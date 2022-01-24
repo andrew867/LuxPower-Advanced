@@ -1,0 +1,7 @@
+{
+  "name": "Lux PowerTek Unoffical",
+  "country": "GB",
+  "domains": ["switch", "sensor"],
+  "homeassistant": "0.61",
+  "persistent_directory": "userfiles",
+}

@@ -1,0 +1,12 @@
+# Example services.yaml entry
+
+luxpower_refresh_register_bank:
+  description: For refreshing the register values.
+  fields:
+    address_bank:
+      description: Address bank number ( can be 0,1,2)
+      default: 0
+      example: 0
+
+luxpower_refresh_registers:
+  description: Request all registers from 3 register banks

@@ -1,0 +1,9 @@
+{
+  "domain": "luxpower",
+  "name": "LuxPower Inverter",
+  "version": "0.5",
+  "documentation": "https://github.com/guybw/LuxPython_DEV",
+  "issue_tracker": "https://github.com/guybw/LuxPython_DEV/issues",
+  "codeowners": ["@guybw"],
+  "requirements": []
+}

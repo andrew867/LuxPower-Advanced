@@ -1,0 +1,216 @@
+- platform: template
+  sensors:
+
+## ##### BATTERY SENSORS   ######
+
+## This is the current output of the battery in W  
+    lux_batttery_discharge:
+      friendly_name: "Lux - Battery Discharge (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_discharge') }}"
+ 
+## This is the current input of the battery in W        
+    lux_battery_charge:
+      friendly_name: "Lux - Battery Charge (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_charge') }}"
+      
+## This works out the battery flow and is helpful to show in items such a solar cards.      
+    lux_battery_flow:
+      friendly_name: "Lux - Battery Flow (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ '-{}'.format(states('sensor.lux_batttery_discharge')) if states('sensor.lux_batttery_discharge')|round > 0 else '+{}'.format(states('sensor.lux_battery_charge')) }}" 
+      
+## This is the battery SOC in Percent
+    lux_battery_percent:
+      friendly_name: "Lux - Battery %"
+      unit_of_measurement: '%'
+      value_template: "{{ state_attr('sensor.luxpower', 'soc') }}"
+      device_class: battery 
+    
+## Total Battery discharge - daily 
+    lux_daily_batttery_discharge:
+      friendly_name: "Lux - Battery Discharge (Daily)"
+      value_template: "{{ state_attr('sensor.luxpower', 'e_dischg_day') }}"
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      
+## Total Battery discharge - total
+    lux_total_batttery_discharge:
+      friendly_name: "Lux - Battery Discharge (Total)"
+      value_template: "{{ state_attr('sensor.luxpower', 'e_dischg_all') }}"
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      
+ ## Total Battery charge - daily
+    lux_daily_battery_charge:
+      friendly_name: "Lux - Battery Charge (Daily)"
+      value_template: "{{ state_attr('sensor.luxpower', 'e_chg_day') }}"
+      unit_of_measurement: 'kWh'
+      device_class: energy
+
+ ## Total Battery charge - total 
+    lux_total_battery_charge:
+      friendly_name: "Lux - Battery Charge (Total)"
+      value_template: "{{ state_attr('sensor.luxpower', 'e_chg_all') }}"
+      unit_of_measurement: 'kWh'
+      device_class: energy 
+## ##### END OF BATTERY SENSORS   ######
+
+## ##### Power Flow Sensors   ######
+      
+## This is the amount of power the inverter is giving out
+    lux_power_from_inverter_live:
+      friendly_name: "Lux - Power from Inverter (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_inv') }}"
+ 
+## This is the amount of power the inverter is recieving - this isn't used much
+    lux_power_to_inverter_live:
+      friendly_name: "Lux - Power to Inverter (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_rec') }}" 
+      
+## This is the live amount of power from the grid to the HOUSE, NOT to the inverter    
+    lux_power_to_home:
+      friendly_name: "Lux - Power from grid to HOUSE (Live)"
+      device_class: energy
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_load') }}"
+     
+## This is the power directly from the grid - live.
+    lux_power_from_grid_live:
+      friendly_name: "Lux - Power from Grid (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_to_user') }}"
+      
+      
+## This is for the total power from the grid - DAILY       
+    lux_power_from_grid_daily:
+      friendly_name: "Lux - Power from Grid (Daily)"
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      value_template: "{{ state_attr('sensor.luxpower', 'e_to_user_day') }}"
+      
+## This is for the total power from the grid - EVER    
+    lux_power_from_grid_total:
+      friendly_name: "Lux - Power from Grid (Total)"
+      unit_of_measurement: 'kWh'
+      value_template: "{{ state_attr('sensor.luxpower', 'e_to_user_all') }}"
+      device_class: energy
+
+## This is for the total power to the grid - Live     
+    lux_power_to_grid_live:
+      friendly_name: "Lux - Power To Grid (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_to_grid') }}"
+      device_class: energy
+      
+## This is for the total power to the grid - Live     
+    lux_power_to_grid_daily:
+      friendly_name: "Lux - Power To Grid (Daily)"
+      unit_of_measurement: 'kWh'
+      value_template: "{{ state_attr('sensor.luxpower', 'e_to_grid_day') }}"
+      device_class: energy    
+      
+## This is for the total power to the grid - TOTAL         
+    lux_power_to_grid_total:
+      friendly_name: "Lux - Power To Grid (Total)"
+      unit_of_measurement: 'kWh'
+      value_template: "{{ state_attr('sensor.luxpower', 'e_to_grid_all') }}"
+      device_class: energy
+ 
+## This is for the total power from the inverter to the house- TOTAL         
+    lux_power_from_inverter_daily:
+      friendly_name: "Lux - Power from Inverter to Home (Daily)"
+      unit_of_measurement: 'kWh'
+      value_template: "{{ state_attr('sensor.luxpower', 'e_inv_day') }}" 
+ 
+## This is for the total power from the inverter to the house- TOTAL         
+    lux_power_to_inverter_daily:
+      friendly_name: "Lux - Power to Inverter (Daily)"
+      unit_of_measurement: 'kWh'
+      value_template: "{{ state_attr('sensor.luxpower', 'e_rec_day') }}" 
+      
+## ##### END OF Power Flow Sensors   ######
+
+ 
+## ##### SOLAR Sensors   ######
+      
+## This is the current solar Output in W  
+    lux_current_solar_output:
+      friendly_name: "Lux - Solar Output (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_pv_total') }}"
+      device_class: energy
+      
+## This is the amount of solar produced today.       
+    lux_daily_solar:
+      friendly_name: "Lux - Solar Output (Daily)"
+      unit_of_measurement: 'kWh'
+      value_template: "{{ state_attr('sensor.luxpower', 'e_pv_total') }}"
+      device_class: energy
+      
+## This is the amount of solar produced in TOTAL.             
+    lux_total_solar:
+      friendly_name: "Lux - Solar Output (Total)"
+      unit_of_measurement: 'kWh'
+      value_template: "{{ state_attr('sensor.luxpower', 'e_pv_all') }}"
+      device_class: energy
+## ##### END OF SOLAR Sensors   ######
+
+
+## ##### Other Lux Sensors   ######
+      
+    
+    lux_status:
+      friendly_name: "Lux - Status"
+      value_template: "{{ state_attr('sensor.luxpower', 'status') }}" 
+      
+     
+
+    lux_status_text: 
+        friendly_name: "Lux - Status (Text)"
+        unit_of_measurement: "State"
+        value_template: >-
+          {% set mapper =  {
+              '0' : 'Standby',
+              '2' : 'Inverting',             
+              '4' : 'Silent',
+              '5' : 'Float',
+              '6' : 'EQ',
+              '7' : 'Charger Off',
+              '8' : 'Support',
+              '9' : 'Selling',
+              '10' : 'Pass Through',
+              '12' : 'TBC',   
+              '16' : 'Battery Discharging',
+              '20' : 'Solar + Battery Discharging',
+              '32' : 'Battery Charging',
+              '11' : 'Offsetting' } %}
+          {% set state =  states.sensor.lux_status.state %}
+          {{ mapper[state] if state in mapper else 'Unknown' }}
+     
+## STATUS 0 = Standby
+## Status 32 = Charging
+## Status 16 = MIGHT be discharging
+## Status 20 = Solar + Batt Discharge
+## Status 12 = *COULD be exporting to grid
+
+## This works out the battery flow and is helpful to show in items such a solar cards.      
+    lux_home_consumtion:
+      friendly_name: "Lux - Home Consumption (Daily)"
+      unit_of_measurement: 'kWh'
+      value_template: >
+        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float - 
+                            states('sensor.lux_power_to_inverter_daily') | float + 
+                            states('sensor.lux_power_from_inverter_daily') | float) }}
+    lux_home_consumtion_live:
+      friendly_name: "Lux - Home Consumption (Live)"
+      unit_of_measurement: 'W'
+      value_template: >
+        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float -
+                            states('sensor.lux_power_to_inverter_live') | float + 
+                            states('sensor.lux_power_from_inverter_live') | float) }}
+                            
+## ##### END OF Other Lux Sensors   ######
