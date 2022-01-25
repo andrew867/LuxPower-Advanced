@@ -22,8 +22,6 @@ SCHEME_REGISTER_BANK = vol.Schema({
         vol.Required("address_bank"):  vol.Coerce(int),
     })
 
-# DONGLE_SERIAL = b'BA19520393'
-# SERIAL_NUMBER = b'0102005050'
 
 
 class LuxPowerClient(asyncio.Protocol):
