@@ -198,14 +198,14 @@
 ## Status 12 = *COULD be exporting to grid
 
 ## This works out the battery flow and is helpful to show in items such a solar cards.      
-    lux_home_consumtion:
+    lux_home_consumption:
       friendly_name: "Lux - Home Consumption (Daily)"
       unit_of_measurement: 'kWh'
       value_template: >
         {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float - 
                             states('sensor.lux_power_to_inverter_daily') | float + 
                             states('sensor.lux_power_from_inverter_daily') | float) }}
-    lux_home_consumtion_live:
+    lux_home_consumption_live:
       friendly_name: "Lux - Home Consumption (Live)"
       unit_of_measurement: 'W'
       value_template: >
