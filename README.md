@@ -1,5 +1,5 @@
 # LuxPython
-LuxPython is a custom intergation into Home Assistant to allow local access to the Lux Powertek Inverter
+LuxPython is a custom integration into Home Assistant to allow local access to the Lux Powertek Inverter
 
 # IMPORTANT PLEASE READ!
 This is in active development - it DOES have bugs in.
@@ -21,7 +21,7 @@ You need to setup your inverter by following this intstructions first:
 https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md
 
 
-Copy the "luxpower" intergation to your Home Assistant instance into the "custom_components" folder
+Copy the "luxpower" integration to your Home Assistant instance into the "custom_components" folder
 
 ./custom_components/luxpower/ to your hass data directory (where your configuration.yaml lives)
 
@@ -62,7 +62,7 @@ homeassistant:
       icon: mdi:battery-negative
       state_class: total_increasing   
         
-    sensor.lux_home_consumtion:
+    sensor.lux_home_consumption:
       icon: mdi:home 
     
     sensor.lux_batttery_discharge:
