@@ -142,7 +142,19 @@
       friendly_name: "Lux - Solar Output (Live)"
       unit_of_measurement: 'W'
       value_template: "{{ state_attr('sensor.luxpower', 'p_pv_total') }}"
-      device_class: energy
+      device_class: power
+## This is the current solar Output in W from array 1
+    lux_current_solar_output_1:
+      friendly_name: "Lux - Solar Output Array 1 (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_pv_1') }}"
+      device_class: power
+## This is the current solar Output in W from array 2  
+    lux_current_solar_output_2:
+      friendly_name: "Lux - Solar Output Array 2 (Live)"
+      unit_of_measurement: 'W'
+      value_template: "{{ state_attr('sensor.luxpower', 'p_pv_2') }}"
+      device_class: power
       
 ## This is the amount of solar produced today.       
     lux_daily_solar:
