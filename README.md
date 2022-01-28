@@ -70,6 +70,13 @@ homeassistant:
       
     sensor.lux_battery_charge:
       icon: mdi:battery-positive
+      
+    sensor.lux_current_solar_output_1:
+      state_class: measurement
+    sensor.lux_current_solar_output_1:
+      state_class: measurement
+    sensor.lux_current_solar_output_2:
+      state_class: measurement
 ```
 
 
