@@ -55,6 +55,22 @@
       value_template: "{{ state_attr('sensor.luxpower', 'e_chg_all') }}"
       unit_of_measurement: 'kWh'
       device_class: energy 
+      
+ ## BMS Limit Charge
+    lux_bms_limit_charge:
+      friendly_name: "Lux - BMS Limit Charge"
+      value_template: "{{ state_attr('sensor.luxpower', 'max_chg_curr') }}"
+      unit_of_measurement: 'A'   
+ 
+ ## BMS Limit Disharge
+    lux_bms_limit_discharge:
+      friendly_name: "Lux - BMS Limit Discharge"
+      value_template: "{{ state_attr('sensor.luxpower', 'max_dischg_curr') }}"
+      unit_of_measurement: 'A' 
+
+ 
+
+
 ## ##### END OF BATTERY SENSORS   ######
 
 ## ##### Power Flow Sensors   ######
