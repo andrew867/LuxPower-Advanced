@@ -206,7 +206,7 @@
               '2' : 'Inverting',             
               '4' : 'Silent',
               '5' : 'Float',
-              '6' : 'EQ',
+              '64' : 'No AC Power',
               '7' : 'Charger Off',
               '8' : 'Support',
               '9' : 'Selling',
@@ -230,15 +230,15 @@
       friendly_name: "Lux - Home Consumption (Daily)"
       unit_of_measurement: 'kWh'
       value_template: >
-        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float - 
-                            states('sensor.lux_power_to_inverter_daily') | float + 
-                            states('sensor.lux_power_from_inverter_daily') | float) }}
+        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float(0) - 
+                            states('sensor.lux_power_to_inverter_daily') | float(0) + 
+                            states('sensor.lux_power_from_inverter_daily') | float(0)) }}
     lux_home_consumption_live:
       friendly_name: "Lux - Home Consumption (Live)"
       unit_of_measurement: 'W'
       value_template: >
-        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float -
-                            states('sensor.lux_power_to_inverter_live') | float + 
-                            states('sensor.lux_power_from_inverter_live') | float) }}
+        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float(0) -
+                            states('sensor.lux_power_to_inverter_live') | float(0) + 
+                            states('sensor.lux_power_from_inverter_live') | float(0)) }}
                             
 ## ##### END OF Other Lux Sensors   ######
