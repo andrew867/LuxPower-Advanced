@@ -90,6 +90,8 @@ sensor: !include sensors.yaml
 
 and then copy the sensors.yaml in this github into the root of your HA folder and then reboot HA and you should then see more sensors!
 
+You can also use the card luxpowercard.yaml which will give you a clone of the lux powertek website.
+
 
 I HIGHLY recomend you install this powercard:
 https://github.com/gurbyz/power-wheel-card#readme

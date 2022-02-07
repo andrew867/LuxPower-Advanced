@@ -55,16 +55,22 @@
       value_template: "{{ state_attr('sensor.luxpower', 'e_chg_all') }}"
       unit_of_measurement: 'kWh'
       device_class: energy 
+
+ ## Battery Voltage - Live
+    lux_battery_voltage:
+      friendly_name: "Lux - Battery Voltage (Live)"
+      value_template: "{{ state_attr('sensor.luxpower', 'v_bat') }}"
+      unit_of_measurement: 'A'  
       
- ## BMS Limit Charge
+ ## BMS Limit Charge - Live
     lux_bms_limit_charge:
-      friendly_name: "Lux - BMS Limit Charge"
+      friendly_name: "Lux - BMS Limit Charge (Live)"
       value_template: "{{ state_attr('sensor.luxpower', 'max_chg_curr') }}"
       unit_of_measurement: 'A'   
  
- ## BMS Limit Disharge
+ ## BMS Limit Disharge - Live
     lux_bms_limit_discharge:
-      friendly_name: "Lux - BMS Limit Discharge"
+      friendly_name: "Lux - BMS Limit Discharge (Live)"
       value_template: "{{ state_attr('sensor.luxpower', 'max_dischg_curr') }}"
       unit_of_measurement: 'A' 
 
@@ -211,7 +217,7 @@
               '8' : 'Support',
               '9' : 'Selling',
               '10' : 'Pass Through',
-              '12' : 'TBC',   
+              '12' : 'Solar + Battery Charging',   
               '16' : 'Battery Discharging',
               '20' : 'Solar + Battery Discharging',
               '32' : 'Battery Charging',

@@ -63,7 +63,7 @@ class LuxPowerStateSensorEntity(Entity):
         state_attributes[LXPPacket.v_pv_1] = "{} {}".format(self._data.get(LXPPacket.v_pv_1, ""), " V")
         state_attributes[LXPPacket.v_pv_2] = "{} {}".format( self._data.get(LXPPacket.v_pv_2, ""), " V")
         state_attributes[LXPPacket.v_pv_3] = "{} {}".format( self._data.get(LXPPacket.v_pv_3, ""), " V")
-        state_attributes[LXPPacket.v_bat] = "{} {}".format( self._data.get(LXPPacket.v_bat, ""), " V")
+        state_attributes[LXPPacket.v_bat] = "{} {}".format( self._data.get(LXPPacket.v_bat, ""), "")
         state_attributes[LXPPacket.soc] = "{} {}".format( self._data.get(LXPPacket.soc, ""), "")
         state_attributes[LXPPacket.p_pv_1] = "{} {}".format( self._data.get(LXPPacket.p_pv_1, ""), "")
         state_attributes[LXPPacket.p_pv_2] = "{} {}".format( self._data.get(LXPPacket.p_pv_2, ""), "")
