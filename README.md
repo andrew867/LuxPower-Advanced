@@ -106,3 +106,7 @@ At the end of this, you should be able to add the following sensors to HA Energy
 Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
 
 @elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he was incrediable! 
+ 
+If you want to chip in to the devopment costs then feel free to below. This has cost me monney to develop.
+To give you an idea the bug fixes cost about £40 per time.
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
