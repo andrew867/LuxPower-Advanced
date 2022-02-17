@@ -57,7 +57,7 @@ class LuxPowerStateSensorEntity(Entity):
         self.lastupdated_time = 0
 
     @property
-    def device_state_attributes(self) -> Optional[Dict[str, Any]]:
+    def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
         state_attributes[LXPPacket.status] = "{}".format(self._data.get(LXPPacket.status, ""))
         state_attributes[LXPPacket.v_pv_1] = "{} {}".format(self._data.get(LXPPacket.v_pv_1, ""), " V")

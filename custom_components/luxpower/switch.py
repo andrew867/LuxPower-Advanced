@@ -179,7 +179,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             print("Exception ", e)
 
     @property
-    def device_state_attributes(self) -> Optional[Dict[str, Any]]:
+    def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
         if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
             lxpPacket = LXPPacket(dongle_serial=self.dongle_serial, serial_number=self.serial_number)
