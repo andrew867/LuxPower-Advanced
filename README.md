@@ -73,14 +73,13 @@ homeassistant:
       
     sensor.lux_current_solar_output_1:
       state_class: measurement
-    sensor.lux_current_solar_output_1:
-      state_class: measurement
     sensor.lux_current_solar_output_2:
       state_class: measurement
 ```
 
 
 Once you have added this into HA, you should be able to reboot and see some sensors in HA.
+Use Developer Tools to view `sensor.luxpower`. Initially the state will be `Waiting` but after a few minutes when the inverter pushes an update the state will change to `ONLINE` and data will be populated in the attributes.
 
 You should also then then this line to the configuration.yaml
 ```YAML
