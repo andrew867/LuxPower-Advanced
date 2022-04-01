@@ -4,7 +4,7 @@ from homeassistant.components.binary_sensor import DEVICE_CLASS_OPENING
 from homeassistant.components.switch import SwitchEntity
 import logging
 from typing import Optional, Union, Any, Dict
-from . import EVENT_DATA_RECEIVED, DOMAIN, DATA_CONFIG, EVENT_REGISTER_RECEIVED, CLIENT_DAEMON
+from . import EVENT_DATA_RECEIVED, INVERTER_ID, DOMAIN, DATA_CONFIG, EVENT_REGISTER_RECEIVED, CLIENT_DAEMON
 from .LXPPacket import LXPPacket
 import socket
 
@@ -26,15 +26,21 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     device_class = DEVICE_CLASS_OPENING
 
-    name = 'AC Charge Enable'
+    name = 'Lux' + INVERTER_ID + ' AC Charge Enable'
     register_address = 21
     bitmask = LXPPacket.AC_CHARGE_ENABLE
     binarySwitchs.append(
         LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
 
-    name = 'Normal/Standby(ON/OFF)'
+    name = 'Lux' + INVERTER_ID + ' Normal/Standby(ON/OFF)'
     register_address = 21
     bitmask = LXPPacket.NORMAL_OR_STANDBY
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' Force Discharge Enable'
+    register_address = 21
+    bitmask = LXPPacket.FORCED_DISCHARGE_ENABLE
     binarySwitchs.append(
         LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
 
@@ -84,6 +90,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                 self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
                 if 68 in registers.keys():
+                    self.schedule_update_ha_state()
+            if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
+                if 84 in registers.keys():
                     self.schedule_update_ha_state()
         return self._state
 
@@ -194,5 +203,19 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             hour, min = lxpPacket.convert_to_time(self.registers.get(72, 0))
             state_attributes["AC_CHARGE_START_2"] = "{}:{}".format(hour, min)
             hour, min = lxpPacket.convert_to_time(self.registers.get(73, 0))
-            state_attributes["AAC_CHARGE_END_2"] = "{}:{}".format(hour, min)
+            state_attributes["AC_CHARGE_END_2"] = "{}:{}".format(hour, min)
+        if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
+            lxpPacket = LXPPacket(dongle_serial=self.dongle_serial, serial_number=self.serial_number)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(84,0))
+            state_attributes["FORCED_DISCHARGE_START"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(85, 0))
+            state_attributes["FORCED_DISCHARGE_END"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(86, 0))
+            state_attributes["FORCED_DISCHARGE_START_1"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(87, 0))
+            state_attributes["FORCED_DISCHARGE_END_1"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(88, 0))
+            state_attributes["FORCED_DISCHARGE_START_2"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(89, 0))
+            state_attributes["FORCED_DISCHARGE_END_2"] = "{}:{}".format(hour, min)
         return state_attributes

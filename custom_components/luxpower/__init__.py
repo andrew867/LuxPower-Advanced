@@ -10,9 +10,18 @@ from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
 
+"""
+For Single Inverter:
+INVERTER_ID = ''
 
-DOMAIN = 'luxpower'
-DATA_CONFIG = "luxpower_ism8"
+For Multiple Inverters just put underscore followed by inverter serial
+INVERTER_ID = '_1212016010'
+"""
+
+INVERTER_ID = ''
+
+DOMAIN = 'luxpower' + INVERTER_ID
+DATA_CONFIG = "luxpower" + INVERTER_ID + "_ism8"
 
 EVENT_DATA_RECEIVED = "{}_data_receive_event".format(DOMAIN)
 EVENT_REGISTER_RECEIVED = "{}_register_receive_event".format(DOMAIN)
@@ -22,6 +31,8 @@ SCHEME_REGISTER_BANK = vol.Schema({
         vol.Required("address_bank"):  vol.Coerce(int),
     })
 
+# DONGLE_SERIAL = b'BA19520393'
+# SERIAL_NUMBER = b'0102005050'
 
 
 class LuxPowerClient(asyncio.Protocol):
@@ -95,8 +106,8 @@ async def async_setup(hass, config):
     hass.data[DATA_CONFIG] = config[DOMAIN]
     HOST = config[DOMAIN].get("host", "127.0.0.1")
     PORT = config[DOMAIN].get("port", 8000)
-    DONGLE_SERIAL = config[DOMAIN].get("dongle_serial", "BA00000000")
-    SERIAL_NUMBER = config[DOMAIN].get("serial_number", "0000000000")
+    DONGLE_SERIAL = config[DOMAIN].get("dongle_serial", "BA19520393")
+    SERIAL_NUMBER = config[DOMAIN].get("serial_number", "0102005050")
 
     luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)), serial_number=str.encode(str(SERIAL_NUMBER)))
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
