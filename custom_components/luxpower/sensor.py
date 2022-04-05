@@ -34,6 +34,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         await luxpower_client.get_register_data(address_bank)
         await asyncio.sleep(1)
 
+    _LOGGER.debug("LuxPower sensor async_setup_platform sensor done %s", INVERTER_ID)
     print("LuxPower sensor async_setup_platform sensor done")
 
 
@@ -123,7 +124,7 @@ class LuxPowerStateSensorEntity(Entity):
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
-        _LOGGER.info("async_added_to_hasss", self._name)
+        _LOGGER.info("async_added_to_hasss %s", self._name)
         self.is_added_to_hass = True
         if self.hass is not None:
             self.hass.bus.async_listen(EVENT_DATA_RECEIVED, self.push_update)
