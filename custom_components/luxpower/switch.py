@@ -26,15 +26,101 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     device_class = DEVICE_CLASS_OPENING
 
+    """ Common Switches Displayed In The App/Web """
+
+    name = 'Lux' + INVERTER_ID + ' Normal/Standby(ON/OFF)'
+    register_address = 21
+    bitmask = LXPPacket.NORMAL_OR_STANDBY
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' Power Backup Enable'
+    register_address = 21
+    bitmask = LXPPacket.POWER_BACKUP_ENABLE
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' Feed-In Grid'
+    register_address = 21
+    bitmask = LXPPacket.FEED_IN_GRID
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    """ Hidden And Special Purpose Switches """
+
+    name = 'Lux' + INVERTER_ID + ' DCI Enable'
+    register_address = 21
+    bitmask = LXPPacket.DCI_ENABLE
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' GFCI Enable'
+    register_address = 21
+    bitmask = LXPPacket.GFCI_ENABLE
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' Seamless EPS Switching'
+    register_address = 21
+    bitmask = LXPPacket.SEAMLESS_EPS_SWITCHING
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' Grid On Power SS'
+    register_address = 21
+    bitmask = LXPPacket.GRID_ON_POWER_SS
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' Neutral Detect Enable'
+    register_address = 21
+    bitmask = LXPPacket.NEUTRAL_DETECT_ENABLE
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' Anti Island Enable'
+    register_address = 21
+    bitmask = LXPPacket.ANTI_ISLAND_ENABLE
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' DRMS Enable'
+    register_address = 21
+    bitmask = LXPPacket.DRMS_ENABLE 
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' OVF Load Derate Enable'
+    register_address = 21
+    bitmask = LXPPacket.OVF_LOAD_DERATE_ENABLE
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    """ Unknown Switches - FOR TESTING """
+
+    name = 'Lux' + INVERTER_ID + ' R21 Unknown Bit 12'
+    register_address = 21
+    bitmask = LXPPacket.R21_UNKNOWN_BIT_12 
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    name = 'Lux' + INVERTER_ID + ' R21 Unknown Bit 3'
+    register_address = 21
+    bitmask = LXPPacket.R21_UNKNOWN_BIT_3 
+    binarySwitchs.append(
+        LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+
+    """ Switches With Time Attributes """
+
     name = 'Lux' + INVERTER_ID + ' AC Charge Enable'
     register_address = 21
     bitmask = LXPPacket.AC_CHARGE_ENABLE
     binarySwitchs.append(
         LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
 
-    name = 'Lux' + INVERTER_ID + ' Normal/Standby(ON/OFF)'
+    name = 'Lux' + INVERTER_ID + ' Charge Priority'
     register_address = 21
-    bitmask = LXPPacket.NORMAL_OR_STANDBY
+    bitmask = LXPPacket.CHARGE_PRIORITY
     binarySwitchs.append(
         LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
 
@@ -87,9 +173,13 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             oldstate = self._state
             self._state = register_val & self._bitmask == self._bitmask
             if oldstate != self._state:
+                _LOGGER.debug("Reading: {} {} Old State {} Updating state to {} - {}".format(self._register_address, self._bitmask, oldstate, self._state, self._name))
                 self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
                 if 68 in registers.keys():
+                    self.schedule_update_ha_state()
+            if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
+                if 76 in registers.keys():
                     self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
                 if 84 in registers.keys():
@@ -169,6 +259,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                         old_value = lxpPacket.convert_to_int(lxpPacket.value)
                         new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
                         print("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
+                        _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
                         packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
                         print("packet to be written ", packet)
                         sock.send(packet)
@@ -204,6 +295,20 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             state_attributes["AC_CHARGE_START_2"] = "{}:{}".format(hour, min)
             hour, min = lxpPacket.convert_to_time(self.registers.get(73, 0))
             state_attributes["AC_CHARGE_END_2"] = "{}:{}".format(hour, min)
+        if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
+            lxpPacket = LXPPacket(dongle_serial=self.dongle_serial, serial_number=self.serial_number)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(76,0))
+            state_attributes["PRIORITY_CHARGE_START"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(77, 0))
+            state_attributes["PRIORITY_CHARGE_END"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(78, 0))
+            state_attributes["PRIORITY_CHARGE_START_1"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(79, 0))
+            state_attributes["PRIORITY_CHARGE_END_1"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(80, 0))
+            state_attributes["PRIORITY_CHARGE_START_2"] = "{}:{}".format(hour, min)
+            hour, min = lxpPacket.convert_to_time(self.registers.get(81, 0))
+            state_attributes["PRIORITY_CHARGE_END_2"] = "{}:{}".format(hour, min)
         if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
             lxpPacket = LXPPacket(dongle_serial=self.dongle_serial, serial_number=self.serial_number)
             hour, min = lxpPacket.convert_to_time(self.registers.get(84,0))
