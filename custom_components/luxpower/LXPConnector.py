@@ -8,9 +8,9 @@ SERVER_URL = "172.16.255.120"
 SERVER_PORT = 8000
 
 
-async def tcp_echo_client(loop):
-    reader, writer = await asyncio.open_connection(SERVER_URL, SERVER_PORT,
-                                                   loop=loop)
+async def tcp_echo_client(message):
+    reader, writer = await asyncio.open_connection(SERVER_URL, SERVER_PORT)
+                                                   
     print("Connected to server")
     lxpPacket = LXPPacket()
     isConnected = True
