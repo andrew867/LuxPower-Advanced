@@ -64,14 +64,14 @@ homeassistant:
       icon: mdi:battery-positive
       state_class: total_increasing  
       
-    sensor.lux_total_batttery_discharge:
+    sensor.lux_total_battery_discharge:
       icon: mdi:battery-negative
       state_class: total_increasing   
         
     sensor.lux_home_consumption:
       icon: mdi:home 
     
-    sensor.lux_batttery_discharge:
+    sensor.lux_battery_discharge:
       icon: mdi:battery-negative
       
     sensor.lux_battery_charge:
@@ -105,7 +105,30 @@ https://github.com/gurbyz/power-wheel-card#readme
 At the end of this, you should be able to add the following sensors to HA Energy and it will start tracking:
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
-
+If you have an ACS Inverter you should modify the sensors.yaml with the following:
+```
+## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor code. However, there's a new name to prevent conflict. 
+    lux_new_home_consumption:
+      friendly_name: "Lux - Home Consumption (Daily)"
+      unit_of_measurement: 'kWh'
+      value_template: >
+        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float(0) + 
+                            states('sensor.lux_power_from_inverter_daily') | float(0) +
+                            states('sensor.lux_daily_solar') | float(0) - 
+                            states('sensor.lux_power_to_inverter_daily') | float(0) - 
+                            states('sensor.lux_power_to_grid_daily') | float(0)) }}
+    lux_new_home_consumption_live:
+      friendly_name: "Lux - Home Consumption (Live)"
+      unit_of_measurement: 'W'
+      value_template: >
+        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float(0) + 
+                            states('sensor.lux_power_from_inverter_live') | float(0) +
+                            states('sensor.lux_current_solar_output') | float(0) - 
+                            states('sensor.lux_power_to_inverter_live') | float(0) - 
+                            states('sensor.lux_power_to_grid_live') | float(0)) }}
+                            
+## ##### END OF Custom Lux Sensors   ######
+```
 # Thanks!
 
 Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
