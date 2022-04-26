@@ -8,14 +8,13 @@ SERVER_URL = "172.16.255.120"
 SERVER_PORT = 8000
 
 
-async def tcp_echo_client(loop):
+async def tcp_echo_client(message):
     isConnected = True
     while isConnected:
         try:
             address = int(input("Register Address: "))
             num_registers = int(input("Number of reg to read: "))
-            reader, writer = await asyncio.open_connection(SERVER_URL, SERVER_PORT,
-                                                           loop=loop)
+            reader, writer = await asyncio.open_connection(SERVER_URL, SERVER_PORT)
             print("Connected to server")
             lxpPacket = LXPPacket()
             packet = lxpPacket.prepare_packet_for_read(address, num_registers)
