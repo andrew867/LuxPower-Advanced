@@ -37,11 +37,11 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     stateSensors.append(LuxStateSensorEntity(hass, HOST, PORT, name, device_class, unit))
 
     sensors = []
-    sensors.append({"name": "Lux - Battery Discharge (Live)", "entity": 'lux_batttery_discharge', 'attribute': LXPPacket.p_discharge, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
+    sensors.append({"name": "Lux - Battery Discharge (Live)", "entity": 'lux_battery_discharge', 'attribute': LXPPacket.p_discharge, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
     sensors.append({"name": "Lux - Battery Charge (Live)", "entity": 'lux_battery_charge', 'attribute': LXPPacket.p_charge, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
     sensors.append({"name": "Lux - Battery %", "entity": 'lux_battery_percent', 'attribute': LXPPacket.soc, 'device_class': DEVICE_CLASS_BATTERY, 'unit_measure': PERCENTAGE})
-    sensors.append({"name": "Lux - Battery Discharge (Daily)", "entity": 'lux_daily_batttery_discharge', 'attribute': LXPPacket.e_dischg_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": "Lux - Battery Discharge (Total)", "entity": 'lux_total_batttery_discharge', 'attribute': LXPPacket.e_dischg_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": "Lux - Battery Discharge (Daily)", "entity": 'lux_daily_battery_discharge', 'attribute': LXPPacket.e_dischg_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": "Lux - Battery Discharge (Total)", "entity": 'lux_total_battery_discharge', 'attribute': LXPPacket.e_dischg_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
     sensors.append({"name": "Lux - Battery Charge (Daily)", "entity": 'lux_daily_battery_charge', 'attribute': LXPPacket.e_chg_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
     sensors.append({"name": "Lux - Battery Charge (Total)", "entity": 'lux_total_battery_charge', 'attribute': LXPPacket.e_chg_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
     sensors.append({"name": "Lux - Battery Voltage (Live)", "entity": 'lux_battery_voltage', 'attribute': LXPPacket.v_bat, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})

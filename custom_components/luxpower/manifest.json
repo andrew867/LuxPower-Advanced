@@ -1,6 +1,6 @@
 {
   "domain": "luxpower",
-  "name": "LuxPower Inverter (Unoffical)",
+  "name": "LuxPower Inverter (Unofficial)",
   "config_flow": true,
   "documentation": "https://github.com/guybw/LuxPython_DEV",
   "issue_tracker": "https://github.com/guybw/LuxPython_DEV/issues",
@@ -10,6 +10,6 @@
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "version": "0.6.3",
+  "version": "0.7.0",
   "codeowners": ["@guybw"]
 }
