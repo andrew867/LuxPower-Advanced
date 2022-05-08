@@ -1,11 +1,15 @@
 {
   "domain": "luxpower",
   "name": "LuxPower Inverter (Unoffical)",
-  "config_flow": false,
+  "config_flow": true,
   "documentation": "https://github.com/guybw/LuxPython_DEV",
   "issue_tracker": "https://github.com/guybw/LuxPython_DEV/issues",
-  "codeowners": ["@guybw"],
   "iot_class": "local_polling",
+  "dependencies": ["http"],
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
   "version": "0.6.3",
-  "requirements": []
+  "codeowners": ["@guybw"]
 }

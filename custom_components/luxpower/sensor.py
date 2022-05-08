@@ -3,22 +3,26 @@ import time
 from datetime import timedelta, datetime
 from typing import Optional, Union, Any, List, Dict
 import logging
+
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_MODE
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval, async_track_point_in_time, track_time_interval
-
+from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_SERIAL_NUMBER, ATTR_LUX_DONGLE_SERIAL
 from .LXPPacket import LXPPacket
-from . import DATA_CONFIG, EVENT_REGISTER_RECEIVED, INVERTER_ID, DOMAIN, EVENT_DATA_RECEIVED, CLIENT_DAEMON
+from . import DATA_CONFIG, INVERTER_ID, DOMAIN, EVENT_DATA_RECEIVED, CLIENT_DAEMON
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    print("In LuxPower sensor platform discovery")
+async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
+    """Set up the sensor platform."""
+    # We only want this platform to be set up via discovery.
+    _LOGGER.info("Loading the Lux sensor platform")
     platform_config = hass.data[DATA_CONFIG]
 
-    HOST = platform_config.get("host", "127.0.0.1")
-    PORT = platform_config.get("port", 8000)
+    HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
+    PORT = platform_config.get(ATTR_LUX_PORT, 8000)
     stateSensors = []
 
     luxpower_client = hass.data[CLIENT_DAEMON]
@@ -28,7 +32,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     name = "LUXPower" + INVERTER_ID
     stateSensors.append(LuxPowerStateSensorEntity(hass, HOST, PORT, name, device_class, unit))
 
-    async_add_entities(stateSensors, True)
+    async_add_devices(stateSensors, True)
 
     for address_bank in range(0, 3):
         await luxpower_client.get_register_data(address_bank)

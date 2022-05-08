@@ -4,6 +4,7 @@ from homeassistant.components.binary_sensor import DEVICE_CLASS_OPENING
 from homeassistant.components.switch import SwitchEntity
 import logging
 from typing import Optional, Union, Any, Dict
+from .const import DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
 from . import EVENT_DATA_RECEIVED, INVERTER_ID, DOMAIN, DATA_CONFIG, EVENT_REGISTER_RECEIVED, CLIENT_DAEMON
 from .LXPPacket import LXPPacket
 import socket
@@ -11,19 +12,23 @@ import socket
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    print("In LuxPower switch platform discovery")
-    platform_config = hass.data[DATA_CONFIG]
+async def async_setup_entry(hass, config_entry, async_add_devices):
+    """Set up the sensor platform."""
+    # We only want this platform to be set up via discovery.
+    _LOGGER.info("Loading the Lux switch platform")
+    print("Set up the switch platform", config_entry.data)
+    print("Options", len(config_entry.options))
+    platform_config = config_entry.data or {}
+    if len(config_entry.options) > 0:
+        platform_config = config_entry.options
 
-    HOST = platform_config.get("host", "127.0.0.1")
-    PORT = platform_config.get("port", 8000)
-    DONGLE_SERIAL = platform_config.get("dongle_serial", "BA19520393")
-    SERIAL_NUMBER = platform_config.get("serial_number", "0102005050")
+    HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
+    PORT = platform_config.get(ATTR_LUX_PORT, 8000)
+    DONGLE_SERIAL = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
+    SERIAL_NUMBER = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
 
     luxpower_client = hass.data[CLIENT_DAEMON]
-
     binarySwitchs = []
-
     device_class = DEVICE_CLASS_OPENING
 
     """ Common Switches Displayed In The App/Web """
@@ -130,7 +135,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     binarySwitchs.append(
         LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, register_address, bitmask, name, device_class, luxpower_client, str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
 
-    async_add_entities(binarySwitchs, True)
+    async_add_devices(binarySwitchs, True)
     print("LuxPower switch async_setup_platform switch done")
 
 
