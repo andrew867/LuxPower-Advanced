@@ -35,8 +35,8 @@ EVENT_DATA_RECEIVED = "{}_data_receive_event".format(DOMAIN)
 EVENT_REGISTER_RECEIVED = "{}_register_receive_event".format(DOMAIN)
 CLIENT_DAEMON = "{}_client_daemon".format(DOMAIN)
 
-# PLATFORMS = ["sensor", "switch", "number"]
-PLATFORMS = ["sensor", "switch"]
+PLATFORMS = ["sensor", "switch", "number"]
+# PLATFORMS = ["sensor", "switch"]
 
 SCHEME_REGISTER_BANK = vol.Schema({
     vol.Required("address_bank"): vol.Coerce(int),
