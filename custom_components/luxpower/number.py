@@ -6,11 +6,10 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
+from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
 from .LXPPacket import LXPPacket
 import socket
-
-from . import EVENT_DATA_RECEIVED, DOMAIN, DATA_CONFIG, EVENT_REGISTER_RECEIVED, CLIENT_DAEMON
+from .helpers import Event
 
 '''
 Setup some options from this page in Home-assistant and allow times and % to be set.
@@ -28,20 +27,23 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Set up the sensor platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux sensor platform")
-    platform_config = hass.data[DATA_CONFIG]
+    print("Options", len(config_entry.options))
+    platform_config = config_entry.data or {}
+    if len(config_entry.options) > 0:
+        platform_config = config_entry.options
 
     HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = platform_config.get(ATTR_LUX_PORT, 8000)
     DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, 8000)
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, 8000)
-
-    luxpower_client = hass.data[CLIENT_DAEMON]
+    event = Event(dongle=DONGLE)
+    luxpower_client = hass.data[event.CLIENT_DAEMON]
 
     numberPercentageEntities = []
 
     register_address = 64
     name = 'AC Charge Power Rate'
-    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False))
+    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     async_add_devices(numberPercentageEntities, True)
 
@@ -52,7 +54,7 @@ class PercentageNumber(NumberEntity):
     """Representation of a demo Number entity."""
 
     def __init__(
-        self, hass, host, port, dongle, serial, register_address, name, state, icon, assumed):
+        self, hass, host, port, dongle, serial, register_address, name, state, icon, assumed, event: Event):
         """Initialize the Demo Number entity."""
         self.hass = hass
         self._host = host
@@ -67,12 +69,13 @@ class PercentageNumber(NumberEntity):
         # self.dongle_serial = dongle_serial
         # self.serial_number = serial_number
         self.registers = {}
+        self.event = event
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
         _LOGGER.info("async_added_to_hass %s", self._name)
         if self.hass is not None:
-            self.hass.bus.async_listen(EVENT_REGISTER_RECEIVED, self.push_update)
+            self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
         return result
 
     def push_update(self, event):
@@ -144,9 +147,10 @@ class PercentageNumber(NumberEntity):
         """Return the value step."""
         return 1.0
 
-    def async_set_value(self, value):
+    def set_value(self, value):
         """Update the current value."""
         num_value = float(value)
+        print("Calling set_value")
 
         if num_value < self.min_value or num_value > self.max_value:
             raise vol.Invalid(

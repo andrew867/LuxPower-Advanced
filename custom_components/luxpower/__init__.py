@@ -9,31 +9,11 @@ from datetime import timedelta
 import logging
 import asyncio
 from .LXPPacket import LXPPacket
-from .const import DOMAIN_PREFIX, DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
+from .const import DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
 from .helpers import Event
 from .connector import LuxPowerClient
 
 _LOGGER = logging.getLogger(__name__)
-
-
-"""
-For Single Inverter:
-INVERTER_ID = ''
-
-For Multiple Inverters just put underscore followed by inverter serial
-INVERTER_ID = '_1212016010'
-"""
-
-INVERTER_ID = ''
-
-# DOMAIN = 'luxpower' + INVERTER_ID
-# DOMAIN = DOMAIN_PREFIX
-# DATA_CONFIG = "luxpower" + INVERTER_ID + "_ism8"
-DATA_CONFIG = DOMAIN_PREFIX + "_ism8"
-
-EVENT_DATA_RECEIVED = "{}_data_receive_event".format(DOMAIN)
-EVENT_REGISTER_RECEIVED = "{}_register_receive_event".format(DOMAIN)
-CLIENT_DAEMON = "{}_client_daemon".format(DOMAIN)
 
 PLATFORMS = ["sensor", "switch", "number"]
 # PLATFORMS = ["sensor", "switch"]
@@ -60,20 +40,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Data that you want to share with your platforms
     config = entry.data or {}
     print(config)
-    hass.data[DATA_CONFIG] = config
-    HOST = hass.data[DATA_CONFIG].get(ATTR_LUX_HOST, "127.0.0.1")
-    PORT = hass.data[DATA_CONFIG].get(ATTR_LUX_PORT, 8000)
-    DONGLE_SERIAL = hass.data[DATA_CONFIG].get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL_NUMBER = hass.data[DATA_CONFIG].get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    HOST = config.get(ATTR_LUX_HOST, "127.0.0.1")
+    PORT = config.get(ATTR_LUX_PORT, 8000)
+    DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
+    SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
 
-    events = Event(EVENT_DATA_RECEIVED=EVENT_DATA_RECEIVED, EVENT_REGISTER_RECEIVED=EVENT_REGISTER_RECEIVED)
+    events = Event(dongle=DONGLE_SERIAL)
     luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)),
                                      serial_number=str.encode(str(SERIAL_NUMBER)), events=events)
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
     hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
     # await hass.async_add_job(luxpower_client.start_luxpower_client_daemon())
 
-    hass.data[CLIENT_DAEMON] = luxpower_client
+    hass.data[events.CLIENT_DAEMON] = luxpower_client
 
     # await hass.helpers.discovery.async_load_platform("switch", DOMAIN, {}, config)
     # await hass.helpers.discovery.async_load_platform("sensor", DOMAIN, {}, config)
