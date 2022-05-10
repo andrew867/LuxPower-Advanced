@@ -89,6 +89,7 @@ class PercentageNumber(NumberEntity):
             oldstate = self._state
             self._state = float(register_val)
             if oldstate != self._state:
+                _LOGGER.debug(f"PercentageNumber: Changing the number from {oldstate} to {self._state}")
                 self.schedule_update_ha_state()
         return self._state
 
