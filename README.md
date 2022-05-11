@@ -3,10 +3,7 @@ LuxPython is a custom integration into Home Assistant to allow local access to t
 
 # IMPORTANT PLEASE READ!
 
-
-
-HOMEASSISTANT 2022.04 should now be working - please report back if it doesn't!
-
+UPDATE - I have our dev creating a new version of this right now - 2022-05-11 to fix some major issues including a UI for setup, moving the sensors into the integration and hopefully more!
 
 This is in active development - it DOES have bugs in.
 
