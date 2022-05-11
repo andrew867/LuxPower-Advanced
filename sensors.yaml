@@ -1,15 +1,18 @@
 - platform: template
   sensors:
-
-    ## ##### BATTERY SENSORS   ######
     ## This works out the battery flow and is helpful to show in items such a solar cards.
     lux_battery_flow:
       friendly_name: "Lux - Battery Flow (Live)"
       unit_of_measurement: 'W'
       value_template: "{{ '-{}'.format(states('sensor.lux_battery_discharge_live')) if states('sensor.lux_battery_discharge_live')|round > 0 else '+{}'.format(states('sensor.lux_battery_charge_live')) }}"
 
-    ## ##### END OF BATTERY SENSORS   ######
-
+    
+    ## This works out the grid flow and is helpful to show in items such a solar cards.
+    lux_grid_flow:
+      friendly_name: "Lux - Grid Flow (Live)"
+      unit_of_measurement: "W"
+      value_template: "{{ '-{}'.format(states('sensor.lux_power_from_grid_live')) if states('sensor.lux_power_from_grid_live')|round > 0 else '+{}'.format(states('sensor.lux_power_to_grid_live')) }}"
+   
 
     ## ##### Other Lux Sensors   ######
     lux_status_text:
