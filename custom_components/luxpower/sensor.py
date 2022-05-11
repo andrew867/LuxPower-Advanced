@@ -15,7 +15,7 @@ from homeassistant.helpers.typing import StateType
 
 from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_SERIAL_NUMBER, ATTR_LUX_DONGLE_SERIAL
 from .LXPPacket import LXPPacket
-from . import DATA_CONFIG, INVERTER_ID, DOMAIN, EVENT_DATA_RECEIVED, CLIENT_DAEMON
+from .helpers import Event
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +24,10 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Set up the sensor platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux sensor platform")
-    platform_config = hass.data[DATA_CONFIG]
+    print("Options", len(config_entry.options))
+    platform_config = config_entry.data or {}
+    if len(config_entry.options) > 0:
+        platform_config = config_entry.options
 
     HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = platform_config.get(ATTR_LUX_PORT, 8000)
@@ -32,12 +35,14 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, 8000)
     stateSensors = []
 
-    luxpower_client = hass.data[CLIENT_DAEMON]
+    event = Event(dongle=DONGLE)
+
+    luxpower_client = hass.data[event.CLIENT_DAEMON]
 
     device_class = CONF_MODE
     unit = ""
-    name = "LUXPower" + INVERTER_ID
-    stateSensors.append(LuxStateSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, name, device_class, unit))
+    name = "LUXPower"
+    stateSensors.append(LuxStateSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, name, device_class, unit, event))
 
     sensors = []
     sensors.append({"name": "Lux - Battery Discharge (Live)", "entity": 'lux_battery_discharge', 'attribute': LXPPacket.p_discharge, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
@@ -68,7 +73,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     sensors.append({"name": "Lux - Solar Output (Total)", "entity": 'lux_total_solar', 'attribute': LXPPacket.e_pv_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
     sensors.append({"name": "Lux - Status", "entity": 'lux_status', 'attribute': LXPPacket.status, 'device_class': '', 'unit_measure': ''})
     for sensor_data in sensors:
-        stateSensors.append(LuxpowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, sensor_data))
+        stateSensors.append(LuxpowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     async_add_devices(stateSensors, True)
 
@@ -76,14 +81,14 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         await luxpower_client.get_register_data(address_bank)
         await asyncio.sleep(1)
 
-    _LOGGER.debug("LuxPower sensor async_setup_platform sensor done %s", INVERTER_ID)
+    _LOGGER.debug("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
     print("LuxPower sensor async_setup_platform sensor done")
 
 
 class LuxpowerSensorEntity(SensorEntity):
     """Representation of a sensor of Type HAVC, Pressure, Power, Volume."""
     def __init__(
-        self, hass, host, port, dongle, serial, sensor_data
+        self, hass, host, port, dongle, serial, sensor_data, event: Event
     ):
         """Initialize the sensor."""
         self.hass = hass
@@ -102,13 +107,14 @@ class LuxpowerSensorEntity(SensorEntity):
         self._device_attribute = sensor_data['attribute']
         self._state_class = sensor_data.get('state_class', None)
         self.lastupdated_time = 0
+        self.event = event
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
         _LOGGER.info("async_added_to_hasss %s", self._name)
         self.is_added_to_hass = True
         if self.hass is not None:
-            self.hass.bus.async_listen(EVENT_DATA_RECEIVED, self.push_update)
+            self.hass.bus.async_listen(self.event.EVENT_DATA_RECEIVED, self.push_update)
         return result
 
     def checkonline(self, *args, **kwargs):
@@ -179,7 +185,7 @@ class LuxStateSensorEntity(Entity):
     """Representation of a sensor of Type HAVC, Pressure, Power, Volume."""
 
     def __init__(
-        self, hass, host, port, dongle, serial, name, device_class, unit_measure
+        self, hass, host, port, dongle, serial, name, device_class, unit_measure, event:Event
     ):
         """Initialize the sensor."""
         self.hass = hass
@@ -195,6 +201,7 @@ class LuxStateSensorEntity(Entity):
         self.is_added_to_hass = False
         self._data = {}
         self.lastupdated_time = 0
+        self.event = event
 
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
@@ -266,7 +273,7 @@ class LuxStateSensorEntity(Entity):
         _LOGGER.info("async_added_to_hasss %s", self._name)
         self.is_added_to_hass = True
         if self.hass is not None:
-            self.hass.bus.async_listen(EVENT_DATA_RECEIVED, self.push_update)
+            self.hass.bus.async_listen(self.event.EVENT_DATA_RECEIVED, self.push_update)
         return result
 
     def checkonline(self, *args, **kwargs):

@@ -1,4 +1,3 @@
-DOMAIN_PREFIX = 'luxpower'
 DOMAIN = 'luxpower'
 
 # Config UI Attributes
@@ -12,4 +11,8 @@ PLACEHOLDER_LUX_HOST = ""
 PLACEHOLDER_LUX_PORT = ""
 PLACEHOLDER_LUX_DONGLE_SERIAL = ""
 PLACEHOLDER_LUX_SERIAL_NUMBER = ""
+
+EVENT_DATA_FORMAT = "{DOMAIN}_{DONGLE}_data_receive_event"
+EVENT_REGISTER_FORMAT = "{DOMAIN}_{DONGLE}_register_receive_event"
+CLIENT_DAEMON_FORMAT = "{DOMAIN}_{DONGLE}_client_daemon"
 
