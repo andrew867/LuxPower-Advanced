@@ -19,13 +19,81 @@ PLATFORMS = ["sensor", "switch", "number"]
 # PLATFORMS = ["sensor", "switch"]
 
 SCHEME_REGISTER_BANK = vol.Schema({
+    vol.Required("dongle"): vol.Coerce(str),
     vol.Required("address_bank"): vol.Coerce(int),
 })
+
+SCHEME_REGISTERS = vol.Schema({
+    vol.Required("dongle"): vol.Coerce(str),
+})
+
+
+class ServiceHelper:
+    def __init__(self, hass) -> None:
+        self.hass = hass
+
+    async def send_refresh_registers(self, dongle):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            for address_bank in range(0, 3):
+                print("send_refresh_registers for address_bank: ", address_bank)
+                await luxpower_client.get_register_data(address_bank)
+                await asyncio.sleep(1)
+        print("send_refresh_registers done")
+
+    async def send_refresh_register_bank(self, dongle, address_bank):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            print("send_refresh_registers for address_bank: ", address_bank)
+            await luxpower_client.get_register_data(address_bank)
+            await asyncio.sleep(1)
+        print("send_refresh_registers done")
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the BOM component."""
     hass.data.setdefault(DOMAIN, {})
+
+    service_helper = ServiceHelper(hass=hass)
+
+    async def handle_refresh_register_bank(call):
+        """Handle the service call."""
+        _LOGGER.info("handle_refresh_register_bank service: %s", DOMAIN)
+        dongle = call.data.get("dongle")
+        address_bank = call.data.get("address_bank")
+        print("handle_refresh_register_bank service ", address_bank)
+        await service_helper.send_refresh_register_bank(dongle=dongle, address_bank=int(address_bank))
+
+    async def handle_refresh_registers(call):
+        """Handle the service call."""
+        _LOGGER.info("handle_refresh_registers service: %s", DOMAIN)
+        print("handle_refresh_registers service ")
+        dongle = call.data.get("dongle")
+        await service_helper.send_refresh_registers(dongle=dongle)
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_refresh_register_bank",
+        handle_refresh_register_bank,
+        schema=SCHEME_REGISTER_BANK
+    )
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_refresh_registers",
+        handle_refresh_registers,
+        schema=SCHEME_REGISTERS
+    )
     return True
 
 
@@ -56,35 +124,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass_data = hass.data.setdefault(DOMAIN, {})
     hass_data[entry.entry_id] = {'DONGLE': DONGLE_SERIAL, 'client': luxpower_client}   # Used for avoiding duplication of config entries
-
-    # await hass.helpers.discovery.async_load_platform("switch", DOMAIN, {}, config)
-    # await hass.helpers.discovery.async_load_platform("sensor", DOMAIN, {}, config)
-
-    async def handle_refresh_register_bank(call):
-        """Handle the service call."""
-        _LOGGER.info("handle_refresh_register_bank service: %s", DOMAIN)
-        address_bank = call.data.get("address_bank")
-        print("handle_refresh_register_bank service ", address_bank)
-        await luxpower_client.get_register_data(address_bank)
-
-    async def handle_refresh_registers(call):
-        """Handle the service call."""
-        _LOGGER.info("handle_refresh_registers service: %s", DOMAIN)
-        print("handle_refresh_registers service ")
-        for address_bank in range(0, 3):
-            await luxpower_client.get_register_data(address_bank)
-            await asyncio.sleep(1)
-
-    hass.services.async_register(
-        DOMAIN, "luxpower_refresh_register_bank",
-        handle_refresh_register_bank,
-        schema=SCHEME_REGISTER_BANK
-    )
-
-    hass.services.async_register(
-        DOMAIN, "luxpower_refresh_registers",
-        handle_refresh_registers
-    )
 
     for component in PLATFORMS:
         hass.async_create_task(

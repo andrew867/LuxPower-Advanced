@@ -1,12 +1,21 @@
 # Example services.yaml entry
 
 luxpower_refresh_register_bank:
-  description: For refreshing the register values.
+  description: For refreshing the register values of an address bank of specified DONGLE
   fields:
+    dongle:
+      description: Dongle Serial Number
+      default: ''
+      example: '<DONGLE SERIAL>'
     address_bank:
       description: Address bank number ( can be 0,1,2)
-      default: 0
-      example: 0
+      default: '0'
+      example: '0'
 
 luxpower_refresh_registers:
-  description: Request all registers from 3 register banks
+  description: Request all registers from 3 register banks of specified DONGLE
+  fields:
+    dongle:
+      description: Dongle Serial Number
+      default: ''
+      example: '<DONGLE SERIAL>'
