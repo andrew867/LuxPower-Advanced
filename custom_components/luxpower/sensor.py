@@ -191,6 +191,7 @@ class LuxStateSensorEntity(Entity):
         self.hass = hass
         self._host = host
         self._port = port
+        self._key = key
         self._name = name
         self.dongle = dongle
         self.serial = serial
@@ -203,74 +204,9 @@ class LuxStateSensorEntity(Entity):
         self.lastupdated_time = 0
         self.event = event
 
-    @property
-    def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
-        state_attributes = self.state_attributes or {}
-        state_attributes[LXPPacket.status] = "{}".format(self._data.get(LXPPacket.status, "unavailable"), "")
-        state_attributes[LXPPacket.v_pv_1] = "{}".format(self._data.get(LXPPacket.v_pv_1, "unavailable"), "")
-        state_attributes[LXPPacket.v_pv_2] = "{}".format( self._data.get(LXPPacket.v_pv_2, "unavailable"), "")
-        state_attributes[LXPPacket.v_pv_3] = "{}".format( self._data.get(LXPPacket.v_pv_3, "unavailable"), "")
-        state_attributes[LXPPacket.v_bat] = "{}".format( self._data.get(LXPPacket.v_bat, "unavailable"), "")
-        state_attributes[LXPPacket.soc] = "{}".format( self._data.get(LXPPacket.soc, "unavailable"), "")
-        state_attributes[LXPPacket.p_pv_1] = "{}".format( self._data.get(LXPPacket.p_pv_1, "unavailable"), "")
-        state_attributes[LXPPacket.p_pv_2] = "{}".format( self._data.get(LXPPacket.p_pv_2, "unavailable"), "")
-        state_attributes[LXPPacket.p_pv_3] = "{}".format( self._data.get(LXPPacket.p_pv_3, "unavailable"), "")
-        state_attributes[LXPPacket.p_pv_total] = "{}".format( self._data.get(LXPPacket.p_pv_total, "unavailable"), "")
-        state_attributes[LXPPacket.p_charge] = "{}".format( self._data.get(LXPPacket.p_charge, "unavailable"), "")
-        state_attributes[LXPPacket.p_discharge] = "{}".format( self._data.get(LXPPacket.p_discharge, "unavailable"), "")
-        state_attributes[LXPPacket.v_ac_r] = "{}".format( self._data.get(LXPPacket.v_ac_r, "unavailable"), "")
-        state_attributes[LXPPacket.v_ac_s] = "{}".format(self._data.get(LXPPacket.v_ac_s, "unavailable"), "")
-        state_attributes[LXPPacket.v_ac_t] = "{}".format( self._data.get(LXPPacket.v_ac_t, "unavailable"), "")
-        state_attributes[LXPPacket.f_ac] = "{}".format( self._data.get(LXPPacket.f_ac, "unavailable"), "")
-        state_attributes[LXPPacket.p_inv] = "{}".format( self._data.get(LXPPacket.p_inv, "unavailable"), "")
-        state_attributes[LXPPacket.p_rec] = "{}".format( self._data.get(LXPPacket.p_rec, "unavailable"), "")
-        state_attributes[LXPPacket.pf] = "{}".format( self._data.get(LXPPacket.pf, "unavailable"))
-        state_attributes[LXPPacket.v_eps_r] = "{}".format( self._data.get(LXPPacket.v_eps_r, "unavailable"), "")
-        state_attributes[LXPPacket.v_eps_s] = "{}".format( self._data.get(LXPPacket.v_eps_s, "unavailable"), "")
-        state_attributes[LXPPacket.v_eps_t] = "{}".format( self._data.get(LXPPacket.v_eps_t, "unavailable"), "")
-        state_attributes[LXPPacket.f_eps] = "{}".format( self._data.get(LXPPacket.f_eps, "unavailable"), "")
-        state_attributes[LXPPacket.p_to_grid] = "{}".format( self._data.get(LXPPacket.p_to_grid, "unavailable"), "")
-        state_attributes[LXPPacket.p_to_user] = "{}".format( self._data.get(LXPPacket.p_to_user, "unavailable"), "")
-        state_attributes[LXPPacket.p_load] = "{}".format( self._data.get(LXPPacket.p_load, "unavailable"), "")
-        state_attributes[LXPPacket.e_pv_1_day] = "{}".format( self._data.get(LXPPacket.e_pv_1_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_pv_2_day] = "{}".format( self._data.get(LXPPacket.e_pv_2_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_pv_3_day] = "{}".format( self._data.get(LXPPacket.e_pv_3_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_pv_total] = "{}".format( self._data.get(LXPPacket.e_pv_total, "unavailable"), "")
-        state_attributes[LXPPacket.e_inv_day] = "{}".format( self._data.get(LXPPacket.e_inv_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_rec_day] = "{}".format( self._data.get(LXPPacket.e_rec_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_chg_day] =  "{}".format(self._data.get(LXPPacket.e_chg_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_dischg_day] = "{}".format( self._data.get(LXPPacket.e_dischg_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_eps_day] = "{}".format( self._data.get(LXPPacket.e_eps_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_to_grid_day] = "{}".format( self._data.get(LXPPacket.e_to_grid_day, "unavailable"), "")
-        state_attributes[LXPPacket.e_to_user_day] = "{}".format( self._data.get(LXPPacket.e_to_user_day, "unavailable"), "")
-        state_attributes[LXPPacket.v_bus_1] = "{}".format( self._data.get(LXPPacket.v_bus_1, "unavailable"), "")
-        state_attributes[LXPPacket.v_bus_2] = "{}".format( self._data.get(LXPPacket.v_bus_2, "unavailable"), "")
-        state_attributes[LXPPacket.e_pv_1_all] = "{}".format( self._data.get(LXPPacket.e_pv_1_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_pv_2_all] = "{}".format( self._data.get(LXPPacket.e_pv_2_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_pv_3_all] = "{}".format( self._data.get(LXPPacket.e_pv_3_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_pv_all] = "{}".format( self._data.get(LXPPacket.e_pv_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_inv_all] = "{}".format( self._data.get(LXPPacket.e_inv_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_rec_all] = "{}".format( self._data.get(LXPPacket.e_rec_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_chg_all] = "{}".format( self._data.get(LXPPacket.e_chg_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_dischg_all] = "{}".format( self._data.get(LXPPacket.e_dischg_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_eps_all] = "{}".format( self._data.get(LXPPacket.e_eps_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_to_grid_all] = "{}".format( self._data.get(LXPPacket.e_to_grid_all, "unavailable"), "")
-        state_attributes[LXPPacket.e_to_user_all] = "{}".format( self._data.get(LXPPacket.e_to_user_all, "unavailable"), "")
-        state_attributes[LXPPacket.t_inner] = "{}".format( self._data.get(LXPPacket.t_inner, "unavailable"), "")
-        state_attributes[LXPPacket.t_rad_1] = "{}".format( self._data.get(LXPPacket.t_rad_1, "unavailable"), "")
-        state_attributes[LXPPacket.t_rad_2] = "{}".format( self._data.get(LXPPacket.t_rad_2, "unavailable"), "")
-        state_attributes[LXPPacket.t_bat] = "{}".format( self._data.get(LXPPacket.t_bat, "unavailable"), "")
-        state_attributes[LXPPacket.uptime] = "{}".format( self._data.get(LXPPacket.uptime, "unavailable"), "")
-        state_attributes[LXPPacket.max_chg_curr] = "{}".format( self._data.get(LXPPacket.max_chg_curr, "unavailable"), "")
-        state_attributes[LXPPacket.max_dischg_curr] = "{}".format( self._data.get(LXPPacket.max_dischg_curr, "unavailable"), "")
-        state_attributes[LXPPacket.charge_volt_ref] = "{}".format( self._data.get(LXPPacket.charge_volt_ref, "unavailable"), "")
-        state_attributes[LXPPacket.dischg_cut_volt] = "{}".format( self._data.get(LXPPacket.dischg_cut_volt, "unavailable"), "")
-        state_attributes[LXPPacket.bat_count] = "{}".format( self._data.get(LXPPacket.bat_count, "unavailable"), "")
-        return state_attributes
-
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
-        _LOGGER.info("async_added_to_hasss %s", self._name)
+        _LOGGER.info("async_added_to_hasss %s", self._key)
         self.is_added_to_hass = True
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_DATA_RECEIVED, self.push_update)
@@ -285,20 +221,14 @@ class LuxStateSensorEntity(Entity):
     def push_update(self, event):
         print("register event received")
         self._data = event.data.get('data', {})
-        self._state = "ONLINE"
+        self._state = self._data.get(self._key, "unavailable")
 
         self.schedule_update_ha_state()
         return self._state
 
-    def update(self):
-        if not self.is_added_to_hass:
-            return
-        # _LOGGER.info("{} updating state to {}".format(self._dp_id, self._stateval))
-        return self._state
-
     @property
     def unique_id(self) -> Optional[str]:
-        return "{}_{}".format(DOMAIN, "states")
+        return "{}_{}".format(self.serial_number, self._key)
 
     @property
     def should_poll(self):
