@@ -19,3 +19,11 @@ luxpower_refresh_registers:
       description: Dongle Serial Number
       default: ''
       example: '<DONGLE SERIAL>'
+
+luxpower_reconnect:
+  description: Reconnect to the specified DONGLE
+  fields:
+    dongle:
+      description: Dongle Serial Number
+      default: ''
+      example: '<DONGLE SERIAL>'

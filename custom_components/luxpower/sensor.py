@@ -77,6 +77,12 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     for sensor_data in sensors:
         stateSensors.append(LuxpowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
+    # Setup Data recieved timestamp sensor
+    sensor_data = {"name": "Lux - Data received time", "entity": 'lux_data_last_received_time',
+                   'attribute': LXPPacket.status,
+                   'device_class': '', 'unit_measure': ''}
+    stateSensors.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+
     # Setup State Text sensor
     sensor_data = {"name": "Lux - Status (Text)", "entity": 'lux_status_text',
                    'attribute': LXPPacket.status,
@@ -104,6 +110,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 
     async_add_devices(stateSensors, True)
 
+    # Todo- delay service call for some time to give the sensors and swiches time to initialise
     for address_bank in range(0, 3):
         await luxpower_client.get_register_data(address_bank)
         await asyncio.sleep(1)
@@ -295,6 +302,28 @@ class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
 
         self.schedule_update_ha_state()
         return self._state
+
+
+class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
+    def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
+        super().__init__(hass, host, port, dongle, serial, sensor_data, event)
+        self.datetime_last_received = None
+
+    def push_update(self, event):
+        print("LuxPowerDataReceivedSensor: register event received")
+        self._data = event.data.get('data', {})
+        self.datetime_last_received = datetime.now()
+        self._state = "{}".format(datetime.now().strftime("'%A %B %-d, %I:%M %p"))
+
+        self.schedule_update_ha_state()
+        return self._state
+
+    @property
+    def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
+        state_attributes = self.state_attributes or {}
+        if self.datetime_last_received is not None:
+            state_attributes['timestamp'] = self.datetime_last_received.timestamp()
+        return state_attributes
 
 
 class LuxStateSensorEntity(Entity):

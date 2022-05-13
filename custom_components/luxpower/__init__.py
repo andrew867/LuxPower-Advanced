@@ -27,10 +27,27 @@ SCHEME_REGISTERS = vol.Schema({
     vol.Required("dongle"): vol.Coerce(str),
 })
 
+SCHEME_RECONNECT = vol.Schema({
+    vol.Required("dongle"): vol.Coerce(str),
+})
+
 
 class ServiceHelper:
     def __init__(self, hass) -> None:
         self.hass = hass
+
+    async def send_reconnect(self, dongle):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            await luxpower_client.reconnect()
+            await asyncio.sleep(1)
+        print("send_reconnect done")
 
     async def send_refresh_registers(self, dongle):
         luxpower_client = None
@@ -83,6 +100,13 @@ async def async_setup(hass: HomeAssistant, config: dict):
         dongle = call.data.get("dongle")
         await service_helper.send_refresh_registers(dongle=dongle)
 
+    async def handle_reconnect(call):
+        """Handle the service call."""
+        _LOGGER.info("handle_reconnect service: %s", DOMAIN)
+        print("handle_reconnect service ")
+        dongle = call.data.get("dongle")
+        await service_helper.send_reconnect(dongle=dongle)
+
     hass.services.async_register(
         DOMAIN, "luxpower_refresh_register_bank",
         handle_refresh_register_bank,
@@ -93,6 +117,12 @@ async def async_setup(hass: HomeAssistant, config: dict):
         DOMAIN, "luxpower_refresh_registers",
         handle_refresh_registers,
         schema=SCHEME_REGISTERS
+    )
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_reconnect",
+        handle_reconnect,
+        schema=SCHEME_RECONNECT
     )
     return True
 
