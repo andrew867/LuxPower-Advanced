@@ -45,6 +45,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     stateSensors.append(LuxStateSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, name, device_class, unit, event))
 
     sensors = []
+
+    # Attribute sensor
     sensors.append({"name": "Lux - Battery Discharge (Live)", "entity": 'lux_battery_discharge', 'attribute': LXPPacket.p_discharge, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
     sensors.append({"name": "Lux - Battery Charge (Live)", "entity": 'lux_battery_charge', 'attribute': LXPPacket.p_charge, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
     sensors.append({"name": "Lux - Battery %", "entity": 'lux_battery_percent', 'attribute': LXPPacket.soc, 'device_class': DEVICE_CLASS_BATTERY, 'unit_measure': PERCENTAGE})
@@ -74,6 +76,31 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     sensors.append({"name": "Lux - Status", "entity": 'lux_status', 'attribute': LXPPacket.status, 'device_class': '', 'unit_measure': ''})
     for sensor_data in sensors:
         stateSensors.append(LuxpowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+
+    # Setup State Text sensor
+    sensor_data = {"name": "Lux - Status (Text)", "entity": 'lux_status_text',
+                   'attribute': LXPPacket.status,
+                   'device_class': '', 'unit_measure': ''}
+    stateSensors.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+
+    # Multiple attribute models
+    # 1. Battery Flow Live
+    sensor_data = {"name": "Lux - Battery Flow (Live)", "entity": 'lux_battery_flow', 'attribute': LXPPacket.p_discharge,
+                   'attribute1': LXPPacket.p_discharge, 'attribute2': LXPPacket.p_charge,  # Attribute dependencies
+                   'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
+    stateSensors.append(LuxPowerBatteryFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+
+    # 2. Home Consumption Live
+    sensor_data = {"name": "Lux - Home Consumption (Live)", "entity": 'lux_home_consumption_live', 'attribute': LXPPacket.p_to_user,
+                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv,  # Attribute dependencies
+                   'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
+    stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+
+    # 3. Home Consumption Daily
+    sensor_data = {"name": "Lux - Home Consumption (Daily)", "entity": 'lux_home_consumption', 'attribute': LXPPacket.e_to_user_day,
+                   'attribute1': LXPPacket.e_to_user_day, 'attribute2': LXPPacket.e_rec_day, 'attribute3': LXPPacket.e_inv_day,  # Attribute dependencies
+                   'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR}
+    stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     async_add_devices(stateSensors, True)
 
@@ -179,6 +206,95 @@ class LuxpowerSensorEntity(SensorEntity):
     @property
     def native_unit_of_measurement(self) -> Optional[str]:
         return self._unit_of_measurement
+
+
+class LuxPowerBatteryFlowSensor(LuxpowerSensorEntity):
+
+    def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
+        super().__init__(hass, host, port, dongle, serial, sensor_data, event)
+        self._device_attribute1 = sensor_data['attribute1']
+        self._device_attribute2 = sensor_data['attribute2']
+
+    def push_update(self, event):
+        print("LuxPowerBatterFlowSensor: register event received")
+        self._data = event.data.get('data', {})
+
+        discharge_value = float(self._data.get(self._device_attribute1, 0.0))
+        charge_value = float(self._data.get(self._device_attribute2, 0.0))
+        if discharge_value > 0:
+            flow_value = -1 * discharge_value
+        else:
+            flow_value = charge_value
+        self._state = "{}".format(flow_value)
+
+        self.schedule_update_ha_state()
+        return self._state
+
+
+class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
+    def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
+        super().__init__(hass, host, port, dongle, serial, sensor_data, event)
+        self._device_attribute1 = sensor_data['attribute1']
+        self._device_attribute2 = sensor_data['attribute2']
+        self._device_attribute3 = sensor_data['attribute3']
+
+    def push_update(self, event):
+        print("LuxPowerHomeConsumptionSensor: register event received")
+        self._data = event.data.get('data', {})
+
+        grid = float(self._data.get(self._device_attribute1, 0.0))
+        to_inverter = float(self._data.get(self._device_attribute2, 0.0))
+        from_inverter = float(self._data.get(self._device_attribute3, 0.0))
+        consumption_value = grid - to_inverter + from_inverter
+        self._state = "{}".format(consumption_value)
+
+        self.schedule_update_ha_state()
+        return self._state
+
+
+class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
+    def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
+        super().__init__(hass, host, port, dongle, serial, sensor_data, event)
+
+    def push_update(self, event):
+        print("LuxPowerStatusSensor: register event received")
+        self._data = event.data.get('data', {})
+        state_text = ''
+        status = int(self._data.get(self._device_attribute, 0.0))
+        if status == 0:
+            state_text = 'Standby'
+        elif status == 2:
+            state_text = 'Inverting'
+        elif status == 4:
+            state_text = 'Silent'
+        elif status == 5:
+            state_text = 'Float'
+        elif status == 64:
+            state_text = 'No AC Power'
+        elif status == 7:
+            state_text = 'Charger Off'
+        elif status == 8:
+            state_text = 'Support'
+        elif status == 9:
+            state_text = 'Selling'
+        elif status == 10:
+            state_text = 'Pass Through'
+        elif status == 12:
+            state_text = 'Solar + Battery Charging'
+        elif status == 16:
+            state_text = 'Battery Discharging'
+        elif status == 20:
+            state_text = 'Solar + Battery Discharging'
+        elif status == 32:
+            state_text = 'Battery Charging'
+        elif status == 11:
+            state_text = 'Offsetting'
+        else:
+            state_text = 'Unknown'
+        self._state = "{}".format(state_text)
+
+        self.schedule_update_ha_state()
+        return self._state
 
 
 class LuxStateSensorEntity(Entity):
