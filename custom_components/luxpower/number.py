@@ -106,7 +106,7 @@ class PercentageNumber(NumberEntity):
 
     @property
     def unique_id(self) -> Optional[str]:
-        return "{}_numberpercent_{}".format(DOMAIN, self._register_address)
+        return "{}_{}_numberpercent_{}".format(DOMAIN, self.dongle, self._register_address)
 
     @property
     def should_poll(self):

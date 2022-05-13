@@ -22,6 +22,7 @@ SCHEME_REGISTER_BANK = vol.Schema({
     vol.Required("address_bank"): vol.Coerce(int),
 })
 
+
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the BOM component."""
     hass.data.setdefault(DOMAIN, {})
@@ -35,11 +36,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     print("platform config: ", entry.data)
     print("platform entry_id: ", entry.entry_id)
     """Your controller/hub specific code."""
-    hass_data = hass.data.setdefault(DOMAIN, {})
-    hass_data[entry.entry_id] = {}
     # Data that you want to share with your platforms
     config = entry.data or {}
     print(config)
+    # Read the config values entered by the user
     HOST = config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = config.get(ATTR_LUX_PORT, 8000)
     DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
@@ -53,6 +53,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # await hass.async_add_job(luxpower_client.start_luxpower_client_daemon())
 
     hass.data[events.CLIENT_DAEMON] = luxpower_client
+
+    hass_data = hass.data.setdefault(DOMAIN, {})
+    hass_data[entry.entry_id] = {'DONGLE': DONGLE_SERIAL, 'client': luxpower_client}   # Used for avoiding duplication of config entries
 
     # await hass.helpers.discovery.async_load_platform("switch", DOMAIN, {}, config)
     # await hass.helpers.discovery.async_load_platform("sensor", DOMAIN, {}, config)
@@ -106,7 +109,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     )
 
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        entry_data = hass.data[DOMAIN].pop(entry.entry_id)
+        if entry_data.get('client') is not None:
+            luxpower_client = entry_data.get('client')
+            luxpower_client.stop_client()
         hass.data.setdefault(DOMAIN, {})
         _LOGGER.info("async_unload_entry: unloaded...")
 

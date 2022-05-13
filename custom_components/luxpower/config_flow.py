@@ -66,13 +66,17 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="user", data_schema=data_schema, errors=errors
             )
         if self.hass.data.get(DOMAIN, None) is not None and self.hass.data[DOMAIN].__len__() > 0:
-            errors["base"] = "exist_error"
-            return self.async_show_form(
-                step_id="user", data_schema=data_schema, errors=errors
-            )
+            dongle_check = self.data[ATTR_LUX_DONGLE_SERIAL]
+            for entry in self.hass.data[DOMAIN]:
+                entry_data = self.hass.data[DOMAIN][entry]
+                if entry_data['DONGLE'] == dongle_check:
+                    errors["base"] = "exist_error"
+                    return self.async_show_form(
+                        step_id="user", data_schema=data_schema, errors=errors
+                    )
 
         return self.async_create_entry(
-            title="LuxPower",
+            title=f"LuxPower - ({self.data[ATTR_LUX_DONGLE_SERIAL]})",
             data=self.data,
         )
 
@@ -106,13 +110,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ):
         if user_input is not None:
             _LOGGER.info("OptionsFlowHandler: saving options ")
-            return self.async_create_entry(title="LuxPower", data=user_input)
+            return self.async_create_entry(title="LuxPower ()", data=user_input)
+
+        config_entry = self.config_entry.data
         data_schema = vol.Schema(
             {
-                vol.Required(ATTR_LUX_HOST, default=PLACEHOLDER_LUX_HOST): str,
-                vol.Required(ATTR_LUX_PORT, default=PLACEHOLDER_LUX_PORT): vol.All(int, vol.Range(min=1001, max=60001)),
-                vol.Required(ATTR_LUX_DONGLE_SERIAL, default=PLACEHOLDER_LUX_DONGLE_SERIAL): str,
-                vol.Required(ATTR_LUX_SERIAL_NUMBER, default=PLACEHOLDER_LUX_SERIAL_NUMBER): str,
+                vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, '')): str,
+                vol.Required(ATTR_LUX_PORT, default=config_entry.get(ATTR_LUX_PORT, '')): vol.All(int, vol.Range(min=1001, max=60001)),
+                vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, '')): str,
+                vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, '')): str,
             }
         )
         return self.async_show_form(

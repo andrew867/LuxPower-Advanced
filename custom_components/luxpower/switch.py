@@ -74,8 +74,8 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self.serial = serial
         self._register_address = register_address
         self._bitmask = bitmask
-        self._name = name
-        self._key = key
+        self._name = object_id
+        self._object_id = object_id
         self._device_class = device_class
         self._state = False
         self.luxpower_client = luxpower_client
@@ -124,7 +124,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
 
     @property
     def unique_id(self) -> Optional[str]:
-        return "{}_{}".format(self.serial_number, self._key)
+        return "{}_{}_{}_{}".format(DOMAIN, self.dongle, self._register_address, self._bitmask)
 
     @property
     def available(self):

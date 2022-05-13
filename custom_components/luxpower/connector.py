@@ -12,7 +12,7 @@ class LuxPowerClient(asyncio.Protocol):
         self.server = server
         self.port = port
         self.events = events
-
+        self._stop_client = False
         self._transport = None
         self._connected = False
         self._LOGGER = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class LuxPowerClient(asyncio.Protocol):
                 self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
 
     async def start_luxpower_client_daemon(self, ):
-        while True:
+        while not self._stop_client:
             if not self._connected:
                 try:
                     print("luxpower daemon: Connecting to lux power server")
@@ -62,6 +62,7 @@ class LuxPowerClient(asyncio.Protocol):
                 except Exception as e:
                     print("Exception luxpower daemon client in open connection retrying in 10 seconds", e)
             await asyncio.sleep(10)
+        print("Exiting start_luxpower_client_daemon")
 
     async def get_register_data(self, address_bank):
         try:
@@ -69,4 +70,15 @@ class LuxPowerClient(asyncio.Protocol):
             self._transport.write(packet)
         except Exception as e:
             print("Exception get_register_data", e)
+
+    def stop_client(self):
+        print("stop_client called")
+        self._stop_client = True
+        if self._transport is not None:
+            try:
+                self._transport.close()
+            except Exception as e:
+                print("Exception ", e)
+        print("stop client finished")
+
 
