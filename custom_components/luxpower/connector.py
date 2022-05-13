@@ -38,7 +38,7 @@ class LuxPowerClient(asyncio.Protocol):
     def connection_lost(self, exc: Optional[Exception]) -> None:
         self._connected = False
         print("Disconnected from LuxPower server")
-        _LOGGER.error("Connected to Luxpower server")
+        _LOGGER.error("Disconnected from Luxpower server")
 
     def data_received(self, data):
         print(data)
@@ -72,10 +72,18 @@ class LuxPowerClient(asyncio.Protocol):
 
     async def get_register_data(self, address_bank):
         try:
-            packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, 40)
+            packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, 40, type=LXPPacket.READ_INPUT)
             self._transport.write(packet)
         except Exception as e:
             print("Exception get_register_data", e)
+            _LOGGER.error(f"close error : {e}")
+
+    async def get_holding_data(self, address_bank):
+        try:
+            packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, 40, type=LXPPacket.READ_HOLD)
+            self._transport.write(packet)
+        except Exception as e:
+            print("Exception get_holding_data", e)
             _LOGGER.error(f"close error : {e}")
 
     def stop_client(self):

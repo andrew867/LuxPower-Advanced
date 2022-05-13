@@ -64,6 +64,21 @@ class ServiceHelper:
                 await asyncio.sleep(1)
         print("send_refresh_registers done")
 
+    async def send_holding_registers(self, dongle):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            for address_bank in range(0, 3):
+                print("send_refresh_registers for address_bank: ", address_bank)
+                await luxpower_client.get_holding_data(address_bank)
+                await asyncio.sleep(1)
+        print("send_refresh_registers done")
+
     async def send_refresh_register_bank(self, dongle, address_bank):
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
@@ -100,6 +115,13 @@ async def async_setup(hass: HomeAssistant, config: dict):
         dongle = call.data.get("dongle")
         await service_helper.send_refresh_registers(dongle=dongle)
 
+    async def handle_holding_registers(call):
+        """Handle the service call."""
+        _LOGGER.info("handle_refresh_registers service: %s", DOMAIN)
+        print("handle_holding_registers service ")
+        dongle = call.data.get("dongle")
+        await service_helper.send_holding_registers(dongle=dongle)
+
     async def handle_reconnect(call):
         """Handle the service call."""
         _LOGGER.info("handle_reconnect service: %s", DOMAIN)
@@ -116,6 +138,12 @@ async def async_setup(hass: HomeAssistant, config: dict):
     hass.services.async_register(
         DOMAIN, "luxpower_refresh_registers",
         handle_refresh_registers,
+        schema=SCHEME_REGISTERS
+    )
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_refresh_holdings",
+        handle_holding_registers,
         schema=SCHEME_REGISTERS
     )
 

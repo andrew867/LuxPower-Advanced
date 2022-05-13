@@ -192,7 +192,7 @@ class PercentageNumber(NumberEntity):
             sock.connect((self._host, self._port))
             print("Connected to server")
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1)
+            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)

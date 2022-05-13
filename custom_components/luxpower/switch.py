@@ -1,3 +1,4 @@
+import asyncio
 import struct
 
 from homeassistant.components.binary_sensor import DEVICE_CLASS_OPENING
@@ -59,6 +60,12 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
             LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, DONGLE_SERIAL, SERIAL_NUMBER, switch_data["register_address"], switch_data["bitmask"], switch_data["name"], device_class, luxpower_client, event))
 
     async_add_devices(binarySwitchs, True)
+
+    # Todo- delay service call for some time to give the sensors and swiches time to initialise
+    for address_bank in range(0, 3):
+        await luxpower_client.get_holding_data(address_bank)
+        await asyncio.sleep(1)
+
     print("LuxPower switch async_setup_platform switch done")
 
 
@@ -175,7 +182,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             sock.connect((self._host, self._port))
             print("Connected to server")
             lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1)
+            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
             sock.close()
         except Exception as e:
@@ -187,7 +194,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             sock.connect((self._host, self._port))
             print("set_register_bit: Connected to server", self._host, self._port, self._register_address)
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1)
+            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)
