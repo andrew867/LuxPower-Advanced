@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_MODE, DEVICE_CLASS_POWER, POWER_WATT, ENERGY_KILO_WATT_HOUR, PERCENTAGE, \
     DEVICE_CLASS_BATTERY, DEVICE_CLASS_ENERGY, DEVICE_CLASS_VOLTAGE, ELECTRIC_POTENTIAL_VOLT, DEVICE_CLASS_CURRENT, \
     ELECTRIC_CURRENT_AMPERE
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity, DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval, async_track_point_in_time, track_time_interval
 from homeassistant.helpers.typing import StateType
@@ -20,7 +21,14 @@ from .helpers import Event
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
+async def refreshSensors(hass: HomeAssistant, dongle):
+    await asyncio.sleep(10)
+    _LOGGER.info("Refreshing sensors")
+    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_registers', {'dongle': dongle}, blocking=True)
+    _LOGGER.info(f"Refreshing sensors done with status : {status}")
+
+
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
     """Set up the sensor platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux sensor platform")
@@ -110,10 +118,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 
     async_add_devices(stateSensors, True)
 
-    # Todo- delay service call for some time to give the sensors and swiches time to initialise
-    for address_bank in range(0, 3):
-        await luxpower_client.get_register_data(address_bank)
-        await asyncio.sleep(1)
+    # delay service call for some time to give the sensors and swiches time to initialise
+    hass.async_create_task(refreshSensors(hass, dongle=DONGLE))
 
     _LOGGER.debug("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
     print("LuxPower sensor async_setup_platform sensor done")

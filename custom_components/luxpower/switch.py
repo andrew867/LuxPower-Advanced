@@ -6,6 +6,8 @@ from homeassistant.components.switch import SwitchEntity
 import logging
 from typing import Optional, Union, Any, Dict
 
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 
 from .const import DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
@@ -16,7 +18,14 @@ import socket
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
+async def refreshSwitches(hass: HomeAssistant, dongle):
+    await asyncio.sleep(20)
+    _LOGGER.info("Refreshing switches")
+    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_holdings', {'dongle': dongle}, blocking=True)
+    _LOGGER.info(f"Refreshing switches done with status : {status}")
+
+
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
     """Set up the sensor platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux switch platform")
@@ -61,10 +70,8 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
 
     async_add_devices(binarySwitchs, True)
 
-    # Todo- delay service call for some time to give the sensors and swiches time to initialise
-    for address_bank in range(0, 3):
-        await luxpower_client.get_holding_data(address_bank)
-        await asyncio.sleep(1)
+    #  delay service call for some time to give the sensors and swiches time to initialise
+    hass.async_create_task(refreshSwitches(hass, dongle=DONGLE_SERIAL))
 
     print("LuxPower switch async_setup_platform switch done")
 

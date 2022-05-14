@@ -2,7 +2,7 @@ import asyncio
 import logging
 from .helpers import Event
 from typing import Optional
-
+from .const import DOMAIN
 from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
@@ -107,3 +107,65 @@ class LuxPowerClient(asyncio.Protocol):
         self._connected = False
         print("reconnect client finished")
         _LOGGER.debug("reconnect finished finished")
+
+
+class ServiceHelper:
+    def __init__(self, hass) -> None:
+        self.hass = hass
+
+    async def send_reconnect(self, dongle):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            await luxpower_client.reconnect()
+            await asyncio.sleep(1)
+        print("send_reconnect done")
+
+    async def send_refresh_registers(self, dongle):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            for address_bank in range(0, 3):
+                print("send_refresh_registers for address_bank: ", address_bank)
+                await luxpower_client.get_register_data(address_bank)
+                await asyncio.sleep(1)
+        print("send_refresh_registers done")
+
+    async def send_holding_registers(self, dongle):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            for address_bank in range(0, 3):
+                print("send_holding_registers for address_bank: ", address_bank)
+                await luxpower_client.get_holding_data(address_bank)
+                await asyncio.sleep(1)
+        print("send_holding_registers done")
+
+    async def send_refresh_register_bank(self, dongle, address_bank):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            print("send_refresh_registers for address_bank: ", address_bank)
+            await luxpower_client.get_register_data(address_bank)
+            await asyncio.sleep(1)
+        print("send_refresh_registers done")
