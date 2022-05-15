@@ -1,6 +1,6 @@
 {
   "domain": "luxpower",
-  "name": "LuxPower Inverter (Unofficial)",
+  "name": "LuxPower Inverter",
   "config_flow": true,
   "documentation": "https://github.com/guybw/LuxPython_DEV",
   "issue_tracker": "https://github.com/guybw/LuxPython_DEV/issues",
