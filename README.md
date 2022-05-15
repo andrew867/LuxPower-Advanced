@@ -8,12 +8,11 @@ UPDATE - I have our dev creating a new version of this right now - 2022-05-11. T
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com I would like to know how you get on and if this works for you!
 
-If you want to chip in to the development costs then feel free to below. This has cost me money to develop and all the money goes to the developer (paid gigs) to fix issues!
-Once you have installed this please seriously consider clicking below and putting £20 into the development pot. It ALL goes to bug fixes and features!
+This has cost me money to develop and all the money goes to the developer (paid gigs) to fix issues!
+Once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it ALL goes to bug fixes and features!
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
 
 # How to Install
-
 
 You need to set up your inverter by following these instructions first:
 https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md
