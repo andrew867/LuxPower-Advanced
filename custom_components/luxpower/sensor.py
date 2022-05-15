@@ -102,15 +102,21 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     sensor_data = {"name": "Lux - Battery Flow (Live)", "entity": 'lux_battery_flow', 'attribute': LXPPacket.p_discharge,
                    'attribute1': LXPPacket.p_discharge, 'attribute2': LXPPacket.p_charge,  # Attribute dependencies
                    'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
-    stateSensors.append(LuxPowerBatteryFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+    stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # 2. Home Consumption Live
+    # 2. Grid Flow Live
+    sensor_data = {"name": "Lux - Grid Flow (Live)", "entity": 'lux_grid_flow', 'attribute': LXPPacket.p_to_user,
+                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_to_grid,   # Attribute dependencies
+                   'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
+    stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+
+    # 3. Home Consumption Live
     sensor_data = {"name": "Lux - Home Consumption (Live)", "entity": 'lux_home_consumption_live', 'attribute': LXPPacket.p_to_user,
                    'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv,  # Attribute dependencies
                    'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # 3. Home Consumption Daily
+    # 4. Home Consumption Daily
     sensor_data = {"name": "Lux - Home Consumption (Daily)", "entity": 'lux_home_consumption', 'attribute': LXPPacket.e_to_user_day,
                    'attribute1': LXPPacket.e_to_user_day, 'attribute2': LXPPacket.e_rec_day, 'attribute3': LXPPacket.e_inv_day,  # Attribute dependencies
                    'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR}
@@ -157,15 +163,12 @@ class LuxpowerSensorEntity(SensorEntity):
             self.hass.bus.async_listen(self.event.EVENT_DATA_RECEIVED, self.push_update)
         return result
 
-    def checkonline(self, *args, **kwargs):
-        if time.time() - self.lastupdated_time > 10:
-            self._state = "{}".format(self._data.get(self._device_attribute, "unavailable"), "")
-        self.schedule_update_ha_state()
-
     def push_update(self, event):
-        print("register event received")
+        print("Sensor: register event received")
         self._data = event.data.get('data', {})
-        self._state = "{}".format(self._data.get(self._device_attribute, "unavailable"), "")
+        value = self._data.get(self._device_attribute)
+        value = round(value, 1) if isinstance(value, (int, float)) else "unavailable"
+        self._state = "{}".format(value)
 
         self.schedule_update_ha_state()
         return self._state
@@ -221,8 +224,10 @@ class LuxpowerSensorEntity(SensorEntity):
         return self._unit_of_measurement
 
 
-class LuxPowerBatteryFlowSensor(LuxpowerSensorEntity):
-
+class LuxPowerFlowSensor(LuxpowerSensorEntity):
+    '''
+    Template equation state = -1*attribute1 if attribute1 > 0 else attribute2
+    '''
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
         self._device_attribute1 = sensor_data['attribute1']
@@ -232,19 +237,22 @@ class LuxPowerBatteryFlowSensor(LuxpowerSensorEntity):
         print("LuxPowerBatterFlowSensor: register event received")
         self._data = event.data.get('data', {})
 
-        discharge_value = float(self._data.get(self._device_attribute1, 0.0))
-        charge_value = float(self._data.get(self._device_attribute2, 0.0))
-        if discharge_value > 0:
-            flow_value = -1 * discharge_value
+        negative_value = float(self._data.get(self._device_attribute1, 0.0))
+        positive_value = float(self._data.get(self._device_attribute2, 0.0))
+        if negative_value > 0:
+            flow_value = -1 * negative_value
         else:
-            flow_value = charge_value
-        self._state = "{}".format(flow_value)
+            flow_value = positive_value
+        self._state = "{}".format(round(flow_value,1))
 
         self.schedule_update_ha_state()
         return self._state
 
 
 class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
+    '''
+    Template equation state = attribute1 - attribute2 + attribute3
+    '''
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
         self._device_attribute1 = sensor_data['attribute1']
@@ -259,7 +267,7 @@ class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
         to_inverter = float(self._data.get(self._device_attribute2, 0.0))
         from_inverter = float(self._data.get(self._device_attribute3, 0.0))
         consumption_value = grid - to_inverter + from_inverter
-        self._state = "{}".format(consumption_value)
+        self._state = "{}".format(round(consumption_value, 1))
 
         self.schedule_update_ha_state()
         return self._state
