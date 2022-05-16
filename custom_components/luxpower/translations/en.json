@@ -14,10 +14,10 @@
         "title": "LuxPower",
         "description": "Integration configuration for LuxPower Inverters",
         "data": {
-          "lux_host": "IP address of the Lux Inverter",
-          "lux_port": "TCP Port of the inverter",
-          "lux_dongle_serial": "Inverter dongle number",
-          "lux_serial_number": "Inverter serial number"
+          "lux_host": "IP address of Lux Inverter",
+          "lux_port": "TCP Port of Inverter",
+          "lux_dongle_serial": "Dongle Number",
+          "lux_serial_number": "Inverter Serial Number"
         }
       }
     }
@@ -28,10 +28,10 @@
         "title": "LuxPower",
         "description": "Integration configuration for LuxPower Inverters",
         "data": {
-          "lux_host": "IP address of the Lux Inverter",
-          "lux_port": "TCP Port of the inverter",
-          "lux_dongle_serial": "Inverter dongle number",
-          "lux_serial_number": "Inverter serial number"
+          "lux_host": "IP address of Lux Inverter",
+          "lux_port": "TCP Port of Inverter",
+          "lux_dongle_serial": "Inverter Dongle Number",
+          "lux_serial_number": "Inverter Serial Number"
         }
       }
     }
