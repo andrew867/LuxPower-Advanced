@@ -25,6 +25,7 @@ Copy the "luxpower" integration to your Home Assistant instance into the "custom
 
 If you are new to HA you will likely have to create this folder but if you use HACS it should already be created.
 
+
 Next REBOOT, it's mandatory otherwise the next bit will not work.
 
 Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
