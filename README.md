@@ -82,4 +82,4 @@ Using the great work from here: https://github.com/celsworth/lxp-packet/blob/mas
 @elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he is incredible! 
  
 # BUGS
-I'm aware that inverters sold in South Africa have issues right now. If you do please let me know I'm working on a solution!
+I'm aware that inverters sold in South Africa have issues right now. If you do have issues or you want to use it please let me know I'm working on a solution!
