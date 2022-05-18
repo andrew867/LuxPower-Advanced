@@ -336,8 +336,11 @@ class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
+        state_attributes['dongle'] = self.dongle
         if self.datetime_last_received is not None:
             state_attributes['timestamp'] = self.datetime_last_received.timestamp()
+        else:
+            state_attributes['timestamp'] = 0
         return state_attributes
 
 
