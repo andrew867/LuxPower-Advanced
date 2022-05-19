@@ -45,6 +45,10 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     name = 'AC Charge Power Rate'
     numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
+    register_address = 103
+    name = 'Feed-In-Grid Power'
+    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
     async_add_devices(numberPercentageEntities, True)
 
     print("LuxPower number async_setup_platform number done")
