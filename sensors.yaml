@@ -1,54 +1,62 @@
 - platform: template
   sensors:
-
-## This works out the battery flow and is helpful to show in items such a solar cards.      
+    ## This works out the battery flow and is helpful to show in items such a solar cards.
     lux_battery_flow:
       friendly_name: "Lux - Battery Flow (Live)"
       unit_of_measurement: 'W'
-      value_template: "{{ '-{}'.format(states('sensor.lux_batttery_discharge')) if states('sensor.lux_batttery_discharge')|round > 0 else '+{}'.format(states('sensor.lux_battery_charge')) }}" 
+      value_template: "{{ '-{}'.format(states('sensor.lux_battery_discharge_live')) if states('sensor.lux_battery_discharge_live')|round > 0 else '+{}'.format(states('sensor.lux_battery_charge_live')) }}"
 
-    lux_status_text: 
-        friendly_name: "Lux - Status (Text)"
-        unit_of_measurement: "State"
-        value_template: >-
-          {% set mapper =  {
-              '0' : 'Standby',
-              '2' : 'Inverting',             
-              '4' : 'Silent',
-              '5' : 'Float',
-              '64' : 'No AC Power',
-              '7' : 'Charger Off',
-              '8' : 'Support',
-              '9' : 'Selling',
-              '10' : 'Pass Through',
-              '12' : 'Solar + Battery Charging',   
-              '16' : 'Battery Discharging',
-              '20' : 'Solar + Battery Discharging',
-              '32' : 'Battery Charging',
-              '11' : 'Offsetting' } %}
-          {% set state =  states.sensor.lux_status.state %}
-          {{ mapper[state] if state in mapper else 'Unknown' }}
-     
-## STATUS 0 = Standby
-## Status 32 = Charging
-## Status 16 = MIGHT be discharging
-## Status 20 = Solar + Batt Discharge
-## Status 12 = *COULD be exporting to grid
+    
+    ## This works out the grid flow and is helpful to show in items such a solar cards.
+    lux_grid_flow:
+      friendly_name: "Lux - Grid Flow (Live)"
+      unit_of_measurement: "W"
+      value_template: "{{ '-{}'.format(states('sensor.lux_power_from_grid_live')) if states('sensor.lux_power_from_grid_live')|round > 0 else '+{}'.format(states('sensor.lux_power_to_grid_live')) }}"
+   
 
-## This works out the battery flow and is helpful to show in items such a solar cards.      
-    lux_home_consumption:
-      friendly_name: "Lux - Home Consumption (Daily)"
-      unit_of_measurement: 'kWh'
-      value_template: >
-        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float(0) - 
-                            states('sensor.lux_power_to_inverter_daily') | float(0) + 
-                            states('sensor.lux_power_from_inverter_daily') | float(0)) }}
-    lux_home_consumption_live:
-      friendly_name: "Lux - Home Consumption (Live)"
-      unit_of_measurement: 'W'
-      value_template: >
-        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float(0) -
-                            states('sensor.lux_power_to_inverter_live') | float(0) + 
-                            states('sensor.lux_power_from_inverter_live') | float(0)) }}
-                            
+    ## ##### Other Lux Sensors   ######
+    # lux_status_text:
+    #   friendly_name: "Lux - Status (Text)"
+    #   unit_of_measurement: "State"
+    #   value_template: >-
+    #     {% set mapper =  {
+    #         '0' : 'Standby',
+    #         '2' : 'Inverting',
+    #         '4' : 'Silent',
+    #         '5' : 'Float',
+    #         '64' : 'No AC Power',
+    #         '7' : 'Charger Off',
+    #         '8' : 'Support',
+    #         '9' : 'Selling',
+    #         '10' : 'Pass Through',
+    #         '12' : 'Solar + Battery Charging',
+    #         '16' : 'Battery Discharging',
+    #         '20' : 'Solar + Battery Discharging',
+    #         '32' : 'Battery Charging',
+    #         '11' : 'Offsetting' } %}
+    #     {% set state =  states.sensor.lux_status.state %}
+    #     {{ mapper[state] if state in mapper else 'Unknown' }}
+
+    ## STATUS 0 = Standby
+    ## Status 32 = Charging
+    ## Status 16 = MIGHT be discharging
+    ## Status 20 = Solar + Batt Discharge
+    ## Status 12 = *COULD be exporting to grid
+
+    ## This works out the battery flow and is helpful to show in items such a solar cards.
+    # lux_home_consumption:
+    #   friendly_name: "Lux - Home Consumption (Daily)"
+    #   unit_of_measurement: 'kWh'
+    #   value_template: >
+    #     {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float(0) - 
+    #                         states('sensor.lux_power_to_inverter_daily') | float(0) + 
+    #                         states('sensor.lux_power_from_inverter_daily') | float(0)) }}
+    # lux_home_consumption_live:
+    #   friendly_name: "Lux - Home Consumption (Live)"
+    #   unit_of_measurement: 'W'
+    #   value_template: >
+    #     {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float(0) -
+    #                         states('sensor.lux_power_to_inverter_live') | float(0) + 
+    #                         states('sensor.lux_power_from_inverter_live') | float(0)) }}
+
 ## ##### END OF Other Lux Sensors   ######

@@ -1,0 +1,39 @@
+{
+  "config": {
+    "error": {
+      "host_error": "IP address is invalid",
+      "dongle_error": "Inverter dongle should contain exactly 10 characters",
+      "serial_error": "Inverter serial should contain exactly 10 characters",
+      "exist_error": "Integration already added!"
+    },
+    "abort": {
+        "already_configured": "Device is already configured"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Integration configuration for LuxPower Inverters",
+        "data": {
+          "lux_host": "IP address of Lux Inverter",
+          "lux_port": "TCP Port of Inverter",
+          "lux_dongle_serial": "Dongle Number",
+          "lux_serial_number": "Inverter Serial Number"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Integration configuration for LuxPower Inverters",
+        "data": {
+          "lux_host": "IP address of Lux Inverter",
+          "lux_port": "TCP Port of Inverter",
+          "lux_dongle_serial": "Inverter Dongle Number",
+          "lux_serial_number": "Inverter Serial Number"
+        }
+      }
+    }
+  }
+}

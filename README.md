@@ -3,99 +3,48 @@ LuxPython is a custom integration into Home Assistant to allow local access to t
 
 # IMPORTANT PLEASE READ!
 
-UPDATE - I have our dev creating a new version of this right now - 2022-05-11 to fix some major issues including a UI for setup, moving the sensors into the integration and hopefully more!
-
-This is in active development - it DOES have bugs in.
+UPDATE - I have our dev creating a new version of this right now - 2022-05-11. This is in active development - it DOES have bugs!
 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
+Please keep in touch at guybw@hotmail.com I would like to know how you get on and if this works for you!
 
-I'm NOT a dev, I've paid to have the basics of this developed however, I am working to have some of the bugs fixed.
-Please keep in touch at guybw@hotmail.com I would really like to know how you get on and if this actually works for you!
-
+This has cost me money to develop and all the money goes to the developer (paid gigs) to fix issues!
+Once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it ALL goes to bug fixes and features!
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
 
 # How to Install
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/guybw/LuxPython)
-HACS Support will be enabled with this is changed from Private to Public
-
-For now,  follow below:
-
-You need to setup your inverter by following this intstructions first:
+You need to set up your inverter by following these instructions first:
 https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md
+(make sure you do not change the port from 8000)
 
 
 Copy the "luxpower" integration to your Home Assistant instance into the "custom_components" folder
 
-./custom_components/luxpower/ to your hass data directory (where your configuration.yaml lives)
+./custom_components/luxpower/ to your HA data directory (where your configuration.yaml lives)
 
 If you are new to HA you will likely have to create this folder but if you use HACS it should already be created.
 
+
 Next REBOOT, it's mandatory otherwise the next bit will not work.
 
+Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
 
-In configuration.yaml add the block below but change your Host IP and dongle serial and serial number to your own information.
-
-```YAML
-# Lux Powertek Solar Inverter 
-luxpower:
-  host: 192.168.1.2
-  port: 8000
-  dongle_serial: "BA********"
-  serial_number: "*********"
-  
-homeassistant:
-  customize: 
-    sensor.lux_total_solar:
-      icon: mdi:solar-power
-      state_class: total_increasing
-    
-    sensor.lux_power_to_grid_total:
-      icon: mdi:transmission-tower-import
-      state_class: total_increasing
-      
-    sensor.lux_power_from_grid_total:
-      icon: mdi:transmission-tower-export
-      state_class: total_increasing
-      
-    sensor.lux_total_battery_charge:
-      icon: mdi:battery-positive
-      state_class: total_increasing  
-      
-    sensor.lux_total_battery_discharge:
-      icon: mdi:battery-negative
-      state_class: total_increasing   
-        
-    sensor.lux_home_consumption:
-      icon: mdi:home 
-    
-    sensor.lux_battery_discharge:
-      icon: mdi:battery-negative
-      
-    sensor.lux_battery_charge:
-      icon: mdi:battery-positive
-      
-    sensor.lux_current_solar_output_1:
-      state_class: measurement
-    sensor.lux_current_solar_output_2:
-      state_class: measurement
-```
+Fill in your IP, Port (8000), dongle serial and inverter serial ( this can be found on the Lux website at server.luxpowertek.com
 
 
-Once you have added this into HA, you should be able to reboot and see some sensors in HA.
-Use Developer Tools to view `sensor.luxpower`. Initially the state will be `Waiting` but after a few minutes when the inverter pushes an update the state will change to `ONLINE` and data will be populated in the attributes.
+Once you have added this into HA, you should see some sensors in HA.
 
-You should also then then this line to the configuration.yaml
-```YAML
-sensor: !include sensors.yaml
-```
-**** NB sensor: !include sensors.yaml must go above any other sensor: command in your configuration.yaml
+Use Developer Tools to view `sensor.luxpower`.  Initially, the state will be `Waiting` but after a few minutes when the inverter pushes an update the state will change to `ONLINE` and data will be populated in the attributes.
 
-and then copy the sensors.yaml in this github into the root of your HA folder and then reboot HA and you should then see more sensors!
+
+
+
 
 You can also use the card luxpowercard.yaml which will give you a clone of the lux powertek website.
 
 
-I HIGHLY recomend you install this powercard:
+I HIGHLY recommend you install this power card:
 https://github.com/gurbyz/power-wheel-card#readme
 
 
@@ -130,8 +79,7 @@ If you have an ACS Inverter you should modify the sensors.yaml with the followin
 
 Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
 
-@elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he was incrediable! 
+@elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he is incredible! 
  
-If you want to chip in to the devopment costs then feel free to below. This has cost me monney to develop.
-To give you an idea the bug fixes cost about £40 per time.
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
+# BUGS
+I'm aware that inverters sold in South Africa have issues right now. If you do have issues or you want to use it please let me know I'm working on a solution!

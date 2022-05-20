@@ -1,0 +1,37 @@
+{
+  "config": {
+    "error": {
+      "host_error": "[%key:common::config_flow::error::host_error%]",
+      "dongle_error": "[%key:common::config_flow::error::dongle_error%]",
+      "serial_error": "[%key:common::config_flow::error::serial_error%]",
+      "exist_error": "[%key:common::config_flow::error::exist_error%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    },
+    "step": {
+      "user": {
+        "title": "[%key:common::config_flow::title%]",
+        "description": "[%key:common::config_flow::description%]",
+        "data": {
+          "lux_host": "[%key:common::config_flow::data::lux_host%]",
+          "lux_port": "[%key:common::config_flow::data::lux_port%]",
+          "lux_dongle_serial": "[%key:common::config_flow::data::lux_dongle_serial%]",
+          "lux_serial_number": "[%key:common::config_flow::data::lux_serial_number%]"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "data": {
+          "lux_host": "IP address of the Lux Inverter",
+          "lux_port": "TCP Port of the inverter",
+          "lux_dongle_serial": "Inverter dongle number",
+          "lux_serial_number": "Inverter serial number"
+        }
+      }
+    }
+  }
+}

@@ -2,10 +2,14 @@ from homeassistant.components.number import NumberEntity
 import voluptuous as vol
 from typing import Optional, Union, Any, Dict
 import logging
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.entity import DeviceInfo
+
+from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
 from .LXPPacket import LXPPacket
 import socket
-
-from . import EVENT_DATA_RECEIVED, DOMAIN, DATA_CONFIG, EVENT_REGISTER_RECEIVED, CLIENT_DAEMON
+from .helpers import Event
 
 '''
 Setup some options from this page in Home-assistant and allow times and % to be set.
@@ -19,25 +23,40 @@ AC Charge Power Rate % allow to pick 1-100 ?
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    print("In LuxPower number platform discovery")
+async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
+    """Set up the sensor platform."""
+    # We only want this platform to be set up via discovery.
+    _LOGGER.info("Loading the Lux sensor platform")
+    print("Options", len(config_entry.options))
+    platform_config = config_entry.data or {}
+    if len(config_entry.options) > 0:
+        platform_config = config_entry.options
 
-    platform_config = hass.data[DATA_CONFIG]
-
-    HOST = platform_config.get("host", "127.0.0.1")
-    PORT = platform_config.get("port", 8000)
-    DONGLE_SERIAL = platform_config.get("dongle_serial", "BA00000000")
-    SERIAL_NUMBER = platform_config.get("serial_number", "0000000000")
-
-    luxpower_client = hass.data[CLIENT_DAEMON]
+    HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
+    PORT = platform_config.get(ATTR_LUX_PORT, 8000)
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, 8000)
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, 8000)
+    event = Event(dongle=DONGLE)
+    luxpower_client = hass.data[event.CLIENT_DAEMON]
 
     numberPercentageEntities = []
-
     register_address = 64
-    name = 'AC Charge Power Rate'
-    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, register_address, name, 42.0, "mdi:car-turbocharger", False,  str.encode(str(DONGLE_SERIAL)), str.encode(str(SERIAL_NUMBER))))
+    name = 'LUX - System Charge Power Rate(%)'
+    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
-    async_add_entities(numberPercentageEntities, True)
+    register_address = 67
+    name = 'LUX - AC Battery Charge Level(%)'
+    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 66
+    name = 'LUX - AC Charge Power Rate(%)'
+    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 103
+    name = 'LUX - Feed-in Grid Power(%)'
+    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+    
+    async_add_devices(numberPercentageEntities, True)
 
     print("LuxPower number async_setup_platform number done")
 
@@ -46,29 +65,32 @@ class PercentageNumber(NumberEntity):
     """Representation of a demo Number entity."""
 
     def __init__(
-        self, hass, host, port, register_address, name, state, icon, assumed, dongle_serial, serial_number):
+        self, hass, host, port, dongle, serial, register_address, name, state, icon, assumed, event: Event):
         """Initialize the Demo Number entity."""
         self.hass = hass
         self._host = host
         self._port = port
         self._name = name
+        self.dongle = dongle
+        self.serial = serial
         self._state = state
         self._icon = icon
         self._assumed = assumed
         self._register_address = register_address
-        self.dongle_serial = dongle_serial
-        self.serial_number = serial_number
+        # self.dongle_serial = dongle_serial
+        # self.serial_number = serial_number
         self.registers = {}
+        self.event = event
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
         _LOGGER.info("async_added_to_hass %s", self._name)
         if self.hass is not None:
-            self.hass.bus.async_listen(EVENT_REGISTER_RECEIVED, self.push_update)
+            self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
         return result
 
     def push_update(self, event):
-        _LOGGER.info("register event received PercentageNumber ")
+        _LOGGER.debug("register event received PercentageNumber ")
         registers = event.data.get('registers', {})
         self.registers = registers
         if self._register_address in registers.keys():
@@ -78,23 +100,24 @@ class PercentageNumber(NumberEntity):
             oldstate = self._state
             self._state = float(register_val)
             if oldstate != self._state:
+                _LOGGER.debug(f"PercentageNumber: Changing the number from {oldstate} to {self._state}")
                 self.schedule_update_ha_state()
         return self._state
 
     @property
     def device_info(self):
         """Return device info."""
-        return {
-            "identifiers": {
-                # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, self.unique_id)
-            },
-            "name": self.name,
-        }
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.dongle)},
+            manufacturer="LuxPower",
+            model="LUXPower Inverter",
+            name=self.dongle,
+            sw_version="1.1",
+        )
 
     @property
     def unique_id(self) -> Optional[str]:
-        return "{}_numberpercent_{}".format(DOMAIN, self._register_address)
+        return "{}_{}_numberpercent_{}".format(DOMAIN, self.dongle, self._register_address)
 
     @property
     def should_poll(self):
@@ -136,9 +159,10 @@ class PercentageNumber(NumberEntity):
         """Return the value step."""
         return 1.0
 
-    def async_set_value(self, value):
+    def set_value(self, value):
         """Update the current value."""
         num_value = float(value)
+        print("Calling set_value")
 
         if num_value < self.min_value or num_value > self.max_value:
             raise vol.Invalid(
@@ -155,8 +179,8 @@ class PercentageNumber(NumberEntity):
         try:
             sock.connect((self._host, self._port))
             print("Connected to server")
-            print("SER:", self.dongle_serial, self.serial_number)
-            lxpPacket = LXPPacket(debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number)
+            print("SER:", str.encode(str(self.dongle)), str.encode(str(self.serial)))
+            lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_write(self._register_address, value)
             print("packet to be written ", packet)
             sock.send(packet)
@@ -178,8 +202,8 @@ class PercentageNumber(NumberEntity):
         try:
             sock.connect((self._host, self._port))
             print("Connected to server")
-            lxpPacket = LXPPacket(debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number)
-            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1)
+            lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)

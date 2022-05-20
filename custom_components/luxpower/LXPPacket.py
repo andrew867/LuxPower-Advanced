@@ -358,7 +358,7 @@ class LXPPacket:
         print(packet, len(packet))
         return packet
 
-    def prepare_packet_for_read(self, register, value=1):
+    def prepare_packet_for_read(self, register, value=1, type=READ_HOLD):
         # if len(value) != 2:
         #     print("value length is not 2")
         #     return
@@ -375,7 +375,7 @@ class LXPPacket:
         packet = packet + struct.pack('H', data_length)
 
         data_frame = struct.pack('B', self.ACTION_READ)
-        data_frame = data_frame + struct.pack('B', self.READ_HOLD)
+        data_frame = data_frame + struct.pack('B', type)
         data_frame = data_frame + self.serial_number
         data_frame = data_frame + struct.pack('H', register)
         data_frame = data_frame + struct.pack('H', value)
