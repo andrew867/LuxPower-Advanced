@@ -40,15 +40,22 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     luxpower_client = hass.data[event.CLIENT_DAEMON]
 
     numberPercentageEntities = []
-
     register_address = 64
-    name = 'AC Charge Power Rate'
+    name = 'LUX - System Charge Power Rate(%)'
+    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 67
+    name = 'LUX - AC Battery Charge Level(%)'
+    numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 66
+    name = 'LUX - AC Charge Power Rate(%)'
     numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 103
-    name = 'Feed-In-Grid Power'
+    name = 'LUX - Feed-in Grid Power(%)'
     numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
+    
     async_add_devices(numberPercentageEntities, True)
 
     print("LuxPower number async_setup_platform number done")
