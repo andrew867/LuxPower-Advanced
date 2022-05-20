@@ -5,6 +5,9 @@ LuxPython is a custom integration into Home Assistant to allow local access to t
 
 UPDATE - I have our dev creating a new version of this right now - 2022-05-11. This is in active development - it DOES have bugs!
 
+IF YOU USE THE OLD CONFIGURATION.YAML BE WARNED!  This is a MAJOR CHANGE and you need to delete all of the old sensors / customisation / configuration.yaml and start again. Yes, it's a pain but this is SO much better!
+
+
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com I would like to know how you get on and if this works for you!
 
