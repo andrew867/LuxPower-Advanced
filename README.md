@@ -32,9 +32,11 @@ If you are new to HA you will likely have to create this folder but if you use H
 Next REBOOT, it's mandatory otherwise the next bit will not work.
 
 Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
+![image](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
 Fill in your IP, Port (8000), dongle serial and inverter serial ( this can be found on the Lux website at server.luxpowertek.com
 
+![image](https://user-images.githubusercontent.com/64648444/169526428-a508e905-19ef-45e5-ab2c-185b454489e3.png)
 
 Once you have added this into HA, you should see some sensors in HA.
 
