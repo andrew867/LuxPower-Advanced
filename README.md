@@ -43,7 +43,25 @@ Once you have added this into HA, you should see some sensors in HA.
 
 Use Developer Tools to view `sensor.luxpower`.  Initially, the state will be `Waiting` but after a few minutes when the inverter pushes an update the state will change to `ONLINE` and data will be populated in the attributes.
 
+On a dashboard create a new card and type this (CHANGE THE DONGLE TO YOUR DONGLE SERIAL)
 
+```
+show_name: true
+show_icon: true
+type: button
+tap_action:
+  action: call-service
+  service: luxpower.luxpower_refresh_registers
+  service_data:
+    dongle: BA********
+  target: {}
+entity: ''
+icon_height: 50px
+icon: mdi:cloud-refresh
+name: Refresh LUX Data
+show_state: false
+```
+This will then give you a button to refresh your data as often as you like.
 
 
 
