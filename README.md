@@ -39,6 +39,7 @@ Fill in your IP, Port (8000), dongle serial and inverter serial ( this can be fo
 ![image](https://user-images.githubusercontent.com/64648444/169526428-a508e905-19ef-45e5-ab2c-185b454489e3.png)
 
 Once you have added this into HA, you should see some sensors in HA.
+![image](https://user-images.githubusercontent.com/64648444/169526605-0f667815-87dc-4ab7-86f5-dbffe85ff765.png)
 
 Use Developer Tools to view `sensor.luxpower`.  Initially, the state will be `Waiting` but after a few minutes when the inverter pushes an update the state will change to `ONLINE` and data will be populated in the attributes.
 
