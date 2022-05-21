@@ -69,7 +69,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 83
-    name = 'LUX - Priority Charge Level(%)'
+    name = 'LUX - Forced Discharge Battery Level(%)'
     numberPercentageEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 103
