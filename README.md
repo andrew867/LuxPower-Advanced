@@ -3,7 +3,6 @@ LuxPython is a custom integration into Home Assistant to allow local access to t
 
 # IMPORTANT PLEASE READ!
 
-UPDATE - I have our dev creating a new version of this right now - 2022-05-11. This is in active development - it DOES have bugs!
 
 IF YOU USE THE OLD CONFIGURATION.YAML BE WARNED!  This is a MAJOR CHANGE and you need to delete all of the old sensors / customisation / configuration.yaml and start again. Yes, it's a pain but this is SO much better!
 
@@ -75,7 +74,7 @@ https://github.com/gurbyz/power-wheel-card#readme
 At the end of this, you should be able to add the following sensors to HA Energy and it will start tracking:
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
-If you have an ACS Inverter you should modify the sensors.yaml with the following:
+If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!):
 ```
 ## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor code. However, there's a new name to prevent conflict. 
     lux_new_home_consumption:
