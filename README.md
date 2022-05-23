@@ -1,9 +1,12 @@
-# LuxPython
+# LuxPython (Full Home Assistant UI Integration)
 LuxPython is a custom integration into Home Assistant to allow local access to the Lux Powertek Inverter
 
 # IMPORTANT PLEASE READ!
 
 UPDATE - I have our dev creating a new version of this right now - 2022-05-11. This is in active development - it DOES have bugs!
+
+IF YOU USE THE OLD CONFIGURATION.YAML BE WARNED!  This is a MAJOR CHANGE and you need to delete all of the old sensors / customisation / configuration.yaml and start again. Yes, it's a pain but this is SO much better!
+
 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com I would like to know how you get on and if this works for you!
@@ -29,15 +32,36 @@ If you are new to HA you will likely have to create this folder but if you use H
 Next REBOOT, it's mandatory otherwise the next bit will not work.
 
 Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
+![image](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
 Fill in your IP, Port (8000), dongle serial and inverter serial ( this can be found on the Lux website at server.luxpowertek.com
 
+![image](https://user-images.githubusercontent.com/64648444/169526428-a508e905-19ef-45e5-ab2c-185b454489e3.png)
 
 Once you have added this into HA, you should see some sensors in HA.
+![image](https://user-images.githubusercontent.com/64648444/169526605-0f667815-87dc-4ab7-86f5-dbffe85ff765.png)
 
 Use Developer Tools to view `sensor.luxpower`.  Initially, the state will be `Waiting` but after a few minutes when the inverter pushes an update the state will change to `ONLINE` and data will be populated in the attributes.
 
+On a dashboard create a new card and type this (CHANGE THE DONGLE TO YOUR DONGLE SERIAL)
 
+```
+show_name: true
+show_icon: true
+type: button
+tap_action:
+  action: call-service
+  service: luxpower.luxpower_refresh_registers
+  service_data:
+    dongle: BA********
+  target: {}
+entity: ''
+icon_height: 50px
+icon: mdi:cloud-refresh
+name: Refresh LUX Data
+show_state: false
+```
+This will then give you a button to refresh your data as often as you like.
 
 
 
