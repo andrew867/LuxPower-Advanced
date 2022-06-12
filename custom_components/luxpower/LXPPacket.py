@@ -445,7 +445,7 @@ class LXPPacket:
                 print("v_bat(Volts) ", v_bat)
             self.data[LXPPacket.v_bat] = v_bat
 
-            soc = self.readValues.get(5)[0] or 0
+            soc = self.readValues.get(5)[0] or 0 if self.readValues.get(5) is not None else 0
             if self.debug:
                 print("soc(%) ", soc)
             self.data[LXPPacket.soc] = soc
