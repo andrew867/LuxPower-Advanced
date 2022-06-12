@@ -241,7 +241,7 @@ class LXPPacket:
         self.device_function = self.data_frame[1]
         self.serial_number = self.data_frame[2:12]
         self.register = struct.unpack('H', self.data_frame[12:14])[0]
-        self.value_length_byte_present = self.protocol_number == 2 and self.device_function != self.WRITE_SINGLE
+        self.value_length_byte_present = (self.protocol_number == 2 or self.protocol_number == 5) and self.device_function != self.WRITE_SINGLE
         self.value_length = 2
         if self.value_length_byte_present:
             self.value_length = self.data_frame[14]
