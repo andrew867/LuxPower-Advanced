@@ -6,7 +6,8 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
+from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
+    ATTR_LUX_USE_DONGLE
 from .LXPPacket import LXPPacket
 import socket
 from .helpers import Event
@@ -34,122 +35,128 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 
     HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = platform_config.get(ATTR_LUX_PORT, 8000)
-    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, 8000)
-    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, 8000)
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    USE_DONGLE = platform_config.get(ATTR_LUX_USE_DONGLE, False)
+
+    entityID_prefix = DONGLE if USE_DONGLE else ''
+
     event = Event(dongle=DONGLE)
     luxpower_client = hass.data[event.CLIENT_DAEMON]
 
+    _LOGGER.info(f"Lux number platform_config: {platform_config}")
+
     numberEntities = []
     register_address = 64
-    name = 'LUX - System Charge Power Rate(%)'
+    name = f'LUX {entityID_prefix}- System Charge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
     
     register_address = 65
-    name = 'LUX - System Discharge Power Rate(%)'
+    name = f'LUX {entityID_prefix}- System Discharge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
     
     register_address = 66
-    name = 'LUX - AC Charge Power Rate(%)'
+    name = f'LUX {entityID_prefix}- AC Charge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
     
     register_address = 67
-    name = 'LUX - AC Battery Charge Level(%)'
+    name = f'LUX {entityID_prefix}- AC Battery Charge Level(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
     
     register_address = 74
-    name = 'LUX - Priority Charge Rate(%)'
+    name = f'LUX {entityID_prefix}- Priority Charge Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
     
     register_address = 75
-    name = 'LUX - Priority Charge Level(%)'
+    name = f'LUX {entityID_prefix}- Priority Charge Level(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
     
     register_address = 82
-    name = 'LUX - Forced Discharge Power Rate(%)'
+    name = f'LUX {entityID_prefix}- Forced Discharge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 83
-    name = 'LUX - Forced Discharge Battery Level(%)'
+    name = f'LUX {entityID_prefix}- Forced Discharge Battery Level(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 103
-    name = 'LUX - Feed-in Grid Power(%)'
+    name = f'LUX {entityID_prefix}- Feed-in Grid Power(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
     
     register_address = 105
-    name = 'LUX - On-grid Discharge Cut-off SOC (?)'
+    name = f'LUX {entityID_prefix}- On-grid Discharge Cut-off SOC (?)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
     
     register_address = 68
-    name = 'LUX - AC Charge Start'
+    name = f'LUX {entityID_prefix}- AC Charge Start'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 69
-    name = 'LUX - AC Charge End'
+    name = f'LUX {entityID_prefix}- AC Charge End'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 70
-    name = 'LUX - AC Charge Start1'
+    name = f'LUX {entityID_prefix}- AC Charge Start1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 71
-    name = 'LUX - AC Charge End1'
+    name = f'LUX {entityID_prefix}- AC Charge End1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 72
-    name = 'LUX - AC Charge Start2'
+    name = f'LUX {entityID_prefix}- AC Charge Start2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 73
-    name = 'LUX - AC Charge End2'
+    name = f'LUX {entityID_prefix}- AC Charge End2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 76
-    name = 'LUX - Force Charge Start'
+    name = f'LUX {entityID_prefix}- Force Charge Start'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 77
-    name = 'LUX - Force Charge End'
+    name = f'LUX {entityID_prefix}- Force Charge End'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 78
-    name = 'LUX - Force Charge Start1'
+    name = f'LUX {entityID_prefix}- Force Charge Start1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 79
-    name = 'LUX - Force Charge End1'
+    name = f'LUX {entityID_prefix}- Force Charge End1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 80
-    name = 'LUX - Force Charge Start2'
+    name = f'LUX {entityID_prefix}- Force Charge Start2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 81
-    name = 'LUX - Force Charge End2'
+    name = f'LUX {entityID_prefix}- Force Charge End2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 84
-    name = 'LUX - Force Discharge Start'
+    name = f'LUX {entityID_prefix}- Force Discharge Start'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 85
-    name = 'LUX - Force Discharge End'
+    name = f'LUX {entityID_prefix}- Force Discharge End'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 86
-    name = 'LUX - Force Discharge Start1'
+    name = f'LUX {entityID_prefix}- Force Discharge Start1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 87
-    name = 'LUX - Force Discharge End1'
+    name = f'LUX {entityID_prefix}- Force Discharge End1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 88
-    name = 'LUX - Force Discharge Start2'
+    name = f'LUX {entityID_prefix}- Force Discharge Start2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 89
-    name = 'LUX - Force Discharge End2'
+    name = f'LUX {entityID_prefix}- Force Discharge End2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     async_add_devices(numberEntities, True)

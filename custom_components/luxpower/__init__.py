@@ -9,7 +9,8 @@ from datetime import timedelta
 import logging
 import asyncio
 from .LXPPacket import LXPPacket
-from .const import DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER
+from .const import DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
+    ATTR_LUX_USE_DONGLE
 from .helpers import Event
 from .connector import LuxPowerClient, ServiceHelper
 
@@ -102,12 +103,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Your controller/hub specific code."""
     # Data that you want to share with your platforms
     config = entry.data or {}
+    if len(entry.options) > 0:
+        config = entry.options
     print(config)
     # Read the config values entered by the user
     HOST = config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = config.get(ATTR_LUX_PORT, 8000)
     DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    USE_DONGLE = config.get(ATTR_LUX_USE_DONGLE, False)
 
     events = Event(dongle=DONGLE_SERIAL)
     luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)),
