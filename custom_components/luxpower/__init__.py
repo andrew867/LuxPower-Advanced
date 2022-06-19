@@ -10,7 +10,7 @@ import logging
 import asyncio
 from .LXPPacket import LXPPacket
 from .const import DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
-    ATTR_LUX_USE_DONGLE
+    ATTR_LUX_USE_SERIAL
 from .helpers import Event
 from .connector import LuxPowerClient, ServiceHelper
 
@@ -111,7 +111,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     PORT = config.get(ATTR_LUX_PORT, 8000)
     DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
-    USE_DONGLE = config.get(ATTR_LUX_USE_DONGLE, False)
+    USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
     events = Event(dongle=DONGLE_SERIAL)
     luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)),

@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
 
 from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
-    ATTR_LUX_USE_DONGLE
+    ATTR_LUX_USE_SERIAL
 from .LXPPacket import LXPPacket
 import socket
 from .helpers import Event
@@ -37,9 +37,9 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     PORT = platform_config.get(ATTR_LUX_PORT, 8000)
     DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
-    USE_DONGLE = platform_config.get(ATTR_LUX_USE_DONGLE, False)
+    USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
 
-    entityID_prefix = DONGLE if USE_DONGLE else ''
+    entityID_prefix = SERIAL if USE_SERIAL else ''
 
     event = Event(dongle=DONGLE)
     luxpower_client = hass.data[event.CLIENT_DAEMON]

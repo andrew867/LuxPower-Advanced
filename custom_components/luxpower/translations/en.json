@@ -18,7 +18,7 @@
           "lux_port": "TCP Port of Inverter",
           "lux_dongle_serial": "Dongle Number",
           "lux_serial_number": "Inverter Serial Number",
-          "lux_use_dongle": "Use dongle to be part of entity"
+          "lux_use_serial": "Use serial to be part of entity"
         }
       }
     }
@@ -33,7 +33,7 @@
           "lux_port": "TCP Port of Inverter",
           "lux_dongle_serial": "Inverter Dongle Number",
           "lux_serial_number": "Inverter Serial Number",
-          "lux_use_dongle": "Use dongle to be part of entity"
+          "lux_use_serial": "Use serial to be part of entity"
         }
       }
     }

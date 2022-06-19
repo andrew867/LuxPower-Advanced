@@ -7,8 +7,8 @@ from homeassistant.components.mqtt import MqttServiceInfo
 from homeassistant.core import callback
 
 from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
-    ATTR_LUX_USE_DONGLE, PLACEHOLDER_LUX_HOST, PLACEHOLDER_LUX_PORT, PLACEHOLDER_LUX_DONGLE_SERIAL, \
-    PLACEHOLDER_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_USE_DONGLE
+    ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_HOST, PLACEHOLDER_LUX_PORT, PLACEHOLDER_LUX_DONGLE_SERIAL, \
+    PLACEHOLDER_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_USE_SERIAL
 
 import voluptuous as vol
 _LOGGER = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(ATTR_LUX_PORT, default=PLACEHOLDER_LUX_PORT): vol.All(int, vol.Range(min=1001, max=60001)),
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=PLACEHOLDER_LUX_DONGLE_SERIAL): str,
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=PLACEHOLDER_LUX_SERIAL_NUMBER): str,
-                vol.Optional(ATTR_LUX_USE_DONGLE, default=PLACEHOLDER_LUX_USE_DONGLE): bool,
+                vol.Optional(ATTR_LUX_USE_SERIAL, default=PLACEHOLDER_LUX_USE_SERIAL): bool,
             }
         )
 
@@ -123,7 +123,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Required(ATTR_LUX_PORT, default=config_entry.get(ATTR_LUX_PORT, '')): vol.All(int, vol.Range(min=1001, max=60001)),
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, '')): str,
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, '')): str,
-                vol.Optional(ATTR_LUX_USE_DONGLE, default=config_entry.get(ATTR_LUX_USE_DONGLE, False)): bool,
+                vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
             }
         )
         return self.async_show_form(
