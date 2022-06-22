@@ -98,6 +98,12 @@ If you have an ACS Inverter you should modify the sensors.yaml with the followin
                             
 ## ##### END OF Custom Lux Sensors   ######
 ```
+# Things to note
+The inverter dongle is fairly poor and often disconnects, this is not a fault of this code but the dongle (wifi dongle) the ethernet dongle I'm told still isn't stable and this will NOT work as I can't query the inverter via it.
+
+To solve the issue of LuxPython not showing please import the reconnection blueprint in this folder. It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20)
+
+
 # Thanks!
 
 Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
