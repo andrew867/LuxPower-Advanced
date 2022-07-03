@@ -113,13 +113,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     # 3. Home Consumption Live
     sensor_data = {"name": "Lux - Home Consumption (Live)", "entity": 'lux_home_consumption_live', 'attribute': LXPPacket.p_to_user,
-                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv,  # Attribute dependencies
+                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv, 'attribute4': LXPPacket.p_to_grid, # Attribute dependencies
+                   # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
                    'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # 4. Home Consumption Daily
     sensor_data = {"name": "Lux - Home Consumption (Daily)", "entity": 'lux_home_consumption', 'attribute': LXPPacket.e_to_user_day,
-                   'attribute1': LXPPacket.e_to_user_day, 'attribute2': LXPPacket.e_rec_day, 'attribute3': LXPPacket.e_inv_day,  # Attribute dependencies
+                   'attribute1': LXPPacket.e_to_user_day, 'attribute2': LXPPacket.e_rec_day, 'attribute3': LXPPacket.e_inv_day, 'attribute4': LXPPacket.e_to_grid_day, # Attribute dependencies
                    'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR}
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
@@ -250,16 +251,17 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
         return self._state
 
 
-class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
+class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity): #Used for both live and daily consumption calcuation.
     '''
-    Template equation state = attribute1 - attribute2 + attribute3
+    Template equation state = attribute1 - attribute2 + attribute3 - attribute4
     '''
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
-        self._device_attribute1 = sensor_data['attribute1']
-        self._device_attribute2 = sensor_data['attribute2']
-        self._device_attribute3 = sensor_data['attribute3']
-
+        self._device_attribute1 = sensor_data['attribute1'] # Power from grid to consumer unit
+        self._device_attribute2 = sensor_data['attribute2'] # Power from consumer unit to inverter
+        self._device_attribute3 = sensor_data['attribute3'] # Power from inverter to consumer unit
+        self._device_attribute4 = sensor_data['attribute4'] # Power from consumer unit to grid
+                
     def push_update(self, event):
         print("LuxPowerHomeConsumptionSensor: register event received")
         self._data = event.data.get('data', {})
@@ -267,12 +269,12 @@ class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
         grid = float(self._data.get(self._device_attribute1, 0.0))
         to_inverter = float(self._data.get(self._device_attribute2, 0.0))
         from_inverter = float(self._data.get(self._device_attribute3, 0.0))
-        consumption_value = grid - to_inverter + from_inverter
+        to_grid = float(self._data.get(self._device_attribute4, 0.0))
+        consumption_value = grid - to_inverter + from_inverter - to_grid
         self._state = "{}".format(round(consumption_value, 1))
 
         self.schedule_update_ha_state()
         return self._state
-
 
 class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
