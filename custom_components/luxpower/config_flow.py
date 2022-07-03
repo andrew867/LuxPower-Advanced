@@ -7,7 +7,8 @@ from homeassistant.components.mqtt import MqttServiceInfo
 from homeassistant.core import callback
 
 from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
-    PLACEHOLDER_LUX_HOST, PLACEHOLDER_LUX_PORT, PLACEHOLDER_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_SERIAL_NUMBER
+    ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_HOST, PLACEHOLDER_LUX_PORT, PLACEHOLDER_LUX_DONGLE_SERIAL, \
+    PLACEHOLDER_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_USE_SERIAL
 
 import voluptuous as vol
 _LOGGER = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(ATTR_LUX_PORT, default=PLACEHOLDER_LUX_PORT): vol.All(int, vol.Range(min=1001, max=60001)),
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=PLACEHOLDER_LUX_DONGLE_SERIAL): str,
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=PLACEHOLDER_LUX_SERIAL_NUMBER): str,
+                vol.Optional(ATTR_LUX_USE_SERIAL, default=PLACEHOLDER_LUX_USE_SERIAL): bool,
             }
         )
 
@@ -113,12 +115,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             return self.async_create_entry(title="LuxPower ()", data=user_input)
 
         config_entry = self.config_entry.data
+        if len(self.config_entry.options) > 0:
+            config_entry = self.config_entry.options
         data_schema = vol.Schema(
             {
                 vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, '')): str,
                 vol.Required(ATTR_LUX_PORT, default=config_entry.get(ATTR_LUX_PORT, '')): vol.All(int, vol.Range(min=1001, max=60001)),
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, '')): str,
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, '')): str,
+                vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
             }
         )
         return self.async_show_form(
