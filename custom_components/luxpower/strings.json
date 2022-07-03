@@ -17,7 +17,8 @@
           "lux_host": "[%key:common::config_flow::data::lux_host%]",
           "lux_port": "[%key:common::config_flow::data::lux_port%]",
           "lux_dongle_serial": "[%key:common::config_flow::data::lux_dongle_serial%]",
-          "lux_serial_number": "[%key:common::config_flow::data::lux_serial_number%]"
+          "lux_serial_number": "[%key:common::config_flow::data::lux_serial_number%]",
+          "lux_use_serial": "[%key:common::config_flow::data::lux_use_serial%]"
         }
       }
     }
@@ -29,7 +30,8 @@
           "lux_host": "IP address of the Lux Inverter",
           "lux_port": "TCP Port of the inverter",
           "lux_dongle_serial": "Inverter dongle number",
-          "lux_serial_number": "Inverter serial number"
+          "lux_serial_number": "Inverter serial number",
+          "lux_use_serial": "Use serial to be part of entityID"
         }
       }
     }
