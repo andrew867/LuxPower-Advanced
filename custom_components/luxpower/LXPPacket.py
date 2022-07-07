@@ -241,7 +241,7 @@ class LXPPacket:
         self.device_function = self.data_frame[1]
         self.serial_number = self.data_frame[2:12]
         self.register = struct.unpack('H', self.data_frame[12:14])[0]
-        self.value_length_byte_present = self.protocol_number == 2 and self.device_function != self.WRITE_SINGLE
+        self.value_length_byte_present = (self.protocol_number == 2 or self.protocol_number == 5) and self.device_function != self.WRITE_SINGLE
         self.value_length = 2
         if self.value_length_byte_present:
             self.value_length = self.data_frame[14]
@@ -445,7 +445,7 @@ class LXPPacket:
                 print("v_bat(Volts) ", v_bat)
             self.data[LXPPacket.v_bat] = v_bat
 
-            soc = self.readValues.get(5)[0] or 0
+            soc = self.readValues.get(5)[0] or 0 if self.readValues.get(5) is not None else 0
             if self.debug:
                 print("soc(%) ", soc)
             self.data[LXPPacket.soc] = soc
