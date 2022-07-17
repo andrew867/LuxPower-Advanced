@@ -30,8 +30,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     """Set up the sensor platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux switch platform")
-    print("Set up the switch platform", config_entry.data)
-    print("Options", len(config_entry.options))
+    _LOGGER.info("Set up the switch platform", config_entry.data)
+    _LOGGER.info("Options", len(config_entry.options))
     platform_config = config_entry.data or {}
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
@@ -81,7 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     #  delay service call for some time to give the sensors and swiches time to initialise
     hass.async_create_task(refreshSwitches(hass, dongle=DONGLE_SERIAL))
 
-    print("LuxPower switch async_setup_platform switch done")
+    _LOGGER.info("LuxPower switch async_setup_platform switch done")
 
 
 class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
@@ -114,7 +114,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         return result
 
     def push_update(self, event):
-        print("switch: register event received")
+        _LOGGER.info("switch: register event received")
         registers = event.data.get('registers', {})
         self.registers = registers
         if self._register_address in registers.keys():
@@ -125,7 +125,6 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             self._state = register_val & self._bitmask == self._bitmask
             if oldstate != self._state:
                 _LOGGER.debug("Reading: {} {} Old State {} Updating state to {} - {}".format(self._register_address, self._bitmask, oldstate, self._state, self._name))
-                print("Reading: {} {} Old State {} Updating state to {} - {}".format(self._register_address, self._bitmask, oldstate, self._state, self._name))
                 self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
                 if 68 in registers.keys():
@@ -173,11 +172,11 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         return self._state
 
     def turn_on(self, **kwargs: Any) -> None:
-        print("turn on called ")
+        _LOGGER.info("turn on called ")
         self.set_register_bit(True)
 
     def turn_off(self, **kwargs: Any) -> None:
-        print("turn off called ")
+        _LOGGER.info("turn off called ")
         self.set_register_bit(False)
 
     @property
@@ -195,38 +194,38 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            print("Connected to server")
+            _LOGGER.info("Connected to server")
             lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
             sock.close()
         except Exception as e:
-            print("Exception ", e)
+            _LOGGER.info("Exception ", e)
 
     def set_register_bit(self, bit_polarity=False):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            print("set_register_bit: Connected to server", self._host, self._port, self._register_address)
+            _LOGGER.info("set_register_bit: Connected to server", self._host, self._port, self._register_address)
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)
-            print('Received: ', packet)
+            _LOGGER.info('Received: ', packet)
             data = lxpPacket.parse_packet(packet)
-            print(data)
+            _LOGGER.info(data)
             if not lxpPacket.packet_error:
                 if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
                     if len(lxpPacket.value) == 2:
                         old_value = lxpPacket.convert_to_int(lxpPacket.value)
                         new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
-                        print("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
+                        _LOGGER.info("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
                         _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
                         packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
-                        print("packet to be written ", packet)
+                        _LOGGER.info("packet to be written ", packet)
                         sock.send(packet)
-                        print("written packet")
+                        _LOGGER.info("written packet")
 
                         # self._state = bit_polarity
                         # self.schedule_update_ha_state()
@@ -237,19 +236,17 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                         # if not lxpPacket.packet_error:
                         #     print(result)
                     else:
-                        print("Length of value packet is not 2, received: ", len(lxpPacket.value))
                         _LOGGER.debug(f"Length of value packet is not 2, received: {len(lxpPacket.value)}")
                 else:
-                    print("Expected Type: ", lxpPacket.READ_HOLD, ' Received :', lxpPacket.device_function)
-                    print("Expected Address: ", self._register_address, ' Received :', lxpPacket.register)
+                    _LOGGER.debug("Expected Type: ", lxpPacket.READ_HOLD, ' Received :', lxpPacket.device_function)
+                    _LOGGER.debug("Expected Address: ", self._register_address, ' Received :', lxpPacket.register)
             else:
-                print("LX Packet error")
                 _LOGGER.debug("LX Packet error")
             sock.close()
-            print("Closing socket...")
+            _LOGGER.info("Closing socket...")
         except Exception as e:
-            print("Exception ", e)
-        print("set_register_bit done")
+            _LOGGER.debug("Exception ", e)
+        _LOGGER.debug("set_register_bit done")
 
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
