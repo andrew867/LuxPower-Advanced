@@ -50,27 +50,27 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     register_address = 64
     name = f'LUX {entityID_prefix}- System Charge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-    
+
     register_address = 65
     name = f'LUX {entityID_prefix}- System Discharge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-    
+
     register_address = 66
     name = f'LUX {entityID_prefix}- AC Charge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-    
+
     register_address = 67
     name = f'LUX {entityID_prefix}- AC Battery Charge Level(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-    
+
     register_address = 74
     name = f'LUX {entityID_prefix}- Priority Charge Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-    
+
     register_address = 75
     name = f'LUX {entityID_prefix}- Priority Charge Level(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-    
+
     register_address = 82
     name = f'LUX {entityID_prefix}- Forced Discharge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
@@ -82,11 +82,11 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     register_address = 103
     name = f'LUX {entityID_prefix}- Feed-in Grid Power(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-    
+
     register_address = 105
     name = f'LUX {entityID_prefix}- On-grid Discharge Cut-off SOC (?)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-    
+
     register_address = 68
     name = f'LUX {entityID_prefix}- AC Charge Start'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
@@ -243,29 +243,29 @@ class PercentageNumber(NumberEntity):
         return self._assumed
 
     @property
-    def value(self):
+    def native_value(self):
         """Return the current value."""
         return self._state
 
     @property
-    def min_value(self):
+    def native_min_value(self):
         """Return the minimum value."""
         return 0.0
 
     @property
-    def max_value(self):
+    def native_max_value(self):
         """Return the maximum value."""
         return 100.0
 
     @property
-    def step(self):
+    def native_step(self):
         """Return the value step."""
         return 1.0
 
-    def set_value(self, value):
+    def set_native_value(self, value):
         """Update the current value."""
         num_value = float(value)
-        print("Calling set_value")
+        print("Calling set_value", num_value)
 
         if num_value < self.min_value or num_value > self.max_value:
             raise vol.Invalid(
@@ -417,29 +417,29 @@ class TimeNumber(NumberEntity):
         return self._assumed
 
     @property
-    def value(self):
+    def native_value(self):
         """Return the current value."""
         return self._state
 
     @property
-    def min_value(self):
+    def native_min_value(self):
         """Return the minimum value."""
         return 0.0
 
     @property
-    def max_value(self):
+    def native_max_value(self):
         """Return the maximum value."""
         return 65000.0
 
     @property
-    def step(self):
+    def native_step(self):
         """Return the value step."""
         return 1.0
 
-    def set_value(self, value):
+    def set_native_value(self, value):
         """Update the current value."""
         num_value = float(value)
-        print("Calling set_value")
+        print("Calling set_value", num_value)
 
         if num_value < self.min_value or num_value > self.max_value:
             raise vol.Invalid(
