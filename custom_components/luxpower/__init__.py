@@ -1,4 +1,5 @@
 """Example Load Platform integration."""
+from distutils.log import info
 from typing import Optional
 
 from homeassistant.core import HomeAssistant
@@ -44,27 +45,27 @@ async def async_setup(hass: HomeAssistant, config: dict):
         _LOGGER.info("handle_refresh_register_bank service: %s", DOMAIN)
         dongle = call.data.get("dongle")
         address_bank = call.data.get("address_bank")
-        print("handle_refresh_register_bank service ", address_bank)
+        _LOGGER.debug("handle_refresh_register_bank service ", address_bank)
         await service_helper.send_refresh_register_bank(dongle=dongle, address_bank=int(address_bank))
 
     async def handle_refresh_registers(call):
         """Handle the service call."""
         _LOGGER.info("handle_refresh_registers service: %s", DOMAIN)
-        print("handle_refresh_registers service ")
+        _LOGGER.debug("handle_refresh_registers service ")
         dongle = call.data.get("dongle")
         await service_helper.send_refresh_registers(dongle=dongle)
 
     async def handle_holding_registers(call):
         """Handle the service call."""
         _LOGGER.info("handle_holding_registers service: %s", DOMAIN)
-        print("handle_holding_registers service ")
+        _LOGGER.debug("handle_holding_registers service ")
         dongle = call.data.get("dongle")
         await service_helper.send_holding_registers(dongle=dongle)
 
     async def handle_reconnect(call):
         """Handle the service call."""
         _LOGGER.info("handle_reconnect service: %s", DOMAIN)
-        print("handle_reconnect service ")
+        _LOGGER.debug("handle_reconnect service ")
         dongle = call.data.get("dongle")
         await service_helper.send_reconnect(dongle=dongle)
 
@@ -98,14 +99,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """LuxPower integration platform load."""
 
     _LOGGER.info("async_setup_entry: LuxPower integration platform load")
-    print("platform config: ", entry.data)
-    print("platform entry_id: ", entry.entry_id)
+    _LOGGER.debug("platform config: ", entry.data)
+    _LOGGER.debug("platform entry_id: ", entry.entry_id)
     """Your controller/hub specific code."""
     # Data that you want to share with your platforms
     config = entry.data or {}
     if len(entry.options) > 0:
         config = entry.options
-    print(config)
+    _LOGGER.debug(config)
     # Read the config values entered by the user
     HOST = config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = config.get(ATTR_LUX_PORT, 8000)
@@ -131,7 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
-    print("LuxPower init async_setup done")
+    _LOGGER.info("LuxPower init async_setup done")
     return True
 
 

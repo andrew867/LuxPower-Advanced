@@ -21,7 +21,6 @@ from .helpers import Event
 
 _LOGGER = logging.getLogger(__name__)
 
-
 async def refreshSensors(hass: HomeAssistant, dongle):
     await asyncio.sleep(10)
     _LOGGER.info("Refreshing sensors")
@@ -34,7 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux sensor platform")
 
-    print("Options", len(config_entry.options))
+    _LOGGER.info("Options", len(config_entry.options))
     platform_config = config_entry.data or {}
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
@@ -114,19 +113,22 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     # 2. Grid Flow Live
     sensor_data = {"name": f"Lux {entityID_prefix}- Grid Flow (Live)", "entity": 'lux_grid_flow', 'attribute': LXPPacket.p_to_user,
-                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_to_grid,   # Attribute dependencies
+                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv, 'attribute4': LXPPacket.p_to_grid, # Attribute dependencies
+                   # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
+                   
                    'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
     stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # 3. Home Consumption Live
     sensor_data = {"name": f"Lux {entityID_prefix}- Home Consumption (Live)", "entity": 'lux_home_consumption_live', 'attribute': LXPPacket.p_to_user,
-                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv,  # Attribute dependencies
+                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv, 'attribute4': LXPPacket.p_to_grid, # Attribute dependencies
+                   # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
                    'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # 4. Home Consumption Daily
     sensor_data = {"name": f"Lux {entityID_prefix}- Home Consumption (Daily)", "entity": 'lux_home_consumption', 'attribute': LXPPacket.e_to_user_day,
-                   'attribute1': LXPPacket.e_to_user_day, 'attribute2': LXPPacket.e_rec_day, 'attribute3': LXPPacket.e_inv_day,  # Attribute dependencies
+                   'attribute1': LXPPacket.e_to_user_day, 'attribute2': LXPPacket.e_rec_day, 'attribute3': LXPPacket.e_inv_day, 'attribute4': LXPPacket.e_to_grid_day, # Attribute dependencies
                    'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR}
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
@@ -136,8 +138,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     hass.async_create_task(refreshSensors(hass, dongle=DONGLE))
 
     _LOGGER.debug("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
-    print("LuxPower sensor async_setup_platform sensor done")
-
+    _LOGGER.info("LuxPower sensor async_setup_platform sensor done")
 
 class LuxpowerSensorEntity(SensorEntity):
     """Representation of a sensor of Type HAVC, Pressure, Power, Volume."""
@@ -172,7 +173,7 @@ class LuxpowerSensorEntity(SensorEntity):
         return result
 
     def push_update(self, event):
-        print("Sensor: register event received")
+        _LOGGER.info("Sensor: register event received")
         self._data = event.data.get('data', {})
         value = self._data.get(self._device_attribute)
         value = round(value, 1) if isinstance(value, (int, float)) else "unavailable"
@@ -242,7 +243,7 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
         self._device_attribute2 = sensor_data['attribute2']
 
     def push_update(self, event):
-        print("LuxPowerBatterFlowSensor: register event received")
+        _LOGGER.info("LuxPowerBatterFlowSensor: register event received")
         self._data = event.data.get('data', {})
 
         negative_value = float(self._data.get(self._device_attribute1, 0.0))
@@ -257,36 +258,37 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
         return self._state
 
 
-class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
+class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity): #Used for both live and daily consumption calcuation.
     '''
-    Template equation state = attribute1 - attribute2 + attribute3
+    Template equation state = attribute1 - attribute2 + attribute3 - attribute4
     '''
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
-        self._device_attribute1 = sensor_data['attribute1']
-        self._device_attribute2 = sensor_data['attribute2']
-        self._device_attribute3 = sensor_data['attribute3']
-
+        self._device_attribute1 = sensor_data['attribute1'] # Power from grid to consumer unit
+        self._device_attribute2 = sensor_data['attribute2'] # Power from consumer unit to inverter
+        self._device_attribute3 = sensor_data['attribute3'] # Power from inverter to consumer unit
+        self._device_attribute4 = sensor_data['attribute4'] # Power from consumer unit to grid
+                
     def push_update(self, event):
-        print("LuxPowerHomeConsumptionSensor: register event received")
+        _LOGGER.info("LuxPowerHomeConsumptionSensor: register event received")
         self._data = event.data.get('data', {})
 
         grid = float(self._data.get(self._device_attribute1, 0.0))
         to_inverter = float(self._data.get(self._device_attribute2, 0.0))
         from_inverter = float(self._data.get(self._device_attribute3, 0.0))
-        consumption_value = grid - to_inverter + from_inverter
+        to_grid = float(self._data.get(self._device_attribute4, 0.0))
+        consumption_value = grid - to_inverter + from_inverter - to_grid
         self._state = "{}".format(round(consumption_value, 1))
 
         self.schedule_update_ha_state()
         return self._state
-
 
 class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
 
     def push_update(self, event):
-        print("LuxPowerStatusSensor: register event received")
+        _LOGGER.info("LuxPowerStatusSensor: register event received")
         self._data = event.data.get('data', {})
         state_text = ''
         status = int(self._data.get(self._device_attribute, 0.0))
@@ -332,7 +334,7 @@ class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
         self.datetime_last_received = None
 
     def push_update(self, event):
-        print("LuxPowerDataReceivedSensor: register event received")
+        _LOGGER.info("LuxPowerDataReceivedSensor: register event received")
         self._data = event.data.get('data', {})
         self.datetime_last_received = datetime.now()
         self._state = "{}".format(datetime.now().strftime("'%A %B %-d, %I:%M %p"))
@@ -447,13 +449,13 @@ class LuxStateSensorEntity(Entity):
         return result
 
     def checkonline(self, *args, **kwargs):
-        print("check online")
+        _LOGGER.info("check online")
         if time.time() - self.lastupdated_time > 10:
             self._state = "OFFLINE"
         self.schedule_update_ha_state()
 
     def push_update(self, event):
-        print("register event received")
+        _LOGGER.info("register event received")
         self._data = event.data.get('data', {})
         self._state = "ONLINE"
 
@@ -505,4 +507,3 @@ class LuxStateSensorEntity(Entity):
     def unit_of_measurement(self):
         """Return the unit this state is expressed in."""
         return self._unit_of_measurement
-

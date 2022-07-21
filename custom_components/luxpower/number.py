@@ -28,7 +28,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Set up the sensor platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux sensor platform")
-    print("Options", len(config_entry.options))
+    _LOGGER.info("Options", len(config_entry.options))
     platform_config = config_entry.data or {}
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
@@ -161,7 +161,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 
     async_add_devices(numberEntities, True)
 
-    print("LuxPower number async_setup_platform number done")
+    _LOGGER.info("LuxPower number async_setup_platform number done")
 
 
 class PercentageNumber(NumberEntity):
@@ -265,7 +265,7 @@ class PercentageNumber(NumberEntity):
     def set_native_value(self, value):
         """Update the current value."""
         num_value = float(value)
-        print("Calling set_value", num_value)
+        _LOGGER.info("Calling set_value", num_value)
 
         if num_value < self.min_value or num_value > self.max_value:
             raise vol.Invalid(
@@ -281,21 +281,21 @@ class PercentageNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            print("Connected to server")
-            print("SER:", str.encode(str(self.dongle)), str.encode(str(self.serial)))
+            _LOGGER.info("Connected to server")
+            _LOGGER.info("SER:", str.encode(str(self.dongle)), str.encode(str(self.serial)))
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_write(self._register_address, value)
-            print("packet to be written ", packet)
+            _LOGGER.info("packet to be written ", packet)
             sock.send(packet)
-            print("written packet")
+            _LOGGER.info("written packet")
             packet = sock.recv(1000)
-            print('Received: ', packet)
+            _LOGGER.info('Received: ', packet)
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
-                print(result)
+                _LOGGER.error(result)
             sock.close()
         except Exception as e:
-            print("Exception ", e)
+            _LOGGER.info("Exception ", e)
             # raise vol.Invalid(
             #     f"Couldn't set data for {self.entity_id}: {value} )"
             # )
@@ -304,15 +304,15 @@ class PercentageNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            print("Connected to server")
+            _LOGGER.info("Connected to server")
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)
-            print('Received: ', packet)
+            _LOGGER.info('Received: ', packet)
             data = lxpPacket.parse_packet(packet)
-            print(data)
+            _LOGGER.info(data)
             if not lxpPacket.packet_error:
                 if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
                     if len(lxpPacket.value) == 2:
@@ -330,10 +330,9 @@ class PercentageNumber(NumberEntity):
 
             sock.close()
         except Exception as e:
-            print("Exception ", e)
+            _LOGGER.info("Exception ", e)
 
         return self._state
-
 
 class TimeNumber(NumberEntity):
     """Representation of a demo Number entity."""
@@ -439,7 +438,8 @@ class TimeNumber(NumberEntity):
     def set_native_value(self, value):
         """Update the current value."""
         num_value = float(value)
-        print("Calling set_value", num_value)
+        _LOGGER.info("Calling set_value", num_value)
+
 
         if num_value < self.min_value or num_value > self.max_value:
             raise vol.Invalid(
@@ -455,21 +455,21 @@ class TimeNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            print("Connected to server")
-            print("SER:", str.encode(str(self.dongle)), str.encode(str(self.serial)))
+            _LOGGER.info("Connected to server")
+            _LOGGER.info("SER:", str.encode(str(self.dongle)), str.encode(str(self.serial)))
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_write(self._register_address, value)
-            print("packet to be written ", packet)
+            _LOGGER.info("packet to be written ", packet)
             sock.send(packet)
-            print("written packet")
+            _LOGGER.info("written packet")
             packet = sock.recv(1000)
-            print('Received: ', packet)
+            _LOGGER.info('Received: ', packet)
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
-                print(result)
+                _LOGGER.info(result)
             sock.close()
         except Exception as e:
-            print("Exception ", e)
+            _LOGGER.info("Exception ", e)
             # raise vol.Invalid(
             #     f"Couldn't set data for {self.entity_id}: {value} )"
             # )
@@ -480,15 +480,15 @@ class TimeNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            print("Connected to server")
+            _LOGGER.info("Connected to server")
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)
-            print('Received: ', packet)
+            _LOGGER.info('Received: ', packet)
             data = lxpPacket.parse_packet(packet)
-            print(data)
+            _LOGGER.info(data)
             if not lxpPacket.packet_error:
                 if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
                     if len(lxpPacket.value) == 2:
@@ -506,7 +506,7 @@ class TimeNumber(NumberEntity):
 
             sock.close()
         except Exception as e:
-            print("Exception ", e)
+            _LOGGER.info("Exception ", e)
 
         return self._state
 
@@ -516,4 +516,3 @@ class TimeNumber(NumberEntity):
         state_attributes['hour'] = self.hour_val
         state_attributes['minute'] = self.minute_val
         return state_attributes
-

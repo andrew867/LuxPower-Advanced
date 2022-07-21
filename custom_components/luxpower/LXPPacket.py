@@ -1,5 +1,7 @@
 import struct
+import logging
 
+_LOGGER = logging.getLogger(__name__)
 
 class LXPPacket:
 
@@ -185,11 +187,11 @@ class LXPPacket:
     def parse_packet(self, packet):
         self.packet_error = True
         if self.debug:
-            print("*********************** PARSING PACKET *************************************")
+            _LOGGER.info("*********************** PARSING PACKET *************************************")
         self.packet_length = len(packet)
 
         if self.packet_length < 37:
-            print("packet not sufficient")
+            _LOGGER.error("packet not sufficient")
             return
 
         prefix = packet[0:2]
@@ -203,38 +205,37 @@ class LXPPacket:
         self.crc_modbus = struct.unpack('H', packet[self.packet_length - 2: self.packet_length])[0]
 
         if self.debug:
-            print("prefix: ", prefix)
+            _LOGGER.debug("prefix: ", prefix)
         if prefix != self.prefix:
-            print('invalid packet')
+            _LOGGER.debug('invalid packet')
             return
 
         if self.debug:
-            print("protocol_number: ", self.protocol_number)
-            print("frame_length : ", self.frame_length)
-            print("tcp_function : ", self.tcp_function, self.TCP_FUNCTION[self.tcp_function])
-            print("dongle_serial : ", self.dongle_serial)
-
-            print("data_length : ", self.data_length)
+            _LOGGER.debug("protocol_number: ", self.protocol_number)
+            _LOGGER.debug("frame_length : ", self.frame_length)
+            _LOGGER.debug("tcp_function : ", self.tcp_function, self.TCP_FUNCTION[self.tcp_function])
+            _LOGGER.debug("dongle_serial : ", self.dongle_serial)
+            _LOGGER.debug("data_length : ", self.data_length)
 
         if self.tcp_function == self.HEARTBEAT:
-            print("HEARTBEAT ")
+            _LOGGER.debug("HEARTBEAT ")
             return
 
         if self.data_length != len(self.data_frame) + 2:
-            print('bad data length', len(self.data_frame))
+            _LOGGER.debug('bad data length', len(self.data_frame))
             return
 
         if self.debug:
-            print("data_frame : ", self.data_frame)
+            _LOGGER.debug("data_frame : ", self.data_frame)
 
-            print("crc_modbus : ", self.crc_modbus)
+            _LOGGER.debug("crc_modbus : ", self.crc_modbus)
         crc16 = self.computeCRC(self.data_frame)
 
         if self.debug:
-            print("CRC data: ", crc16)
+            _LOGGER.debug("CRC data: ", crc16)
 
         if crc16 != self.crc_modbus:
-            print("CRC error")
+            _LOGGER.debug("CRC error")
             return
 
         self.address_action = self.data_frame[0]
@@ -250,13 +251,13 @@ class LXPPacket:
             self.value = self.data_frame[14:16]
 
         if self.debug:
-            print("address_action :", self.address_action, self.ADDRESS_ACTION[self.address_action])
-            print("device_function :", self.device_function, self.DEVICE_FUNCTION[self.device_function])
-            print("serial_number :", self.serial_number)
-            print("register :", self.register)
-            print("value_length_byte_present:", self.value_length_byte_present)
-            print("value_length:", self.value_length)
-            print("value :", self.value)
+            _LOGGER.debug("address_action :", self.address_action, self.ADDRESS_ACTION[self.address_action])
+            _LOGGER.debug("device_function :", self.device_function, self.DEVICE_FUNCTION[self.device_function])
+            _LOGGER.debug("serial_number :", self.serial_number)
+            _LOGGER.debug("register :", self.register)
+            _LOGGER.debug("value_length_byte_present:", self.value_length_byte_present)
+            _LOGGER.debug("value_length:", self.value_length)
+            _LOGGER.debug("value :", self.value)
 
         # if self.tcp_function == self.TRANSLATED_DATA and self.device_function == self.READ_INPUT:
         #     if self.frame_length != 111 or self.frame_length != 97:
@@ -289,7 +290,7 @@ class LXPPacket:
 
     def process_packet(self):
         if self.debug:
-            print("--------------PROCESS PACKET---------------")
+            _LOGGER.info("--------------PROCESS PACKET---------------")
         if self.device_function == self.READ_HOLD or self.device_function == self.WRITE_SINGLE:
             for i in range(0, int(len(self.value) / 2)):
                 self.regValues[self.register + i] = self.get_read_value(self.register + i)
@@ -297,9 +298,9 @@ class LXPPacket:
                 self.regValuesHex[self.register + i] = ''.join(format(x, '02X')
                                                                 for x in self.get_read_value(self.register + i))
             if self.debug:
-                print(self.regValues)
-                print(self.regValuesInt)
-                print(self.regValuesHex)
+                _LOGGER.debug(self.regValues)
+                _LOGGER.debug(self.regValuesInt)
+                _LOGGER.debug(self.regValuesHex)
 
         # elif self.device_function == self.WRITE_SINGLE:
         #     self.regValues[self.register] = self.get_read_value(self.register)
@@ -325,9 +326,9 @@ class LXPPacket:
                 self.inputRead3 = True
 
             if self.debug:
-                print(self.readValues)
-                print(self.readValuesInt)
-                print(self.readValuesHex)
+                _LOGGER.debug(self.readValues)
+                _LOGGER.debug(self.readValuesInt)
+                _LOGGER.debug(self.readValuesHex)
 
             self.get_device_values()
 
@@ -355,7 +356,7 @@ class LXPPacket:
         crc_modbus = self.computeCRC(data_frame)
         packet = packet + data_frame + struct.pack('H', crc_modbus)
 
-        print(packet, len(packet))
+        _LOGGER.debug(packet, len(packet))
         return packet
 
     def prepare_packet_for_read(self, register, value=1, type=READ_HOLD):
@@ -382,7 +383,7 @@ class LXPPacket:
         crc_modbus = self.computeCRC(data_frame)
         packet = packet + data_frame + struct.pack('H', crc_modbus)
 
-        print(packet, len(packet))
+        _LOGGER.debug(packet, len(packet))
         return packet
 
     def get_read_value_int(self, reg):
@@ -424,7 +425,7 @@ class LXPPacket:
     def get_device_values(self):
         if self.inputRead1:
             if self.debug:
-                print("***********INPUT 1 registers************")
+                _LOGGER.info("***********INPUT 1 registers************")
             status = self.readValuesInt.get(0)
             if self.debug:
                 print("status ", status)
@@ -435,27 +436,27 @@ class LXPPacket:
             v_pv_3 = self.readValuesInt.get(3, 0) / 10
 
             if self.debug:
-                print("v_pv(Volts - v_pv_1, v_pv_2, v_pv_3)  ", v_pv_1, v_pv_2, v_pv_3)
+                _LOGGER.debug("v_pv(Volts - v_pv_1, v_pv_2, v_pv_3)  ", v_pv_1, v_pv_2, v_pv_3)
             self.data[LXPPacket.v_pv_1] = v_pv_1
             self.data[LXPPacket.v_pv_2] = v_pv_2
             self.data[LXPPacket.v_pv_3] = v_pv_3
 
             v_bat = self.readValuesInt.get(4, 0) / 10
             if self.debug:
-                print("v_bat(Volts) ", v_bat)
+                _LOGGER.debug("v_bat(Volts) ", v_bat)
             self.data[LXPPacket.v_bat] = v_bat
 
             soc = self.readValues.get(5)[0] or 0 if self.readValues.get(5) is not None else 0
             if self.debug:
-                print("soc(%) ", soc)
+                _LOGGER.debug("soc(%) ", soc)
             self.data[LXPPacket.soc] = soc
 
             p_pv_1 = self.readValuesInt.get(7, 0)
             p_pv_2 = self.readValuesInt.get(8, 0)
             p_pv_3 = self.readValuesInt.get(9, 0)
             if self.debug:
-                print("p_pv(Watts - p_pv_1, p_pv_2, p_pv_3) ", p_pv_1, p_pv_2, p_pv_3)
-                print("p_pv_total(Watts) ", p_pv_1 + p_pv_2 + p_pv_3)
+                _LOGGER.debug("p_pv(Watts - p_pv_1, p_pv_2, p_pv_3) ", p_pv_1, p_pv_2, p_pv_3)
+                _LOGGER.debug("p_pv_total(Watts) ", p_pv_1 + p_pv_2 + p_pv_3)
             self.data[LXPPacket.p_pv_1] = p_pv_1
             self.data[LXPPacket.p_pv_2] = p_pv_2
             self.data[LXPPacket.p_pv_3] = p_pv_3
@@ -464,8 +465,8 @@ class LXPPacket:
             p_charge = self.readValuesInt.get(10, 0)
             p_discharge = self.readValuesInt.get(11, 0)
             if self.debug:
-                print("p_charge(Watts) ", p_charge)
-                print("p_discharge(Watts) ", p_discharge)
+                _LOGGER.debug("p_charge(Watts) ", p_charge)
+                _LOGGER.debug("p_discharge(Watts) ", p_discharge)
             self.data[LXPPacket.p_charge] = p_charge
             self.data[LXPPacket.p_discharge] = p_discharge
 
@@ -473,41 +474,41 @@ class LXPPacket:
             v_ac_s = self.readValuesInt.get(13, 0) / 10
             v_ac_t = self.readValuesInt.get(14, 0) / 10
             if self.debug:
-                print("v_ac(Volts - v_ac_r, v_ac_s, v_ac_t) ", v_ac_r, v_ac_s, v_ac_t)
+                _LOGGER.debug("v_ac(Volts - v_ac_r, v_ac_s, v_ac_t) ", v_ac_r, v_ac_s, v_ac_t)
             self.data[LXPPacket.v_ac_r] = v_ac_r
             self.data[LXPPacket.v_ac_s] = v_ac_s
             self.data[LXPPacket.v_ac_t] = v_ac_t
 
             f_ac = self.readValuesInt.get(15, 0) / 100
             if self.debug:
-                print("f_ac(Hz)", f_ac)
+                _LOGGER.debug("f_ac(Hz)", f_ac)
             self.data[LXPPacket.f_ac] = f_ac
 
             p_inv = self.readValuesInt.get(16, 0)
             p_rec = self.readValuesInt.get(17, 0)
             if self.debug:
-                print("p_inv(Watts)", p_inv)
-                print("p_rec(Watts)", p_rec)
+                _LOGGER.debug("p_inv(Watts)", p_inv)
+                _LOGGER.debug("p_rec(Watts)", p_rec)
             self.data[LXPPacket.p_inv] = p_inv
             self.data[LXPPacket.p_rec] = p_rec
 
             pf = self.readValuesInt.get(19, 0) / 1000
             if self.debug:
-                print("pf ", pf)
+                _LOGGER.debug("pf ", pf)
             self.data[LXPPacket.pf] = pf
 
             v_eps_r = self.readValuesInt.get(20, 0) / 10
             v_eps_s = self.readValuesInt.get(21, 0) / 10
             v_eps_t = self.readValuesInt.get(22, 0) / 10
             if self.debug:
-                print("v_pv(Volts - v_eps_r, v_eps_s, v_eps_t)  ", v_eps_r, v_eps_s, v_eps_t)
+                _LOGGER.debug("v_pv(Volts - v_eps_r, v_eps_s, v_eps_t)  ", v_eps_r, v_eps_s, v_eps_t)
             self.data[LXPPacket.v_eps_r] = v_eps_r
             self.data[LXPPacket.v_eps_s] = v_eps_s
             self.data[LXPPacket.v_eps_t] = v_eps_t
 
             f_eps = self.readValuesInt.get(23, 0) / 100
             if self.debug:
-                print("f_ac(Hz)", f_eps)
+                _LOGGER.debug("f_ac(Hz)", f_eps)
             self.data[LXPPacket.f_eps] = f_eps
 
             p_to_grid = self.readValuesInt.get(26, 0)
@@ -516,9 +517,9 @@ class LXPPacket:
             if p_load < 0:
                 p_load = 0
             if self.debug:
-                print("p_to_grid(Watts)", p_to_grid)
-                print("p_to_user(Watts)", p_to_user)
-                print("p_load(Watts)", p_load)
+                _LOGGER.debug("p_to_grid(Watts)", p_to_grid)
+                _LOGGER.debug("p_to_user(Watts)", p_to_user)
+                _LOGGER.debug("p_load(Watts)", p_load)
             self.data[LXPPacket.p_to_grid] = p_to_grid
             self.data[LXPPacket.p_to_user] = p_to_user
             self.data[LXPPacket.p_load] = p_load
@@ -527,8 +528,8 @@ class LXPPacket:
             e_pv_2_day = self.readValuesInt.get(29, 0) / 10
             e_pv_3_day = self.readValuesInt.get(30, 0) / 10
             if self.debug:
-                print("e_pv_1(kWh) e_pv_1_day, e_pv_2_day, e_pv_3_day", e_pv_1_day, e_pv_2_day, e_pv_3_day)
-                print("e_pv_total(kWh) e_pv_1_day + e_pv_2_day + e_pv_3_day", e_pv_1_day + e_pv_2_day + e_pv_3_day)
+                _LOGGER.debug("e_pv_1(kWh) e_pv_1_day, e_pv_2_day, e_pv_3_day", e_pv_1_day, e_pv_2_day, e_pv_3_day)
+                _LOGGER.debug("e_pv_total(kWh) e_pv_1_day + e_pv_2_day + e_pv_3_day", e_pv_1_day + e_pv_2_day + e_pv_3_day)
             self.data[LXPPacket.e_pv_1_day] = e_pv_1_day
             self.data[LXPPacket.e_pv_2_day] = e_pv_2_day
             self.data[LXPPacket.e_pv_3_day] = e_pv_3_day
@@ -539,10 +540,10 @@ class LXPPacket:
             e_chg_day = self.readValuesInt.get(33, 0) / 10
             e_dischg_day = self.readValuesInt.get(34, 0) / 10
             if self.debug:
-                print("e_inv_day(kWh) ", e_inv_day)
-                print("e_rec_day(kWh) ", e_rec_day)
-                print("e_chg_day(kWh) ", e_chg_day)
-                print("e_dischg_day(kWh) ", e_dischg_day)
+                _LOGGER.debug("e_inv_day(kWh) ", e_inv_day)
+                _LOGGER.debug("e_rec_day(kWh) ", e_rec_day)
+                _LOGGER.debug("e_chg_day(kWh) ", e_chg_day)
+                _LOGGER.debug("e_dischg_day(kWh) ", e_dischg_day)
             self.data[LXPPacket.e_inv_day] = e_inv_day
             self.data[LXPPacket.e_rec_day] = e_rec_day
             self.data[LXPPacket.e_chg_day] = e_chg_day
@@ -552,9 +553,9 @@ class LXPPacket:
             e_to_grid_day = self.readValuesInt.get(36, 0) / 10
             e_to_user_day = self.readValuesInt.get(37, 0) / 10
             if self.debug:
-                print("e_eps_day(kWh) ", e_eps_day)
-                print("e_to_grid_day(kWh) ", e_to_grid_day)
-                print("e_to_user_day(kWh) ", e_to_user_day)
+                _LOGGER.debug("e_eps_day(kWh) ", e_eps_day)
+                _LOGGER.debug("e_to_grid_day(kWh) ", e_to_grid_day)
+                _LOGGER.debug("e_to_user_day(kWh) ", e_to_user_day)
             self.data[LXPPacket.e_eps_day] = e_eps_day
             self.data[LXPPacket.e_to_grid_day] = e_to_grid_day
             self.data[LXPPacket.e_to_user_day] = e_to_user_day
@@ -562,23 +563,23 @@ class LXPPacket:
             v_bus_1 = self.readValuesInt.get(38, 0) / 10
             v_bus_2 = self.readValuesInt.get(39, 0) / 10
             if self.debug:
-                print("v_bus_1(Volts) ", v_bus_1)
-                print("v_bus_2(Volts) ", v_bus_2)
+                _LOGGER.debug("v_bus_1(Volts) ", v_bus_1)
+                _LOGGER.debug("v_bus_2(Volts) ", v_bus_2)
             self.data[LXPPacket.v_bus_1] = v_bus_1
             self.data[LXPPacket.v_bus_2] = v_bus_2
 
         if self.inputRead2:
             if self.debug:
-                print("*********INPUT 2 registers **************")
+                _LOGGER.debug("*********INPUT 2 registers **************")
 
             e_pv_1_all = self.get_read_value_combined_int(40, 41) / 10
             e_pv_2_all = self.get_read_value_combined_int(42, 43) / 10
             e_pv_3_all = self.get_read_value_combined_int(44, 45) / 10
             if self.debug:
-                print("e_pv_1_all(kWh) ", e_pv_1_all)
-                print("e_pv_2_all(kWh) ", e_pv_2_all)
-                print("e_pv_3_all(kWh) ", e_pv_3_all)
-                print("e_pv_all(kWh) e_pv_1_all + e_pv_2_all + e_pv_3_all", e_pv_1_all + e_pv_2_all + e_pv_3_all)
+                _LOGGER.debug("e_pv_1_all(kWh) ", e_pv_1_all)
+                _LOGGER.debug("e_pv_2_all(kWh) ", e_pv_2_all)
+                _LOGGER.debug("e_pv_3_all(kWh) ", e_pv_3_all)
+                _LOGGER.debug("e_pv_all(kWh) e_pv_1_all + e_pv_2_all + e_pv_3_all", e_pv_1_all + e_pv_2_all + e_pv_3_all)
             self.data[LXPPacket.e_pv_1_all] = e_pv_1_all
             self.data[LXPPacket.e_pv_2_all] = e_pv_2_all
             self.data[LXPPacket.e_pv_3_all] = e_pv_3_all
@@ -592,13 +593,13 @@ class LXPPacket:
             e_to_grid_all = self.get_read_value_combined_int(56, 57) / 10
             e_to_user_all = self.get_read_value_combined_int(58, 59) / 10
             if self.debug:
-                print("e_inv_all(kWh) ", e_inv_all)
-                print("e_rec_all(kWh) ", e_rec_all)
-                print("e_chg_all(kWh) ", e_chg_all)
-                print("e_dischg_all(kWh) ", e_dischg_all)
-                print("e_eps_all(kWh) ", e_eps_all)
-                print("e_to_grid_all(kWh) ", e_to_grid_all)
-                print("e_to_user_all(kWh) ", e_to_user_all)
+                _LOGGER.debug("e_inv_all(kWh) ", e_inv_all)
+                _LOGGER.debug("e_rec_all(kWh) ", e_rec_all)
+                _LOGGER.debug("e_chg_all(kWh) ", e_chg_all)
+                _LOGGER.debug("e_dischg_all(kWh) ", e_dischg_all)
+                _LOGGER.debug("e_eps_all(kWh) ", e_eps_all)
+                _LOGGER.debug("e_to_grid_all(kWh) ", e_to_grid_all)
+                _LOGGER.debug("e_to_user_all(kWh) ", e_to_user_all)
             self.data[LXPPacket.e_inv_all] = e_inv_all
             self.data[LXPPacket.e_rec_all] = e_rec_all
             self.data[LXPPacket.e_chg_all] = e_chg_all
@@ -612,10 +613,10 @@ class LXPPacket:
             t_rad_2 = self.readValuesInt.get(66, 0)
             t_bat = self.readValuesInt.get(67, 0)
             if self.debug:
-                print("t_inner ", t_inner)
-                print("t_rad_1 ", t_rad_1)
-                print("t_rad_2 ", t_rad_2)
-                print("t_bat ", t_bat)
+                _LOGGER.debug("t_inner ", t_inner)
+                _LOGGER.debug("t_rad_1 ", t_rad_1)
+                _LOGGER.debug("t_rad_2 ", t_rad_2)
+                _LOGGER.debug("t_bat ", t_bat)
             self.data[LXPPacket.t_inner] = t_inner
             self.data[LXPPacket.t_rad_1] = t_rad_1
             self.data[LXPPacket.t_rad_2] = t_rad_2
@@ -623,32 +624,32 @@ class LXPPacket:
 
             uptime = self.get_read_value_combined_int(69, 70)
             if self.debug:
-                print("uptime(seconds) ", uptime)
+                _LOGGER.debug("uptime(seconds) ", uptime)
             self.data[LXPPacket.uptime] = uptime
 
         if self.inputRead3:
             if self.debug:
-                print("***********INPUT 3 registers************")
+                _LOGGER.debug("***********INPUT 3 registers************")
 
             max_chg_curr = self.readValuesInt.get(81, 0) / 100
             max_dischg_curr = self.readValuesInt.get(82, 0) / 100
             if self.debug:
-                print("max_chg_curr(Ampere) ", max_chg_curr)
-                print("max_dischg_curr(Ampere) ", max_dischg_curr)
+                _LOGGER.debug("max_chg_curr(Ampere) ", max_chg_curr)
+                _LOGGER.debug("max_dischg_curr(Ampere) ", max_dischg_curr)
             self.data[LXPPacket.max_chg_curr] = max_chg_curr
             self.data[LXPPacket.max_dischg_curr] = max_dischg_curr
 
             charge_volt_ref = self.readValuesInt.get(83, 0) / 10
             dischg_cut_volt = self.readValuesInt.get(84, 0) / 10
             if self.debug:
-                print("charge_volt_ref(Volts) ", charge_volt_ref)
-                print("dischg_cut_volt(Volts) ", dischg_cut_volt)
+                _LOGGER.debug("charge_volt_ref(Volts) ", charge_volt_ref)
+                _LOGGER.debug("dischg_cut_volt(Volts) ", dischg_cut_volt)
             self.data[LXPPacket.charge_volt_ref] = charge_volt_ref
             self.data[LXPPacket.dischg_cut_volt] = dischg_cut_volt
 
             bat_count = self.readValuesInt.get(96, 0)
             if self.debug:
-                print("bat_count ", bat_count)
+                _LOGGER.debug("bat_count ", bat_count)
             self.data[LXPPacket.bat_count] = bat_count
 
     def update_value(self, oldvalue, mask, enable=True):
@@ -737,45 +738,45 @@ if __name__ == "__main__":
     lxpPacket.set_packet(packet)
     lxpPacket.parse()
     if not lxpPacket.packet_error:
-        print("Protocol: ", lxpPacket.protocol_number, 'action: ', lxpPacket.ADDRESS_ACTION[lxpPacket.address_action])
-        print("function: ", lxpPacket.DEVICE_FUNCTION[lxpPacket.device_function], 'register: ', lxpPacket.register)
-        print(lxpPacket.regValues)
-        print(lxpPacket.regValuesInt)
-        print(lxpPacket.regValuesHex)
+        _LOGGER.debug("Protocol: ", lxpPacket.protocol_number, 'action: ', lxpPacket.ADDRESS_ACTION[lxpPacket.address_action])
+        _LOGGER.debug("function: ", lxpPacket.DEVICE_FUNCTION[lxpPacket.device_function], 'register: ', lxpPacket.register)
+        _LOGGER.debug(lxpPacket.regValues)
+        _LOGGER.debug(lxpPacket.regValuesInt)
+        _LOGGER.debug(lxpPacket.regValuesHex)
 
         lxpPacket.get_device_values()
 
     lxpPacket.set_packet(packet2)
     lxpPacket.parse()
     if not lxpPacket.packet_error:
-        print("Protocol: ", lxpPacket.protocol_number, 'action: ', lxpPacket.ADDRESS_ACTION[lxpPacket.address_action])
-        print("function: ", lxpPacket.DEVICE_FUNCTION[lxpPacket.device_function], 'register: ', lxpPacket.register)
-        print(lxpPacket.regValues)
-        print(lxpPacket.regValuesInt)
-        print(lxpPacket.regValuesHex)
+        _LOGGER.debug("Protocol: ", lxpPacket.protocol_number, 'action: ', lxpPacket.ADDRESS_ACTION[lxpPacket.address_action])
+        _LOGGER.debug("function: ", lxpPacket.DEVICE_FUNCTION[lxpPacket.device_function], 'register: ', lxpPacket.register)
+        _LOGGER.debug(lxpPacket.regValues)
+        _LOGGER.debug(lxpPacket.regValuesInt)
+        _LOGGER.debug(lxpPacket.regValuesHex)
 
         lxpPacket.get_device_values()
 
     lxpPacket.set_packet(packet3)
     lxpPacket.parse()
     if not lxpPacket.packet_error:
-        print("Protocol: ", lxpPacket.protocol_number, 'action: ', lxpPacket.ADDRESS_ACTION[lxpPacket.address_action])
-        print("function: ", lxpPacket.DEVICE_FUNCTION[lxpPacket.device_function], 'register: ', lxpPacket.register)
-        print(lxpPacket.regValues)
-        print(lxpPacket.regValuesInt)
-        print(lxpPacket.regValuesHex)
+        _LOGGER.debug("Protocol: ", lxpPacket.protocol_number, 'action: ', lxpPacket.ADDRESS_ACTION[lxpPacket.address_action])
+        _LOGGER.debug("function: ", lxpPacket.DEVICE_FUNCTION[lxpPacket.device_function], 'register: ', lxpPacket.register)
+        _LOGGER.debug(lxpPacket.regValues)
+        _LOGGER.debug(lxpPacket.regValuesInt)
+        _LOGGER.debug(lxpPacket.regValuesHex)
 
         lxpPacket.get_device_values()
 
     lxpPacket.set_packet(read_input_packet1)
     lxpPacket.parse()
     if not lxpPacket.packet_error:
-        print("Protocol: ", lxpPacket.protocol_number, 'action: ', lxpPacket.ADDRESS_ACTION[lxpPacket.address_action])
-        print("function: ", lxpPacket.DEVICE_FUNCTION[lxpPacket.device_function], 'register: ', lxpPacket.register)
-        print(lxpPacket.readValues)
-        print(lxpPacket.readValuesInt)
-        print(lxpPacket.readValuesHex)
+        _LOGGER.debug("Protocol: ", lxpPacket.protocol_number, 'action: ', lxpPacket.ADDRESS_ACTION[lxpPacket.address_action])
+        _LOGGER.debug("function: ", lxpPacket.DEVICE_FUNCTION[lxpPacket.device_function], 'register: ', lxpPacket.register)
+        _LOGGER.debug(lxpPacket.readValues)
+        _LOGGER.debug(lxpPacket.readValuesInt)
+        _LOGGER.debug(lxpPacket.readValuesHex)
 
 
     new_packet = lxpPacket.prepare_packet_for_write(21, 53505)
-    print(packet == new_packet)
+    _LOGGER.debug(packet == new_packet)
