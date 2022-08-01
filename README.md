@@ -15,7 +15,7 @@ Once you have installed this and have it working, please click below to donate t
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
 
 
-[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
+
 
 
 
@@ -106,6 +106,8 @@ The inverter dongle is fairly poor and often disconnects, this is not a fault of
 
 To solve the issue of LuxPython not showing please import the reconnection blueprint in this folder. It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20)
 
+The Blueprint import should help below but please report back if it doesn't work for you.
+[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
 
 # 2 (or more inverters)
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
