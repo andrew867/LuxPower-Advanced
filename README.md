@@ -14,7 +14,10 @@ This has cost me money to develop and all the money goes to the developer (paid 
 Once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it ALL goes to bug fixes and features!
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
 
-# How to Install
+
+[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fcommunity.home-assistant.io%2Ft%2Fmotion-activate-light-or-switch-based-on-daylight-sun-elevation%2F265010)
+
+
 
 You need to set up your inverter by following these instructions first:
 https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md
