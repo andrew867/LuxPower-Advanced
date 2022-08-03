@@ -66,12 +66,17 @@ show_state: false
 This will then give you a button to refresh your data as often as you like.
 
 
-
-You can also use the card luxpowercard.yaml which will give you a clone of the lux powertek website.
-
-
 I HIGHLY recommend you install this power card:
 https://github.com/gurbyz/power-wheel-card#readme
+Import that and then use the below yaml for the card.
+```
+type: custom:power-wheel-card
+title: Solar Status
+solar_power_entity: sensor.lux_solar_output_live
+grid_power_entity: sensor.lux_grid_flow_live
+battery_soc_entity: sensor.lux_battery
+battery_power_entity: sensor.lux_battery_flow_live
+```
 
 
 At the end of this, you should be able to add the following sensors to HA Energy and it will start tracking:
