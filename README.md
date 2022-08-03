@@ -109,9 +109,14 @@ To solve the issue of LuxPython not showing please import the reconnection bluep
 The Blueprint import should help below but please report back if it doesn't work for you.
 [![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
 
+Also be aware that you can set the times in HA but they will not pull (new) times from the Lux Server so if you set times in the app / website they will not change in HA.
+There is a blueprint and you need to create a helper (please contact me for a demo on how to do this if required) I don't recomend it as I would use the AC Charge Switch.
+
 # 2 (or more inverters)
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
 I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_templae.yaml is the file.
+
+
 # Thanks!
 
 Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
