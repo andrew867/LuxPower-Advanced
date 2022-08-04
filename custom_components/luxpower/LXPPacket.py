@@ -190,8 +190,9 @@ class LXPPacket:
             _LOGGER.info("*********************** PARSING PACKET *************************************")
         self.packet_length = len(packet)
 
+        #Packet len < 37 then packet contains no data, just serial number
         if self.packet_length < 37:
-            _LOGGER.error("packet not sufficient")
+            _LOGGER.debug("packet received, serial number")
             return
 
         prefix = packet[0:2]
