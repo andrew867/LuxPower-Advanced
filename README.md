@@ -3,7 +3,8 @@ LuxPython is a custom integration into Home Assistant to allow local access to t
 
 # IMPORTANT PLEASE READ!
 
-Please do not update to 2022.08 Luxpython does not work !!!!
+Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
+
 
 
 IF YOU USE THE OLD CONFIGURATION.YAML BE WARNED!  This is a MAJOR CHANGE and you need to delete all of the old sensors / customisation / configuration.yaml and start again. Yes, it's a pain but this is SO much better!
@@ -123,6 +124,8 @@ There is a blueprint and you need to create a helper (please contact me for a de
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
 I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_templae.yaml is the file.
 
+#BACKUPS
+The amount of times people (and me included) that HA has HA is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM I it can corrupt / fail!
 
 # Thanks!
 
