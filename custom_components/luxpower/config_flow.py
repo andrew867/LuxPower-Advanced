@@ -3,7 +3,7 @@ import ipaddress
 import re
 
 from homeassistant import config_entries, data_entry_flow
-from homeassistant.components.mqtt import MqttServiceInfo
+##from homeassistant.components.mqtt import MqttServiceInfo
 from homeassistant.core import callback
 
 from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
