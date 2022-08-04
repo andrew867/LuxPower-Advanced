@@ -3,6 +3,9 @@ LuxPython is a custom integration into Home Assistant to allow local access to t
 
 # IMPORTANT PLEASE READ!
 
+Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
+
+
 
 IF YOU USE THE OLD CONFIGURATION.YAML BE WARNED!  This is a MAJOR CHANGE and you need to delete all of the old sensors / customisation / configuration.yaml and start again. Yes, it's a pain but this is SO much better!
 
@@ -14,7 +17,10 @@ This has cost me money to develop and all the money goes to the developer (paid 
 Once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it ALL goes to bug fixes and features!
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
 
-# How to Install
+
+
+
+
 
 You need to set up your inverter by following these instructions first:
 https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md
@@ -63,12 +69,17 @@ show_state: false
 This will then give you a button to refresh your data as often as you like.
 
 
-
-You can also use the card luxpowercard.yaml which will give you a clone of the lux powertek website.
-
-
 I HIGHLY recommend you install this power card:
 https://github.com/gurbyz/power-wheel-card#readme
+Import that and then use the below yaml for the card.
+```
+type: custom:power-wheel-card
+title: Solar Status
+solar_power_entity: sensor.lux_solar_output_live
+grid_power_entity: sensor.lux_grid_flow_live
+battery_soc_entity: sensor.lux_battery
+battery_power_entity: sensor.lux_battery_flow_live
+```
 
 
 At the end of this, you should be able to add the following sensors to HA Energy and it will start tracking:
@@ -103,10 +114,19 @@ The inverter dongle is fairly poor and often disconnects, this is not a fault of
 
 To solve the issue of LuxPython not showing please import the reconnection blueprint in this folder. It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20)
 
+The Blueprint import should help below but please report back if it doesn't work for you.
+[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
+
+Also be aware that you can set the times in HA but they will not pull (new) times from the Lux Server so if you set times in the app / website they will not change in HA.
+There is a blueprint and you need to create a helper (please contact me for a demo on how to do this if required) I don't recomend it as I would use the AC Charge Switch.
 
 # 2 (or more inverters)
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
 I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_templae.yaml is the file.
+
+#BACKUPS
+The amount of times people (and me included) that HA has HA is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM I it can corrupt / fail!
+
 # Thanks!
 
 Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
