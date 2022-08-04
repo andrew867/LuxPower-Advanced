@@ -192,7 +192,7 @@ class LXPPacket:
 
         #Check if packet contains only serial number
         if self.packet_length == 19:
-            _LOGGER.error(f"Packet received. Serial number number: {packet}. No other data.")
+            _LOGGER.debug(f"Packet received. Serial number number: {packet}. No other data.")
             return
         #Check if packet contains data
         elif self.packet_length < 37:
