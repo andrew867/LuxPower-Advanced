@@ -111,6 +111,7 @@ class LXPPacket:
     p_to_grid = "p_to_grid"
     p_to_user = "p_to_user"
     p_load = "p_load"
+    p_to_eps = "p_to_eps"
     e_pv_1_day = "e_pv_1_day"
     e_pv_2_day = "e_pv_2_day"
     e_pv_3_day = "e_pv_3_day"
@@ -515,7 +516,8 @@ class LXPPacket:
             if self.debug:
                 _LOGGER.debug("f_ac(Hz)", f_eps)
             self.data[LXPPacket.f_eps] = f_eps
-
+            
+            p_to_eps = self.readValuesInt.get(24, 0)
             p_to_grid = self.readValuesInt.get(26, 0)
             p_to_user = self.readValuesInt.get(27, 0)
             p_load =  p_to_user - p_rec
