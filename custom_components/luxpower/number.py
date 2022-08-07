@@ -84,8 +84,13 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 105
-    name = f'LUX {entityID_prefix}- On-grid Discharge Cut-off SOC (?)'
+    name = f'LUX {entityID_prefix}- On-grid Discharge Cut-off SOC'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 144
+    name = f'LUX {entityID_prefix}- Off-grid Discharge Cut-off SOC (?)'
+    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
 
     register_address = 68
     name = f'LUX {entityID_prefix}- AC Charge Start'
