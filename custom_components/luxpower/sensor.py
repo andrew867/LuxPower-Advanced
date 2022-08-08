@@ -118,11 +118,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     # 2. Grid Flow Live
     sensor_data = {"name": f"Lux {entityID_prefix}- Grid Flow (Live)", "entity": 'lux_grid_flow', 'attribute': LXPPacket.p_to_user,
-                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv, 'attribute4': LXPPacket.p_to_grid, # Attribute dependencies
-                   # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
-                   
+                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_to_grid,   # Attribute dependencies
                    'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
     stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+
 
     # 3. Home Consumption Live
     sensor_data = {"name": f"Lux {entityID_prefix}- Home Consumption (Live)", "entity": 'lux_home_consumption_live', 'attribute': LXPPacket.p_to_user,
