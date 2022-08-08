@@ -532,6 +532,7 @@ class LXPPacket:
                 _LOGGER.debug("p_load(Watts)", p_load)
             self.data[LXPPacket.p_to_grid] = p_to_grid
             self.data[LXPPacket.p_to_user] = p_to_user
+            self.data[LXPPacket.p_to_eps] = p_to_eps
             self.data[LXPPacket.p_load] = p_load
 
             e_pv_1_day = self.readValuesInt.get(28, 0) / 10
