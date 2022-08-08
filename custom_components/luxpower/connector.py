@@ -132,7 +132,10 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
-            for address_bank in range(0, 3):
+            # This change stops Spamming of Lux Server Database
+            # Really needs seperate function refresh_two_registers
+            # for address_bank in range(0, 3):
+            for address_bank in range(0, 2):
                 _LOGGER.debug("send_refresh_registers for address_bank: ", address_bank)
                 await luxpower_client.get_register_data(address_bank)
                 await asyncio.sleep(1)

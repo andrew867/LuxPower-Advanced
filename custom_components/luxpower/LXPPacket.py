@@ -381,7 +381,10 @@ class LXPPacket:
         packet = packet + self.dongle_serial
         packet = packet + struct.pack('H', data_length)
 
-        data_frame = struct.pack('B', self.ACTION_READ)
+        # This Change Makes Packets Same as App in Local Mode
+        # And Solves issue Of Slow Connect on 2nd Parallel Inverter
+        # data_frame = struct.pack('B', self.ACTION_READ)
+        data_frame = struct.pack('B', self.ACTION_WRITE)
         data_frame = data_frame + struct.pack('B', type)
         data_frame = data_frame + self.serial_number
         data_frame = data_frame + struct.pack('H', register)
