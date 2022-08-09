@@ -177,7 +177,7 @@ class LuxpowerSensorEntity(SensorEntity):
         return result
 
     def push_update(self, event):
-        _LOGGER.info("Sensor: register event received")
+        _LOGGER.info("Sensor: register event received %s", self._name)
         self._data = event.data.get('data', {})
         value = self._data.get(self._device_attribute)
         value = round(value, 1) if isinstance(value, (int, float)) else "unavailable"
@@ -247,7 +247,7 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
         self._device_attribute2 = sensor_data['attribute2']
 
     def push_update(self, event):
-        _LOGGER.info("LuxPowerBatterFlowSensor: register event received")
+        _LOGGER.info("LuxPowerFlowSensor: register event received")
         self._data = event.data.get('data', {})
 
         negative_value = float(self._data.get(self._device_attribute1, 0.0))

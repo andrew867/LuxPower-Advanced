@@ -87,8 +87,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     name = f'LUX {entityID_prefix}- On-grid Discharge Cut-off SOC'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
-    register_address = 144
-    name = f'LUX {entityID_prefix}- Off-grid Discharge Cut-off SOC (?)'
+    register_address = 125
+    name = f'LUX {entityID_prefix}- Off-grid Discharge Cut-off SOC'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
 
@@ -198,10 +198,13 @@ class PercentageNumber(NumberEntity):
         return result
 
     def push_update(self, event):
-        _LOGGER.debug("register event received PercentageNumber ")
+        _LOGGER.debug("Register Event Received PercentageNumber %s", self._name)
         registers = event.data.get('registers', {})
         self.registers = registers
+        _LOGGER.debug(f"Register Address: {self._register_address}")
+
         if self._register_address in registers.keys():
+            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
             register_val = registers.get(self._register_address,None)
             if register_val is None:
                 return
