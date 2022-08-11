@@ -26,6 +26,9 @@ class LXPPacket:
     WRITE_SINGLE = 6
     WRITE_MULTI = 16
 
+    NULL_DONGLE = b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
+    NULL_SERIAL = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
     TCP_FUNCTION = {
         193: 'HEARTBEAT',
         194: 'TRANSLATED_DATA',
@@ -150,6 +153,7 @@ class LXPPacket:
     def __init__(self, packet=b'', dongle_serial=b'', serial_number=b'', debug=True):
         self.packet = packet
         self.packet_length = 0
+        self.packet_length_calced = 0
         self.packet_error = True
         self.prefix = b'\xa1\x1a'
         self.protocol_number = 0
@@ -177,7 +181,7 @@ class LXPPacket:
         self.inputRead3 = False
 
         self.data = {}
-        self.debug = debug
+        self.debug = True
 
     def set_packet(self, packet):
         self.packet = packet
@@ -191,6 +195,10 @@ class LXPPacket:
             _LOGGER.info("*********************** PARSING PACKET *************************************")
         self.packet_length = len(packet)
 
+        # Have we got a Combined Packet?
+        if self.packet_length > 117:
+            _LOGGER.debug(f"Large Packet received. Processing 1st Frame Only.")
+
         #Check if packet contains only serial number
         if self.packet_length == 19:
             _LOGGER.debug(f"Packet received. Serial number number: {packet}. No other data.")
@@ -200,45 +208,50 @@ class LXPPacket:
             _LOGGER.error("Recevied packet not sufficient")
             return
 
+
+
         prefix = packet[0:2]
         self.protocol_number = struct.unpack('H', packet[2:4])[0]
         self.frame_length = struct.unpack('H', packet[4:6])[0]
+        self.packet_length_calced = self.frame_length + 6
+
         unknown_byte = packet[6]
         self.tcp_function = packet[7]
         self.dongle_serial = packet[8:18]
         self.data_length = struct.unpack('H', packet[18:20])[0]
-        self.data_frame = packet[20:self.packet_length - 2]
-        self.crc_modbus = struct.unpack('H', packet[self.packet_length - 2: self.packet_length])[0]
+
+        self.data_frame = packet[20:self.packet_length_calced - 2]
+        self.crc_modbus = struct.unpack('H', packet[self.packet_length_calced - 2: self.packet_length_calced])[0]
 
         if self.debug:
-            _LOGGER.debug("prefix: ", prefix)
+            _LOGGER.debug("prefix: %s", prefix)
         if prefix != self.prefix:
             _LOGGER.debug('invalid packet')
             return
 
         if self.debug:
-            _LOGGER.debug("protocol_number: ", self.protocol_number)
-            _LOGGER.debug("frame_length : ", self.frame_length)
-            _LOGGER.debug("tcp_function : ", self.tcp_function, self.TCP_FUNCTION[self.tcp_function])
-            _LOGGER.debug("dongle_serial : ", self.dongle_serial)
-            _LOGGER.debug("data_length : ", self.data_length)
+            _LOGGER.debug("protocol_number: %s", self.protocol_number)
+            _LOGGER.debug("frame_length : %s", self.frame_length)
+            _LOGGER.debug("tcp_function : %s", self.tcp_function, self.TCP_FUNCTION[self.tcp_function])
+            _LOGGER.debug("dongle_serial : %s", self.dongle_serial)
+            _LOGGER.debug("data_length : %s", self.data_length)
 
         if self.tcp_function == self.HEARTBEAT:
             _LOGGER.debug("HEARTBEAT ")
             return
 
         if self.data_length != len(self.data_frame) + 2:
-            _LOGGER.debug('bad data length', len(self.data_frame))
+            _LOGGER.debug('bad data length %s', len(self.data_frame))
             return
 
         if self.debug:
-            _LOGGER.debug("data_frame : ", self.data_frame)
+            _LOGGER.debug("data_frame : %s", self.data_frame)
 
-            _LOGGER.debug("crc_modbus : ", self.crc_modbus)
+            _LOGGER.debug("crc_modbus : %s", self.crc_modbus)
         crc16 = self.computeCRC(self.data_frame)
 
         if self.debug:
-            _LOGGER.debug("CRC data: ", crc16)
+            _LOGGER.debug("CRC data: %s", crc16)
 
         if crc16 != self.crc_modbus:
             _LOGGER.debug("CRC error")
@@ -257,13 +270,13 @@ class LXPPacket:
             self.value = self.data_frame[14:16]
 
         if self.debug:
-            _LOGGER.debug("address_action :", self.address_action, self.ADDRESS_ACTION[self.address_action])
-            _LOGGER.debug("device_function :", self.device_function, self.DEVICE_FUNCTION[self.device_function])
-            _LOGGER.debug("serial_number :", self.serial_number)
-            _LOGGER.debug("register :", self.register)
-            _LOGGER.debug("value_length_byte_present:", self.value_length_byte_present)
-            _LOGGER.debug("value_length:", self.value_length)
-            _LOGGER.debug("value :", self.value)
+            #_LOGGER.debug("address_action : %s %s", self.address_action, self.ADDRESS_ACTION[self.address_action])
+            _LOGGER.debug("device_function : %s %s", self.device_function, self.DEVICE_FUNCTION[self.device_function])
+            _LOGGER.debug("serial_number : %s", self.serial_number)
+            _LOGGER.debug("register : %s", self.register)
+            _LOGGER.debug("value_length_byte_present : %s", self.value_length_byte_present)
+            _LOGGER.debug("value_length : %s", self.value_length)
+            _LOGGER.debug("value : %s", self.value)
 
         # if self.tcp_function == self.TRANSLATED_DATA and self.device_function == self.READ_INPUT:
         #     if self.frame_length != 111 or self.frame_length != 97:
@@ -369,6 +382,9 @@ class LXPPacket:
         # if len(value) != 2:
         #     print("value length is not 2")
         #     return
+
+        _LOGGER.info("Entering prepare_packet_for_read %s %s", register, value)
+
         protocol = 2
         frame_length = 32
         data_length = 18
@@ -378,21 +394,25 @@ class LXPPacket:
         packet = packet + struct.pack('H', frame_length)
         packet = packet + b'\x01'
         packet = packet + struct.pack('B', self.TRANSLATED_DATA)
-        packet = packet + self.dongle_serial
+        #packet = packet + self.dongle_serial
+        packet = packet + self.NULL_DONGLE
         packet = packet + struct.pack('H', data_length)
 
         # This Change Makes Packets Same as App in Local Mode
         # And Solves issue Of Slow Connect on 2nd Parallel Inverter
         # data_frame = struct.pack('B', self.ACTION_READ)
         data_frame = struct.pack('B', self.ACTION_WRITE)
+
         data_frame = data_frame + struct.pack('B', type)
-        data_frame = data_frame + self.serial_number
+        #data_frame = data_frame + self.serial_number
+        data_frame = data_frame + self.NULL_SERIAL
         data_frame = data_frame + struct.pack('H', register)
         data_frame = data_frame + struct.pack('H', value)
         crc_modbus = self.computeCRC(data_frame)
         packet = packet + data_frame + struct.pack('H', crc_modbus)
 
-        _LOGGER.debug(packet, len(packet))
+        _LOGGER.debug(f"{packet} LEN: %s ",len(packet))
+        #_LOGGER.debug(packet, len(packet))
         return packet
 
     def get_read_value_int(self, reg):
