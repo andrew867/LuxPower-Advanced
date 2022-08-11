@@ -25,10 +25,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
-    """Set up the sensor platform."""
+    """Set up the number platform."""
     # We only want this platform to be set up via discovery.
-    _LOGGER.info("Loading the Lux sensor platform")
-    _LOGGER.info("Options", len(config_entry.options))
+    _LOGGER.info("Loading the Lux number platform")
+    _LOGGER.info("Options %s", len(config_entry.options))
     platform_config = config_entry.data or {}
     if len(config_entry.options) > 0:
         platform_config = config_entry.options

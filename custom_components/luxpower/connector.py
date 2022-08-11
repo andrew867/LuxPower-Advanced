@@ -30,7 +30,6 @@ class LuxPowerClient(asyncio.Protocol):
         """ is called as soon as an ISM8 connects to server """
         _peername = transport.get_extra_info('peername')
         _LOGGER.info("Connected to LUXPower Server: %s", _peername)
-        _LOGGER.info("Connected to Luxpower server")
         self._transport = transport
         self._connected = True
 
@@ -42,10 +41,10 @@ class LuxPowerClient(asyncio.Protocol):
     def data_received(self, data):
         _LOGGER.debug(data)
         packet = data
-        _LOGGER.debug('Received: ', packet)
+        _LOGGER.debug('Received: %s', packet)
         result = self.lxpPacket.parse_packet(packet)
+        _LOGGER.debug(result)
         if not self.lxpPacket.packet_error:
-            _LOGGER.debug(result)
             if self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
                 event_data = {"data": result.get('data', {})}
                 _LOGGER.debug("EVENT DATA: ", event_data)
@@ -69,18 +68,20 @@ class LuxPowerClient(asyncio.Protocol):
 
     async def get_register_data(self, address_bank):
         try:
+            _LOGGER.debug("get_register_data for address_bank: %s", address_bank)
             packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, 40, type=LXPPacket.READ_INPUT)
             self._transport.write(packet)
         except Exception as e:
-            _LOGGER.info("Exception get_register_data", e)
+            _LOGGER.info("Exception get_register_data %s", e)
             _LOGGER.error(f"close error : {e}")
 
     async def get_holding_data(self, address_bank):
         try:
+            _LOGGER.debug("get_holding_data for address_bank: %s", address_bank)
             packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, 40, type=LXPPacket.READ_HOLD)
             self._transport.write(packet)
         except Exception as e:
-            _LOGGER.info("Exception get_holding_data", e)
+            _LOGGER.info("Exception get_holding_data %s", e)
             _LOGGER.error(f"close error : {e}")
 
     def stop_client(self):
@@ -136,7 +137,7 @@ class ServiceHelper:
             # Really needs seperate function refresh_two_registers
             # for address_bank in range(0, 3):
             for address_bank in range(0, 2):
-                _LOGGER.debug("send_refresh_registers for address_bank: ", address_bank)
+                _LOGGER.debug("send_refresh_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_register_data(address_bank)
                 await asyncio.sleep(1)
         _LOGGER.info("send_refresh_registers done")
@@ -150,8 +151,8 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
-            for address_bank in range(0, 3):
-                _LOGGER.debug("send_holding_registers for address_bank: ", address_bank)
+            for address_bank in range(0, 4):
+                _LOGGER.debug("send_holding_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_holding_data(address_bank)
                 await asyncio.sleep(1)
         _LOGGER.info("send_holding_registers done")
@@ -165,7 +166,7 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
-            _LOGGER.info("send_refresh_registers for address_bank: ", address_bank)
+            _LOGGER.info("send_refresh_registers for address_bank: %s", address_bank)
             await luxpower_client.get_register_data(address_bank)
             await asyncio.sleep(1)
-        _LOGGER.debug("send_refresh_registers done")
+        _LOGGER.debug("send_refresh_register_bank done")

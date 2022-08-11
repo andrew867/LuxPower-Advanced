@@ -30,8 +30,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     """Set up the sensor platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux switch platform")
-    _LOGGER.info("Set up the switch platform", config_entry.data)
-    _LOGGER.info("Options", len(config_entry.options))
+    _LOGGER.info("Set up the switch platform %s", config_entry.data)
+    _LOGGER.info("Options %s", len(config_entry.options))
     platform_config = config_entry.data or {}
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
