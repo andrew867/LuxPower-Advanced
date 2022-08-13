@@ -1,3 +1,4 @@
+import struct
 import asyncio
 import logging
 from .helpers import Event
@@ -39,20 +40,50 @@ class LuxPowerClient(asyncio.Protocol):
         _LOGGER.error("Disconnected from Luxpower server")
 
     def data_received(self, data):
+        _LOGGER.info('Inverter: %s', self.lxpPacket.serial_number)
         _LOGGER.debug(data)
         packet = data
-        _LOGGER.debug('Received: %s', packet)
-        result = self.lxpPacket.parse_packet(packet)
-        _LOGGER.debug(result)
-        if not self.lxpPacket.packet_error:
-            if self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
-                event_data = {"data": result.get('data', {})}
-                _LOGGER.debug("EVENT DATA: ", event_data)
-                self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
-            elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:
-                event_data = {"registers": result.get('registers', {})}
-                _LOGGER.debug("EVENT REGISTER: ", event_data)
-                self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
+        packet_remains = data
+        packet_remains_length = len(packet_remains)
+        _LOGGER.debug('TCP OVERALL Packet Remains Length : %s', packet_remains_length)
+
+        frame_number = 0
+
+        while packet_remains_length > 0:
+
+            frame_number = frame_number + 1
+            if frame_number > 1:
+                _LOGGER.info('*** Multi-Frame *** : %s', frame_number)
+
+            prefix = packet_remains[0:2]
+            if prefix != self.lxpPacket.prefix:
+                _LOGGER.debug('Invalid Start Of Packet Prefix %s', prefix)
+                return
+
+            protocol_number = struct.unpack('H', packet_remains[2:4])[0]
+            frame_length_remaining = struct.unpack('H', packet_remains[4:6])[0]
+            frame_length_calced = frame_length_remaining + 6
+            _LOGGER.info('CALCULATED Frame Length : %s', frame_length_calced)
+
+            this_frame = packet_remains[0:frame_length_calced]
+
+            _LOGGER.info('THIS Packet Remains Length : %s', packet_remains_length)
+            packet_remains = packet_remains[frame_length_calced:packet_remains_length]
+            packet_remains_length = len(packet_remains)
+            _LOGGER.info('NEXT Packet Remains Length : %s', packet_remains_length)
+
+            _LOGGER.debug('Received: %s', this_frame)
+            result = self.lxpPacket.parse_packet(this_frame)
+            if not self.lxpPacket.packet_error:
+                _LOGGER.info(result)
+                if self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
+                    event_data = {"data": result.get('data', {})}
+                    _LOGGER.info("EVENT DATA: %s ", event_data)
+                    self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
+                elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:
+                    event_data = {"registers": result.get('registers', {})}
+                    _LOGGER.info("EVENT REGISTER: %s ", event_data)
+                    self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
 
     async def start_luxpower_client_daemon(self, ):
         while not self._stop_client:
@@ -76,10 +107,12 @@ class LuxPowerClient(asyncio.Protocol):
             _LOGGER.error(f"close error : {e}")
 
     async def get_holding_data(self, address_bank):
+        serial = self.lxpPacket.serial_number
         try:
-            _LOGGER.debug("get_holding_data for address_bank: %s", address_bank)
+            _LOGGER.debug(f"get_holding_data for {serial} address_bank: %s", address_bank)
             packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, 40, type=LXPPacket.READ_HOLD)
             self._transport.write(packet)
+            _LOGGER.info(f"Packet Written for getting {serial} HOLDING address_bank {address_bank}")
         except Exception as e:
             _LOGGER.info("Exception get_holding_data %s", e)
             _LOGGER.error(f"close error : {e}")
@@ -154,7 +187,7 @@ class ServiceHelper:
             for address_bank in range(0, 4):
                 _LOGGER.debug("send_holding_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_holding_data(address_bank)
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
         _LOGGER.info("send_holding_registers done")
 
     async def send_refresh_register_bank(self, dongle, address_bank):

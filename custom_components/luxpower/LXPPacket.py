@@ -195,20 +195,14 @@ class LXPPacket:
             _LOGGER.info("*********************** PARSING PACKET *************************************")
         self.packet_length = len(packet)
 
-        # Have we got a Combined Packet?
-        if self.packet_length > 117:
-            _LOGGER.debug(f"Large Packet received. Processing 1st Frame Only.")
-
         #Check if packet contains only serial number
         if self.packet_length == 19:
-            _LOGGER.debug(f"Packet received. Serial number number: {packet}. No other data.")
+            _LOGGER.info(f"Packet received. Serial number number: {packet}. No other data.")
             return
         #Check if packet contains data
         elif self.packet_length < 37:
             _LOGGER.error("Recevied packet not sufficient")
             return
-
-
 
         prefix = packet[0:2]
         self.protocol_number = struct.unpack('H', packet[2:4])[0]
