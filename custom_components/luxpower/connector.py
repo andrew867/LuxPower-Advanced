@@ -83,6 +83,8 @@ class LuxPowerClient(asyncio.Protocol):
                 elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:
                     event_data = {"registers": result.get('registers', {})}
                     _LOGGER.info("EVENT REGISTER: %s ", event_data)
+                    if self.lxpPacket.register == 160:
+                        _LOGGER.warning("REGISTERS: %s ", event_data)
                     self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
 
     async def start_luxpower_client_daemon(self, ):
@@ -108,11 +110,14 @@ class LuxPowerClient(asyncio.Protocol):
 
     async def get_holding_data(self, address_bank):
         serial = self.lxpPacket.serial_number
+        number_of_registers = 40
+        if address_bank == 4:
+            number_of_registers = 20
         try:
-            _LOGGER.debug(f"get_holding_data for {serial} address_bank: %s", address_bank)
-            packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, 40, type=LXPPacket.READ_HOLD)
+            _LOGGER.debug(f"get_holding_data for {serial} address_bank: {address_bank} , {number_of_registers}")
+            packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, number_of_registers, type=LXPPacket.READ_HOLD)
             self._transport.write(packet)
-            _LOGGER.info(f"Packet Written for getting {serial} HOLDING address_bank {address_bank}")
+            _LOGGER.info(f"Packet Written for getting {serial} HOLDING address_bank {address_bank} , {number_of_registers}")
         except Exception as e:
             _LOGGER.info("Exception get_holding_data %s", e)
             _LOGGER.error(f"close error : {e}")
@@ -184,7 +189,7 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
-            for address_bank in range(0, 4):
+            for address_bank in range(0, 5):
                 _LOGGER.debug("send_holding_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_holding_data(address_bank)
                 await asyncio.sleep(2)
