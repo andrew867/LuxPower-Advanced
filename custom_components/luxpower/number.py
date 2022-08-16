@@ -55,6 +55,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     name = f'LUX {entityID_prefix}- System Discharge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
+
     register_address = 66
     name = f'LUX {entityID_prefix}- AC Charge Power Rate(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
@@ -62,35 +63,6 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     register_address = 67
     name = f'LUX {entityID_prefix}- AC Battery Charge Level(%)'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
-    register_address = 74
-    name = f'LUX {entityID_prefix}- Priority Charge Rate(%)'
-    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
-    register_address = 75
-    name = f'LUX {entityID_prefix}- Priority Charge Level(%)'
-    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
-    register_address = 82
-    name = f'LUX {entityID_prefix}- Forced Discharge Power Rate(%)'
-    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
-    register_address = 83
-    name = f'LUX {entityID_prefix}- Forced Discharge Battery Level(%)'
-    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
-    register_address = 103
-    name = f'LUX {entityID_prefix}- Feed-in Grid Power(%)'
-    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
-    register_address = 105
-    name = f'LUX {entityID_prefix}- On-grid Discharge Cut-off SOC'
-    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
-    register_address = 125
-    name = f'LUX {entityID_prefix}- Off-grid Discharge Cut-off SOC'
-    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
-
 
     register_address = 68
     name = f'LUX {entityID_prefix}- AC Charge Start'
@@ -116,6 +88,15 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     name = f'LUX {entityID_prefix}- AC Charge End2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
+
+    register_address = 74
+    name = f'LUX {entityID_prefix}- Priority Charge Rate(%)'
+    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 75
+    name = f'LUX {entityID_prefix}- Priority Charge Level(%)'
+    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
     register_address = 76
     name = f'LUX {entityID_prefix}- Force Charge Start'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
@@ -140,6 +121,14 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     name = f'LUX {entityID_prefix}- Force Charge End2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
+    register_address = 82
+    name = f'LUX {entityID_prefix}- Forced Discharge Power Rate(%)'
+    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 83
+    name = f'LUX {entityID_prefix}- Forced Discharge Battery Level(%)'
+    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
     register_address = 84
     name = f'LUX {entityID_prefix}- Force Discharge Start'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
@@ -163,6 +152,18 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     register_address = 89
     name = f'LUX {entityID_prefix}- Force Discharge End2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
+
+    register_address = 103
+    name = f'LUX {entityID_prefix}- Feed-in Grid Power(%)'
+    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 105
+    name = f'LUX {entityID_prefix}- On-grid Discharge Cut-off SOC'
+    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 125
+    name = f'LUX {entityID_prefix}- Off-grid Discharge Cut-off SOC'
+    numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     async_add_devices(numberEntities, True)
 
