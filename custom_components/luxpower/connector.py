@@ -1,6 +1,8 @@
 import struct
 import asyncio
 import logging
+import socket
+import datetime
 from .helpers import Event
 from typing import Optional
 from .const import DOMAIN
@@ -13,6 +15,8 @@ class LuxPowerClient(asyncio.Protocol):
         self.hass = hass
         self.server = server
         self.port = port
+        self.dongle_serial = dongle_serial
+        self.serial_number = serial_number
         self.events = events
         self._stop_client = False
         self._transport = None
@@ -142,8 +146,57 @@ class LuxPowerClient(asyncio.Protocol):
                 _LOGGER.error(f"close error : {e}")
         self._connected = False
         _LOGGER.debug("reconnect client finished")
-        _LOGGER.debug("reconnect finished finished")
 
+    async def synctime(self):
+        _LOGGER.info("Syncing Time to Luxpower Inverster")
+        now = datetime.datetime.now()
+        _LOGGER.info("%s %s %s %s %s %s", now.year, now.month, now.day, now.hour, now.minute, now.second)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.connect((self.server, self.port))
+            _LOGGER.info("Connected to server")
+            _LOGGER.info("SER: %s %s", str(self.dongle_serial), str(self.serial_number))
+            lxpPacket = LXPPacket(debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number)
+            _LOGGER.info("Created NEW lxpPacket structure")
+
+            _LOGGER.info("Register to be written 12 with value %s",(now.month*256)+(now.year-2000))
+            packet = lxpPacket.prepare_packet_for_write(12, (now.month*256)+(now.year-2000))
+            _LOGGER.info(f"Packet to be written {packet}")
+            sock.send(packet)
+            _LOGGER.info("Packet Written")
+            packet = sock.recv(1000)
+            _LOGGER.info(f"Received: {packet}")
+            result = lxpPacket.parse_packet(packet)
+            if not lxpPacket.packet_error:
+                _LOGGER.info(result)
+
+            _LOGGER.info("Register to be written 13 with value %s",(now.hour*256)+(now.day))
+            packet = lxpPacket.prepare_packet_for_write(13, (now.hour*256)+(now.day))
+            _LOGGER.info(f"Packet to be written {packet}")
+            sock.send(packet)
+            _LOGGER.info("Packet Written")
+            packet = sock.recv(1000)
+            _LOGGER.info(f"Received: {packet}")
+            result = lxpPacket.parse_packet(packet)
+            if not lxpPacket.packet_error:
+                _LOGGER.info(result)
+
+            _LOGGER.info("Register to be written 14 with value %s",(now.second*256)+(now.minute))
+            packet = lxpPacket.prepare_packet_for_write(14, (now.second*256)+(now.minute))
+            _LOGGER.info(f"Packet to be written {packet}")
+            sock.send(packet)
+            _LOGGER.info("Packet Written")
+            packet = sock.recv(1000)
+            _LOGGER.info(f"Received: {packet}")
+            result = lxpPacket.parse_packet(packet)
+            if not lxpPacket.packet_error:
+                _LOGGER.info(result)
+
+            sock.close()
+        except Exception as e:
+            _LOGGER.info("Exception ", e)
+
+        _LOGGER.debug("synctime finished")
 
 class ServiceHelper:
     def __init__(self, hass) -> None:
@@ -161,6 +214,19 @@ class ServiceHelper:
             await luxpower_client.reconnect()
             await asyncio.sleep(1)
         _LOGGER.debug("send_reconnect done")
+
+    async def send_synctime(self, dongle):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data['DONGLE']:
+                luxpower_client = entry_data.get('client')
+                break
+
+        if luxpower_client is not None:
+            await luxpower_client.synctime()
+            await asyncio.sleep(1)
+        _LOGGER.info("send_synctime done")
 
     async def send_refresh_registers(self, dongle):
         luxpower_client = None
