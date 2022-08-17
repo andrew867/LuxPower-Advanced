@@ -346,6 +346,7 @@ class LXPPacket:
             self.get_device_values()
 
     def prepare_packet_for_write(self, register, value):
+        _LOGGER.debug(f"Started Creating Packet For Write Register {register} With Value {value} ")
         # if len(value) != 2:
         #     print("value length is not 2")
         #     return
@@ -354,22 +355,32 @@ class LXPPacket:
         data_length = 18
 
         packet = self.prefix
+        _LOGGER.debug(f"Created Packet With Prefix {packet} , {len(packet)}")
         packet = packet + struct.pack('H', protocol)
+        _LOGGER.debug(f"Created Packet Inc Protocol {packet} , {len(packet)}")
         packet = packet + struct.pack('H', frame_length)
+        _LOGGER.debug(f"Created Packet Inc Frame Length {packet} , {len(packet)}")
         packet = packet + b'\x01'
         packet = packet + struct.pack('B', self.TRANSLATED_DATA)
+        _LOGGER.debug(f"Created Packet Inc Translated Data {packet} , {len(packet)}")
         packet = packet + self.dongle_serial
+        _LOGGER.debug(f"Created Packet Inc Dongle Serial {packet} , {len(packet)}")
         packet = packet + struct.pack('H', data_length)
+
+        _LOGGER.debug(f"Created Packet Header {packet} , {len(packet)}")
 
         data_frame = struct.pack('B', self.ACTION_WRITE)
         data_frame = data_frame + struct.pack('B', self.WRITE_SINGLE)
         data_frame = data_frame + self.serial_number
         data_frame = data_frame + struct.pack('H', register)
         data_frame = data_frame + struct.pack('H', value)
+
+        _LOGGER.debug(f"Created Data Frame {data_frame} , {len(data_frame)}")
+
         crc_modbus = self.computeCRC(data_frame)
         packet = packet + data_frame + struct.pack('H', crc_modbus)
 
-        _LOGGER.debug(packet, len(packet))
+        _LOGGER.debug(f"Created Packet {packet} , {len(packet)}")
         return packet
 
     def prepare_packet_for_read(self, register, value=1, type=READ_HOLD):

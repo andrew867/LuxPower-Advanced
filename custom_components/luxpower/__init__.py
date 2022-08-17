@@ -33,6 +33,10 @@ SCHEME_RECONNECT = vol.Schema({
     vol.Required("dongle"): vol.Coerce(str),
 })
 
+SCHEME_SETTIME = vol.Schema({
+    vol.Required("dongle"): vol.Coerce(str),
+})
+
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the BOM component."""
@@ -69,6 +73,13 @@ async def async_setup(hass: HomeAssistant, config: dict):
         dongle = call.data.get("dongle")
         await service_helper.send_reconnect(dongle=dongle)
 
+    async def handle_synctime(call):
+        """Handle the service call."""
+        _LOGGER.info("handle_synctime service: %s", DOMAIN)
+        _LOGGER.debug("handle_synctime service ")
+        dongle = call.data.get("dongle")
+        await service_helper.send_synctime(dongle=dongle)
+   
     hass.services.async_register(
         DOMAIN, "luxpower_refresh_register_bank",
         handle_refresh_register_bank,
@@ -91,6 +102,12 @@ async def async_setup(hass: HomeAssistant, config: dict):
         DOMAIN, "luxpower_reconnect",
         handle_reconnect,
         schema=SCHEME_RECONNECT
+    )
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_synctime",
+        handle_synctime,
+        schema=SCHEME_SETTIME
     )
     return True
 
