@@ -301,6 +301,8 @@ class PercentageNumber(NumberEntity):
             _LOGGER.info(f"Received: {packet}")
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
+                _LOGGER.info(result)
+            else:
                 _LOGGER.error(result)
             sock.close()
         except Exception as e:
@@ -476,6 +478,8 @@ class TimeNumber(NumberEntity):
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
                 _LOGGER.info(result)
+            else:
+                _LOGGER.error(result)
             sock.close()
         except Exception as e:
             _LOGGER.info("Exception ", e)

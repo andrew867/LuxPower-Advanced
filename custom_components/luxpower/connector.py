@@ -116,7 +116,7 @@ class LuxPowerClient(asyncio.Protocol):
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
         if address_bank == 4:
-            number_of_registers = 20
+            number_of_registers = 40
         try:
             _LOGGER.debug(f"get_holding_data for {serial} address_bank: {address_bank} , {number_of_registers}")
             packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, number_of_registers, type=LXPPacket.READ_HOLD)
@@ -169,6 +169,8 @@ class LuxPowerClient(asyncio.Protocol):
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
                 _LOGGER.info(result)
+            else:
+                _LOGGER.error(result)
 
             _LOGGER.info("Register to be written 13 with value %s",(now.hour*256)+(now.day))
             packet = lxpPacket.prepare_packet_for_write(13, (now.hour*256)+(now.day))
@@ -180,6 +182,8 @@ class LuxPowerClient(asyncio.Protocol):
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
                 _LOGGER.info(result)
+            else:
+                _LOGGER.error(result)
 
             _LOGGER.info("Register to be written 14 with value %s",(now.second*256)+(now.minute))
             packet = lxpPacket.prepare_packet_for_write(14, (now.second*256)+(now.minute))
@@ -191,6 +195,8 @@ class LuxPowerClient(asyncio.Protocol):
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
                 _LOGGER.info(result)
+            else:
+                _LOGGER.error(result)
 
             sock.close()
         except Exception as e:
