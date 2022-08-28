@@ -165,13 +165,181 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     name = f'LUX {entityID_prefix}- Off-grid Discharge Cut-off SOC'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
+#    register_address = 199
+#    name = f'LUX {entityID_prefix}- CT Clamp Offset Amount'
+#    numberEntities.append(NormalNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:knob", False, event))
+
     async_add_devices(numberEntities, True)
 
     _LOGGER.info("LuxPower number async_setup_platform number done")
 
 
+class NormalNumber(NumberEntity):
+    """Representation of a Normal Number entity."""
+
+    def __init__(
+        self, hass, host, port, dongle, serial, register_address, name, state, icon, assumed, event: Event):
+        """Initialize the Demo Number entity."""
+        self.hass = hass
+        self._host = host
+        self._port = port
+        self._name = name
+        self.dongle = dongle
+        self.serial = serial
+        self._state = state
+        self._icon = icon
+        self._assumed = assumed
+        self._register_address = register_address
+        # self.dongle_serial = dongle_serial
+        # self.serial_number = serial_number
+        self.registers = {}
+        self.event = event
+
+    async def async_added_to_hass(self) -> None:
+        result = await super().async_added_to_hass()
+        _LOGGER.info("async_added_to_hass %s", self._name)
+        if self.hass is not None:
+            self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
+        return result
+
+    def push_update(self, event):
+        _LOGGER.debug("Register Event Received PercentageNumber %s", self._name)
+        registers = event.data.get('registers', {})
+        self.registers = registers
+        _LOGGER.debug(f"Register Address: {self._register_address}")
+
+        if self._register_address in registers.keys():
+            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
+            register_val = registers.get(self._register_address,None)
+            if register_val is None:
+                return
+            oldstate = self._state
+            self._state = float(register_val)
+            if oldstate != self._state:
+                _LOGGER.debug(f"NormalNumber: Changing the number from {oldstate} to {self._state}")
+                self.schedule_update_ha_state()
+        return self._state
+
+    @property
+    def device_info(self):
+        """Return device info."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.dongle)},
+            manufacturer="LuxPower",
+            model="LUXPower Inverter",
+            name=self.dongle,
+            sw_version="1.1",
+        )
+
+    @property
+    def unique_id(self) -> Optional[str]:
+        return "{}_{}_numbernormal_{}".format(DOMAIN, self.dongle, self._register_address)
+
+    @property
+    def should_poll(self):
+        """No polling needed for a demo Number entity."""
+        return False
+
+    @property
+    def name(self):
+        """Return the name of the device if any."""
+        return self._name
+
+    @property
+    def icon(self):
+        """Return the icon to use for device if any."""
+        return self._icon
+
+    @property
+    def assumed_state(self):
+        """Return if the state is based on assumptions."""
+        return self._assumed
+
+    @property
+    def native_value(self):
+        """Return the current value."""
+        return self._state
+
+    @property
+    def native_min_value(self):
+        """Return the minimum value."""
+        return 0.0
+
+    @property
+    def native_max_value(self):
+        """Return the maximum value."""
+        return 65535.0
+
+    @property
+    def native_step(self):
+        """Return the value step."""
+        return 1.0
+
+    def set_native_value(self, value):
+        """Update the current value."""
+        num_value = float(value)
+        _LOGGER.info("Calling set_value", num_value)
+
+        if num_value < self.min_value or num_value > self.max_value:
+            raise vol.Invalid(
+                f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})"
+            )
+
+        self.set_register(int(num_value))
+        self._state = self.get_register()
+        # self._state = num_value
+        self.schedule_update_ha_state()
+
+    def set_register(self, value=0):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.connect((self._host, self._port))
+            _LOGGER.info("Connected to server")
+            _LOGGER.info("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
+            lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+            packet = lxpPacket.prepare_packet_for_write(self._register_address, value)
+            _LOGGER.info(f"packet to be written {packet}")
+            sock.send(packet)
+            _LOGGER.info("written packet")
+            packet = sock.recv(1000)
+            _LOGGER.info(f"Received: {packet}")
+            result = lxpPacket.parse_packet(packet)
+            if not lxpPacket.packet_error:
+                _LOGGER.info(result)
+            else:
+                _LOGGER.error(result)
+            sock.close()
+        except Exception as e:
+            _LOGGER.error(f"Exception {e}, Could Not Set Data For {self.entity_id}: {value}")
+
+    def get_register(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.connect((self._host, self._port))
+            _LOGGER.info("Connected to server")
+            lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
+            sock.send(packet)
+
+            packet = sock.recv(1000)
+            _LOGGER.info(f"Received: {packet} ")
+            data = lxpPacket.parse_packet(packet)
+            _LOGGER.info(data)
+            if not lxpPacket.packet_error:
+                if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
+                    if len(lxpPacket.value) == 2:
+                        num_value = lxpPacket.convert_to_int(lxpPacket.value)
+                        self._state = float(num_value)
+                        self.schedule_update_ha_state()
+
+            sock.close()
+        except Exception as e:
+            _LOGGER.error(f"Exception {e}")
+
+        return self._state
+
 class PercentageNumber(NumberEntity):
-    """Representation of a demo Number entity."""
+    """Representation of a Percentage Number entity."""
 
     def __init__(
         self, hass, host, port, dongle, serial, register_address, name, state, icon, assumed, event: Event):
@@ -306,10 +474,7 @@ class PercentageNumber(NumberEntity):
                 _LOGGER.error(result)
             sock.close()
         except Exception as e:
-            _LOGGER.info("Exception ", e)
-            # raise vol.Invalid(
-            #     f"Couldn't set data for {self.entity_id}: {value} )"
-            # )
+            _LOGGER.error(f"Exception {e}, Could Not Set Data For {self.entity_id}: {value}")
 
     def get_register(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -321,7 +486,7 @@ class PercentageNumber(NumberEntity):
             sock.send(packet)
 
             packet = sock.recv(1000)
-            _LOGGER.info('Received: ', packet)
+            _LOGGER.info(f"Received: {packet}")
             data = lxpPacket.parse_packet(packet)
             _LOGGER.info(data)
             if not lxpPacket.packet_error:
@@ -330,23 +495,15 @@ class PercentageNumber(NumberEntity):
                         num_value = lxpPacket.convert_to_int(lxpPacket.value)
                         self._state = float(num_value)
                         self.schedule_update_ha_state()
-                        # self._state = bit_polarity
-                        # self.schedule_update_ha_state()
-                        # await asyncio.sleep(1)
-                        # packet = sock.recv(1000)
-                        # print('Received: ', packet)
-                        # result = lxpPacket.parse_packet(packet)
-                        # if not lxpPacket.packet_error:
-                        #     print(result)
 
             sock.close()
         except Exception as e:
-            _LOGGER.info("Exception ", e)
+            _LOGGER.error(f"Exception {e}")
 
         return self._state
 
 class TimeNumber(NumberEntity):
-    """Representation of a demo Number entity."""
+    """Representation of a Time Number entity."""
 
     def __init__(
         self, hass, host, port, dongle, serial, register_address, name, state, icon, assumed, event: Event):
@@ -376,7 +533,7 @@ class TimeNumber(NumberEntity):
         return result
 
     def push_update(self, event):
-        _LOGGER.debug("register event received HourNumber ")
+        _LOGGER.debug("register event received TimeNumber ")
         registers = event.data.get('registers', {})
         self.registers = registers
         if self._register_address in registers.keys():
@@ -387,7 +544,7 @@ class TimeNumber(NumberEntity):
             self._state = float(register_val)
             if oldstate != self._state:
                 self.hour_val, self.minute_val = self.convert_to_time(register_val)
-                _LOGGER.debug(f"HourNumber: Changing the number from {oldstate} to {self._state}")
+                _LOGGER.debug(f"TimeNumber: Changing the number from {oldstate} to {self._state}")
                 self.schedule_update_ha_state()
         return self._state
 
@@ -482,11 +639,10 @@ class TimeNumber(NumberEntity):
                 _LOGGER.error(result)
             sock.close()
         except Exception as e:
-            _LOGGER.info("Exception ", e)
-            # raise vol.Invalid(
-            #     f"Couldn't set data for {self.entity_id}: {value} )"
-            # )
+            _LOGGER.error(f"Exception {e}, Could Not Set Data For {self.entity_id}: {value}")
+
     def convert_to_time(self, value):
+        # Has To Be Integer Type value Coming In - NOT BYTE ARRAY
         return value & 0x00ff, (value & 0xff00) >> 8
 
     def get_register(self):
@@ -499,27 +655,21 @@ class TimeNumber(NumberEntity):
             sock.send(packet)
 
             packet = sock.recv(1000)
-            _LOGGER.info('Received: ', packet)
+            _LOGGER.info(f"Received: {packet}")
             data = lxpPacket.parse_packet(packet)
             _LOGGER.info(data)
             if not lxpPacket.packet_error:
                 if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
                     if len(lxpPacket.value) == 2:
-                        self.hour_val, self.minute_val = lxpPacket.convert_to_time(lxpPacket.value)
-                        self._state = float(self.hour_val*100 + self.minute_val)
+                        num_value = lxpPacket.convert_to_int(lxpPacket.value)
+                        self.hour_val, self.minute_val = lxpPacket.convert_to_time(num_value)
+                        self._state = float(self.minute_val*256 + self.hour_val)
+                        _LOGGER.info(f"TimeNumber: Hour: {self.hour_val} Minute: {self.minute_val} Decoded from {lxpPacket.value} (numeric: {num_value}) to {self._state}")
                         self.schedule_update_ha_state()
-                        # self._state = bit_polarity
-                        # self.schedule_update_ha_state()
-                        # await asyncio.sleep(1)
-                        # packet = sock.recv(1000)
-                        # print('Received: ', packet)
-                        # result = lxpPacket.parse_packet(packet)
-                        # if not lxpPacket.packet_error:
-                        #     print(result)
 
             sock.close()
         except Exception as e:
-            _LOGGER.info("Exception ", e)
+            _LOGGER.error(f"Exception {e}")
 
         return self._state
 
