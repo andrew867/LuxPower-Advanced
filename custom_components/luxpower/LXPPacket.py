@@ -454,6 +454,7 @@ class LXPPacket:
         pass
 
     def convert_to_time(self, value):
+        # Has To Be Integer Type value Coming In - NOT BYTE ARRAY
         return value & 0x00ff, (value & 0xff00) >> 8
 
     def get_device_values(self):
