@@ -399,8 +399,8 @@ class LXPPacket:
         packet = packet + struct.pack('H', frame_length)
         packet = packet + b'\x01'
         packet = packet + struct.pack('B', self.TRANSLATED_DATA)
-        #packet = packet + self.dongle_serial
-        packet = packet + self.NULL_DONGLE
+        packet = packet + self.dongle_serial
+        #packet = packet + self.NULL_DONGLE
         packet = packet + struct.pack('H', data_length)
 
         # This Change Makes Packets Same as App in Local Mode
@@ -409,8 +409,8 @@ class LXPPacket:
         data_frame = struct.pack('B', self.ACTION_WRITE)
 
         data_frame = data_frame + struct.pack('B', type)
-        #data_frame = data_frame + self.serial_number
-        data_frame = data_frame + self.NULL_SERIAL
+        data_frame = data_frame + self.serial_number
+        #data_frame = data_frame + self.NULL_SERIAL
         data_frame = data_frame + struct.pack('H', register)
         data_frame = data_frame + struct.pack('H', value)
         crc_modbus = self.computeCRC(data_frame)
