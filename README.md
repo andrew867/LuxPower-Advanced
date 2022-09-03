@@ -68,6 +68,13 @@ show_state: false
 ```
 This will then give you a button to refresh your data as often as you like.
 
+There is also a blueprint that you can add that will automatically try to reconnect if the connection drops for a set time, as the dongles can be a bit flakey.
+To install, 
+- add a new automation and select the "Luxpower reconnect"
+- Select "Lux - data receive time" as a trigger
+- Select the interval to check on.
+![image](https://user-images.githubusercontent.com/435874/188263388-8814be9b-6075-4e66-98a0-8818cdb2b321.png)
+
 
 I HIGHLY recommend you install this power card:
 https://github.com/gurbyz/power-wheel-card#readme
