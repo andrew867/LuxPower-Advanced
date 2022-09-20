@@ -65,27 +65,27 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 68
-    name = f'LUX {entityID_prefix}- AC Charge Start'
-    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
-
-    register_address = 69
-    name = f'LUX {entityID_prefix}- AC Charge End'
-    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
-
-    register_address = 70
     name = f'LUX {entityID_prefix}- AC Charge Start1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 71
+    register_address = 69
     name = f'LUX {entityID_prefix}- AC Charge End1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 72
+    register_address = 70
     name = f'LUX {entityID_prefix}- AC Charge Start2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 73
+    register_address = 71
     name = f'LUX {entityID_prefix}- AC Charge End2'
+    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
+
+    register_address = 72
+    name = f'LUX {entityID_prefix}- AC Charge Start3'
+    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
+
+    register_address = 73
+    name = f'LUX {entityID_prefix}- AC Charge End3'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
 
@@ -98,27 +98,27 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 76
-    name = f'LUX {entityID_prefix}- Force Charge Start'
-    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
-
-    register_address = 77
-    name = f'LUX {entityID_prefix}- Force Charge End'
-    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
-
-    register_address = 78
     name = f'LUX {entityID_prefix}- Force Charge Start1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 79
+    register_address = 77
     name = f'LUX {entityID_prefix}- Force Charge End1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 80
+    register_address = 78
     name = f'LUX {entityID_prefix}- Force Charge Start2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 81
+    register_address = 79
     name = f'LUX {entityID_prefix}- Force Charge End2'
+    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
+
+    register_address = 80
+    name = f'LUX {entityID_prefix}- Force Charge Start3'
+    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
+
+    register_address = 81
+    name = f'LUX {entityID_prefix}- Force Charge End3'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 82
@@ -130,27 +130,27 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
 
     register_address = 84
-    name = f'LUX {entityID_prefix}- Force Discharge Start'
-    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
-
-    register_address = 85
-    name = f'LUX {entityID_prefix}- Force Discharge End'
-    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
-
-    register_address = 86
     name = f'LUX {entityID_prefix}- Force Discharge Start1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 87
+    register_address = 85
     name = f'LUX {entityID_prefix}- Force Discharge End1'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 88
+    register_address = 86
     name = f'LUX {entityID_prefix}- Force Discharge Start2'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
-    register_address = 89
+    register_address = 87
     name = f'LUX {entityID_prefix}- Force Discharge End2'
+    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
+
+    register_address = 88
+    name = f'LUX {entityID_prefix}- Force Discharge Start3'
+    numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
+
+    register_address = 89
+    name = f'LUX {entityID_prefix}- Force Discharge End3'
     numberEntities.append(TimeNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 0.0, "mdi:timer-outline", False, event))
 
     register_address = 103
@@ -160,6 +160,10 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     register_address = 105
     name = f'LUX {entityID_prefix}- On-grid Discharge Cut-off SOC'
     numberEntities.append(PercentageNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:car-turbocharger", False, event))
+
+    register_address = 119
+    name = f'LUX {entityID_prefix}- CT Clamp Offset Amount'
+    numberEntities.append(NormalNumber(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, "mdi:knob", False, event))
 
     register_address = 125
     name = f'LUX {entityID_prefix}- Off-grid Discharge Cut-off SOC'
