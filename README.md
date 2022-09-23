@@ -6,10 +6,6 @@ LuxPython is a custom integration into Home Assistant to allow local access to t
 Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
 
 
-
-IF YOU USE THE OLD CONFIGURATION.YAML BE WARNED!  This is a MAJOR CHANGE and you need to delete all of the old sensors / customisation / configuration.yaml and start again. Yes, it's a pain but this is SO much better!
-
-
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com I would like to know how you get on and if this works for you!
 
@@ -21,21 +17,23 @@ Once you have installed this and have it working, please click below to donate t
 
 
 
-
+# SETUP THE DONGLE
 You need to set up your inverter by following these instructions first:
 https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md
 (make sure you do not change the port from 8000) I only support WIFI dongles, not ethernet dongles right now.
 
 
+# INSTALL THE INTEGRATION
 Copy the "luxpower" integration to your Home Assistant instance into the "custom_components" folder
 
 ./custom_components/luxpower/ to your HA data directory (where your configuration.yaml lives)
 
 If you are new to HA you will likely have to create this folder but if you use HACS it should already be created.
-
-
 Next REBOOT, it's mandatory otherwise the next bit will not work.
 
+IF you get stuck with this, please look at this link: https://smartme.pl/en/adding-custom-component-to-home-assistant/ but just change it to this integration.
+
+# SETUP THE INTEGRATION
 Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
 ![image](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
@@ -48,6 +46,7 @@ Once you have added this into HA, you should see some sensors in HA.
 
 Use Developer Tools to view `sensor.luxpower`.  Initially, the state will be `Waiting` but after a few minutes when the inverter pushes an update the state will change to `ONLINE` and data will be populated in the attributes.
 
+# HOW TO REFRESH THE DATA
 On a dashboard create a new card and type this (CHANGE THE DONGLE TO YOUR DONGLE SERIAL)
 
 ```
@@ -68,14 +67,23 @@ show_state: false
 ```
 This will then give you a button to refresh your data as often as you like.
 
-There is also a blueprint that you can add that will automatically try to reconnect if the connection drops for a set time, as the dongles can be a bit flakey.
+# LUX INVERTER DISCONNECTS OFTEN - IMPORTANT
+
+The inverter dongle is fairly poor and often disconnects, this is not a fault of this code but the dongle (wifi dongle) the ethernet dongle I'm told still isn't stable and this will NOT work as I can't query the inverter via it.
+
+To solve the issue of data not flowing please import the reconnection blueprint in this folder (or read below). It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20)
+
+The Blueprint import should help below but please report back if it doesn't work for you.
+[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
+
+This is a blueprint that you can add that will automatically try to reconnect if the connection drops for a set time, as the dongles can be a bit flakey.
 To install, 
 - add a new automation and select the "Luxpower reconnect"
 - Select "Lux - data receive time" as a trigger
 - Select the interval to check on.
 ![image](https://user-images.githubusercontent.com/435874/188263388-8814be9b-6075-4e66-98a0-8818cdb2b321.png)
 
-
+#  GUI SETUP
 I HIGHLY recommend you install this power card:
 https://github.com/gurbyz/power-wheel-card#readme
 Import that and then use the below yaml for the card.
@@ -92,6 +100,7 @@ battery_power_entity: sensor.lux_battery_flow_live
 At the end of this, you should be able to add the following sensors to HA Energy and it will start tracking:
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
+# ACS Inverter (AC ONLY)
 If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!):
 ```
 ## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor code. However, there's a new name to prevent conflict. 
@@ -117,12 +126,8 @@ If you have an ACS Inverter you should modify the sensors.yaml with the followin
 ## ##### END OF Custom Lux Sensors   ######
 ```
 # Things to note
-The inverter dongle is fairly poor and often disconnects, this is not a fault of this code but the dongle (wifi dongle) the ethernet dongle I'm told still isn't stable and this will NOT work as I can't query the inverter via it.
 
-To solve the issue of data not flowing please import the reconnection blueprint in this folder. It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20)
-
-The Blueprint import should help below but please report back if it doesn't work for you.
-[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
+We cannot support the ethernet dongle, only WIFI!
 
 Also be aware that you can set the times in HA but they will not pull (new) times from the Lux Server so if you set times in the app / website they will not change in HA.
 There is a blueprint and you need to create a helper (please contact me for a demo on how to do this if required) I don't recomend it as I would use the AC Charge Switch.
@@ -132,7 +137,7 @@ Mark has helped write template sensors that will allow you to add 2 inverters to
 I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_templae.yaml is the file.
 
 #BACKUPS
-The amount of times people (and me included) that HA has HA is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM I it can corrupt / fail!
+The amount of times people (and me included) that HA has HA is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail!
 
 # Thanks!
 
