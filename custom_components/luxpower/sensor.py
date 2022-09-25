@@ -341,7 +341,7 @@ class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
         _LOGGER.info("LuxPowerDataReceivedSensor: register event received")
         self._data = event.data.get('data', {})
         self.datetime_last_received = datetime.now()
-        self._state = "{}".format(datetime.now().strftime("'%A %B %-d, %I:%M %p"))
+        self._state = "{}".format(datetime.now().strftime("%A %B %-d, %I:%M %p"))
 
         self.schedule_update_ha_state()
         return self._state
