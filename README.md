@@ -146,4 +146,14 @@ Using the great work from here: https://github.com/celsworth/lxp-packet/blob/mas
 @elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he is incredible! 
  
 # BUGS
-I'm aware that inverters sold in South Africa have issues right now. If you do have issues or you want to use it please let me know I'm working on a solution! - FIXED!
+If you find a bug, please open up an issue on Github with as much information as you can.
+
+To help with this please edit your configuration.yaml and add the following
+```
+logger:
+  default: debug
+  logs:
+    custom_components.luxpower: debug
+```
+restart Home Assistant and then go to Settings>System>Logs and copy any errors that show up.
+The error logs starting with "REGISTERS:" is helpful if we are debugging certain settings / values.
