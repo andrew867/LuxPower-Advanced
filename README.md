@@ -144,6 +144,9 @@ The amount of times people (and me included) that HA has HA is a concern. PLEASE
 Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
 
 @elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he is incredible! 
+@maegibbons who has helped fix many of the bugs for people and expanded this to support more inverters / setups. It's really appreciated!
+To everyone else who has helped fixed issue, spotted bugs and contributed to the project!
+
  
 # BUGS
 If you find a bug, please open up an issue on Github with as much information as you can.
