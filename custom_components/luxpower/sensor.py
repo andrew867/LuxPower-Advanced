@@ -93,20 +93,18 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     sensors.append({"name": f"Lux {entityID_prefix}- Radiator 1 Temperature (Live)", "entity": 'lux_radiator1_temp', 'attribute': LXPPacket.t_rad_1, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
     sensors.append({"name": f"Lux {entityID_prefix}- Radiator 2 temperature (Live)", "entity": 'lux_radiator2_temp', 'attribute': LXPPacket.t_rad_2, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
     
-    sensors.append({"name": f"Lux {entityID_prefix}- Status", "entity": 'lux_status', 'attribute': LXPPacket.status, 'device_class': '', 'unit_measure': ''})
+    sensors.append({"name": f"Lux {entityID_prefix}- Status", "entity": 'lux_status', 'attribute': LXPPacket.status})
     for sensor_data in sensors:
         stateSensors.append(LuxpowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # Setup Data recieved timestamp sensor
     sensor_data = {"name": f"Lux {entityID_prefix}- Data received time", "entity": 'lux_data_last_received_time',
-                   'attribute': LXPPacket.status,
-                   'device_class': '', 'unit_measure': ''}
+                   'attribute': LXPPacket.status}
     stateSensors.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # Setup State Text sensor
     sensor_data = {"name": f"Lux {entityID_prefix}- Status (Text)", "entity": 'lux_status_text',
-                   'attribute': LXPPacket.status,
-                   'device_class': '', 'unit_measure': ''}
+                   'attribute': LXPPacket.status}
     stateSensors.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # Multiple attribute models
@@ -158,8 +156,8 @@ class LuxpowerSensorEntity(SensorEntity):
         self._stateval = None
         self.serial = serial
         self.dongle = dongle
-        self._device_class = sensor_data['device_class']
-        self._unit_of_measurement = sensor_data['unit_measure']
+        self._device_class = sensor_data.get('device_class', None)
+        self._unit_of_measurement = sensor_data.get('unit_measure', None)
         self.is_added_to_hass = False
         self._data = {}
         self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, sensor_data['entity'])
