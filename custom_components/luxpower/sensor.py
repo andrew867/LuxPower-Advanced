@@ -322,6 +322,8 @@ class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
             state_text = 'Solar + Battery Discharging'
         elif status == 32:
             state_text = 'Battery Charging'
+        elif status == 40:
+            state_text = 'Solar + Grid + Battery Charging'
         elif status == 11:
             state_text = 'Offsetting'
         else:
