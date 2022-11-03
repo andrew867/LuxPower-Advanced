@@ -36,6 +36,7 @@ IF you get stuck with this, please look at this link: https://smartme.pl/en/addi
 # SETUP THE INTEGRATION
 Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
 ** If it doesn't show up, clear your cache in your browser as it's very likely your browser thats the issue!**
+
 ![image](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
 Fill in your IP, Port (8000), dongle serial and inverter serial ( this can be found on the Lux website at server.luxpowertek.com
