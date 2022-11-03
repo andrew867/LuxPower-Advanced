@@ -103,7 +103,11 @@ At the end of this, you should be able to add the following sensors to HA Energy
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
 # ACS Inverter (AC ONLY)
-If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!):
+If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!)
+You can add sensor: !include sensors.yaml line into your configuration and then create a sensors.yaml file with the below. Have a look at the link below for more help on this.
+https://opensource.com/article/21/2/home-assistant-custom-sensors
+
+:
 ```
 ## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor code. However, there's a new name to prevent conflict. 
     lux_new_home_consumption:
