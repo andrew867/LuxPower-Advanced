@@ -35,6 +35,8 @@ IF you get stuck with this, please look at this link: https://smartme.pl/en/addi
 
 # SETUP THE INTEGRATION
 Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
+** If it doesn't show up, clear your cache in your browser as it's very likely your browser thats the issue!**
+
 ![image](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
 Fill in your IP, Port (8000), dongle serial and inverter serial ( this can be found on the Lux website at server.luxpowertek.com
@@ -71,7 +73,7 @@ This will then give you a button to refresh your data as often as you like.
 
 The inverter dongle is fairly poor and often disconnects, this is not a fault of this code but the dongle (wifi dongle) the ethernet dongle I'm told still isn't stable and this will NOT work as I can't query the inverter via it.
 
-To solve the issue of data not flowing please import the reconnection blueprint in this folder (or read below). It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20)
+To solve the issue of data not flowing please import the reconnection blueprint in this folder (or read below). It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20 minutes but absolutely no lower than 10)
 
 The Blueprint import should help below but please report back if it doesn't work for you.
 [![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
@@ -101,7 +103,11 @@ At the end of this, you should be able to add the following sensors to HA Energy
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
 # ACS Inverter (AC ONLY)
-If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!):
+If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!)
+You can add sensor: !include sensors.yaml line into your configuration and then create a sensors.yaml file with the below. Have a look at the link below for more help on this.
+https://opensource.com/article/21/2/home-assistant-custom-sensors
+
+:
 ```
 ## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor code. However, there's a new name to prevent conflict. 
     lux_new_home_consumption:
