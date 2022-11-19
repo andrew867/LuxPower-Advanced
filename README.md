@@ -161,7 +161,6 @@ logger:
 restart Home Assistant and then go to Settings>System>Logs and copy any errors that show up.
 The error logs starting with "REGISTERS:" is helpful if we are debugging certain settings / values.
 
-
 # Legal 
 
 Copyright (c) 2022, Guy Wells
