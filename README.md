@@ -206,6 +206,10 @@ There is a blueprint and you need to create a helper (please contact me for a de
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
 I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_templae.yaml is the file.
 
+#Advanced stuff
+Do you want to refresh more often than 6 minutes or do you want to change times in HA? Have a read of this file but be warned it's a bit more complex!
+https://github.com/guybw/LuxPython_DEV/blob/master/README_ADVANCED.md
+
 #BACKUPS
 The amount of times people (and me included) that HA has HA is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail!
 
