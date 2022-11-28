@@ -37,6 +37,7 @@ I would strongly suggest you install the Samba share in HA. I would watch this v
 
 
 IF you get stuck with this, please look at this link: https://smartme.pl/en/adding-custom-component-to-home-assistant/ but just change it to this integration.
+
 The files SHOULD look like this (note that the IP should the be IP of the PI for example 192.168.0.3
 \\192.168.0.3\config\custom_components\luxpower
 ![image](https://user-images.githubusercontent.com/64648444/204362676-f96ca53a-8713-45a8-a0ee-38edea1c132a.png)
