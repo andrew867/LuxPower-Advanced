@@ -20,7 +20,7 @@ Once you have installed this and have it working, please click below to donate t
 
 # SETUP THE DONGLE
 You need to set up your inverter by following these instructions first:
-https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md
+https://github.com/guybw/LuxPython_DEV/blob/master/DongleSetup.md
 (make sure you do not change the port from 8000) I only support WIFI dongles, not ethernet dongles right now.
 
 
