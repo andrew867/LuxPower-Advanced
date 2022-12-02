@@ -5,9 +5,18 @@ This is a work in progess  - do not use it yet.
 
 Below is to just change the AC start and end time, you can do it for the others if you wish for discharging etc.
 Create 2 helpers
-HELPER -  AC Charge Start
-HELPER -  AC Charge End
-This should be a time helper
+
+LUX AC Charge End
+
+LUX AC Start Start
+
+LUX Force Charge End
+
+LUX Force Charge Start
+
+LUX Force Discharge Start
+
+LLUX Force Discharge End
 
 Create 2 automations:
 
