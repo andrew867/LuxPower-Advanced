@@ -111,7 +111,7 @@ type: vertical-stack
 cards:
   - type: entities
     entities:
-      - entity: switch.lux_power_backup_enable_2
+      - entity: switch.lux_power_backup_enable
         name: Power Backup (EPS)
     title: Application Setting
     show_header_toggle: false
@@ -132,7 +132,7 @@ cards:
     title: AC Charge
   - type: entities
     entities:
-      - entity: switch.lux_charge_priority_2
+      - entity: switch.lux_charge_priority
       - entity: number.lux_priority_charge_rate
       - entity: number.lux_priority_charge_level
       - entity: number.lux_force_charge_start
@@ -144,11 +144,11 @@ cards:
       - entity: number.lux_system_discharge_power_rate
       - entity: number.lux_on_grid_discharge_cut_off_soc
         icon: mdi:brightness-percent
-      - entity: number.lux_off_grid_discharge_cut_off_soc_2
+      - entity: number.lux_off_grid_discharge_cut_off_soc
         icon: mdi:brightness-percent
-      - entity: switch.lux_force_discharge_enable_2
+      - entity: switch.lux_force_discharge_enable
       - entity: number.lux_forced_discharge_power_rate
-      - entity: number.lux_off_grid_discharge_cut_off_soc_2
+      - entity: number.lux_off_grid_discharge_cut_off_soc
       - entity: number.lux_force_discharge_start
       - entity: number.lux_force_discharge_end
     title: Discharge Settings
