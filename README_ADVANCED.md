@@ -95,7 +95,7 @@ show_header_toggle: false
 ```
 
 
-# below will refresh the data in HA every 30 seconds.
+# Below will refresh the data in HA every 30 seconds.
 This is a work in progess  
 
 Import the automation below, this will refresh the data roughly every 30 seconds depending when the inverter reads our request. WARNING: DO NOT SET IT LOWER OR IT WILL BREAK! This is due to the inverter taking time to respond, not my code!
@@ -119,7 +119,7 @@ mode: single
 # LoveLace (GUI Example)
 In order to help you off, you can create a new card in LoveLace. 
 Simply go to, Settings > Dashboards> Click on the Dashboard you want to add or click on "Open" on Overview if you don't have a custom one.
-Click on the three dots ... at the top right and click Edit Dashboard. At the bottom right click "Add Card" , scroll to the bottom and find "Manual" and click on it, delete the type: etc and paste below:
+Click on the three dots ... at the top right and click Edit Dashboard. At the bottom right click "Add Card" , scroll to the bottom and find "Manual" and click on it, delete the prefilled text then copy and paste the below:
 ```
 type: vertical-stack
 cards:
@@ -168,4 +168,4 @@ cards:
     title: Discharge Settings
 ```
 then click Save.
-If any sensors are wrong, just remove the "_2" off the sensor name.
+If any sensors are wrong, just remove the "_2" off the sensor name. Tip: If you click on the view "Default", you will get an automatically generated list of all the sensors that are known by HA, you can usually find what you are looking for here, especially after clicking on it and inspecting its naming.
