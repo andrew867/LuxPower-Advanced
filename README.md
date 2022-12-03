@@ -31,15 +31,15 @@ Copy the "luxpower" integration to your Home Assistant instance into the "/confi
 You should see a "custom_components" folder, then simply copy ./custom_components/luxpower/ - this is explained in more detail below.
 
 Otherwise, if you are new to HA you will likely have to create this folder but if you use HACS it should already be created.
-Next REBOOT, it's mandatory otherwise the next bit will not work.
+Next REBOOT, this is mandatory otherwise the next bit will not work.
 
-I would strongly suggest you install the Samba share in HA. I would watch this video: https://www.youtube.com/watch?v=udqY2CYzYGk
+I would strongly suggest you install the Samba share in HA. Watch this video: https://www.youtube.com/watch?v=udqY2CYzYGk
 
 
-IF you get stuck with this, please look at this link: https://smartme.pl/en/adding-custom-component-to-home-assistant/ but just change it to this integration.
+IF you get stuck with this, please look at this link: https://smartme.pl/en/adding-custom-component-to-home-assistant/ but just change the example to this integration.
 
-The files SHOULD look like this (note that the IP should the be your IP address of the HA PI or device for example 192.168.0.3
-\\\192.168.0.3\config\custom_components\luxpower - Don't copy the entire folder over. It will not work, only copy from the ZIP file the "luxpower" folder's contents in "custom_components" it should look like this.
+The files SHOULD look like this (note that the IP should the be your IP address of the HA Raspberry Pi or device, for our example below 172.16.255.30
+\\\172.16.255.30\config\custom_components\luxpower - Don't copy the entire folder over. It will not work, only copy from the ZIP file the "luxpower" folder's contents in "custom_components" it should look like this.
 
 ![image](https://user-images.githubusercontent.com/64648444/204362676-f96ca53a-8713-45a8-a0ee-38edea1c132a.png)
 
