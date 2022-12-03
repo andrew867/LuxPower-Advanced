@@ -1,10 +1,13 @@
-please read the first readme BEFORE following any instructions on this page, this is more of a notes page and likely will not work the first time around.
+Please read the first readme BEFORE following any instructions on this page, this is more of a notes page and likely will not work for you the first time around.
 
-#Changing the time in HA for Lux times
+# Changing the time in HA for Lux times
 This is a work in progess  - do not use it yet.
 
-Below is to just change the AC start and end time, you can do it for the others if you wish for discharging etc.
-Create 2 helpers
+Below is to just change the AC start and end time and display them correctly, you can do it for the others if you wish for discharging etc.
+
+Firstly we need to create Helpers for each of the following to help us. Navigate to "Settings.Devices & Services", click on the Helpers at the top and then click "+ Create Helper" button on the bottom right.
+
+Then create a "Date and or time" helper for each of following, paste each of these names into the Name field and remember click on "Date and time" radio button at the bottom:
 
 LUX AC Charge End
 
@@ -16,9 +19,11 @@ LUX Force Charge Start
 
 LUX Force Discharge Start
 
-LLUX Force Discharge End
+LUX Force Discharge End
 
-Create 2 automations:
+After that we will have 5 "date and/or time" helpers.
+
+Next, we need to create two automations to help us link this all together. Navigate to Settings.Automations and click on the "+ Create Automation" button on the bottom right. Create 2 automations, clicking on "Start with an empty automation" for each of the following. Click on the 3 vertical dots on the top right Simply copy and select the "Edit in YAML" option. Paste the following under "New Automation", replacing the existing text:
 
 First 
 ```
@@ -75,9 +80,9 @@ action:
 mode: single
 ```
 
+Finally, go to one of your views, select "Edit Dashboard" after you've clicked on the 3 vertical dots on the top right.
 
-
-You can then add this YAML into lovelace to show the times in HA:
+On the bottom right, click on "+ Add Card", scroll to the bottom of the list and click on "Manual - Need to add a custom card or just want to manually write the YAML?" You can then copy and paste this YAML into card to show the times in HA:
 ```
 type: entities
 entities:
@@ -93,7 +98,7 @@ show_header_toggle: false
 # below will refresh the data in HA every 30 seconds.
 This is a work in progess  
 
-Import the automation below, this will refresh the data every 30 seconds. DO NOT SET IT LOWER IT WILL BREAK! this is due to the inverter taking time to respond, not my code!
+Import the automation below, this will refresh the data roughly every 30 seconds depending when the inverter reads our request. WARNING: DO NOT SET IT LOWER OR IT WILL BREAK! This is due to the inverter taking time to respond, not my code!
 
 You MUST include your dongle number below!
 ```
@@ -162,5 +167,5 @@ cards:
       - entity: number.lux_force_discharge_end
     title: Discharge Settings
 ```
-then click save.
+then click Save.
 If any sensors are wrong, just remove the "_2" off the sensor name.
