@@ -9,9 +9,9 @@ Firstly we need to create Helpers for each of the following to help us. Navigate
 
 Then create a "Date and or time" helper for each of following, paste each of these names into the Name field and remember click on "Date and time" radio button at the bottom:
 
-LUX AC Charge End
+LUX AC Charge Start
 
-LUX AC Start Start
+LUX AC Charge End
 
 LUX Force Charge End
 
