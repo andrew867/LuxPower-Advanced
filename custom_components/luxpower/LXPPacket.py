@@ -696,8 +696,8 @@ class LXPPacket:
             
             max_cell_volt = self.readValuesInt.get(101, 0) / 1000
             min_cell_volt = self.readValuesInt.get(102, 0) / 1000
-            min_cell_temp = self.readValuesInt.get(103, 0)
-            max_cell_temp = self.readValuesInt.get(104, 0)
+            min_cell_temp = self.readValuesInt.get(103, 0) / 10
+            max_cell_temp = self.readValuesInt.get(104, 0) / 10
             if self.debug:
                 _LOGGER.debug("max_cell_volt ", max_cell_volt)
                 _LOGGER.debug("min_cell_volt ", min_cell_volt)
