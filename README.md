@@ -1,13 +1,14 @@
 # LuxPython (Full Home Assistant UI Integration)
-LuxPython is a custom integration into Home Assistant to allow local access to the Lux Powertek Inverter
+LuxPython is a custom integration into Home Assistant (HA) to allow local access to the Lux Powertek Inverter
 
 # IMPORTANT PLEASE READ!
 
 Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
 
+IF YOU ARE READING THIS AND YOU ARE SELLING MY PROJECT - YOU SUCK! I DON'T MAKE MONEY ON THIS AND NOR SHOULD ANYONE ELSE!
 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
-Please keep in touch at guybw@hotmail.com I would like to know how you get on and if this works for you!
+Please keep in touch at guybw@hotmail.com - I would like to know how you get on and if this works for you!
 
 This has cost me money to develop and all the money goes to the developer (paid gigs) to fix issues!
 Once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it ALL goes to bug fixes and features!
@@ -19,22 +20,35 @@ Once you have installed this and have it working, please click below to donate t
 
 # SETUP THE DONGLE
 You need to set up your inverter by following these instructions first:
-https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md
+https://github.com/guybw/LuxPython_DEV/blob/master/DongleSetup.md
 (make sure you do not change the port from 8000) I only support WIFI dongles, not ethernet dongles right now.
 
 
+
 # INSTALL THE INTEGRATION
-Copy the "luxpower" integration to your Home Assistant instance into the "custom_components" folder
+Copy the "luxpower" integration to your Home Assistant instance into the "/config/" folder (where your configuration.yaml lives)
 
-./custom_components/luxpower/ to your HA data directory (where your configuration.yaml lives)
+You should see a "custom_components" folder, then simply copy ./custom_components/luxpower/ - this is explained in more detail below.
 
-If you are new to HA you will likely have to create this folder but if you use HACS it should already be created.
-Next REBOOT, it's mandatory otherwise the next bit will not work.
+Otherwise, if you are new to HA you will likely have to create this folder but if you use HACS it should already be created.
+Next REBOOT, this is mandatory otherwise the next bit will not work.
 
-IF you get stuck with this, please look at this link: https://smartme.pl/en/adding-custom-component-to-home-assistant/ but just change it to this integration.
+I would strongly suggest you install the Samba share in HA. Watch this video: https://www.youtube.com/watch?v=udqY2CYzYGk
+
+
+IF you get stuck with this, please look at this link: https://smartme.pl/en/adding-custom-component-to-home-assistant/ but just change the example to this integration.
+
+The files SHOULD look like this (note that the IP should the be your IP address of the HA Raspberry Pi or device, for our example below 172.16.255.30
+
+
+Type into Windows File Explorer: "\\\172.16.255.30\config\custom_components\luxpower" - Don't copy the entire folder over. It will not work, only copy from the ZIP file the "luxpower" folder's contents in "custom_components" it should look like this.
+
+![image](https://user-images.githubusercontent.com/64648444/204362676-f96ca53a-8713-45a8-a0ee-38edea1c132a.png)
 
 # SETUP THE INTEGRATION
 Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
+** If it doesn't show up, clear your cache in your browser as it's very likely your browser is the issue!**
+
 ![image](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
 Fill in your IP, Port (8000), dongle serial and inverter serial ( this can be found on the Lux website at server.luxpowertek.com
@@ -71,7 +85,7 @@ This will then give you a button to refresh your data as often as you like.
 
 The inverter dongle is fairly poor and often disconnects, this is not a fault of this code but the dongle (wifi dongle) the ethernet dongle I'm told still isn't stable and this will NOT work as I can't query the inverter via it.
 
-To solve the issue of data not flowing please import the reconnection blueprint in this folder (or read below). It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20)
+To solve the issue of data not flowing please import the reconnection blueprint in this folder (or read below). It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20 minutes but absolutely no lower than 10)
 
 The Blueprint import should help below but please report back if it doesn't work for you.
 [![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
@@ -101,7 +115,11 @@ At the end of this, you should be able to add the following sensors to HA Energy
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
 # ACS Inverter (AC ONLY)
-If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!):
+If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!)
+You can add sensor: !include sensors.yaml line into your configuration and then create a sensors.yaml file with the below. Have a look at the link below for more help on this.
+https://opensource.com/article/21/2/home-assistant-custom-sensors
+
+:
 ```
 ## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor code. However, there's a new name to prevent conflict. 
     lux_new_home_consumption:
@@ -125,6 +143,7 @@ If you have an ACS Inverter you should modify the sensors.yaml with the followin
                             
 ## ##### END OF Custom Lux Sensors   ######
 ```
+
 # Things to note
 
 We cannot support the ethernet dongle, only WIFI!
@@ -136,8 +155,12 @@ There is a blueprint and you need to create a helper (please contact me for a de
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
 I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_templae.yaml is the file.
 
-#BACKUPS
-The amount of times people (and me included) that HA has HA is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail!
+# Advanced stuff
+Do you want to refresh more often than 6 minutes or do you want to change times in HA? Have a read of this file but be warned it's a bit more complex!
+https://github.com/guybw/LuxPython_DEV/blob/master/README_ADVANCED.md
+
+# BACKUPS
+The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail!
 
 # Thanks!
 
@@ -160,7 +183,6 @@ logger:
 ```
 restart Home Assistant and then go to Settings>System>Logs and copy any errors that show up.
 The error logs starting with "REGISTERS:" is helpful if we are debugging certain settings / values.
-
 
 # Legal 
 

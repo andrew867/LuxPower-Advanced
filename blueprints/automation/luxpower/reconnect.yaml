@@ -1,6 +1,6 @@
 blueprint:
   name: LuxPower Reconnect
-  description: Schedule a reconnection if the last data received is x minutes (configurable) ago, reconnection is attemped every minute if it conenction fails afterwards.
+  description: Schedule a reconnection if the last data received is x minutes (configurable) ago, reconnection is attemped every minute if it connect fails afterwards.
   domain: automation
   input:
     luxpower_time_entity:

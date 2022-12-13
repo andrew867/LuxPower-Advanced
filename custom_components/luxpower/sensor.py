@@ -92,6 +92,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     sensors.append({"name": f"Lux {entityID_prefix}- Internal Temperature (Live)", "entity": 'lux_internal_temp', 'attribute': LXPPacket.t_inner, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
     sensors.append({"name": f"Lux {entityID_prefix}- Radiator 1 Temperature (Live)", "entity": 'lux_radiator1_temp', 'attribute': LXPPacket.t_rad_1, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
     sensors.append({"name": f"Lux {entityID_prefix}- Radiator 2 temperature (Live)", "entity": 'lux_radiator2_temp', 'attribute': LXPPacket.t_rad_2, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {entityID_prefix}- Battery Max Cell Voltage (Live)", "entity": 'max_cell_volt', 'attribute': LXPPacket.max_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
+    sensors.append({"name": f"Lux {entityID_prefix}- Battery Min Cell Voltage (Live)", "entity": 'min_cell_volt', 'attribute': LXPPacket.min_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
+    sensors.append({"name": f"Lux {entityID_prefix}- Battery Max Cell Temperature (Live)", "entity": 'max_cell_temp', 'attribute': LXPPacket.max_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {entityID_prefix}- Battery Min Cell Temperaturee (Live)", "entity": 'min_cell_temp', 'attribute': LXPPacket.min_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})  
     
     sensors.append({"name": f"Lux {entityID_prefix}- Status", "entity": 'lux_status', 'attribute': LXPPacket.status})
     for sensor_data in sensors:
@@ -322,6 +326,8 @@ class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
             state_text = 'Solar + Battery Discharging'
         elif status == 32:
             state_text = 'Battery Charging'
+        elif status == 40:
+            state_text = 'Solar + Grid + Battery Charging'
         elif status == 11:
             state_text = 'Offsetting'
         else:
