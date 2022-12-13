@@ -149,6 +149,8 @@ class LXPPacket:
     charge_volt_ref = "charge_volt_ref"
     dischg_cut_volt = "dischg_cut_volt"
     bat_count = "bat_count"
+    bat_capacity = "bat_capacity"
+
 
     def __init__(self, packet=b'', dongle_serial=b'', serial_number=b'', debug=True):
         self.packet = packet
@@ -471,27 +473,27 @@ class LXPPacket:
             v_pv_3 = self.readValuesInt.get(3, 0) / 10
 
             if self.debug:
-                _LOGGER.debug("v_pv(Volts - v_pv_1, v_pv_2, v_pv_3)  ", v_pv_1, v_pv_2, v_pv_3)
+                _LOGGER.debug("v_pv(Volts - v_pv_1, v_pv_2, v_pv_3)  %s,%s,%s", v_pv_1, v_pv_2, v_pv_3)
             self.data[LXPPacket.v_pv_1] = v_pv_1
             self.data[LXPPacket.v_pv_2] = v_pv_2
             self.data[LXPPacket.v_pv_3] = v_pv_3
 
             v_bat = self.readValuesInt.get(4, 0) / 10
             if self.debug:
-                _LOGGER.debug("v_bat(Volts) ", v_bat)
+                _LOGGER.debug("v_bat(Volts) %s", v_bat)
             self.data[LXPPacket.v_bat] = v_bat
 
             soc = self.readValues.get(5)[0] or 0 if self.readValues.get(5) is not None else 0
             if self.debug:
-                _LOGGER.debug("soc(%) ", soc)
+                _LOGGER.debug("soc(%) %s", soc)
             self.data[LXPPacket.soc] = soc
 
             p_pv_1 = self.readValuesInt.get(7, 0)
             p_pv_2 = self.readValuesInt.get(8, 0)
             p_pv_3 = self.readValuesInt.get(9, 0)
             if self.debug:
-                _LOGGER.debug("p_pv(Watts - p_pv_1, p_pv_2, p_pv_3) ", p_pv_1, p_pv_2, p_pv_3)
-                _LOGGER.debug("p_pv_total(Watts) ", p_pv_1 + p_pv_2 + p_pv_3)
+                _LOGGER.debug("p_pv(Watts - p_pv_1, p_pv_2, p_pv_3) %s,%s,%s", p_pv_1, p_pv_2, p_pv_3)
+                _LOGGER.debug("p_pv_total(Watts) %s", p_pv_1 + p_pv_2 + p_pv_3)
             self.data[LXPPacket.p_pv_1] = p_pv_1
             self.data[LXPPacket.p_pv_2] = p_pv_2
             self.data[LXPPacket.p_pv_3] = p_pv_3
@@ -500,8 +502,8 @@ class LXPPacket:
             p_charge = self.readValuesInt.get(10, 0)
             p_discharge = self.readValuesInt.get(11, 0)
             if self.debug:
-                _LOGGER.debug("p_charge(Watts) ", p_charge)
-                _LOGGER.debug("p_discharge(Watts) ", p_discharge)
+                _LOGGER.debug("p_charge(Watts) %s", p_charge)
+                _LOGGER.debug("p_discharge(Watts) %s", p_discharge)
             self.data[LXPPacket.p_charge] = p_charge
             self.data[LXPPacket.p_discharge] = p_discharge
 
@@ -509,41 +511,41 @@ class LXPPacket:
             v_ac_s = self.readValuesInt.get(13, 0) / 10
             v_ac_t = self.readValuesInt.get(14, 0) / 10
             if self.debug:
-                _LOGGER.debug("v_ac(Volts - v_ac_r, v_ac_s, v_ac_t) ", v_ac_r, v_ac_s, v_ac_t)
+                _LOGGER.debug("v_ac(Volts - v_ac_r, v_ac_s, v_ac_t) %s,%s,%s", v_ac_r, v_ac_s, v_ac_t)
             self.data[LXPPacket.v_ac_r] = v_ac_r
             self.data[LXPPacket.v_ac_s] = v_ac_s
             self.data[LXPPacket.v_ac_t] = v_ac_t
 
             f_ac = self.readValuesInt.get(15, 0) / 100
             if self.debug:
-                _LOGGER.debug("f_ac(Hz)", f_ac)
+                _LOGGER.debug("f_ac(Hz) %s", f_ac)
             self.data[LXPPacket.f_ac] = f_ac
 
             p_inv = self.readValuesInt.get(16, 0)
             p_rec = self.readValuesInt.get(17, 0)
             if self.debug:
-                _LOGGER.debug("p_inv(Watts)", p_inv)
-                _LOGGER.debug("p_rec(Watts)", p_rec)
+                _LOGGER.debug("p_inv(Watts) %s", p_inv)
+                _LOGGER.debug("p_rec(Watts) %s", p_rec)
             self.data[LXPPacket.p_inv] = p_inv
             self.data[LXPPacket.p_rec] = p_rec
 
             pf = self.readValuesInt.get(19, 0) / 1000
             if self.debug:
-                _LOGGER.debug("pf ", pf)
+                _LOGGER.debug("pf %s", pf)
             self.data[LXPPacket.pf] = pf
 
             v_eps_r = self.readValuesInt.get(20, 0) / 10
             v_eps_s = self.readValuesInt.get(21, 0) / 10
             v_eps_t = self.readValuesInt.get(22, 0) / 10
             if self.debug:
-                _LOGGER.debug("v_pv(Volts - v_eps_r, v_eps_s, v_eps_t)  ", v_eps_r, v_eps_s, v_eps_t)
+                _LOGGER.debug("v_pv(Volts - v_eps_r, v_eps_s, v_eps_t)  %s,%s,%s", v_eps_r, v_eps_s, v_eps_t)
             self.data[LXPPacket.v_eps_r] = v_eps_r
             self.data[LXPPacket.v_eps_s] = v_eps_s
             self.data[LXPPacket.v_eps_t] = v_eps_t
 
             f_eps = self.readValuesInt.get(23, 0) / 100
             if self.debug:
-                _LOGGER.debug("f_ac(Hz)", f_eps)
+                _LOGGER.debug("f_ac(Hz) %s", f_eps)
             self.data[LXPPacket.f_eps] = f_eps
             
             p_to_eps = self.readValuesInt.get(24, 0)
@@ -553,9 +555,9 @@ class LXPPacket:
             if p_load < 0:
                 p_load = 0
             if self.debug:
-                _LOGGER.debug("p_to_grid(Watts)", p_to_grid)
-                _LOGGER.debug("p_to_user(Watts)", p_to_user)
-                _LOGGER.debug("p_load(Watts)", p_load)
+                _LOGGER.debug("p_to_grid(Watts) %s", p_to_grid)
+                _LOGGER.debug("p_to_user(Watts) %s", p_to_user)
+                _LOGGER.debug("p_load(Watts) %s", p_load)
             self.data[LXPPacket.p_to_grid] = p_to_grid
             self.data[LXPPacket.p_to_user] = p_to_user
             self.data[LXPPacket.p_to_eps] = p_to_eps
@@ -565,8 +567,8 @@ class LXPPacket:
             e_pv_2_day = self.readValuesInt.get(29, 0) / 10
             e_pv_3_day = self.readValuesInt.get(30, 0) / 10
             if self.debug:
-                _LOGGER.debug("e_pv_1(kWh) e_pv_1_day, e_pv_2_day, e_pv_3_day", e_pv_1_day, e_pv_2_day, e_pv_3_day)
-                _LOGGER.debug("e_pv_total(kWh) e_pv_1_day + e_pv_2_day + e_pv_3_day", e_pv_1_day + e_pv_2_day + e_pv_3_day)
+                _LOGGER.debug("e_pv_1(kWh) e_pv_1_day, e_pv_2_day, e_pv_3_day %s,%s,%s", e_pv_1_day, e_pv_2_day, e_pv_3_day)
+                _LOGGER.debug("e_pv_total(kWh) e_pv_1_day + e_pv_2_day + e_pv_3_day %s", e_pv_1_day + e_pv_2_day + e_pv_3_day)
             self.data[LXPPacket.e_pv_1_day] = e_pv_1_day
             self.data[LXPPacket.e_pv_2_day] = e_pv_2_day
             self.data[LXPPacket.e_pv_3_day] = e_pv_3_day
@@ -577,10 +579,10 @@ class LXPPacket:
             e_chg_day = self.readValuesInt.get(33, 0) / 10
             e_dischg_day = self.readValuesInt.get(34, 0) / 10
             if self.debug:
-                _LOGGER.debug("e_inv_day(kWh) ", e_inv_day)
-                _LOGGER.debug("e_rec_day(kWh) ", e_rec_day)
-                _LOGGER.debug("e_chg_day(kWh) ", e_chg_day)
-                _LOGGER.debug("e_dischg_day(kWh) ", e_dischg_day)
+                _LOGGER.debug("e_inv_day(kWh) %s", e_inv_day)
+                _LOGGER.debug("e_rec_day(kWh) %s", e_rec_day)
+                _LOGGER.debug("e_chg_day(kWh) %s", e_chg_day)
+                _LOGGER.debug("e_dischg_day(kWh) %s", e_dischg_day)
             self.data[LXPPacket.e_inv_day] = e_inv_day
             self.data[LXPPacket.e_rec_day] = e_rec_day
             self.data[LXPPacket.e_chg_day] = e_chg_day
@@ -590,9 +592,9 @@ class LXPPacket:
             e_to_grid_day = self.readValuesInt.get(36, 0) / 10
             e_to_user_day = self.readValuesInt.get(37, 0) / 10
             if self.debug:
-                _LOGGER.debug("e_eps_day(kWh) ", e_eps_day)
-                _LOGGER.debug("e_to_grid_day(kWh) ", e_to_grid_day)
-                _LOGGER.debug("e_to_user_day(kWh) ", e_to_user_day)
+                _LOGGER.debug("e_eps_day(kWh) %s", e_eps_day)
+                _LOGGER.debug("e_to_grid_day(kWh) %s", e_to_grid_day)
+                _LOGGER.debug("e_to_user_day(kWh) %s", e_to_user_day)
             self.data[LXPPacket.e_eps_day] = e_eps_day
             self.data[LXPPacket.e_to_grid_day] = e_to_grid_day
             self.data[LXPPacket.e_to_user_day] = e_to_user_day
@@ -600,8 +602,8 @@ class LXPPacket:
             v_bus_1 = self.readValuesInt.get(38, 0) / 10
             v_bus_2 = self.readValuesInt.get(39, 0) / 10
             if self.debug:
-                _LOGGER.debug("v_bus_1(Volts) ", v_bus_1)
-                _LOGGER.debug("v_bus_2(Volts) ", v_bus_2)
+                _LOGGER.debug("v_bus_1(Volts) %s", v_bus_1)
+                _LOGGER.debug("v_bus_2(Volts) %s", v_bus_2)
             self.data[LXPPacket.v_bus_1] = v_bus_1
             self.data[LXPPacket.v_bus_2] = v_bus_2
 
@@ -613,10 +615,10 @@ class LXPPacket:
             e_pv_2_all = self.get_read_value_combined_int(42, 43) / 10
             e_pv_3_all = self.get_read_value_combined_int(44, 45) / 10
             if self.debug:
-                _LOGGER.debug("e_pv_1_all(kWh) ", e_pv_1_all)
-                _LOGGER.debug("e_pv_2_all(kWh) ", e_pv_2_all)
-                _LOGGER.debug("e_pv_3_all(kWh) ", e_pv_3_all)
-                _LOGGER.debug("e_pv_all(kWh) e_pv_1_all + e_pv_2_all + e_pv_3_all", e_pv_1_all + e_pv_2_all + e_pv_3_all)
+                _LOGGER.debug("e_pv_1_all(kWh) %s", e_pv_1_all)
+                _LOGGER.debug("e_pv_2_all(kWh) %s", e_pv_2_all)
+                _LOGGER.debug("e_pv_3_all(kWh) %s", e_pv_3_all)
+                _LOGGER.debug("e_pv_all(kWh) e_pv_1_all + e_pv_2_all + e_pv_3_all %s", e_pv_1_all + e_pv_2_all + e_pv_3_all)
             self.data[LXPPacket.e_pv_1_all] = e_pv_1_all
             self.data[LXPPacket.e_pv_2_all] = e_pv_2_all
             self.data[LXPPacket.e_pv_3_all] = e_pv_3_all
@@ -630,13 +632,13 @@ class LXPPacket:
             e_to_grid_all = self.get_read_value_combined_int(56, 57) / 10
             e_to_user_all = self.get_read_value_combined_int(58, 59) / 10
             if self.debug:
-                _LOGGER.debug("e_inv_all(kWh) ", e_inv_all)
-                _LOGGER.debug("e_rec_all(kWh) ", e_rec_all)
-                _LOGGER.debug("e_chg_all(kWh) ", e_chg_all)
-                _LOGGER.debug("e_dischg_all(kWh) ", e_dischg_all)
-                _LOGGER.debug("e_eps_all(kWh) ", e_eps_all)
-                _LOGGER.debug("e_to_grid_all(kWh) ", e_to_grid_all)
-                _LOGGER.debug("e_to_user_all(kWh) ", e_to_user_all)
+                _LOGGER.debug("e_inv_all(kWh) %s", e_inv_all)
+                _LOGGER.debug("e_rec_all(kWh) %s", e_rec_all)
+                _LOGGER.debug("e_chg_all(kWh) %s", e_chg_all)
+                _LOGGER.debug("e_dischg_all(kWh) %s", e_dischg_all)
+                _LOGGER.debug("e_eps_all(kWh) %s", e_eps_all)
+                _LOGGER.debug("e_to_grid_all(kWh) %s", e_to_grid_all)
+                _LOGGER.debug("e_to_user_all(kWh) %s", e_to_user_all)
             self.data[LXPPacket.e_inv_all] = e_inv_all
             self.data[LXPPacket.e_rec_all] = e_rec_all
             self.data[LXPPacket.e_chg_all] = e_chg_all
@@ -650,10 +652,10 @@ class LXPPacket:
             t_rad_2 = self.readValuesInt.get(66, 0)
             t_bat = self.readValuesInt.get(67, 0)
             if self.debug:
-                _LOGGER.debug("t_inner ", t_inner)
-                _LOGGER.debug("t_rad_1 ", t_rad_1)
-                _LOGGER.debug("t_rad_2 ", t_rad_2)
-                _LOGGER.debug("t_bat ", t_bat)
+                _LOGGER.debug("t_inner %s", t_inner)
+                _LOGGER.debug("t_rad_1 %s", t_rad_1)
+                _LOGGER.debug("t_rad_2 %s", t_rad_2)
+                _LOGGER.debug("t_bat %s", t_bat)
             self.data[LXPPacket.t_inner] = t_inner
             self.data[LXPPacket.t_rad_1] = t_rad_1
             self.data[LXPPacket.t_rad_2] = t_rad_2
@@ -661,7 +663,7 @@ class LXPPacket:
 
             uptime = self.get_read_value_combined_int(69, 70)
             if self.debug:
-                _LOGGER.debug("uptime(seconds) ", uptime)
+                _LOGGER.debug("uptime(seconds) %s", uptime)
             self.data[LXPPacket.uptime] = uptime
 
         if self.inputRead3:
@@ -671,23 +673,30 @@ class LXPPacket:
             max_chg_curr = self.readValuesInt.get(81, 0) / 100
             max_dischg_curr = self.readValuesInt.get(82, 0) / 100
             if self.debug:
-                _LOGGER.debug("max_chg_curr(Ampere) ", max_chg_curr)
-                _LOGGER.debug("max_dischg_curr(Ampere) ", max_dischg_curr)
+                _LOGGER.debug("max_chg_curr(Ampere) %s", max_chg_curr)
+                _LOGGER.debug("max_dischg_curr(Ampere) %s", max_dischg_curr)
             self.data[LXPPacket.max_chg_curr] = max_chg_curr
             self.data[LXPPacket.max_dischg_curr] = max_dischg_curr
 
             charge_volt_ref = self.readValuesInt.get(83, 0) / 10
             dischg_cut_volt = self.readValuesInt.get(84, 0) / 10
             if self.debug:
-                _LOGGER.debug("charge_volt_ref(Volts) ", charge_volt_ref)
-                _LOGGER.debug("dischg_cut_volt(Volts) ", dischg_cut_volt)
+                _LOGGER.debug("charge_volt_ref(Volts) %s", charge_volt_ref)
+                _LOGGER.debug("dischg_cut_volt(Volts) %s", dischg_cut_volt)
             self.data[LXPPacket.charge_volt_ref] = charge_volt_ref
             self.data[LXPPacket.dischg_cut_volt] = dischg_cut_volt
 
             bat_count = self.readValuesInt.get(96, 0)
             if self.debug:
-                _LOGGER.debug("bat_count ", bat_count)
+                _LOGGER.debug("bat_count %s", bat_count)
             self.data[LXPPacket.bat_count] = bat_count
+
+            bat_capacity = self.readValuesInt.get(97, 0)
+            if self.debug:
+                _LOGGER.debug("bat_capacity %s", bat_capacity)
+            self.data[LXPPacket.bat_capacity] = bat_capacity
+
+
 
     def update_value(self, oldvalue, mask, enable=True):
         return oldvalue | mask if enable else oldvalue & (65535 - mask)
