@@ -95,7 +95,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     sensors.append({"name": f"Lux {entityID_prefix}- Battery Max Cell Voltage (Live)", "entity": 'max_cell_volt', 'attribute': LXPPacket.max_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
     sensors.append({"name": f"Lux {entityID_prefix}- Battery Min Cell Voltage (Live)", "entity": 'min_cell_volt', 'attribute': LXPPacket.min_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
     sensors.append({"name": f"Lux {entityID_prefix}- Battery Max Cell Temperature (Live)", "entity": 'max_cell_temp', 'attribute': LXPPacket.max_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}- Battery Min Cell Temperaturee (Live)", "entity": 'min_cell_temp', 'attribute': LXPPacket.min_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})  
+    sensors.append({"name": f"Lux {entityID_prefix}- Battery Min Cell Temperature (Live)", "entity": 'min_cell_temp', 'attribute': LXPPacket.min_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})  
     
     sensors.append({"name": f"Lux {entityID_prefix}- Status", "entity": 'lux_status', 'attribute': LXPPacket.status})
     for sensor_data in sensors:
@@ -449,6 +449,11 @@ class LuxStateSensorEntity(Entity):
         state_attributes[LXPPacket.charge_volt_ref] = "{}".format( self._data.get(LXPPacket.charge_volt_ref, "unavailable"), "")
         state_attributes[LXPPacket.dischg_cut_volt] = "{}".format( self._data.get(LXPPacket.dischg_cut_volt, "unavailable"), "")
         state_attributes[LXPPacket.bat_count] = "{}".format( self._data.get(LXPPacket.bat_count, "unavailable"), "")
+        state_attributes[LXPPacket.bat_capacity] = "{}".format( self._data.get(LXPPacket.bat_capacity, "unavailable"), "")
+        state_attributes[LXPPacket.max_cell_volt] = "{}".format( self._data.get(LXPPacket.max_cell_volt, "unavailable"), "")
+        state_attributes[LXPPacket.min_cell_volt] = "{}".format( self._data.get(LXPPacket.min_cell_volt, "unavailable"), "")
+        state_attributes[LXPPacket.max_cell_temp] = "{}".format( self._data.get(LXPPacket.max_cell_temp, "unavailable"), "")
+        state_attributes[LXPPacket.min_cell_temp] = "{}".format( self._data.get(LXPPacket.min_cell_temp, "unavailable"), "")
         return state_attributes
 
     async def async_added_to_hass(self) -> None:
