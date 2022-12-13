@@ -146,6 +146,10 @@ class LXPPacket:
     uptime = "uptime"
     max_chg_curr = "max_chg_curr"
     max_dischg_curr = "max_dischg_curr"
+    max_cell_temp = "max_cell_temp"
+    min_cell_temp = "min_cell_temp"
+    max_cell_volt = "max_cell_volt"
+    min_cell_volt = "min_cell_volt"
     charge_volt_ref = "charge_volt_ref"
     dischg_cut_volt = "dischg_cut_volt"
     bat_count = "bat_count"
@@ -688,7 +692,25 @@ class LXPPacket:
             if self.debug:
                 _LOGGER.debug("bat_count ", bat_count)
             self.data[LXPPacket.bat_count] = bat_count
-
+            
+            
+            max_cell_volt = self.readValuesInt.get(101, 0) / 1000
+            min_cell_volt = self.readValuesInt.get(102, 0) / 1000
+            min_cell_temp = self.readValuesInt.get(103, 0) / 10
+            max_cell_temp = self.readValuesInt.get(104, 0) / 10
+            if self.debug:
+                _LOGGER.debug("max_cell_volt ", max_cell_volt)
+                _LOGGER.debug("min_cell_volt ", min_cell_volt)
+                _LOGGER.debug("min_cell_temp ", min_cell_temp)
+                _LOGGER.debug("max_cell_temp ", max_cell_temp)
+            self.data[LXPPacket.max_cell_volt ] = max_cell_volt 
+            self.data[LXPPacket.min_cell_volt ] = min_cell_volt 
+            self.data[LXPPacket.max_cell_temp ] = max_cell_temp 
+            self.data[LXPPacket.min_cell_temp ] = min_cell_temp  
+            
+            
+            
+            
     def update_value(self, oldvalue, mask, enable=True):
         return oldvalue | mask if enable else oldvalue & (65535 - mask)
 
