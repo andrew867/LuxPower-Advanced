@@ -694,10 +694,10 @@ class LXPPacket:
             self.data[LXPPacket.bat_count] = bat_count
             
             
-            max_cell_volt = self.readValuesInt.get(101, 0)
-            min_cell_volt = self.readValuesInt.get(102, 0)
-            min_cell_temp = self.readValuesInt.get(103, 0)  / 1000
-            max_cell_temp = self.readValuesInt.get(104, 0) / 1000
+            max_cell_volt = self.readValuesInt.get(101, 0) / 1000
+            min_cell_volt = self.readValuesInt.get(102, 0) / 1000
+            min_cell_temp = self.readValuesInt.get(103, 0)
+            max_cell_temp = self.readValuesInt.get(104, 0)
             if self.debug:
                 _LOGGER.debug("max_cell_volt ", max_cell_volt)
                 _LOGGER.debug("min_cell_volt ", min_cell_volt)
