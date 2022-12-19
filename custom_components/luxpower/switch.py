@@ -54,27 +54,27 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     """ Common Switches Displayed In The App/Web """
     switches = [
-        {"name": f'Lux {entityID_prefix} Normal/Standby(ON/OFF)', "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY},
-        {"name": f'Lux {entityID_prefix} Power Backup Enable', "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE},
-        {"name": f'Lux {entityID_prefix} Feed-In Grid', "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID},
-        {"name": f'Lux {entityID_prefix} DCI Enable', "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE},
-        {"name": f'Lux {entityID_prefix} GFCI Enable', "register_address": 21, "bitmask": LXPPacket.GFCI_ENABLE},
-        {"name": f'Lux {entityID_prefix} Seamless EPS Switching', "register_address": 21, "bitmask": LXPPacket.SEAMLESS_EPS_SWITCHING},
-        {"name": f'Lux {entityID_prefix} Grid On Power SS', "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS},
-        {"name": f'Lux {entityID_prefix} Neutral Detect Enable', "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE},
-        {"name": f'Lux {entityID_prefix} Anti Island Enable', "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE},
-        {"name": f'Lux {entityID_prefix} DRMS Enable', "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE},
-        {"name": f'Lux {entityID_prefix} OVF Load Derate Enable', "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE},
-        {"name": f'Lux {entityID_prefix} R21 Unknown Bit 12', "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12},
-        {"name": f'Lux {entityID_prefix} R21 Unknown Bit 3', "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3},
-        {"name": f'Lux {entityID_prefix} AC Charge Enable', "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE},
-        {"name": f'Lux {entityID_prefix} Charge Priority', "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY},
-        {"name": f'Lux {entityID_prefix} Force Discharge Enable', "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE},
+        {"name": f'Lux {entityID_prefix} Normal/Standby(ON/OFF)', "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "enabled": True},
+        {"name": f'Lux {entityID_prefix} Power Backup Enable', "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix} Feed-In Grid', "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID, "enabled": True},
+        {"name": f'Lux {entityID_prefix} DCI Enable', "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix} GFCI Enable', "register_address": 21, "bitmask": LXPPacket.GFCI_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix} Seamless EPS Switching', "register_address": 21, "bitmask": LXPPacket.SEAMLESS_EPS_SWITCHING, "enabled": True},
+        {"name": f'Lux {entityID_prefix} Grid On Power SS', "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "enabled": False},
+        {"name": f'Lux {entityID_prefix} Neutral Detect Enable', "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "enabled": False},
+        {"name": f'Lux {entityID_prefix} Anti Island Enable', "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "enabled": False},
+        {"name": f'Lux {entityID_prefix} DRMS Enable', "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "enabled": False},
+        {"name": f'Lux {entityID_prefix} OVF Load Derate Enable', "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "enabled": False},
+        {"name": f'Lux {entityID_prefix} R21 Unknown Bit 12', "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "enabled": False},
+        {"name": f'Lux {entityID_prefix} R21 Unknown Bit 3', "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3, "enabled": False},
+        {"name": f'Lux {entityID_prefix} AC Charge Enable', "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix} Charge Priority', "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "enabled": True},
+        {"name": f'Lux {entityID_prefix} Force Discharge Enable', "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": True},
     ]
 
     for switch_data in switches:
         binarySwitchs.append(
-            LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, DONGLE_SERIAL, SERIAL_NUMBER, switch_data["register_address"], switch_data["bitmask"], switch_data["name"], device_class, luxpower_client, event))
+            LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, DONGLE_SERIAL, SERIAL_NUMBER, switch_data["register_address"], switch_data["bitmask"], switch_data["name"], switch_data["enabled"], device_class, luxpower_client, event))
 
     async_add_devices(binarySwitchs, True)
 
@@ -87,7 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     """Represent a binary sensor."""
 
-    def __init__(self, hass, host, port, dongle, serial, register_address, bitmask, object_id, device_class, luxpower_client, event: Event) -> None:
+    def __init__(self, hass, host, port, dongle, serial, register_address, bitmask, object_id, create_enabled, device_class, luxpower_client, event: Event) -> None:
         super().__init__()
         self.hass = hass
         self._host = host
@@ -100,6 +100,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self._object_id = object_id
         self._device_class = device_class
         self._state = False
+        self._attr_entity_registry_enabled_default = create_enabled
         self.luxpower_client = luxpower_client
         # self.lxppacket = luxpower_client.lxpPacket
         self.registers = {}
