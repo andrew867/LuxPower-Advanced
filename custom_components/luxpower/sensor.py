@@ -92,8 +92,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     sensors.append({"name": f"Lux {entityID_prefix}- Internal Temperature (Live)", "entity": 'lux_internal_temp', 'attribute': LXPPacket.t_inner, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
     sensors.append({"name": f"Lux {entityID_prefix}- Radiator 1 Temperature (Live)", "entity": 'lux_radiator1_temp', 'attribute': LXPPacket.t_rad_1, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
     sensors.append({"name": f"Lux {entityID_prefix}- Radiator 2 temperature (Live)", "entity": 'lux_radiator2_temp', 'attribute': LXPPacket.t_rad_2, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}- Battery Max Cell Voltage (Live)", "entity": 'max_cell_volt', 'attribute': LXPPacket.max_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
-    sensors.append({"name": f"Lux {entityID_prefix}- Battery Min Cell Voltage (Live)", "entity": 'min_cell_volt', 'attribute': LXPPacket.min_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
+    sensors.append({"name": f"Lux {entityID_prefix}- Battery Max Cell Voltage (Live)", "entity": 'max_cell_volt', 'attribute': LXPPacket.max_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT, 'decimal_places': 3})
+    sensors.append({"name": f"Lux {entityID_prefix}- Battery Min Cell Voltage (Live)", "entity": 'min_cell_volt', 'attribute': LXPPacket.min_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT, 'decimal_places': 3})
     sensors.append({"name": f"Lux {entityID_prefix}- Battery Max Cell Temperature (Live)", "entity": 'max_cell_temp', 'attribute': LXPPacket.max_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
     sensors.append({"name": f"Lux {entityID_prefix}- Battery Min Cell Temperature (Live)", "entity": 'min_cell_temp', 'attribute': LXPPacket.min_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})  
     
@@ -167,6 +167,7 @@ class LuxpowerSensorEntity(SensorEntity):
         self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, sensor_data['entity'])
         self._device_attribute = sensor_data['attribute']
         self._state_class = sensor_data.get('state_class', None)
+        self.decimal_places = sensor_data.get('decimal_places', 1)
         self.lastupdated_time = 0
         self.event = event
 
@@ -182,7 +183,7 @@ class LuxpowerSensorEntity(SensorEntity):
         _LOGGER.info("Sensor: register event received %s", self._name)
         self._data = event.data.get('data', {})
         value = self._data.get(self._device_attribute)
-        value = round(value, 1) if isinstance(value, (int, float)) else "unavailable"
+        value = round(value, self.decimal_places) if isinstance(value, (int, float)) else "unavailable"
         self._state = "{}".format(value)
 
         self.schedule_update_ha_state()
