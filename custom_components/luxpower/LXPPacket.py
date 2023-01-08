@@ -88,6 +88,13 @@ class LXPPacket:
     MICRO_GRID_ENABLE = 1 << 2
     FAST_ZERO_EXPORT_ENABLE = 1 << 1
 
+
+    ###
+    ### Register 110, Most Significant Byte
+    ###
+
+    TAKE_LOAD_TOGETHER = 1 << 10
+
     status = "status"
     v_pv_1 = "v_pv_1"
     v_pv_2 = "v_pv_2"

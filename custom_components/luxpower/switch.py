@@ -70,6 +70,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"name": f'Lux {entityID_prefix} AC Charge Enable', "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "enabled": True},
         {"name": f'Lux {entityID_prefix} Charge Priority', "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "enabled": True},
         {"name": f'Lux {entityID_prefix} Force Discharge Enable', "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix} SNA Take Load Together', "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
     ]
 
     for switch_data in switches:
