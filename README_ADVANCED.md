@@ -61,12 +61,12 @@ description: ""
 trigger:
   - platform: state
     entity_id:
-      - input_datetime.lux_ac_charge_start_1
-      - input_datetime.lux_ac_charge_end_1
-      - input_datetime.lux_force_charge_start_1
-      - input_datetime.lux_force_charge_end_1
-      - input_datetime.lux_force_discharge_start_1
-      - input_datetime.lux_force_discharge_end_1
+      - input_datetime.lux_ac_charge_start1
+      - input_datetime.lux_ac_charge_end1
+      - input_datetime.lux_force_charge_start1
+      - input_datetime.lux_force_charge_end1
+      - input_datetime.lux_force_discharge_start1
+      - input_datetime.lux_force_discharge_end1
 condition: []
 action:
   - service: number.set_value
