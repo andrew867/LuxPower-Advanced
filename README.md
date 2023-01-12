@@ -19,9 +19,13 @@ I've recorded some very quick videos, only 1 has audio yet.
 They aren't great but it might help someone.
 
 HOWTO - Install Samba Share on Home Assistant https://youtu.be/Pld5siYLNL8
+
 HOWTO - Install an Integration into Home Assistant (NO AUDIO) https://youtu.be/wk_9kCNjLRE
+
 HOWTO - Setup a basic refresh and reconnect in Home Assistant https://youtu.be/iCmv_w5aAJE
+
 HOWTO - Setup Energy Monitoring in Home Assistant https://youtu.be/pnp1y5CQRPY
+
 HOWTO - Install Power Card in Home Assistant https://youtu.be/2petWQXWue0
 
 
