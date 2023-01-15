@@ -95,6 +95,12 @@ class LXPPacket:
 
     TAKE_LOAD_TOGETHER = 1 << 10
 
+    ###
+    ### Register 110, Least Significant Byte
+    ###
+
+    CHARGE_LAST = 1 << 4
+
     status = "status"
     v_pv_1 = "v_pv_1"
     v_pv_2 = "v_pv_2"
