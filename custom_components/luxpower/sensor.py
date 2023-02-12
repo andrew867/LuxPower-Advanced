@@ -23,9 +23,9 @@ _LOGGER = logging.getLogger(__name__)
 
 async def refreshSensors(hass: HomeAssistant, dongle):
     await asyncio.sleep(10)
-    _LOGGER.info("Refreshing sensors")
+    _LOGGER.debug("Refreshing sensors")
     status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_registers', {'dongle': dongle}, blocking=True)
-    _LOGGER.info(f"Refreshing sensors done with status : {status}")
+    _LOGGER.debug(f"Refreshing sensors done with status : {status}")
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
@@ -71,13 +71,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     sensors.append({"name": f"Lux {entityID_prefix}- Battery Voltage (Live)", "entity": 'lux_battery_voltage', 'attribute': LXPPacket.v_bat, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
     sensors.append({"name": f"Lux {entityID_prefix}- BMS Limit Charge (Live)", "entity": 'lux_bms_limit_charge', 'attribute': LXPPacket.max_chg_curr, 'device_class': DEVICE_CLASS_CURRENT, 'unit_measure': ELECTRIC_CURRENT_AMPERE})
     sensors.append({"name": f"Lux {entityID_prefix}- BMS Limit Discharge (Live)", "entity": 'lux_bms_limit_discharge', 'attribute': LXPPacket.max_dischg_curr, 'device_class': DEVICE_CLASS_CURRENT, 'unit_measure': ELECTRIC_CURRENT_AMPERE})
-    sensors.append({"name": f"Lux {entityID_prefix}- Power from Inverter (Live)", "entity": 'lux_power_from_inverter_live', 'attribute': LXPPacket.p_inv, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}- Power to Inverter (Live)", "entity": 'lux_power_to_inverter_live', 'attribute': LXPPacket.p_rec, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}- Power from grid to HOUSE (Live)", "entity": 'lux_power_to_home', 'attribute': LXPPacket.p_load, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}- Power to EPS (Live)", "entity": 'lux_power_to_eps', 'attribute': LXPPacket.p_to_eps, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}- Power from Grid (Live)", "entity": 'lux_power_from_grid_live', 'attribute': LXPPacket.p_to_user, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}- Power from Grid (Daily)", "entity": 'lux_power_from_grid_daily', 'attribute': LXPPacket.e_to_user_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}- Power from Grid (Total)", "entity": 'lux_power_from_grid_total', 'attribute': LXPPacket.e_to_user_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {entityID_prefix}- Power From Inverter (Live)", "entity": 'lux_power_from_inverter_live', 'attribute': LXPPacket.p_inv, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}- Power To Inverter (Live)", "entity": 'lux_power_to_inverter_live', 'attribute': LXPPacket.p_rec, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}- Power From Grid to HOUSE (Live)", "entity": 'lux_power_to_home', 'attribute': LXPPacket.p_load, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}- Power To EPS (Live)", "entity": 'lux_power_to_eps', 'attribute': LXPPacket.p_to_eps, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}- Power From Grid (Live)", "entity": 'lux_power_from_grid_live', 'attribute': LXPPacket.p_to_user, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}- Power From Grid (Daily)", "entity": 'lux_power_from_grid_daily', 'attribute': LXPPacket.e_to_user_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {entityID_prefix}- Power From Grid (Total)", "entity": 'lux_power_from_grid_total', 'attribute': LXPPacket.e_to_user_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
     sensors.append({"name": f"Lux {entityID_prefix}- Power To Grid (Live)", "entity": 'lux_power_to_grid_live', 'attribute': LXPPacket.p_to_grid, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
     sensors.append({"name": f"Lux {entityID_prefix}- Power To Grid (Daily)", "entity": 'lux_power_to_grid_daily', 'attribute': LXPPacket.e_to_grid_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
     sensors.append({"name": f"Lux {entityID_prefix}- Power To Grid (Total)", "entity": 'lux_power_to_grid_total', 'attribute': LXPPacket.e_to_grid_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
@@ -144,8 +144,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     # delay service call for some time to give the sensors and swiches time to initialise
     hass.async_create_task(refreshSensors(hass, dongle=DONGLE))
 
-    _LOGGER.debug("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
-    _LOGGER.info("LuxPower sensor async_setup_platform sensor done")
+    _LOGGER.info("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
 
 class LuxpowerSensorEntity(SensorEntity):
     """Representation of a sensor of Type HAVC, Pressure, Power, Volume."""
@@ -174,14 +173,14 @@ class LuxpowerSensorEntity(SensorEntity):
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
-        _LOGGER.info("async_added_to_hasss %s", self._name)
+        _LOGGER.debug("async_added_to_hasss %s", self._name)
         self.is_added_to_hass = True
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_DATA_RECEIVED, self.push_update)
         return result
 
     def push_update(self, event):
-        _LOGGER.info("Sensor: register event received %s", self._name)
+        _LOGGER.debug("Sensor: register event received %s", self._name)
         self._data = event.data.get('data', {})
         value = self._data.get(self._device_attribute)
         value = round(value, self.decimal_places) if isinstance(value, (int, float)) else "unavailable"
@@ -193,7 +192,7 @@ class LuxpowerSensorEntity(SensorEntity):
     def update(self):
         if not self.is_added_to_hass:
             return
-        # _LOGGER.info("{} updating state to {}".format(self._dp_id, self._stateval))
+        # _LOGGER.debug("{} updating state to {}".format(self._dp_id, self._stateval))
         return self._state
 
     @property
@@ -251,7 +250,7 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
         self._device_attribute2 = sensor_data['attribute2']
 
     def push_update(self, event):
-        _LOGGER.info("LuxPowerFlowSensor: register event received")
+        _LOGGER.debug("LuxPowerFlowSensor: register event received")
         self._data = event.data.get('data', {})
 
         negative_value = float(self._data.get(self._device_attribute1, 0.0))
@@ -278,7 +277,7 @@ class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity): #Used for both live a
         self._device_attribute4 = sensor_data['attribute4'] # Power from consumer unit to grid
                 
     def push_update(self, event):
-        _LOGGER.info("LuxPowerHomeConsumptionSensor: register event received")
+        _LOGGER.debug("LuxPowerHomeConsumptionSensor: register event received")
         self._data = event.data.get('data', {})
 
         grid = float(self._data.get(self._device_attribute1, 0.0))
@@ -296,7 +295,7 @@ class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
 
     def push_update(self, event):
-        _LOGGER.info("LuxPowerStatusSensor: register event received")
+        _LOGGER.debug("LuxPowerStatusSensor: register event received")
         self._data = event.data.get('data', {})
         state_text = ''
         status = int(self._data.get(self._device_attribute, 0.0))
@@ -346,7 +345,7 @@ class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
         self.datetime_last_received = None
 
     def push_update(self, event):
-        _LOGGER.info("LuxPowerDataReceivedSensor: register event received")
+        _LOGGER.debug("LuxPowerDataReceivedSensor: register event received")
         self._data = event.data.get('data', {})
         self.datetime_last_received = datetime.now()
         self._state = "{}".format(datetime.now().strftime("%A %B %-d, %I:%M %p"))
@@ -460,20 +459,20 @@ class LuxStateSensorEntity(Entity):
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
-        _LOGGER.info("async_added_to_hasss %s", self._name)
+        _LOGGER.debug("async_added_to_hasss %s", self._name)
         self.is_added_to_hass = True
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_DATA_RECEIVED, self.push_update)
         return result
 
     def checkonline(self, *args, **kwargs):
-        _LOGGER.info("check online")
+        _LOGGER.debug("check online")
         if time.time() - self.lastupdated_time > 10:
             self._state = "OFFLINE"
         self.schedule_update_ha_state()
 
     def push_update(self, event):
-        _LOGGER.info("register event received")
+        _LOGGER.debug("register event received")
         self._data = event.data.get('data', {})
         self._state = "ONLINE"
 
@@ -483,7 +482,7 @@ class LuxStateSensorEntity(Entity):
     def update(self):
         if not self.is_added_to_hass:
             return
-        # _LOGGER.info("{} updating state to {}".format(self._dp_id, self._stateval))
+        # _LOGGER.debug("{} updating state to {}".format(self._dp_id, self._stateval))
         return self._state
 
     @property

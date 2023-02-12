@@ -211,12 +211,12 @@ class LXPPacket:
     def parse_packet(self, packet):
         self.packet_error = True
         if self.debug:
-            _LOGGER.info("*********************** PARSING PACKET *************************************")
+            _LOGGER.debug("*********************** PARSING PACKET *************************************")
         self.packet_length = len(packet)
 
         #Check if packet contains only serial number
         if self.packet_length == 19 or self.packet_length == 21:
-            _LOGGER.info(f"Packet received. Serial number number: {packet}. No other data.")
+            _LOGGER.debug(f"Packet received. Serial number number: {packet}. No other data.")
             return
         #Check if packet contains data
         elif self.packet_length < 37:
@@ -228,18 +228,25 @@ class LXPPacket:
         self.frame_length = struct.unpack('H', packet[4:6])[0]
         self.packet_length_calced = self.frame_length + 6
 
+        _LOGGER.debug("self.packet_length: %s", self.packet_length)
+        _LOGGER.debug("self.packet_length_calced: %s", self.packet_length_calced)
+
+        if self.packet_length != self.packet_length_calced:
+            _LOGGER.error('Invalid packet - Bad packet length (real/calced) %s %s', self.packet_length, self.packet_length_calced)
+            return
+
         unknown_byte = packet[6]
         self.tcp_function = packet[7]
         self.dongle_serial = packet[8:18]
         self.data_length = struct.unpack('H', packet[18:20])[0]
 
         self.data_frame = packet[20:self.packet_length_calced - 2]
-        self.crc_modbus = struct.unpack('H', packet[self.packet_length_calced - 2: self.packet_length_calced])[0]
 
         if self.debug:
             _LOGGER.debug("prefix: %s", prefix)
+
         if prefix != self.prefix:
-            _LOGGER.debug('invalid packet')
+            _LOGGER.error('Invalid packet - Bad Prefix')
             return
 
         if self.debug:
@@ -254,20 +261,22 @@ class LXPPacket:
             return
 
         if self.data_length != len(self.data_frame) + 2:
-            _LOGGER.debug('bad data length %s', len(self.data_frame))
+            _LOGGER.error('Invalid packet - Bad data length %s', len(self.data_frame))
             return
+
+        self.crc_modbus = struct.unpack('H', packet[self.packet_length_calced - 2: self.packet_length_calced])[0]
 
         if self.debug:
             _LOGGER.debug("data_frame : %s", self.data_frame)
-
             _LOGGER.debug("crc_modbus : %s", self.crc_modbus)
+
         crc16 = self.computeCRC(self.data_frame)
 
         if self.debug:
             _LOGGER.debug("CRC data: %s", crc16)
 
         if crc16 != self.crc_modbus:
-            _LOGGER.debug("CRC error")
+            _LOGGER.error("Invalid Packet - CRC error")
             return
 
         self.address_action = self.data_frame[0]
@@ -322,7 +331,7 @@ class LXPPacket:
 
     def process_packet(self):
         if self.debug:
-            _LOGGER.info("--------------PROCESS PACKET---------------")
+            _LOGGER.debug("--------------PROCESS PACKET---------------")
         if self.device_function == self.READ_HOLD or self.device_function == self.WRITE_SINGLE:
             for i in range(0, int(len(self.value) / 2)):
                 self.regValues[self.register + i] = self.get_read_value(self.register + i)
@@ -407,7 +416,7 @@ class LXPPacket:
         #     print("value length is not 2")
         #     return
 
-        _LOGGER.info("Entering prepare_packet_for_read %s %s", register, value)
+        _LOGGER.debug("Entering prepare_packet_for_read %s %s", register, value)
 
         protocol = 2
         frame_length = 32
@@ -479,7 +488,7 @@ class LXPPacket:
     def get_device_values(self):
         if self.inputRead1:
             if self.debug:
-                _LOGGER.info("***********INPUT 1 registers************")
+                _LOGGER.debug("***********INPUT 1 registers************")
             status = self.readValuesInt.get(0)
             if self.debug:
                 print("status ", status)

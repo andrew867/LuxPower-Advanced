@@ -21,9 +21,9 @@ _LOGGER = logging.getLogger(__name__)
 
 async def refreshSwitches(hass: HomeAssistant, dongle):
     await asyncio.sleep(20)
-    _LOGGER.info("Refreshing switches")
+    _LOGGER.debug("Refreshing switches")
     status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_holdings', {'dongle': dongle}, blocking=True)
-    _LOGGER.info(f"Refreshing switches done with status : {status}")
+    _LOGGER.debug(f"Refreshing switches done with status : {status}")
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
@@ -110,14 +110,14 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
-        _LOGGER.info("async_added_to_hass %s", self._name)
+        _LOGGER.debug("async_added_to_hass %s", self._name)
         self.is_added_to_hass = True
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
         return result
 
     def push_update(self, event):
-        _LOGGER.info("switch: register event received")
+        _LOGGER.debug("switch: register event received")
         registers = event.data.get('registers', {})
         self.registers = registers
         if self._register_address in registers.keys():
@@ -143,7 +143,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     # @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         # self._state = self._protocol._dp_values.get(self._dp_id, None)
-        _LOGGER.info("{} {} updating state to {}".format(self._register_address, self._bitmask, self._state))
+        _LOGGER.debug("{} {} updating state to {}".format(self._register_address, self._bitmask, self._state))
         return self._state
 
     @property
@@ -175,11 +175,11 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         return self._state
 
     def turn_on(self, **kwargs: Any) -> None:
-        _LOGGER.info("turn on called ")
+        _LOGGER.debug("turn on called ")
         self.set_register_bit(True)
 
     def turn_off(self, **kwargs: Any) -> None:
-        _LOGGER.info("turn off called ")
+        _LOGGER.debug("turn off called ")
         self.set_register_bit(False)
 
     @property
@@ -197,38 +197,38 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            _LOGGER.info("Connected to server")
+            _LOGGER.debug("Connected to server")
             lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
             sock.close()
         except Exception as e:
-            _LOGGER.info("Exception ", e)
+            _LOGGER.error("Exception ", e)
 
     def set_register_bit(self, bit_polarity=False):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            _LOGGER.info("set_register_bit: Connected to server", self._host, self._port, self._register_address)
+            _LOGGER.debug("set_register_bit: Connected to server", self._host, self._port, self._register_address)
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)
-            _LOGGER.info('Received: ', packet)
+            _LOGGER.debug('Received: ', packet)
             data = lxpPacket.parse_packet(packet)
-            _LOGGER.info(data)
+            _LOGGER.debug(data)
             if not lxpPacket.packet_error:
                 if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
                     if len(lxpPacket.value) == 2:
                         old_value = lxpPacket.convert_to_int(lxpPacket.value)
                         new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
-                        _LOGGER.info("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
+                        _LOGGER.debug("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
                         _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
                         packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
-                        _LOGGER.info("packet to be written ", packet)
+                        _LOGGER.debug("packet to be written ", packet)
                         sock.send(packet)
-                        _LOGGER.info("written packet")
+                        _LOGGER.debug("written packet")
 
                         # self._state = bit_polarity
                         # self.schedule_update_ha_state()
@@ -246,9 +246,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             else:
                 _LOGGER.debug("LX Packet error")
             sock.close()
-            _LOGGER.info("Closing socket...")
+            _LOGGER.debug("Closing socket...")
         except Exception as e:
-            _LOGGER.debug("Exception ", e)
+            _LOGGER.error("Exception ", e)
         _LOGGER.debug("set_register_bit done")
 
     @property
