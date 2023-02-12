@@ -207,7 +207,7 @@ class NormalNumber(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
-        _LOGGER.info("async_added_to_hass %s", self._name)
+        _LOGGER.debug("async_added_to_hass %s", self._name)
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
         return result
@@ -288,7 +288,7 @@ class NormalNumber(NumberEntity):
     def set_native_value(self, value):
         """Update the current value."""
         num_value = float(value)
-        _LOGGER.info("Calling set_value", num_value)
+        _LOGGER.debug("Calling set_value", num_value)
 
         if num_value < self.min_value or num_value > self.max_value:
             raise vol.Invalid(
@@ -304,18 +304,18 @@ class NormalNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            _LOGGER.info("Connected to server")
-            _LOGGER.info("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
+            _LOGGER.debug("Connected to server")
+            _LOGGER.debug("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_write(self._register_address, value)
-            _LOGGER.info(f"packet to be written {packet}")
+            _LOGGER.debug(f"packet to be written {packet}")
             sock.send(packet)
-            _LOGGER.info("written packet")
+            _LOGGER.debug("written packet")
             packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet}")
+            _LOGGER.debug(f"Received: {packet}")
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
-                _LOGGER.info(result)
+                _LOGGER.debug(result)
             else:
                 _LOGGER.error(result)
             sock.close()
@@ -326,15 +326,15 @@ class NormalNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            _LOGGER.info("Connected to server")
+            _LOGGER.debug("Connected to server")
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet} ")
+            _LOGGER.debug(f"Received: {packet} ")
             data = lxpPacket.parse_packet(packet)
-            _LOGGER.info(data)
+            _LOGGER.debug(data)
             if not lxpPacket.packet_error:
                 if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
                     if len(lxpPacket.value) == 2:
@@ -372,7 +372,7 @@ class PercentageNumber(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
-        _LOGGER.info("async_added_to_hass %s", self._name)
+        _LOGGER.debug("async_added_to_hass %s", self._name)
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
         return result
@@ -453,7 +453,7 @@ class PercentageNumber(NumberEntity):
     def set_native_value(self, value):
         """Update the current value."""
         num_value = float(value)
-        _LOGGER.info("Calling set_value", num_value)
+        _LOGGER.debug("Calling set_value", num_value)
 
         if num_value < self.min_value or num_value > self.max_value:
             raise vol.Invalid(
@@ -469,18 +469,18 @@ class PercentageNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            _LOGGER.info("Connected to server")
-            _LOGGER.info("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
+            _LOGGER.debug("Connected to server")
+            _LOGGER.debug("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_write(self._register_address, value)
-            _LOGGER.info(f"packet to be written {packet}")
+            _LOGGER.debug(f"packet to be written {packet}")
             sock.send(packet)
-            _LOGGER.info("written packet")
+            _LOGGER.debug("written packet")
             packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet}")
+            _LOGGER.debug(f"Received: {packet}")
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
-                _LOGGER.info(result)
+                _LOGGER.debug(result)
             else:
                 _LOGGER.error(result)
             sock.close()
@@ -491,15 +491,15 @@ class PercentageNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            _LOGGER.info("Connected to server")
+            _LOGGER.debug("Connected to server")
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet}")
+            _LOGGER.debug(f"Received: {packet}")
             data = lxpPacket.parse_packet(packet)
-            _LOGGER.info(data)
+            _LOGGER.debug(data)
             if not lxpPacket.packet_error:
                 if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
                     if len(lxpPacket.value) == 2:
@@ -539,7 +539,7 @@ class TimeNumber(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         result = await super().async_added_to_hass()
-        _LOGGER.info("async_added_to_hass %s", self._name)
+        _LOGGER.debug("async_added_to_hass %s", self._name)
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
         return result
@@ -618,7 +618,7 @@ class TimeNumber(NumberEntity):
     def set_native_value(self, value):
         """Update the current value."""
         num_value = float(value)
-        _LOGGER.info(f"Calling set_value {num_value}")
+        _LOGGER.debug(f"Calling set_value {num_value}")
 
 
         if num_value < self.min_value or num_value > self.max_value:
@@ -635,18 +635,18 @@ class TimeNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            _LOGGER.info("Connected to server")
-            _LOGGER.info("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
+            _LOGGER.debug("Connected to server")
+            _LOGGER.debug("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_write(self._register_address, value)
-            _LOGGER.info(f"packet to be written {packet}")
+            _LOGGER.debug(f"packet to be written {packet}")
             sock.send(packet)
-            _LOGGER.info("written packet")
+            _LOGGER.debug("written packet")
             packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet}")
+            _LOGGER.debug(f"Received: {packet}")
             result = lxpPacket.parse_packet(packet)
             if not lxpPacket.packet_error:
-                _LOGGER.info(result)
+                _LOGGER.debug(result)
             else:
                 _LOGGER.error(result)
             sock.close()
@@ -661,22 +661,22 @@ class TimeNumber(NumberEntity):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((self._host, self._port))
-            _LOGGER.info("Connected to server")
+            _LOGGER.debug("Connected to server")
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
             packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet}")
+            _LOGGER.debug(f"Received: {packet}")
             data = lxpPacket.parse_packet(packet)
-            _LOGGER.info(data)
+            _LOGGER.debug(data)
             if not lxpPacket.packet_error:
                 if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
                     if len(lxpPacket.value) == 2:
                         num_value = lxpPacket.convert_to_int(lxpPacket.value)
                         self.hour_val, self.minute_val = lxpPacket.convert_to_time(num_value)
                         self._state = float(self.minute_val*256 + self.hour_val)
-                        _LOGGER.info(f"TimeNumber: Hour: {self.hour_val} Minute: {self.minute_val} Decoded from {lxpPacket.value} (numeric: {num_value}) to {self._state}")
+                        _LOGGER.debug(f"TimeNumber: Hour: {self.hour_val} Minute: {self.minute_val} Decoded from {lxpPacket.value} (numeric: {num_value}) to {self._state}")
                         self.schedule_update_ha_state()
 
             sock.close()

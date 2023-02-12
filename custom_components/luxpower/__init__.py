@@ -46,38 +46,33 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
     async def handle_refresh_register_bank(call):
         """Handle the service call."""
-        _LOGGER.info("handle_refresh_register_bank service: %s", DOMAIN)
         dongle = call.data.get("dongle")
         address_bank = call.data.get("address_bank")
-        _LOGGER.debug("handle_refresh_register_bank service ", address_bank)
+        _LOGGER.debug("handle_refresh_register_bank service: %s %s %s", DOMAIN, dongle, address_bank)
         await service_helper.send_refresh_register_bank(dongle=dongle, address_bank=int(address_bank))
 
     async def handle_refresh_registers(call):
         """Handle the service call."""
-        _LOGGER.info("handle_refresh_registers service: %s", DOMAIN)
-        _LOGGER.debug("handle_refresh_registers service ")
         dongle = call.data.get("dongle")
+        _LOGGER.debug("handle_refresh_registers service: %s %s", DOMAIN, dongle)
         await service_helper.send_refresh_registers(dongle=dongle)
 
     async def handle_holding_registers(call):
         """Handle the service call."""
-        _LOGGER.info("handle_holding_registers service: %s", DOMAIN)
-        _LOGGER.debug("handle_holding_registers service ")
         dongle = call.data.get("dongle")
+        _LOGGER.debug("handle_holding_registers service: %s %s", DOMAIN, dongle)
         await service_helper.send_holding_registers(dongle=dongle)
 
     async def handle_reconnect(call):
         """Handle the service call."""
-        _LOGGER.info("handle_reconnect service: %s", DOMAIN)
-        _LOGGER.debug("handle_reconnect service ")
         dongle = call.data.get("dongle")
+        _LOGGER.debug("handle_reconnect service: %s %s", DOMAIN, dongle)
         await service_helper.send_reconnect(dongle=dongle)
 
     async def handle_synctime(call):
         """Handle the service call."""
-        _LOGGER.info("handle_synctime service: %s", DOMAIN)
-        _LOGGER.debug("handle_synctime service ")
         dongle = call.data.get("dongle")
+        _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
         await service_helper.send_synctime(dongle=dongle)
    
     hass.services.async_register(
