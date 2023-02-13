@@ -179,6 +179,7 @@ The amount of times people (and me included) that HA has failed or corrupted is 
 Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
 
 @elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he is incredible! 
+
 @maegibbons who has helped fix many of the bugs for people and expanded this to support more inverters / setups. It's really appreciated!
 To everyone else who has helped fixed issue, spotted bugs and contributed to the project!
 
@@ -198,7 +199,7 @@ The error logs starting with "REGISTERS:" is helpful if we are debugging certain
 
 # Legal 
 
-Copyright (c) 2022, Guy Wells
+Copyright (c) 2023, Guy Wells
 All rights reserved.
 
 This software may not be sold, resold, redistributed or otherwise conveyed to a third party. 
