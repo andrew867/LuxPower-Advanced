@@ -192,6 +192,7 @@ class LXPPacket:
         self.regValues = {}
         self.regValuesHex = {}
         self.regValuesInt = {}
+        self.regValuesThis = {}
         self.readValues = {}
         self.readValuesHex = {}
         self.readValuesInt = {}
@@ -207,6 +208,56 @@ class LXPPacket:
 
     def parse(self):
         self.parse_packet(self.packet)
+
+    def process_socket_received_single(self, data, register_reqd):
+        _LOGGER.debug('Inverter: %s', self.serial_number)
+        _LOGGER.debug(data)
+        packet = data
+        packet_remains = data
+        packet_remains_length = len(packet_remains)
+        _LOGGER.debug('TCP OVERALL Packet Remains Length : %s', packet_remains_length)
+
+        frame_number = 0
+
+        while packet_remains_length > 0:
+
+            frame_number = frame_number + 1
+            if frame_number > 1:
+                _LOGGER.error('*** Multi-Frame *** : %s', frame_number)
+
+            prefix = packet_remains[0:2]
+            if prefix != self.prefix:
+                _LOGGER.debug('Invalid Start Of Packet Prefix %s', prefix)
+                return
+
+            protocol_number = struct.unpack('H', packet_remains[2:4])[0]
+            frame_length_remaining = struct.unpack('H', packet_remains[4:6])[0]
+            frame_length_calced = frame_length_remaining + 6
+            _LOGGER.debug('CALCULATED Frame Length : %s', frame_length_calced)
+
+            this_frame = packet_remains[0:frame_length_calced]
+
+            _LOGGER.debug('THIS Packet Remains Length : %s', packet_remains_length)
+            packet_remains = packet_remains[frame_length_calced:packet_remains_length]
+            packet_remains_length = len(packet_remains)
+            _LOGGER.debug('NEXT Packet Remains Length : %s', packet_remains_length)
+
+            _LOGGER.debug('Received: %s', this_frame)
+            result = self.parse_packet(this_frame)
+            if not self.packet_error:
+                _LOGGER.debug(result)
+                if self.register == register_reqd:
+                    if self.device_function == self.WRITE_SINGLE:
+                        _LOGGER.debug("WRITE_HOLD succesfull")
+                    elif self.device_function == self.READ_HOLD:
+                        if len(self.value) == 2:
+                            num_value = self.convert_to_int(self.value)
+                            return_value = float(num_value)
+                            _LOGGER.debug('Read Value: %s', return_value)
+                            return return_value
+            else:
+                _LOGGER.error(result)
+
 
     def parse_packet(self, packet):
         self.packet_error = True
@@ -232,8 +283,12 @@ class LXPPacket:
         _LOGGER.debug("self.packet_length_calced: %s", self.packet_length_calced)
 
         if self.packet_length != self.packet_length_calced:
-            _LOGGER.error('Invalid packet - Bad packet length (real/calced) %s %s', self.packet_length, self.packet_length_calced)
-            return
+            if self.packet_length > self.packet_length_calced:
+                _LOGGER.warning('Long Packet - Continuing - packet length (real/calced) %s %s', self.packet_length, self.packet_length_calced)
+                _LOGGER.warning('Probably An Unhandled MultiFrame - Report To Devs')
+            else:
+                _LOGGER.error('Bad Packet -  Too Short - (real/calced) %s %s', self.packet_length, self.packet_length_calced)
+                return
 
         unknown_byte = packet[6]
         self.tcp_function = packet[7]
@@ -308,7 +363,7 @@ class LXPPacket:
 
         return {"tcp_function": self.TCP_FUNCTION[self.tcp_function],
                 "device_function": self.DEVICE_FUNCTION[self.device_function],
-                "register": self.register, "value": self.value, "data": self.data, "registers": self.regValuesInt}
+                "register": self.register, "value": self.value, "data": self.data, "registers": self.regValuesInt, "thesereg": self.regValuesThis}
 
     def computeCRC(self, data):
         length = len(data)
@@ -333,25 +388,24 @@ class LXPPacket:
         if self.debug:
             _LOGGER.debug("--------------PROCESS PACKET---------------")
         if self.device_function == self.READ_HOLD or self.device_function == self.WRITE_SINGLE:
+            self.regValuesThis = {}
+            not_found = True
             for i in range(0, int(len(self.value) / 2)):
+                if self.register + i in [68,69,70,71,72,73,76,77,78,79,80,81,84,85,86,87,88,89,159] and not_found:
+                    _LOGGER.debug(f"Trying to Add Register 21 to this List if it already Exists")
+                    if 21 in self.regValuesInt:
+                        self.regValuesThis[21] = self.regValuesInt[21]
+                        not_found = False
+                self.regValuesThis[self.register + i] = self.get_read_value_int(self.register + i)
                 self.regValues[self.register + i] = self.get_read_value(self.register + i)
                 self.regValuesInt[self.register + i] = self.get_read_value_int(self.register + i)
                 self.regValuesHex[self.register + i] = ''.join(format(x, '02X')
                                                                 for x in self.get_read_value(self.register + i))
             if self.debug:
+                _LOGGER.debug(self.regValuesThis)
                 _LOGGER.debug(self.regValues)
                 _LOGGER.debug(self.regValuesInt)
                 _LOGGER.debug(self.regValuesHex)
-
-        # elif self.device_function == self.WRITE_SINGLE:
-        #     self.regValues[self.register] = self.get_read_value(self.register)
-        #     self.regValuesInt[self.register] = self.get_read_value_int(self.register)
-        #     self.regValuesHex[self.register] = ''.join(format(x, '02X')
-        #                                                 for x in self.get_read_value(self.register))
-        #     if self.debug:
-        #         print(self.regValues)
-        #         print(self.regValuesInt)
-        #         print(self.regValuesHex)
 
         elif self.device_function == self.READ_INPUT:
             for i in range(0,int(len(self.value)/2)):

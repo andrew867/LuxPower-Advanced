@@ -84,10 +84,11 @@ class LuxPowerClient(asyncio.Protocol):
                     _LOGGER.debug("EVENT DATA: %s ", event_data)
                     self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
                 elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:
-                    event_data = {"registers": result.get('registers', {})}
+                    total_data = {"registers": result.get('registers', {})}
+                    event_data = {"registers": result.get('thesereg', {})}
                     _LOGGER.debug("EVENT REGISTER: %s ", event_data)
                     if self.lxpPacket.register == 160:
-                        _LOGGER.warning("REGISTERS: %s ", event_data)
+                        _LOGGER.warning("REGISTERS: %s ", total_data)
                     self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
 
     async def start_luxpower_client_daemon(self, ):
