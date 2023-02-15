@@ -223,7 +223,7 @@ class LXPPacket:
 
             frame_number = frame_number + 1
             if frame_number > 1:
-                _LOGGER.error('*** Multi-Frame *** : %s', frame_number)
+                _LOGGER.debug('*** Multi-Frame *** : %s', frame_number)
 
             prefix = packet_remains[0:2]
             if prefix != self.prefix:

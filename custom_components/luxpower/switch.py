@@ -221,19 +221,20 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
 
             data = sock.recv(1000)
             self._read_value=lxpPacket.process_socket_received_single(data, self._register_address)
+            if self._read_value is not None:
+                old_value = int(self._read_value)
+                new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
+                _LOGGER.debug("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
+                _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
+                packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
+                _LOGGER.debug("packet to be written ", packet)
+                sock.send(packet)
+                _LOGGER.debug("Packet has been wriiten")
 
-            old_value = int(self._read_value)
-            new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
-            _LOGGER.debug("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
-            _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
-            packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
-            _LOGGER.debug("packet to be written ", packet)
-            sock.send(packet)
-            _LOGGER.debug("Packet has been wriiten")
-
-            data = sock.recv(1000)
-            lxpPacket.process_socket_received_single(data, self._register_address)
-
+                data = sock.recv(1000)
+                lxpPacket.process_socket_received_single(data, self._register_address)
+            else:
+                _LOGGER.warning(f"get_register has returned None for {self._register_address}")
             sock.close()
             _LOGGER.debug("Closing socket...")
         except Exception as e:

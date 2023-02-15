@@ -25,6 +25,14 @@ AC Charge Power Rate % allow to pick 1-100 ?
 _LOGGER = logging.getLogger(__name__)
 
 
+
+def floatzero(incoming):
+    try:
+        value_we_got = float(incoming)
+    except:
+        value_we_got = 0
+    return value_we_got
+
 async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Set up the number platform."""
     # We only want this platform to be set up via discovery.
@@ -334,7 +342,7 @@ class LuxNormalNumberEntity(NumberEntity):
             data = sock.recv(1000)
             _LOGGER.debug(f"Data Received about to call received_single")
             self._read_value=lxpPacket.process_socket_received_single(data, self._register_address)
-            _LOGGER.debug(f"Value Received for Register {self._register_address} is {self._read_value}")
+            _LOGGER.warning(f"Value Received for Register {self._register_address} is {self._read_value}")
             sock.close()
 
         except Exception as e:
@@ -346,20 +354,23 @@ class LuxNormalNumberEntity(NumberEntity):
     def set_native_value(self, value):
         """Update the current value."""
         num_value = float(value)
-        if int(num_value) != int(float(self._state)):
+        if int(num_value) != int(floatzero(self._state)):
             _LOGGER.debug(f"Calling set_value {num_value}")
 
             if num_value < self.min_value or num_value > self.max_value:
-                raise vol.Invalid(
-                    f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})"
-                )
+                raise vol.Invalid(f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})")
 
             self.set_register(int(num_value))
-            self._state = self.get_register()
-            if self.is_time_entity:
-                self.hour_val, self.minute_val = self.convert_to_time(int(self._state))
-                _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
-            self.schedule_update_ha_state()
+            self._read_value = self.get_register()
+            if self._read_value is not None:
+                self._state = self._read_value
+                if self.is_time_entity:
+                    self.hour_val, self.minute_val = self.convert_to_time(int(self._state))
+                    _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
+                self.schedule_update_ha_state()
+            else:
+                _LOGGER.warning(f"get_register has returned None for {self._register_address}")
+
 
 class LuxPercentageNumberEntity(LuxNormalNumberEntity):
     """Representation of a Percentage Number entity."""
