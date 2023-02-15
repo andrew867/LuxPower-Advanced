@@ -43,6 +43,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
 
     entityID_prefix = SERIAL_NUMBER if USE_SERIAL else ''
+    hyphen = ' -' if USE_SERIAL else '-'
+    # Get Rid Of Hyphen 15/02/2023
+    hyphen = ''
 
     event = Event(dongle=DONGLE_SERIAL)
     luxpower_client = hass.data[event.CLIENT_DAEMON]
@@ -51,27 +54,26 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     _LOGGER.info(f"Lux switch platform_config: {platform_config}")
 
-
     """ Common Switches Displayed In The App/Web """
     switches = [
-        {"name": f'Lux {entityID_prefix} Normal/Standby(ON/OFF)', "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "enabled": True},
-        {"name": f'Lux {entityID_prefix} Power Backup Enable', "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "enabled": True},
-        {"name": f'Lux {entityID_prefix} Feed-In Grid', "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID, "enabled": True},
-        {"name": f'Lux {entityID_prefix} DCI Enable', "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE, "enabled": True},
-        {"name": f'Lux {entityID_prefix} GFCI Enable', "register_address": 21, "bitmask": LXPPacket.GFCI_ENABLE, "enabled": True},
-        {"name": f'Lux {entityID_prefix} Seamless EPS Switching', "register_address": 21, "bitmask": LXPPacket.SEAMLESS_EPS_SWITCHING, "enabled": True},
-        {"name": f'Lux {entityID_prefix} Grid On Power SS', "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "enabled": False},
-        {"name": f'Lux {entityID_prefix} Neutral Detect Enable', "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "enabled": False},
-        {"name": f'Lux {entityID_prefix} Anti Island Enable', "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "enabled": False},
-        {"name": f'Lux {entityID_prefix} DRMS Enable', "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "enabled": False},
-        {"name": f'Lux {entityID_prefix} OVF Load Derate Enable', "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "enabled": False},
-        {"name": f'Lux {entityID_prefix} R21 Unknown Bit 12', "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "enabled": False},
-        {"name": f'Lux {entityID_prefix} R21 Unknown Bit 3', "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3, "enabled": False},
-        {"name": f'Lux {entityID_prefix} AC Charge Enable', "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "enabled": True},
-        {"name": f'Lux {entityID_prefix} Charge Priority', "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "enabled": True},
-        {"name": f'Lux {entityID_prefix} Force Discharge Enable', "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": True},
-        {"name": f'Lux {entityID_prefix} Take Load Together', "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
-        {"name": f'Lux {entityID_prefix} Charge Last', "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} Normal/Standby(ON/OFF)', "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} Power Backup Enable', "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} Feed-In Grid', "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} DCI Enable', "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} GFCI Enable', "register_address": 21, "bitmask": LXPPacket.GFCI_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} Seamless EPS Switching', "register_address": 21, "bitmask": LXPPacket.SEAMLESS_EPS_SWITCHING, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} Grid On Power SS', "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} Neutral Detect Enable', "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} Anti Island Enable', "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} DRMS Enable', "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} OVF Load Derate Enable', "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} R21 Unknown Bit 12', "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} R21 Unknown Bit 3', "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} AC Charge Enable', "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} Charge Priority', "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} Force Discharge Enable', "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": True},
+        {"name": f'Lux {entityID_prefix}{hyphen} Take Load Together', "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
+        {"name": f'Lux {entityID_prefix}{hyphen} Charge Last', "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": False},
     ]
 
     for switch_data in switches:
