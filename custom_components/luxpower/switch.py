@@ -27,7 +27,7 @@ async def refreshSwitches(hass: HomeAssistant, dongle):
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
-    """Set up the sensor platform."""
+    """Set up the switch platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux switch platform")
     _LOGGER.info("Set up the switch platform %s", config_entry.data)
@@ -97,15 +97,18 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self.dongle = dongle
         self.serial = serial
         self._register_address = register_address
+        self._register_value = None
         self._bitmask = bitmask
         self._name = object_id
         self._object_id = object_id
         self._device_class = device_class
         self._state = False
+        self._read_value = 0
         self._attr_entity_registry_enabled_default = create_enabled
         self.luxpower_client = luxpower_client
         # self.lxppacket = luxpower_client.lxpPacket
         self.registers = {}
+        self.totalregs = {}
         self.event = event
 
     async def async_added_to_hass(self) -> None:
@@ -117,26 +120,30 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         return result
 
     def push_update(self, event):
-        _LOGGER.debug("switch: register event received")
         registers = event.data.get('registers', {})
         self.registers = registers
         if self._register_address in registers.keys():
             register_val = registers.get(self._register_address,None)
             if register_val is None:
                 return
+            #Save current register int value
+            self._register_value = register_val
+            _LOGGER.debug("switch: register event received - register: %s bitmask: %s", self._register_address, self._bitmask)
+            self.totalregs = self.luxpower_client.lxpPacket.regValuesInt
+            #_LOGGER.debug("totalregs: %s" , self.totalregs)
             oldstate = self._state
             self._state = register_val & self._bitmask == self._bitmask
             if oldstate != self._state:
                 _LOGGER.debug("Reading: {} {} Old State {} Updating state to {} - {}".format(self._register_address, self._bitmask, oldstate, self._state, self._name))
                 self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
-                if 68 in registers.keys():
+                if 68 in self.totalregs.keys():
                     self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
-                if 76 in registers.keys():
+                if 76 in self.totalregs.keys():
                     self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
-                if 84 in registers.keys():
+                if 84 in self.totalregs.keys():
                     self.schedule_update_ha_state()
         return self._state
 
@@ -208,43 +215,34 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     def set_register_bit(self, bit_polarity=False):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
+            # Read Existing Register Value
             sock.connect((self._host, self._port))
             _LOGGER.debug("set_register_bit: Connected to server", self._host, self._port, self._register_address)
             lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
 
-            packet = sock.recv(1000)
-            _LOGGER.debug('Received: ', packet)
-            data = lxpPacket.parse_packet(packet)
-            _LOGGER.debug(data)
-            if not lxpPacket.packet_error:
-                if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == self._register_address:
-                    if len(lxpPacket.value) == 2:
-                        old_value = lxpPacket.convert_to_int(lxpPacket.value)
-                        new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
-                        _LOGGER.debug("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
-                        _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
-                        packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
-                        _LOGGER.debug("packet to be written ", packet)
-                        sock.send(packet)
-                        _LOGGER.debug("written packet")
-
-                        # self._state = bit_polarity
-                        # self.schedule_update_ha_state()
-                        # await asyncio.sleep(1)
-                        # packet = sock.recv(1000)
-                        # print('Received: ', packet)
-                        # result = lxpPacket.parse_packet(packet)
-                        # if not lxpPacket.packet_error:
-                        #     print(result)
-                    else:
-                        _LOGGER.debug(f"Length of value packet is not 2, received: {len(lxpPacket.value)}")
-                else:
-                    _LOGGER.debug("Expected Type: ", lxpPacket.READ_HOLD, ' Received :', lxpPacket.device_function)
-                    _LOGGER.debug("Expected Address: ", self._register_address, ' Received :', lxpPacket.register)
+            data = sock.recv(1000)
+            self._read_value=lxpPacket.process_socket_received_single(data, self._register_address)
+            if self._read_value is not None:
+                #Read has been succesful - use read value
+                old_value = int(self._read_value)
             else:
-                _LOGGER.debug("LX Packet error")
+                #Read has been UNsuccesful - use LAST KNOWN register value
+                _LOGGER.warning(f"Cannot read Register - Using LAST KNOWN value {self._register_value}")
+                old_value = int(self._register_value)
+
+            new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
+            _LOGGER.debug("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
+            _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
+            packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
+            _LOGGER.debug("packet to be written ", packet)
+            sock.send(packet)
+            _LOGGER.debug("Packet has been wriiten")
+
+            data = sock.recv(1000)
+            lxpPacket.process_socket_received_single(data, self._register_address)
+
             sock.close()
             _LOGGER.debug("Closing socket...")
         except Exception as e:
@@ -256,44 +254,46 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         state_attributes = self.state_attributes or {}
         if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
             lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            hour, min = lxpPacket.convert_to_time(self.registers.get(68,0))
+            _LOGGER.debug("Attrib totalregs: %s" , self.totalregs)
+            _LOGGER.debug("Attrib registers: %s" , self.registers)
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(68,0))
             state_attributes["AC_CHARGE_START"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(69, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(69, 0))
             state_attributes["AC_CHARGE_END"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(70, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(70, 0))
             state_attributes["AC_CHARGE_START_1"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(71, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(71, 0))
             state_attributes["AC_CHARGE_END_1"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(72, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(72, 0))
             state_attributes["AC_CHARGE_START_2"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(73, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(73, 0))
             state_attributes["AC_CHARGE_END_2"] = "{}:{}".format(hour, min)
         if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
             lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            hour, min = lxpPacket.convert_to_time(self.registers.get(76,0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(76, 0))
             state_attributes["PRIORITY_CHARGE_START"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(77, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(77, 0))
             state_attributes["PRIORITY_CHARGE_END"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(78, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(78, 0))
             state_attributes["PRIORITY_CHARGE_START_1"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(79, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(79, 0))
             state_attributes["PRIORITY_CHARGE_END_1"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(80, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(80, 0))
             state_attributes["PRIORITY_CHARGE_START_2"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(81, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(81, 0))
             state_attributes["PRIORITY_CHARGE_END_2"] = "{}:{}".format(hour, min)
         if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
             lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            hour, min = lxpPacket.convert_to_time(self.registers.get(84,0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(84, 0))
             state_attributes["FORCED_DISCHARGE_START"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(85, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(85, 0))
             state_attributes["FORCED_DISCHARGE_END"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(86, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(86, 0))
             state_attributes["FORCED_DISCHARGE_START_1"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(87, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(87, 0))
             state_attributes["FORCED_DISCHARGE_END_1"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(88, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(88, 0))
             state_attributes["FORCED_DISCHARGE_START_2"] = "{}:{}".format(hour, min)
-            hour, min = lxpPacket.convert_to_time(self.registers.get(89, 0))
+            hour, min = lxpPacket.convert_to_time(self.totalregs.get(89, 0))
             state_attributes["FORCED_DISCHARGE_END_2"] = "{}:{}".format(hour, min)
         return state_attributes
