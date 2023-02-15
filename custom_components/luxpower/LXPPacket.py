@@ -271,7 +271,7 @@ class LXPPacket:
             return
         #Check if packet contains data
         elif self.packet_length < 37:
-            _LOGGER.error("Recevied packet not sufficient")
+            _LOGGER.error(f"Recevied packet is TOO SMALL with length {self.packet_length}")
             return
 
         prefix = packet[0:2]

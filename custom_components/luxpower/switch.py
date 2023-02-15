@@ -97,6 +97,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self.dongle = dongle
         self.serial = serial
         self._register_address = register_address
+        self._register_value = None
         self._bitmask = bitmask
         self._name = object_id
         self._object_id = object_id
@@ -125,6 +126,8 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             register_val = registers.get(self._register_address,None)
             if register_val is None:
                 return
+            #Save current register int value
+            self._register_value = register_val
             _LOGGER.debug("switch: register event received - register: %s bitmask: %s", self._register_address, self._bitmask)
             self.totalregs = self.luxpower_client.lxpPacket.regValuesInt
             #_LOGGER.debug("totalregs: %s" , self.totalregs)
@@ -222,19 +225,24 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             data = sock.recv(1000)
             self._read_value=lxpPacket.process_socket_received_single(data, self._register_address)
             if self._read_value is not None:
+                #Read has been succesful - use read value
                 old_value = int(self._read_value)
-                new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
-                _LOGGER.debug("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
-                _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
-                packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
-                _LOGGER.debug("packet to be written ", packet)
-                sock.send(packet)
-                _LOGGER.debug("Packet has been wriiten")
-
-                data = sock.recv(1000)
-                lxpPacket.process_socket_received_single(data, self._register_address)
             else:
-                _LOGGER.warning(f"get_register has returned None for {self._register_address}")
+                #Read has been UNsuccesful - use LAST KNOWN register value
+                _LOGGER.warning(f"Cannot read Register - Using LAST KNOWN value {self._register_value}")
+                old_value = int(self._register_value)
+
+            new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
+            _LOGGER.debug("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
+            _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
+            packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
+            _LOGGER.debug("packet to be written ", packet)
+            sock.send(packet)
+            _LOGGER.debug("Packet has been wriiten")
+
+            data = sock.recv(1000)
+            lxpPacket.process_socket_received_single(data, self._register_address)
+
             sock.close()
             _LOGGER.debug("Closing socket...")
         except Exception as e:

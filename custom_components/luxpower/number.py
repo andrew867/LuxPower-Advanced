@@ -342,7 +342,7 @@ class LuxNormalNumberEntity(NumberEntity):
             data = sock.recv(1000)
             _LOGGER.debug(f"Data Received about to call received_single")
             self._read_value=lxpPacket.process_socket_received_single(data, self._register_address)
-            _LOGGER.warning(f"Value Received for Register {self._register_address} is {self._read_value}")
+            _LOGGER.debug(f"Value Received for Register {self._register_address} is {self._read_value}")
             sock.close()
 
         except Exception as e:
@@ -369,7 +369,7 @@ class LuxNormalNumberEntity(NumberEntity):
                     _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
                 self.schedule_update_ha_state()
             else:
-                _LOGGER.warning(f"get_register has returned None for {self._register_address}")
+                _LOGGER.warning(f"Cannot confirm succesful READ_BACK of SET Register: {self._register_address} Entity: {self.entity_id}")
 
 
 class LuxPercentageNumberEntity(LuxNormalNumberEntity):
