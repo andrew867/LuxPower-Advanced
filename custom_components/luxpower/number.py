@@ -223,7 +223,19 @@ class LuxNormalNumberEntity(NumberEntity):
         result = await super().async_added_to_hass()
         _LOGGER.debug("async_added_to_hass %s", self._name)
         if self.hass is not None:
-            self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
+            if self._register_address == 21:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
+            elif 0 <= self._register_address <= 39:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update)
+            elif 40 <= self._register_address <= 79:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update)
+            elif 80 <= self._register_address <= 119:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update)
+            elif 120 <= self._register_address <= 159:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
+            elif 160 <= self._register_address <= 199:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+            #self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
         return result
     
     def convert_to_time(self, value):
@@ -310,48 +322,35 @@ class LuxNormalNumberEntity(NumberEntity):
         """Return the value step."""
         return 1.0
 
-    def set_register(self, value=0):
-        _LOGGER.debug(f"Calling set_register within Normal Class")
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            sock.connect((self._host, self._port))
-            _LOGGER.debug("Connected to server")
-            _LOGGER.debug("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
-            lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            packet = lxpPacket.prepare_packet_for_write(self._register_address, value)
-            _LOGGER.debug(f"WRITE_HOLD packet to be written {packet}")
-            sock.send(packet)
-            _LOGGER.debug("packet has been written")
+    def set_register(self, new_value=0):
+        _LOGGER.debug(f"Started set_register")
 
-            data = sock.recv(1000)
-            lxpPacket.process_socket_received_single(data, self._register_address)
-            sock.close()
+        lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
 
-        except Exception as e:
-            _LOGGER.error(f"Exception {e.args}, Could Not SET Data For {self.entity_id}: {value}")
-            _LOGGER.error(f"{e.with_traceback}")
+        self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+
+        if self._read_value is not None:
+            #Write has been succesful 
+            _LOGGER.info(f"Write Register OK - Setting INVERTER Register {self._register_address} value of {self._read_value}")
+        else:
+            #Write has been UNsuccesful
+            _LOGGER.warning(f"Cannot write Register {self._register_address}")
+
+        return self._read_value
 
     def get_register(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            sock.connect((self._host, self._port))
-            _LOGGER.debug("Connected to server")
-            _LOGGER.debug("SER: %s %s", str.encode(str(self.dongle)), str.encode(str(self.serial)))
-            lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
-            _LOGGER.debug(f"READ_HOLD packet to be written {packet}")
-            sock.send(packet)
-            _LOGGER.debug("packet has been written")
+        _LOGGER.debug(f"Started get_register")
 
-            data = sock.recv(1000)
-            _LOGGER.debug(f"Data Received about to call received_single")
-            self._read_value=lxpPacket.process_socket_received_single(data, self._register_address)
-            _LOGGER.debug(f"Value Received for Register {self._register_address} is {self._read_value}")
-            sock.close()
+        lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
 
-        except Exception as e:
-            _LOGGER.error(f"Exception {e.args}, Could Not GET Data For {self.entity_id}: {value}")
-            _LOGGER.error(f"{e.with_traceback}")
+        self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD)
+
+        if self._read_value is not None:
+            #Read has been succesful - use read value
+            _LOGGER.info(f"Read Register OK - Using INVERTER Register {self._register_address} value of {self._read_value}")
+        else:
+            #Read has been UNsuccesful
+            _LOGGER.warning(f"Cannot read Register {self._register_address}")
 
         return self._read_value
 
@@ -359,21 +358,30 @@ class LuxNormalNumberEntity(NumberEntity):
         """Update the current value."""
         num_value = float(value)
         if int(num_value) != int(floatzero(self._state)):
-            _LOGGER.debug(f"Calling set_value {num_value}")
+            _LOGGER.debug(f"Started set_value {num_value}")
 
             if num_value < self.min_value or num_value > self.max_value:
                 raise vol.Invalid(f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})")
 
-            self.set_register(int(num_value))
-            self._read_value = self.get_register()
+            self._read_value = self.set_register(int(num_value))
             if self._read_value is not None:
-                self._state = self._read_value
-                if self.is_time_entity:
-                    self.hour_val, self.minute_val = self.convert_to_time(int(self._state))
-                    _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
-                self.schedule_update_ha_state()
+                _LOGGER.info(f"CAN confirm succesful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                self._read_value = self.get_register()
+                if self._read_value is not None:
+                    _LOGGER.info(f"CAN confirm succesful READ_BACK of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                    if self._read_value == int(num_value):
+                        _LOGGER.info(f"CAN confirm READ_BACK value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                        self._state = self._read_value
+                        if self.is_time_entity:
+                            self.hour_val, self.minute_val = self.convert_to_time(int(self._state))
+                            _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
+                        self.schedule_update_ha_state()
+                    else:
+                        _LOGGER.warning(f"CanNOT confirm READ_BACK value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}")
+                else:
+                    _LOGGER.warning(f"CanNOT confirm succesful READ_BACK of SET Register: {self._register_address} Entity: {self.entity_id}")
             else:
-                _LOGGER.warning(f"Cannot confirm succesful READ_BACK of SET Register: {self._register_address} Entity: {self.entity_id}")
+                _LOGGER.warning(f"CanNOT confirm succesful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}")
 
 
 class LuxPercentageNumberEntity(LuxNormalNumberEntity):
