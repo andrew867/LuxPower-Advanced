@@ -80,16 +80,38 @@ class LuxPowerClient(asyncio.Protocol):
             if not self.lxpPacket.packet_error:
                 _LOGGER.debug(result)
                 if self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
-                    event_data = {"data": result.get('data', {})}
+                    total_data = {"data": result.get('data', {})}
+                    event_data = {"data": result.get('thesedata', {})}
                     _LOGGER.debug("EVENT DATA: %s ", event_data)
-                    self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
+                    if 0 <= self.lxpPacket.register <= 39:
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
+                    elif 40 <= self.lxpPacket.register <= 79:
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
+                    elif 80 <= self.lxpPacket.register <= 119:
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
+ 
+                    #self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
                 elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:
                     total_data = {"registers": result.get('registers', {})}
                     event_data = {"registers": result.get('thesereg', {})}
                     _LOGGER.debug("EVENT REGISTER: %s ", event_data)
                     if self.lxpPacket.register == 160:
                         _LOGGER.warning("REGISTERS: %s ", total_data)
-                    self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
+                    if 0 <= self.lxpPacket.register <= 39:
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_BANK0_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_21_RECEIVED, event_data)
+                    elif 40 <= self.lxpPacket.register <= 79:
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_BANK1_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_21_RECEIVED, event_data)
+                    elif 80 <= self.lxpPacket.register <= 119:
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_BANK2_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_21_RECEIVED, event_data)
+                    elif 120 <= self.lxpPacket.register <= 159:
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_BANK3_RECEIVED, event_data)
+                    elif 160 <= self.lxpPacket.register <= 199:
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_BANK4_RECEIVED, event_data)
+
+                    #self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
 
     async def start_luxpower_client_daemon(self, ):
         while not self._stop_client:
@@ -315,6 +337,7 @@ class ServiceHelper:
         _LOGGER.info("send_synctime done")
 
     async def send_refresh_registers(self, dongle):
+        _LOGGER.debug("send_refresh_registers start")
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]

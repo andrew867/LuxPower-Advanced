@@ -118,7 +118,19 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         _LOGGER.debug("async_added_to_hass %s", self._name)
         self.is_added_to_hass = True
         if self.hass is not None:
-            self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
+            if self._register_address == 21:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
+            elif 0 <= self._register_address <= 39:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update)
+            elif 40 <= self._register_address <= 79:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update)
+            elif 80 <= self._register_address <= 119:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update)
+            elif 120 <= self._register_address <= 159:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
+            elif 160 <= self._register_address <= 199:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+            #self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
         return result
 
     def push_update(self, event):
@@ -215,40 +227,35 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             _LOGGER.error("Exception ", e)
 
     def set_register_bit(self, bit_polarity=False):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            # Read Existing Register Value
-            sock.connect((self._host, self._port))
-            _LOGGER.debug("set_register_bit: Connected to server", self._host, self._port, self._register_address)
-            lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
-            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
-            sock.send(packet)
 
-            data = sock.recv(1000)
-            self._read_value=lxpPacket.process_socket_received_single(data, self._register_address)
+        lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+
+        self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD)
+ 
+        if self._read_value is not None:
+            #Read has been succesful - use read value
+            _LOGGER.info(f"Read Register OK - Using INVERTER Register {self._register_address} value of {self._read_value}")
+            old_value = int(self._read_value)
+        else:
+            #Read has been UNsuccesful - use LAST KNOWN register value
+            _LOGGER.warning(f"Cannot read Register - Using LAST KNOWN Register {self._register_address} value of {self._register_value}")
+            old_value = int(self._register_value)
+
+        new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
+
+        if new_value != old_value:
+            _LOGGER.info("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
+            self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+
             if self._read_value is not None:
-                #Read has been succesful - use read value
-                old_value = int(self._read_value)
+                _LOGGER.info(f"CAN confirm succesful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                if self._read_value == new_value:
+                    _LOGGER.info(f"CAN confirm WRITTEN value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                else:
+                    _LOGGER.warning(f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}")
             else:
-                #Read has been UNsuccesful - use LAST KNOWN register value
-                _LOGGER.warning(f"Cannot read Register - Using LAST KNOWN value {self._register_value}")
-                old_value = int(self._register_value)
+                _LOGGER.warning(f"CanNOT confirm succesful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}")
 
-            new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
-            _LOGGER.debug("OLD: ", old_value, " MASK: ", self._bitmask, " NEW: ", new_value)
-            _LOGGER.debug("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
-            packet = lxpPacket.prepare_packet_for_write(self._register_address, new_value)
-            _LOGGER.debug("packet to be written ", packet)
-            sock.send(packet)
-            _LOGGER.debug("Packet has been wriiten")
-
-            data = sock.recv(1000)
-            lxpPacket.process_socket_received_single(data, self._register_address)
-
-            sock.close()
-            _LOGGER.debug("Closing socket...")
-        except Exception as e:
-            _LOGGER.error("Exception ", e)
         _LOGGER.debug("set_register_bit done")
 
     @property
