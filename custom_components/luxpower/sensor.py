@@ -342,6 +342,8 @@ class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
             state_text = 'Solar + Grid + Battery Charging'
         elif status == 11:
             state_text = 'Offsetting'
+        elif status == 192:
+            state_text = 'No grid power available, using solar + battery'
         else:
             state_text = 'Unknown'
         self._state = "{}".format(state_text)

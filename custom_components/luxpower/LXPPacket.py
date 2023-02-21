@@ -240,7 +240,7 @@ class LXPPacket:
                     #i/o has been succesful - exit loop
                     io_confirmed = True
                 else:
-                    _LOGGER.warning(f"Cannot read/write Register {self._register_address} - Current retry count is {retry_count}")
+                    _LOGGER.info(f"Cannot read/write Register {register} - Current retry count is {retry_count}")
  
             sock.close()
             _LOGGER.debug("Closing socket...")
