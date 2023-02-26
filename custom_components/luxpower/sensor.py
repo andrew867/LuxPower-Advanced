@@ -145,7 +145,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async_add_devices(stateSensors, True)
 
     # delay service call for some time to give the sensors and swiches time to initialise
-    hass.async_create_task(refreshSensors(hass, dongle=DONGLE))
+#    hass.async_create_task(refreshSensors(hass, dongle=DONGLE))
 
     _LOGGER.info("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
 

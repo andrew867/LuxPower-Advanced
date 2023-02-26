@@ -83,7 +83,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async_add_devices(binarySwitchs, True)
 
     #  delay service call for some time to give the sensors and swiches time to initialise
-    hass.async_create_task(refreshSwitches(hass, dongle=DONGLE_SERIAL))
+    #hass.async_create_task(refreshSwitches(hass, dongle=DONGLE_SERIAL))
 
     _LOGGER.info("LuxPower switch async_setup_platform switch done")
 

@@ -25,6 +25,11 @@ SCHEME_REGISTER_BANK = vol.Schema({
     vol.Required("address_bank"): vol.Coerce(int),
 })
 
+SCHEME_REGISTERS_COUNT = vol.Schema({
+    vol.Required("dongle"): vol.Coerce(str),
+    vol.Optional("bank_count", default=2): vol.Coerce(int),
+})
+
 SCHEME_REGISTERS = vol.Schema({
     vol.Required("dongle"): vol.Coerce(str),
 })
@@ -37,6 +42,20 @@ SCHEME_SETTIME = vol.Schema({
     vol.Required("dongle"): vol.Coerce(str),
 })
 
+
+async def refreshALLPlatforms(hass: HomeAssistant, dongle):
+
+    await asyncio.sleep(10)
+#    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_registers', {'dongle': dongle}, blocking=True)
+    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_registers', {'dongle': dongle, 'bank_count': 3}, blocking=True)
+
+#    await asyncio.sleep(10)
+    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_holdings', {'dongle': dongle}, blocking=True)
+
+#    await asyncio.sleep(20)
+#    _LOGGER.debug("Refreshing switches")
+#    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_holdings', {'dongle': dongle}, blocking=True)
+#    _LOGGER.debug(f"Refreshing switches done with status : {status}")
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the BOM component."""
@@ -54,8 +73,12 @@ async def async_setup(hass: HomeAssistant, config: dict):
     async def handle_refresh_registers(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
+        bank_count = call.data.get("bank_count")
+        if int(bank_count)==0:
+            bank_count = 2    
         _LOGGER.debug("handle_refresh_registers service: %s %s", DOMAIN, dongle)
-        await service_helper.send_refresh_registers(dongle=dongle)
+        await service_helper.send_refresh_registers(dongle=dongle, bank_count=int(bank_count))
+        #await service_helper.send_refresh_registers(dongle=dongle)
 
     async def handle_holding_registers(call):
         """Handle the service call."""
@@ -84,7 +107,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
     hass.services.async_register(
         DOMAIN, "luxpower_refresh_registers",
         handle_refresh_registers,
-        schema=SCHEME_REGISTERS
+        schema=SCHEME_REGISTERS_COUNT
     )
 
     hass.services.async_register(
@@ -144,6 +167,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
+    # Refresh ALL Platforms By Issuing Service Call, After Suitable Delay To Give The Platforms Time To Initialise
+    hass.async_create_task(refreshALLPlatforms(hass, dongle=DONGLE_SERIAL))
+ 
     _LOGGER.info("LuxPower init async_setup done")
     return True
 

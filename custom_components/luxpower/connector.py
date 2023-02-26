@@ -336,8 +336,8 @@ class ServiceHelper:
             await asyncio.sleep(1)
         _LOGGER.info("send_synctime done")
 
-    async def send_refresh_registers(self, dongle):
-        _LOGGER.debug("send_refresh_registers start")
+    async def send_refresh_registers(self, dongle, bank_count):
+        _LOGGER.debug(f"send_refresh_registers start - Count: {bank_count}")
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
@@ -349,7 +349,7 @@ class ServiceHelper:
             # This change stops Spamming of Lux Server Database
             # Really needs seperate function refresh_two_registers
             # for address_bank in range(0, 3):
-            for address_bank in range(0, 2):
+            for address_bank in range(0, bank_count):
                 _LOGGER.debug("send_refresh_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_register_data(address_bank)
                 await asyncio.sleep(1)
