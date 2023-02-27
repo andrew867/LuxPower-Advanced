@@ -46,16 +46,10 @@ SCHEME_SETTIME = vol.Schema({
 async def refreshALLPlatforms(hass: HomeAssistant, dongle):
 
     await asyncio.sleep(10)
-#    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_registers', {'dongle': dongle}, blocking=True)
     status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_registers', {'dongle': dongle, 'bank_count': 3}, blocking=True)
 
-#    await asyncio.sleep(10)
     status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_holdings', {'dongle': dongle}, blocking=True)
 
-#    await asyncio.sleep(20)
-#    _LOGGER.debug("Refreshing switches")
-#    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_holdings', {'dongle': dongle}, blocking=True)
-#    _LOGGER.debug(f"Refreshing switches done with status : {status}")
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the BOM component."""

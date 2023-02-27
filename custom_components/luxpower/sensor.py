@@ -21,12 +21,6 @@ from .helpers import Event
 
 _LOGGER = logging.getLogger(__name__)
 
-async def refreshSensors(hass: HomeAssistant, dongle):
-    await asyncio.sleep(10)
-    _LOGGER.debug("Refreshing sensors")
-    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_registers', {'dongle': dongle}, blocking=True)
-    _LOGGER.debug(f"Refreshing sensors done with status : {status}")
-
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
     """Set up the sensor platform."""
@@ -143,9 +137,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     async_add_devices(stateSensors, True)
-
-    # delay service call for some time to give the sensors and swiches time to initialise
-#    hass.async_create_task(refreshSensors(hass, dongle=DONGLE))
 
     _LOGGER.info("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
 

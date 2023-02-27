@@ -19,13 +19,6 @@ import socket
 _LOGGER = logging.getLogger(__name__)
 
 
-async def refreshSwitches(hass: HomeAssistant, dongle):
-    await asyncio.sleep(20)
-    _LOGGER.debug("Refreshing switches")
-    status = await hass.services.async_call(DOMAIN, 'luxpower_refresh_holdings', {'dongle': dongle}, blocking=True)
-    _LOGGER.debug(f"Refreshing switches done with status : {status}")
-
-
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
     """Set up the switch platform."""
     # We only want this platform to be set up via discovery.
@@ -81,9 +74,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
             LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, DONGLE_SERIAL, SERIAL_NUMBER, switch_data["register_address"], switch_data["bitmask"], switch_data["name"], switch_data["enabled"], device_class, luxpower_client, event))
 
     async_add_devices(binarySwitchs, True)
-
-    #  delay service call for some time to give the sensors and swiches time to initialise
-    #hass.async_create_task(refreshSwitches(hass, dongle=DONGLE_SERIAL))
 
     _LOGGER.info("LuxPower switch async_setup_platform switch done")
 
