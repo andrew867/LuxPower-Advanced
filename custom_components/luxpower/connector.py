@@ -166,145 +166,110 @@ class LuxPowerClient(asyncio.Protocol):
         self._connected = False
         _LOGGER.info("reconnect client finished")
 
+
     async def synctime(self):
         _LOGGER.info("Syncing Time to Luxpower Inverter")
+
+        lxpPacket = LXPPacket(debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number)
+
+        _LOGGER.info("Register to be read 12")
+        read_value = lxpPacket.register_io_with_retry(self.server, self.port, 12, value=1, iotype=lxpPacket.READ_HOLD)
+
+        if read_value is not None:
+            #Read has been succesful - use read value
+            _LOGGER.info(f"READ Register OK - Using INVERTER Register: 12 Value: {read_value}")
+            old12 = read_value
+            oldmonth = int(old12/256)
+            oldyear = int((old12-(oldmonth*256))+2000)
+            _LOGGER.info("Old12: %s, Oldmonth: %s, Oldyear: %s",old12,oldmonth,oldyear)
+        else:
+            #Read has been UNsuccesful
+            _LOGGER.warning(f"Cannot READ Register: 12 - Aborting")
+            return
+
+        _LOGGER.info("Register to be read 13")
+        read_value = lxpPacket.register_io_with_retry(self.server, self.port, 13, value=1, iotype=lxpPacket.READ_HOLD)
+
+        if read_value is not None:
+            #Read has been succesful - use read value
+            _LOGGER.info(f"READ Register OK - Using INVERTER Register: 13 Value: {read_value}")
+            old13 = read_value
+            oldhour = int(old13/256)
+            oldday = int(old13-(oldhour*256))
+            _LOGGER.info("Old13: %s, Oldhour: %s, Oldday: %s",old13,oldhour,oldday)
+        else:
+            #Read has been UNsuccesful
+            _LOGGER.warning(f"Cannot READ Register: 13 - Aborting")
+            return
+
+        _LOGGER.info("Register to be read 14")
+        read_value = lxpPacket.register_io_with_retry(self.server, self.port, 14, value=1, iotype=lxpPacket.READ_HOLD)
+
+        if read_value is not None:
+            #Read has been succesful - use read value
+            _LOGGER.info(f"READ Register OK - Using INVERTER Register: 14 Value: {read_value}")
+            old14 = read_value
+            oldsecond = int(old14/256)
+            oldminute = int(old14-(oldsecond*256))
+            _LOGGER.info("Old14: %s, Oldsecond: %s, Oldminute: %s",old14,oldsecond,oldminute)
+        else:
+            #Read has been UNsuccesful
+            _LOGGER.warning(f"Cannot READ Register: 14 - Aborting")
+            return
+
+        was = datetime.datetime(int(oldyear), int(oldmonth), int(oldday), int(oldhour), int(oldminute), int(oldsecond))
+        _LOGGER.info("was: %s %s %s %s %s %s", was.year, was.month, was.day, was.hour, was.minute, was.second)
+
         now = datetime.datetime.now()
-        _LOGGER.info("%s %s %s %s %s %s", now.year, now.month, now.day, now.hour, now.minute, now.second)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            sock.connect((self.server, self.port))
-            _LOGGER.info("Connected to server")
-            _LOGGER.info("SER: %s %s", str(self.dongle_serial), str(self.serial_number))
-            lxpPacket = LXPPacket(debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number)
-            _LOGGER.info("Created NEW lxpPacket structure")
+        _LOGGER.info("now: %s %s %s %s %s %s", now.year, now.month, now.day, now.hour, now.minute, now.second)
 
-            _LOGGER.info("Register to be read 12")
-            packet = lxpPacket.prepare_packet_for_read(12, 1, type=LXPPacket.READ_HOLD)
-            _LOGGER.info(f"Packet to be written {packet}")
-            sock.send(packet)
-            _LOGGER.info("Packet Written")
-            packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet}")
-            result = lxpPacket.parse_packet(packet)
-            if not lxpPacket.packet_error:
-                _LOGGER.info(result)
-                if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == 12:
-                    if len(lxpPacket.value) == 2:
-                        old12 = lxpPacket.convert_to_int(lxpPacket.value)
-                        oldmonth = int(old12/256)
-                        oldyear = (old12-(oldmonth*256))+2000
-                        _LOGGER.info("Old12: %s, Oldmonth: %s, Oldyear: %s",old12,oldmonth,oldyear)
-                    else:
-                        _LOGGER.info("Wrong Value Length: %s",len(lxpPacket.value))
-                else:
-                    _LOGGER.info("Wrong Function Or Register: %s, %s", lxpPacket.device_function, lxpPacket.register)
+        _LOGGER.warning("%s Old Time: %s, New Time: %s, Seconds Diff: %s", str(self.serial_number), was, now, abs(now-was))
+
+        if 1 == 1:
+            new_value = (now.month*256)+(now.year-2000)
+            
+            _LOGGER.info(f"Register to be written 12 with value {new_value}")
+            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 12, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+
+            if read_value is not None:
+                #Write has been succesful
+                _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 12 Value: {read_value}")
             else:
-                _LOGGER.error(result)
+                #Write has been UNsuccesful
+                _LOGGER.warning(f"Cannot WRITE Register: 12 Value: {new_value} - Aborting")
+                return
 
-            _LOGGER.info("Register to be read 13")
-            packet = lxpPacket.prepare_packet_for_read(13, 1, type=LXPPacket.READ_HOLD)
-            _LOGGER.info(f"Packet to be written {packet}")
-            sock.send(packet)
-            _LOGGER.info("Packet Written")
-            packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet}")
-            result = lxpPacket.parse_packet(packet)
-            if not lxpPacket.packet_error:
-                _LOGGER.info(result)
-                if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == 13:
-                    if len(lxpPacket.value) == 2:
-                        old13 = lxpPacket.convert_to_int(lxpPacket.value)
-                        oldhour = int(old13/256)
-                        oldday = (old13-(oldhour*256))
-                        _LOGGER.info("Old13: %s, Oldhour: %s, Oldday: %s",old13,oldhour,oldday)
-                    else:
-                        _LOGGER.info("Wrong Value Length: %s",len(lxpPacket.value))
-                else:
-                    _LOGGER.info("Wrong Function Or Register: %s, %s", lxpPacket.device_function, lxpPacket.register)
+            new_value = (now.hour*256)+(now.day)
+            
+            _LOGGER.info(f"Register to be written 13 with value {new_value}")
+            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 13, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+
+            if read_value is not None:
+                #Write has been succesful
+                _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 13 Value: {read_value}")
             else:
-                _LOGGER.error(result)
+                #Write has been UNsuccesful
+                _LOGGER.warning(f"Cannot WRITE Register: 13 Value: {new_value} - Aborting")
+                return
 
-            _LOGGER.info("Register to be read 14")
-            packet = lxpPacket.prepare_packet_for_read(14, 1, type=LXPPacket.READ_HOLD)
-            _LOGGER.info(f"Packet to be written {packet}")
-            sock.send(packet)
-            _LOGGER.info("Packet Written")
-            packet = sock.recv(1000)
-            _LOGGER.info(f"Received: {packet}")
-            result = lxpPacket.parse_packet(packet)
-            if not lxpPacket.packet_error:
-                _LOGGER.info(result)
-                if lxpPacket.device_function == lxpPacket.READ_HOLD and lxpPacket.register == 14:
-                    if len(lxpPacket.value) == 2:
-                        old14 = lxpPacket.convert_to_int(lxpPacket.value)
-                        oldsecond = int(old14/256)
-                        oldminute = (old14-(oldsecond*256))
-                        _LOGGER.info("Old14: %s, Oldsecond: %s, Oldminute: %s",old14,oldsecond,oldminute)
-                    else:
-                        _LOGGER.info("Wrong Value Length: %s",len(lxpPacket.value))
-                else:
-                    _LOGGER.info("Wrong Function Or Register: %s, %s", lxpPacket.device_function, lxpPacket.register)
+            new_value = ((now.second+1)*256)+(now.minute)
+            
+            _LOGGER.info(f"Register to be written 14 with value {new_value}")
+            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 14, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+
+            if read_value is not None:
+                #Write has been succesful
+                _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 14 Value: {read_value}")
             else:
-                _LOGGER.error(result)
+                #Write has been UNsuccesful
+                _LOGGER.warning(f"Cannot WRITE Register: 14 Value: {new_value} - Aborting")
+                return
 
-            was = datetime.datetime(oldyear, oldmonth, oldday, oldhour, oldminute, oldsecond)
-
-            _LOGGER.info("was: %s %s %s %s %s %s", was.year, was.month, was.day, was.hour, was.minute, was.second)
-            now = datetime.datetime.now()
-            _LOGGER.info("now: %s %s %s %s %s %s", now.year, now.month, now.day, now.hour, now.minute, now.second)
-
-            _LOGGER.warning("%s Old Time: %s, New Time: %s, Seconds Diff: %s", str(self.serial_number), was, now, abs(now-was))
- 
-            if 1 == 1:
-                _LOGGER.info("Register to be written 12 with value %s",(now.month*256)+(now.year-2000))
-                packet = lxpPacket.prepare_packet_for_write(12, (now.month*256)+(now.year-2000))
-                _LOGGER.info(f"Packet to be written {packet}")
-                sock.send(packet)
-                _LOGGER.info("Packet Written")
-                packet = sock.recv(1000)
-                _LOGGER.info(f"Received: {packet}")
-                result = lxpPacket.parse_packet(packet)
-                if not lxpPacket.packet_error:
-                    _LOGGER.info(result)
-                else:
-                    _LOGGER.error(result)
-
-                _LOGGER.info("Register to be written 13 with value %s",(now.hour*256)+(now.day))
-                packet = lxpPacket.prepare_packet_for_write(13, (now.hour*256)+(now.day))
-                _LOGGER.info(f"Packet to be written {packet}")
-                sock.send(packet)
-                _LOGGER.info("Packet Written")
-                packet = sock.recv(1000)
-                _LOGGER.info(f"Received: {packet}")
-                result = lxpPacket.parse_packet(packet)
-                if not lxpPacket.packet_error:
-                    _LOGGER.info(result)
-                else:
-                    _LOGGER.error(result)
-
-                now = datetime.datetime.now()
-
-                _LOGGER.info("Register to be written 14 with value %s",(now.second*256)+(now.minute))
-                packet = lxpPacket.prepare_packet_for_write(14, ((now.second+1)*256)+(now.minute))
-                _LOGGER.info(f"Packet to be written {packet}")
-                sock.send(packet)
-                _LOGGER.info("Packet Written")
-                packet = sock.recv(1000)
-                _LOGGER.info(f"Received: {packet}")
-                result = lxpPacket.parse_packet(packet)
-                if not lxpPacket.packet_error:
-                    _LOGGER.info(result)
-                else:
-                    _LOGGER.error(result)
-
-            else:
-                _LOGGER.warning("Inverter Time Update Disabled In Code")
-
-            sock.close()
-        except Exception as e:
-            _LOGGER.info("Exception ", e)
+        else:
+            _LOGGER.warning("Inverter Time Update Disabled In Code")
 
         _LOGGER.debug("synctime finished")
+
 
 class ServiceHelper:
     def __init__(self, hass) -> None:
@@ -336,8 +301,8 @@ class ServiceHelper:
             await asyncio.sleep(1)
         _LOGGER.info("send_synctime done")
 
-    async def send_refresh_registers(self, dongle):
-        _LOGGER.debug("send_refresh_registers start")
+    async def send_refresh_registers(self, dongle, bank_count):
+        _LOGGER.info(f"send_refresh_registers start - Count: {bank_count}")
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
@@ -349,11 +314,11 @@ class ServiceHelper:
             # This change stops Spamming of Lux Server Database
             # Really needs seperate function refresh_two_registers
             # for address_bank in range(0, 3):
-            for address_bank in range(0, 2):
-                _LOGGER.debug("send_refresh_registers for address_bank: %s", address_bank)
+            for address_bank in range(0, bank_count):
+                _LOGGER.info("send_refresh_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_register_data(address_bank)
                 await asyncio.sleep(1)
-        _LOGGER.debug("send_refresh_registers done")
+        _LOGGER.info("send_refresh_registers done")
 
     async def send_holding_registers(self, dongle):
         luxpower_client = None

@@ -331,10 +331,10 @@ class LuxNormalNumberEntity(NumberEntity):
 
         if self._read_value is not None:
             #Write has been succesful 
-            _LOGGER.info(f"Write Register OK - Setting INVERTER Register {self._register_address} value of {self._read_value}")
+            _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: {self._register_address} Value: {self._read_value}")
         else:
             #Write has been UNsuccesful
-            _LOGGER.warning(f"Cannot write Register {self._register_address}")
+            _LOGGER.warning(f"Cannot WRITE Register: {self._register_address} Value: {new_value}")
 
         return self._read_value
 
@@ -347,10 +347,10 @@ class LuxNormalNumberEntity(NumberEntity):
 
         if self._read_value is not None:
             #Read has been succesful - use read value
-            _LOGGER.info(f"Read Register OK - Using INVERTER Register {self._register_address} value of {self._read_value}")
+            _LOGGER.info(f"READ Register OK - Using INVERTER Register: {self._register_address} Value: {self._read_value}")
         else:
             #Read has been UNsuccesful
-            _LOGGER.warning(f"Cannot read Register {self._register_address}")
+            _LOGGER.warning(f"Cannot READ Register: {self._register_address}")
 
         return self._read_value
 

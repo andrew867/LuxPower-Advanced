@@ -240,7 +240,7 @@ class LXPPacket:
                     #i/o has been succesful - exit loop
                     io_confirmed = True
                 else:
-                    _LOGGER.warning(f"Cannot read/write Register {self._register_address} - Current retry count is {retry_count}")
+                    _LOGGER.info(f"Cannot read/write Register {register} - Current retry count is {retry_count}")
  
             sock.close()
             _LOGGER.debug("Closing socket...")
@@ -292,10 +292,10 @@ class LXPPacket:
                         num_value = self.convert_to_int(self.value)
                         return_value = float(num_value)
                         if self.device_function == self.WRITE_SINGLE:
-                            _LOGGER.info(f"WRITE_SINGLE register succesful - Register Value: {return_value}")
+                            _LOGGER.info(f"WRITE_SINGLE register succesful - Inverter: {self.serial_number.decode()} - Register: {self.register} - Value: {return_value}")
                             return return_value
                         elif self.device_function == self.READ_HOLD:
-                            _LOGGER.info(f"READ_SINGLE register succesful - Register Value: {return_value}")
+                            _LOGGER.info(f"READ_SINGLE  register succesful - Inverter: {self.serial_number.decode()} - Register: {self.register} - Value: {return_value}")
                             return return_value
             else:
                 _LOGGER.error(result)
