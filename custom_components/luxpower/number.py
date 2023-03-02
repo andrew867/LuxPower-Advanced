@@ -395,6 +395,10 @@ class LuxPercentageNumberEntity(LuxNormalNumberEntity):
     def unique_id(self) -> Optional[str]:
         return "{}_{}_numberpercent_{}".format(DOMAIN, self.dongle, self._register_address)
 
+    @property
+    def native_unit_of_measurement(self) -> Optional[str]:
+        return "%"
+
 class LuxTimeNumberEntity(LuxNormalNumberEntity):
     """Representation of a Time Number entity."""
 
