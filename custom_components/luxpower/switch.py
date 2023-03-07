@@ -1,20 +1,19 @@
 import asyncio
+import logging
+import socket
 import struct
+from typing import Any, Dict, Optional, Union
 
 from homeassistant.components.binary_sensor import DEVICE_CLASS_OPENING
 from homeassistant.components.switch import SwitchEntity
-import logging
-from typing import Optional, Union, Any, Dict
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
-    ATTR_LUX_USE_SERIAL
+from .const import (ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_HOST, ATTR_LUX_PORT,
+                    ATTR_LUX_SERIAL_NUMBER, ATTR_LUX_USE_SERIAL, DOMAIN)
 from .helpers import Event
 from .LXPPacket import LXPPacket
-import socket
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,12 +98,12 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self._attr_entity_registry_enabled_default = create_enabled
         self.luxpower_client = luxpower_client
         # self.lxppacket = luxpower_client.lxpPacket
-        self.registers = {}
-        self.totalregs = {}
+        self.registers: Dict[int, int] = {}
+        self.totalregs: Dict[int, int] = {}
         self.event = event
 
     async def async_added_to_hass(self) -> None:
-        result = await super().async_added_to_hass()
+        await super().async_added_to_hass()
         _LOGGER.debug("async_added_to_hass %s", self._name)
         self.is_added_to_hass = True
         if self.hass is not None:
@@ -120,8 +119,6 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
             elif 160 <= self._register_address <= 199:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
-            #self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
-        return result
 
     def push_update(self, event):
         registers = event.data.get('registers', {})
@@ -138,7 +135,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             oldstate = self._state
             self._state = register_val & self._bitmask == self._bitmask
             if oldstate != self._state:
-                _LOGGER.debug("Reading: {} {} Old State {} Updating state to {} - {}".format(self._register_address, self._bitmask, oldstate, self._state, self._name))
+                _LOGGER.debug(f"Reading: {self._register_address} {self._bitmask} Old State {oldstate} Updating state to {self._state} - {self._name}")
                 self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
                 if 68 in self.totalregs.keys():
@@ -154,12 +151,12 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     # @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         # self._state = self._protocol._dp_values.get(self._dp_id, None)
-        _LOGGER.debug("{} {} updating state to {}".format(self._register_address, self._bitmask, self._state))
+        _LOGGER.debug(f"{self._register_address} {self._bitmask} updating state to {self._state}")
         return self._state
 
     @property
     def unique_id(self) -> Optional[str]:
-        return "{}_{}_{}_{}".format(DOMAIN, self.dongle, self._register_address, self._bitmask)
+        return f"{DOMAIN}_{self.dongle}_{self._register_address}_{self._bitmask}"
 
     @property
     def available(self):
@@ -223,28 +220,28 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD)
  
         if self._read_value is not None:
-            #Read has been succesful - use read value
+            #Read has been successful - use read value
             _LOGGER.info(f"Read Register OK - Using INVERTER Register {self._register_address} value of {self._read_value}")
             old_value = int(self._read_value)
         else:
-            #Read has been UNsuccesful - use LAST KNOWN register value
+            #Read has been UNsuccessful - use LAST KNOWN register value
             _LOGGER.warning(f"Cannot read Register - Using LAST KNOWN Register {self._register_address} value of {self._register_value}")
             old_value = int(self._register_value)
 
         new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
 
         if new_value != old_value:
-            _LOGGER.info("Writing: OLD: {} REGISTER: {} MASK: {} NEW {}".format(old_value, self._register_address, self._bitmask, new_value))
+            _LOGGER.info(f"Writing: OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask} NEW {new_value}")
             self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
 
             if self._read_value is not None:
-                _LOGGER.info(f"CAN confirm succesful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                _LOGGER.info(f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
                 if self._read_value == new_value:
                     _LOGGER.info(f"CAN confirm WRITTEN value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
                 else:
                     _LOGGER.warning(f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}")
             else:
-                _LOGGER.warning(f"CanNOT confirm succesful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}")
+                _LOGGER.warning(f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}")
 
         _LOGGER.debug("set_register_bit done")
 
@@ -256,43 +253,43 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             _LOGGER.debug("Attrib totalregs: %s" , self.totalregs)
             _LOGGER.debug("Attrib registers: %s" , self.registers)
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(68,0))
-            state_attributes["AC_CHARGE_START"] = "{}:{}".format(hour, min)
+            state_attributes["AC_CHARGE_START"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(69, 0))
-            state_attributes["AC_CHARGE_END"] = "{}:{}".format(hour, min)
+            state_attributes["AC_CHARGE_END"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(70, 0))
-            state_attributes["AC_CHARGE_START_1"] = "{}:{}".format(hour, min)
+            state_attributes["AC_CHARGE_START_1"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(71, 0))
-            state_attributes["AC_CHARGE_END_1"] = "{}:{}".format(hour, min)
+            state_attributes["AC_CHARGE_END_1"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(72, 0))
-            state_attributes["AC_CHARGE_START_2"] = "{}:{}".format(hour, min)
+            state_attributes["AC_CHARGE_START_2"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(73, 0))
-            state_attributes["AC_CHARGE_END_2"] = "{}:{}".format(hour, min)
+            state_attributes["AC_CHARGE_END_2"] = f"{hour}:{min}"
         if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
             lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(76, 0))
-            state_attributes["PRIORITY_CHARGE_START"] = "{}:{}".format(hour, min)
+            state_attributes["PRIORITY_CHARGE_START"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(77, 0))
-            state_attributes["PRIORITY_CHARGE_END"] = "{}:{}".format(hour, min)
+            state_attributes["PRIORITY_CHARGE_END"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(78, 0))
-            state_attributes["PRIORITY_CHARGE_START_1"] = "{}:{}".format(hour, min)
+            state_attributes["PRIORITY_CHARGE_START_1"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(79, 0))
-            state_attributes["PRIORITY_CHARGE_END_1"] = "{}:{}".format(hour, min)
+            state_attributes["PRIORITY_CHARGE_END_1"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(80, 0))
-            state_attributes["PRIORITY_CHARGE_START_2"] = "{}:{}".format(hour, min)
+            state_attributes["PRIORITY_CHARGE_START_2"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(81, 0))
-            state_attributes["PRIORITY_CHARGE_END_2"] = "{}:{}".format(hour, min)
+            state_attributes["PRIORITY_CHARGE_END_2"] = f"{hour}:{min}"
         if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
             lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(84, 0))
-            state_attributes["FORCED_DISCHARGE_START"] = "{}:{}".format(hour, min)
+            state_attributes["FORCED_DISCHARGE_START"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(85, 0))
-            state_attributes["FORCED_DISCHARGE_END"] = "{}:{}".format(hour, min)
+            state_attributes["FORCED_DISCHARGE_END"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(86, 0))
-            state_attributes["FORCED_DISCHARGE_START_1"] = "{}:{}".format(hour, min)
+            state_attributes["FORCED_DISCHARGE_START_1"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(87, 0))
-            state_attributes["FORCED_DISCHARGE_END_1"] = "{}:{}".format(hour, min)
+            state_attributes["FORCED_DISCHARGE_END_1"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(88, 0))
-            state_attributes["FORCED_DISCHARGE_START_2"] = "{}:{}".format(hour, min)
+            state_attributes["FORCED_DISCHARGE_START_2"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(89, 0))
-            state_attributes["FORCED_DISCHARGE_END_2"] = "{}:{}".format(hour, min)
+            state_attributes["FORCED_DISCHARGE_END_2"] = f"{hour}:{min}"
         return state_attributes

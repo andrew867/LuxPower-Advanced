@@ -1,17 +1,17 @@
-from homeassistant.components.number import NumberEntity
-import voluptuous as vol
-from typing import Optional, Union, Any, Dict
 import logging
+import socket
 import struct
+from typing import Any, Dict, List, Optional, Union
 
+import voluptuous as vol
+from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
-    ATTR_LUX_USE_SERIAL
-from .LXPPacket import LXPPacket
-import socket
+from .const import (ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_HOST, ATTR_LUX_PORT,
+                    ATTR_LUX_SERIAL_NUMBER, ATTR_LUX_USE_SERIAL, DOMAIN)
 from .helpers import Event
+from .LXPPacket import LXPPacket
 
 '''
 Setup some options from this page in Home-assistant and allow times and % to be set.
@@ -64,7 +64,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     maxnumb = 65535.0
 
 
-    numberEntities = []
+    numberEntities: List[LuxNormalNumberEntity] = []
+
     register_address = 64
     name = f'Lux {entityID_prefix}{hyphen} System Charge Power Rate(%)'
     numberEntities.append(LuxPercentageNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, register_address, name, 42.0, maxperc, "mdi:car-turbocharger", False, event))
@@ -214,13 +215,13 @@ class LuxNormalNumberEntity(NumberEntity):
         self._icon = icon
         self._assumed = assumed
         self._register_address = register_address
-        self.registers = {}
+        self.registers: Dict[int, str]  = {}
         self.event = event
         self.hour_val = -1
         self.minute_val = -1
 
     async def async_added_to_hass(self) -> None:
-        result = await super().async_added_to_hass()
+        await super().async_added_to_hass()
         _LOGGER.debug("async_added_to_hass %s", self._name)
         if self.hass is not None:
             if self._register_address == 21:
@@ -235,8 +236,6 @@ class LuxNormalNumberEntity(NumberEntity):
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
             elif 160 <= self._register_address <= 199:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
-            #self.hass.bus.async_listen(self.event.EVENT_REGISTER_RECEIVED, self.push_update)
-        return result
     
     def convert_to_time(self, value):
         # Has To Be Integer Type value Coming In - NOT BYTE ARRAY
@@ -280,7 +279,7 @@ class LuxNormalNumberEntity(NumberEntity):
 
     @property
     def unique_id(self) -> Optional[str]:
-        return "{}_{}_numbernormal_{}".format(DOMAIN, self.dongle, self._register_address)
+        return f"{DOMAIN}_{self.dongle}_numbernormal_{self._register_address}"
 
     @property
     def should_poll(self):
@@ -330,10 +329,10 @@ class LuxNormalNumberEntity(NumberEntity):
         self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
 
         if self._read_value is not None:
-            #Write has been succesful 
+            #Write has been successful 
             _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: {self._register_address} Value: {self._read_value}")
         else:
-            #Write has been UNsuccesful
+            #Write has been UNsuccessful
             _LOGGER.warning(f"Cannot WRITE Register: {self._register_address} Value: {new_value}")
 
         return self._read_value
@@ -346,10 +345,10 @@ class LuxNormalNumberEntity(NumberEntity):
         self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD)
 
         if self._read_value is not None:
-            #Read has been succesful - use read value
+            #Read has been successful - use read value
             _LOGGER.info(f"READ Register OK - Using INVERTER Register: {self._register_address} Value: {self._read_value}")
         else:
-            #Read has been UNsuccesful
+            #Read has been UNsuccessful
             _LOGGER.warning(f"Cannot READ Register: {self._register_address}")
 
         return self._read_value
@@ -365,10 +364,10 @@ class LuxNormalNumberEntity(NumberEntity):
 
             self._read_value = self.set_register(int(num_value))
             if self._read_value is not None:
-                _LOGGER.info(f"CAN confirm succesful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                _LOGGER.info(f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
                 self._read_value = self.get_register()
                 if self._read_value is not None:
-                    _LOGGER.info(f"CAN confirm succesful READ_BACK of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                    _LOGGER.info(f"CAN confirm successful READ_BACK of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
                     if self._read_value == int(num_value):
                         _LOGGER.info(f"CAN confirm READ_BACK value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
                         self._state = self._read_value
@@ -379,9 +378,9 @@ class LuxNormalNumberEntity(NumberEntity):
                     else:
                         _LOGGER.warning(f"CanNOT confirm READ_BACK value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}")
                 else:
-                    _LOGGER.warning(f"CanNOT confirm succesful READ_BACK of SET Register: {self._register_address} Entity: {self.entity_id}")
+                    _LOGGER.warning(f"CanNOT confirm successful READ_BACK of SET Register: {self._register_address} Entity: {self.entity_id}")
             else:
-                _LOGGER.warning(f"CanNOT confirm succesful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}")
+                _LOGGER.warning(f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}")
 
 
 class LuxPercentageNumberEntity(LuxNormalNumberEntity):
@@ -393,7 +392,7 @@ class LuxPercentageNumberEntity(LuxNormalNumberEntity):
 
     @property
     def unique_id(self) -> Optional[str]:
-        return "{}_{}_numberpercent_{}".format(DOMAIN, self.dongle, self._register_address)
+        return f"{DOMAIN}_{self.dongle}_numberpercent_{self._register_address}"
 
     @property
     def native_unit_of_measurement(self) -> Optional[str]:
@@ -408,7 +407,7 @@ class LuxTimeNumberEntity(LuxNormalNumberEntity):
 
     @property
     def unique_id(self) -> Optional[str]:
-        return "{}_{}_hour_{}".format(DOMAIN, self.dongle, self._register_address)
+        return f"{DOMAIN}_{self.dongle}_hour_{self._register_address}"
 
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
