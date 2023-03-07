@@ -183,7 +183,12 @@ Using the great work from here: https://github.com/celsworth/lxp-packet/blob/mas
 @maegibbons who has helped fix many of the bugs for people and expanded this to support more inverters / setups. It's really appreciated!
 To everyone else who has helped fixed issue, spotted bugs and contributed to the project!
 
- 
+# WHY PRIVATE
+I took the decision a long while ago to make this private as it's really hard to stop people using and abusing the system. Everyone on here has answered my canned email of setup and has a basic understanding of HA (at a minimum) or I've worked though a remote season to set them up.
+
+If HACS could support private repo's I would absolutely put it in HACS but it doesn't so I can't.
+
+
 # BUGS
 If you find a bug, please open up an issue on Github with as much information as you can.
 
