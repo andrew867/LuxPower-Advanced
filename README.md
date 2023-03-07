@@ -172,7 +172,7 @@ Do you want to refresh more often than 6 minutes or do you want to change times 
 https://github.com/guybw/LuxPython_DEV/blob/master/README_ADVANCED.md
 
 # BACKUPS
-The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail!
+The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail! I HIGHLY recomend this https://github.com/sabeechen/hassio-google-drive-backup
 
 # Thanks!
 
