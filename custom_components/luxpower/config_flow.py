@@ -51,7 +51,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=PLACEHOLDER_LUX_SERIAL_NUMBER): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=PLACEHOLDER_LUX_USE_SERIAL): bool,
             }
-        )
+        )  # fmt: skip
 
         if user_input is None:
             return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
@@ -124,7 +124,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, "")): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
             }
-        )
+        )  # fmt: skip
         return self.async_show_form(
             step_id="user",
             data_schema=data_schema,

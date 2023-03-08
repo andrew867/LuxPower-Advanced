@@ -92,7 +92,10 @@ class LuxPowerClient(asyncio.Protocol):
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
 
                     # self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
-                elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:
+                elif (
+                    self.lxpPacket.device_function == self.lxpPacket.READ_HOLD
+                    or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE
+                ):
                     total_data = {"registers": result.get("registers", {})}
                     event_data = {"registers": result.get("thesereg", {})}
                     _LOGGER.debug("EVENT REGISTER: %s ", event_data)
@@ -114,9 +117,7 @@ class LuxPowerClient(asyncio.Protocol):
 
                     # self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
 
-    async def start_luxpower_client_daemon(
-        self,
-    ):
+    async def start_luxpower_client_daemon(self):
         while not self._stop_client:
             if not self._connected:
                 try:
@@ -143,9 +144,13 @@ class LuxPowerClient(asyncio.Protocol):
             number_of_registers = 40
         try:
             _LOGGER.debug(f"get_holding_data for {serial} address_bank: {address_bank} , {number_of_registers}")
-            packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, number_of_registers, type=LXPPacket.READ_HOLD)
+            packet = self.lxpPacket.prepare_packet_for_read(
+                address_bank * 40, number_of_registers, type=LXPPacket.READ_HOLD
+            )
             self._transport.write(packet)
-            _LOGGER.debug(f"Packet Written for getting {serial} HOLDING address_bank {address_bank} , {number_of_registers}")
+            _LOGGER.debug(
+                f"Packet Written for getting {serial} HOLDING address_bank {address_bank} , {number_of_registers}"
+            )
         except Exception as e:
             _LOGGER.error("Exception get_holding_data %s", e)
 
@@ -225,13 +230,17 @@ class LuxPowerClient(asyncio.Protocol):
         now = datetime.datetime.now()
         _LOGGER.info("now: %s %s %s %s %s %s", now.year, now.month, now.day, now.hour, now.minute, now.second)
 
-        _LOGGER.warning("%s Old Time: %s, New Time: %s, Seconds Diff: %s", str(self.serial_number), was, now, abs(now - was))
+        _LOGGER.warning(
+            "%s Old Time: %s, New Time: %s, Seconds Diff: %s", str(self.serial_number), was, now, abs(now - was)
+        )
 
         if 1 == 1:
             new_value = (now.month * 256) + (now.year - 2000)
 
             _LOGGER.info(f"Register to be written 12 with value {new_value}")
-            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 12, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+            read_value = lxpPacket.register_io_with_retry(
+                self.server, self.port, 12, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+            )
 
             if read_value is not None:
                 # Write has been successful
@@ -244,7 +253,9 @@ class LuxPowerClient(asyncio.Protocol):
             new_value = (now.hour * 256) + (now.day)
 
             _LOGGER.info(f"Register to be written 13 with value {new_value}")
-            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 13, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+            read_value = lxpPacket.register_io_with_retry(
+                self.server, self.port, 13, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+            )
 
             if read_value is not None:
                 # Write has been successful
@@ -257,7 +268,9 @@ class LuxPowerClient(asyncio.Protocol):
             new_value = ((now.second + 1) * 256) + (now.minute)
 
             _LOGGER.info(f"Register to be written 14 with value {new_value}")
-            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 14, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+            read_value = lxpPacket.register_io_with_retry(
+                self.server, self.port, 14, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+            )
 
             if read_value is not None:
                 # Write has been successful

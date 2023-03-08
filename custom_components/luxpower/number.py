@@ -206,7 +206,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 class LuxNormalNumberEntity(NumberEntity):
     """Representation of a Normal Number entity."""
 
-    def __init__(self, hass, host, port, dongle, serial, register_address, name, state, maxval, icon, assumed, event: Event):
+    def __init__(self, hass, host, port, dongle, serial, register_address, name, state, maxval, icon, assumed, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         self.hass = hass
         self._host = host
@@ -247,7 +247,9 @@ class LuxNormalNumberEntity(NumberEntity):
         return value & 0x00FF, (value & 0xFF00) >> 8
 
     def push_update(self, event):
-        _LOGGER.debug(f"Register Event Received Lux****NumberEntity: {self._name} - Register Address: {self._register_address}")
+        _LOGGER.debug(
+            f"Register Event Received Lux****NumberEntity: {self._name} - Register Address: {self._register_address}"
+        )
 
         registers = event.data.get("registers", {})
         self.registers = registers
@@ -329,13 +331,19 @@ class LuxNormalNumberEntity(NumberEntity):
     def set_register(self, new_value=0):
         _LOGGER.debug(f"Started set_register")
 
-        lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+        lxpPacket = LXPPacket(
+            debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
+        )
 
-        self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+        self._read_value = lxpPacket.register_io_with_retry(
+            self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+        )
 
         if self._read_value is not None:
             # Write has been successful
-            _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: {self._register_address} Value: {self._read_value}")
+            _LOGGER.info(
+                f"WRITE Register OK - Setting INVERTER Register: {self._register_address} Value: {self._read_value}"
+            )
         else:
             # Write has been UNsuccessful
             _LOGGER.warning(f"Cannot WRITE Register: {self._register_address} Value: {new_value}")
@@ -345,13 +353,19 @@ class LuxNormalNumberEntity(NumberEntity):
     def get_register(self):
         _LOGGER.debug(f"Started get_register")
 
-        lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+        lxpPacket = LXPPacket(
+            debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
+        )
 
-        self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD)
+        self._read_value = lxpPacket.register_io_with_retry(
+            self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD
+        )
 
         if self._read_value is not None:
             # Read has been successful - use read value
-            _LOGGER.info(f"READ Register OK - Using INVERTER Register: {self._register_address} Value: {self._read_value}")
+            _LOGGER.info(
+                f"READ Register OK - Using INVERTER Register: {self._register_address} Value: {self._read_value}"
+            )
         else:
             # Read has been UNsuccessful
             _LOGGER.warning(f"Cannot READ Register: {self._register_address}")
@@ -365,27 +379,41 @@ class LuxNormalNumberEntity(NumberEntity):
             _LOGGER.debug(f"Started set_value {num_value}")
 
             if num_value < self.min_value or num_value > self.max_value:
-                raise vol.Invalid(f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})")
+                raise vol.Invalid(
+                    f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})"
+                )
 
             self._read_value = self.set_register(int(num_value))
             if self._read_value is not None:
-                _LOGGER.info(f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                _LOGGER.info(
+                    f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                )
                 self._read_value = self.get_register()
                 if self._read_value is not None:
-                    _LOGGER.info(f"CAN confirm successful READ_BACK of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                    _LOGGER.info(
+                        f"CAN confirm successful READ_BACK of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                    )
                     if self._read_value == int(num_value):
-                        _LOGGER.info(f"CAN confirm READ_BACK value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                        _LOGGER.info(
+                            f"CAN confirm READ_BACK value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                        )
                         self._state = self._read_value
                         if self.is_time_entity:
                             self.hour_val, self.minute_val = self.convert_to_time(int(self._state))
                             _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
                         self.schedule_update_ha_state()
                     else:
-                        _LOGGER.warning(f"CanNOT confirm READ_BACK value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}")
+                        _LOGGER.warning(
+                            f"CanNOT confirm READ_BACK value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
+                        )
                 else:
-                    _LOGGER.warning(f"CanNOT confirm successful READ_BACK of SET Register: {self._register_address} Entity: {self.entity_id}")
+                    _LOGGER.warning(
+                        f"CanNOT confirm successful READ_BACK of SET Register: {self._register_address} Entity: {self.entity_id}"
+                    )
             else:
-                _LOGGER.warning(f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}")
+                _LOGGER.warning(
+                    f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}"
+                )
 
 
 class LuxPercentageNumberEntity(LuxNormalNumberEntity):

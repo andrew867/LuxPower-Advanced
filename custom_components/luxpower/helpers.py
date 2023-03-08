@@ -5,6 +5,7 @@ from .const import (
     EVENT_REGISTER_FORMAT,
 )
 
+# fmt: off
 
 class Event:
     def __init__(self, dongle) -> None:
@@ -21,3 +22,5 @@ class Event:
         self.EVENT_REGISTER_BANK3_RECEIVED = EVENT_REGISTER_FORMAT.format(DOMAIN=DOMAIN, DONGLE=self.INVERTER_ID, GROUP="bank3")
         self.EVENT_REGISTER_BANK4_RECEIVED = EVENT_REGISTER_FORMAT.format(DOMAIN=DOMAIN, DONGLE=self.INVERTER_ID, GROUP="bank4")
         self.CLIENT_DAEMON = CLIENT_DAEMON_FORMAT.format(DOMAIN=DOMAIN, DONGLE=self.INVERTER_ID)
+
+# fmt: on

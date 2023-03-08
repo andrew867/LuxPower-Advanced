@@ -1,4 +1,5 @@
 DOMAIN = "luxpower"
+VERSION = "3.0.2"
 
 # Config UI Attributes
 ATTR_LUX_HOST = "lux_host"

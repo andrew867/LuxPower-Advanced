@@ -1,4 +1,3 @@
-"""Example Load Platform integration."""
 import asyncio
 import logging
 from datetime import timedelta
@@ -62,9 +61,13 @@ SCHEME_SETTIME = vol.Schema(
 
 async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     await asyncio.sleep(10)
-    status = await hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True)
+    status = await hass.services.async_call(
+        DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True
+    )
 
-    status = await hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True)
+    status = await hass.services.async_call(
+        DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True
+    )  # fmt: skip
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -88,7 +91,6 @@ async def async_setup(hass: HomeAssistant, config: dict):
             bank_count = 2
         _LOGGER.debug("handle_refresh_registers service: %s %s", DOMAIN, dongle)
         await service_helper.send_refresh_registers(dongle=dongle, bank_count=int(bank_count))
-        # await service_helper.send_refresh_registers(dongle=dongle)
 
     async def handle_holding_registers(call):
         """Handle the service call."""
@@ -108,15 +110,26 @@ async def async_setup(hass: HomeAssistant, config: dict):
         _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
         await service_helper.send_synctime(dongle=dongle)
 
-    hass.services.async_register(DOMAIN, "luxpower_refresh_register_bank", handle_refresh_register_bank, schema=SCHEME_REGISTER_BANK)
+    hass.services.async_register(
+        DOMAIN, "luxpower_refresh_register_bank", handle_refresh_register_bank, schema=SCHEME_REGISTER_BANK
+    )
 
-    hass.services.async_register(DOMAIN, "luxpower_refresh_registers", handle_refresh_registers, schema=SCHEME_REGISTERS_COUNT)
+    hass.services.async_register(
+        DOMAIN, "luxpower_refresh_registers", handle_refresh_registers, schema=SCHEME_REGISTERS_COUNT
+    )
 
-    hass.services.async_register(DOMAIN, "luxpower_refresh_holdings", handle_holding_registers, schema=SCHEME_REGISTERS)
+    hass.services.async_register(
+        DOMAIN, "luxpower_refresh_holdings", handle_holding_registers, schema=SCHEME_REGISTERS
+    )
 
-    hass.services.async_register(DOMAIN, "luxpower_reconnect", handle_reconnect, schema=SCHEME_RECONNECT)
+    hass.services.async_register(
+        DOMAIN, "luxpower_reconnect", handle_reconnect, schema=SCHEME_RECONNECT
+    )  # fmt: skip
 
-    hass.services.async_register(DOMAIN, "luxpower_synctime", handle_synctime, schema=SCHEME_SETTIME)
+    hass.services.async_register(
+        DOMAIN, "luxpower_synctime", handle_synctime, schema=SCHEME_SETTIME
+    )  # fmt: skip
+
     return True
 
 
@@ -140,7 +153,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
     events = Event(dongle=DONGLE_SERIAL)
-    luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)), serial_number=str.encode(str(SERIAL_NUMBER)), events=events)
+    luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)), serial_number=str.encode(str(SERIAL_NUMBER)), events=events,)  # fmt: skip
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
     hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
     # await hass.async_add_job(luxpower_client.start_luxpower_client_daemon())
@@ -148,7 +161,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[events.CLIENT_DAEMON] = luxpower_client
 
     hass_data = hass.data.setdefault(DOMAIN, {})
-    hass_data[entry.entry_id] = {"DONGLE": DONGLE_SERIAL, "client": luxpower_client}  # Used for avoiding duplication of config entries
+    hass_data[entry.entry_id] = {
+        "DONGLE": DONGLE_SERIAL,
+        "client": luxpower_client,
+    }  # Used for avoiding duplication of config entries
 
     for component in PLATFORMS:
         hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
@@ -164,7 +180,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""
     _LOGGER.info("async_unload_entry: unloading...")
-    unload_ok = all(await asyncio.gather(*[hass.config_entries.async_forward_entry_unload(entry, component) for component in PLATFORMS]))
+    unload_ok = all(
+        await asyncio.gather(
+            *[hass.config_entries.async_forward_entry_unload(entry, component) for component in PLATFORMS]
+        )
+    )
 
     if unload_ok:
         entry_data = hass.data[DOMAIN].pop(entry.entry_id)

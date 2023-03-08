@@ -89,7 +89,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     """Represent a binary sensor."""
 
-    def __init__(self, hass, host, port, dongle, serial, register_address, bitmask, object_id, create_enabled, device_class, luxpower_client, event: Event) -> None:
+    def __init__(self, hass, host, port, dongle, serial, register_address, bitmask, object_id, create_enabled, device_class, luxpower_client, event: Event) -> None:  # fmt: skip
         super().__init__()
         self.hass = hass
         self._host = host
@@ -138,13 +138,17 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                 return
             # Save current register int value
             self._register_value = register_val
-            _LOGGER.debug("switch: register event received - register: %s bitmask: %s", self._register_address, self._bitmask)
+            _LOGGER.debug(
+                "switch: register event received - register: %s bitmask: %s", self._register_address, self._bitmask
+            )
             self.totalregs = self.luxpower_client.lxpPacket.regValuesInt
             # _LOGGER.debug("totalregs: %s" , self.totalregs)
             oldstate = self._state
             self._state = register_val & self._bitmask == self._bitmask
             if oldstate != self._state:
-                _LOGGER.debug(f"Reading: {self._register_address} {self._bitmask} Old State {oldstate} Updating state to {self._state} - {self._name}")
+                _LOGGER.debug(
+                    f"Reading: {self._register_address} {self._bitmask} Old State {oldstate} Updating state to {self._state} - {self._name}"
+                )
                 self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
                 if 68 in self.totalregs.keys():
@@ -215,7 +219,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         try:
             sock.connect((self._host, self._port))
             _LOGGER.debug("Connected to server")
-            lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+            lxpPacket = LXPPacket(
+                dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
+            )
             packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
             sock.send(packet)
             sock.close()
@@ -223,33 +229,53 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             _LOGGER.error("Exception ", e)
 
     def set_register_bit(self, bit_polarity=False):
-        lxpPacket = LXPPacket(debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+        lxpPacket = LXPPacket(
+            debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
+        )
 
-        self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD)
+        self._read_value = lxpPacket.register_io_with_retry(
+            self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD
+        )
 
         if self._read_value is not None:
             # Read has been successful - use read value
-            _LOGGER.info(f"Read Register OK - Using INVERTER Register {self._register_address} value of {self._read_value}")
+            _LOGGER.info(
+                f"Read Register OK - Using INVERTER Register {self._register_address} value of {self._read_value}"
+            )
             old_value = int(self._read_value)
         else:
             # Read has been UNsuccessful - use LAST KNOWN register value
-            _LOGGER.warning(f"Cannot read Register - Using LAST KNOWN Register {self._register_address} value of {self._register_value}")
+            _LOGGER.warning(
+                f"Cannot read Register - Using LAST KNOWN Register {self._register_address} value of {self._register_value}"
+            )
             old_value = int(self._register_value)
 
         new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
 
         if new_value != old_value:
-            _LOGGER.info(f"Writing: OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask} NEW {new_value}")
-            self._read_value = lxpPacket.register_io_with_retry(self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+            _LOGGER.info(
+                f"Writing: OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask} NEW {new_value}"
+            )
+            self._read_value = lxpPacket.register_io_with_retry(
+                self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+            )
 
             if self._read_value is not None:
-                _LOGGER.info(f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                _LOGGER.info(
+                    f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                )
                 if self._read_value == new_value:
-                    _LOGGER.info(f"CAN confirm WRITTEN value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}")
+                    _LOGGER.info(
+                        f"CAN confirm WRITTEN value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                    )
                 else:
-                    _LOGGER.warning(f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}")
+                    _LOGGER.warning(
+                        f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
+                    )
             else:
-                _LOGGER.warning(f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}")
+                _LOGGER.warning(
+                    f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}"
+                )
 
         _LOGGER.debug("set_register_bit done")
 
@@ -257,7 +283,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
         if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
-            lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+            lxpPacket = LXPPacket(
+                dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
+            )
             _LOGGER.debug("Attrib totalregs: %s", self.totalregs)
             _LOGGER.debug("Attrib registers: %s", self.registers)
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(68, 0))
@@ -273,7 +301,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(73, 0))
             state_attributes["AC_CHARGE_END_2"] = f"{hour}:{min}"
         if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
-            lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+            lxpPacket = LXPPacket(
+                dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
+            )
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(76, 0))
             state_attributes["PRIORITY_CHARGE_START"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(77, 0))
@@ -287,7 +317,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(81, 0))
             state_attributes["PRIORITY_CHARGE_END_2"] = f"{hour}:{min}"
         if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
-            lxpPacket = LXPPacket(dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial)))
+            lxpPacket = LXPPacket(
+                dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
+            )
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(84, 0))
             state_attributes["FORCED_DISCHARGE_START"] = f"{hour}:{min}"
             hour, min = lxpPacket.convert_to_time(self.totalregs.get(85, 0))
