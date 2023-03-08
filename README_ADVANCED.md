@@ -1,7 +1,7 @@
 Please read the first readme BEFORE following any instructions on this page, this is more of a notes page and likely will not work for you the first time around.
 
 # Changing the time in HA for Lux times
-This is a work in progess  - do not use it yet.
+This is a work in progress  - do not use it yet.
 
 Below is to just change the AC start and end time and display them correctly, you can do it for the others if you wish for discharging etc.
 
@@ -97,7 +97,7 @@ show_header_toggle: false
 
 
 # Below will refresh the data in HA every 30 seconds.
-This is a work in progess  
+This is a work in progress  
 
 Import the automation below, this will refresh the data roughly every 30 seconds depending when the inverter reads our request. WARNING: DO NOT SET IT LOWER OR IT WILL BREAK! This is due to the inverter taking time to respond, not my code!
 

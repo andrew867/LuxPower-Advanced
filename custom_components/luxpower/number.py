@@ -63,7 +63,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     maxtime = 65000.0
     maxnumb = 65535.0
 
-
+    # fmt: off
     numberEntities: List[LuxNormalNumberEntity] = []
 
     register_address = 64
@@ -196,6 +196,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 
     _LOGGER.info("LuxPower number async_setup_platform number done")
 
+    # fmt: on
 
 class LuxNormalNumberEntity(NumberEntity):
     """Representation of a Normal Number entity."""

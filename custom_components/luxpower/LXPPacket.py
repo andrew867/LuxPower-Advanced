@@ -1,6 +1,6 @@
+import logging
 import socket
 import struct
-import logging
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -237,7 +237,7 @@ class LXPPacket:
                 data = sock.recv(1000)
                 read_value=self.process_socket_received_single(data, register)
                 if read_value is not None:
-                    #i/o has been succesful - exit loop
+                    #i/o has been successful - exit loop
                     io_confirmed = True
                 else:
                     _LOGGER.info(f"Cannot read/write Register {register} - Current retry count is {retry_count}")
@@ -292,10 +292,10 @@ class LXPPacket:
                         num_value = self.convert_to_int(self.value)
                         return_value = float(num_value)
                         if self.device_function == self.WRITE_SINGLE:
-                            _LOGGER.info(f"WRITE_SINGLE register succesful - Inverter: {self.serial_number.decode()} - Register: {self.register} - Value: {return_value}")
+                            _LOGGER.info(f"WRITE_SINGLE register successful - Inverter: {self.serial_number.decode()} - Register: {self.register} - Value: {return_value}")
                             return return_value
                         elif self.device_function == self.READ_HOLD:
-                            _LOGGER.info(f"READ_SINGLE  register succesful - Inverter: {self.serial_number.decode()} - Register: {self.register} - Value: {return_value}")
+                            _LOGGER.info(f"READ_SINGLE  register successful - Inverter: {self.serial_number.decode()} - Register: {self.register} - Value: {return_value}")
                             return return_value
             else:
                 _LOGGER.error(result)
@@ -313,7 +313,7 @@ class LXPPacket:
             return
         #Check if packet contains data
         elif self.packet_length < 37:
-            _LOGGER.error(f"Recevied packet is TOO SMALL with length {self.packet_length}")
+            _LOGGER.error(f"Received packet is TOO SMALL with length {self.packet_length}")
             return
 
         prefix = packet[0:2]

@@ -1,11 +1,12 @@
-import struct
 import asyncio
+import datetime
 import logging
 import socket
-import datetime
-from .helpers import Event
+import struct
 from typing import Optional
+
 from .const import DOMAIN
+from .helpers import Event
 from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
@@ -176,14 +177,14 @@ class LuxPowerClient(asyncio.Protocol):
         read_value = lxpPacket.register_io_with_retry(self.server, self.port, 12, value=1, iotype=lxpPacket.READ_HOLD)
 
         if read_value is not None:
-            #Read has been succesful - use read value
+            #Read has been successful - use read value
             _LOGGER.info(f"READ Register OK - Using INVERTER Register: 12 Value: {read_value}")
             old12 = read_value
             oldmonth = int(old12/256)
             oldyear = int((old12-(oldmonth*256))+2000)
             _LOGGER.info("Old12: %s, Oldmonth: %s, Oldyear: %s",old12,oldmonth,oldyear)
         else:
-            #Read has been UNsuccesful
+            #Read has been UNsuccessful
             _LOGGER.warning(f"Cannot READ Register: 12 - Aborting")
             return
 
@@ -191,14 +192,14 @@ class LuxPowerClient(asyncio.Protocol):
         read_value = lxpPacket.register_io_with_retry(self.server, self.port, 13, value=1, iotype=lxpPacket.READ_HOLD)
 
         if read_value is not None:
-            #Read has been succesful - use read value
+            #Read has been successful - use read value
             _LOGGER.info(f"READ Register OK - Using INVERTER Register: 13 Value: {read_value}")
             old13 = read_value
             oldhour = int(old13/256)
             oldday = int(old13-(oldhour*256))
             _LOGGER.info("Old13: %s, Oldhour: %s, Oldday: %s",old13,oldhour,oldday)
         else:
-            #Read has been UNsuccesful
+            #Read has been UNsuccessful
             _LOGGER.warning(f"Cannot READ Register: 13 - Aborting")
             return
 
@@ -206,14 +207,14 @@ class LuxPowerClient(asyncio.Protocol):
         read_value = lxpPacket.register_io_with_retry(self.server, self.port, 14, value=1, iotype=lxpPacket.READ_HOLD)
 
         if read_value is not None:
-            #Read has been succesful - use read value
+            #Read has been successful - use read value
             _LOGGER.info(f"READ Register OK - Using INVERTER Register: 14 Value: {read_value}")
             old14 = read_value
             oldsecond = int(old14/256)
             oldminute = int(old14-(oldsecond*256))
             _LOGGER.info("Old14: %s, Oldsecond: %s, Oldminute: %s",old14,oldsecond,oldminute)
         else:
-            #Read has been UNsuccesful
+            #Read has been UNsuccessful
             _LOGGER.warning(f"Cannot READ Register: 14 - Aborting")
             return
 
@@ -232,10 +233,10 @@ class LuxPowerClient(asyncio.Protocol):
             read_value = lxpPacket.register_io_with_retry(self.server, self.port, 12, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
 
             if read_value is not None:
-                #Write has been succesful
+                #Write has been successful
                 _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 12 Value: {read_value}")
             else:
-                #Write has been UNsuccesful
+                #Write has been UNsuccessful
                 _LOGGER.warning(f"Cannot WRITE Register: 12 Value: {new_value} - Aborting")
                 return
 
@@ -245,10 +246,10 @@ class LuxPowerClient(asyncio.Protocol):
             read_value = lxpPacket.register_io_with_retry(self.server, self.port, 13, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
 
             if read_value is not None:
-                #Write has been succesful
+                #Write has been successful
                 _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 13 Value: {read_value}")
             else:
-                #Write has been UNsuccesful
+                #Write has been UNsuccessful
                 _LOGGER.warning(f"Cannot WRITE Register: 13 Value: {new_value} - Aborting")
                 return
 
@@ -258,10 +259,10 @@ class LuxPowerClient(asyncio.Protocol):
             read_value = lxpPacket.register_io_with_retry(self.server, self.port, 14, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
 
             if read_value is not None:
-                #Write has been succesful
+                #Write has been successful
                 _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 14 Value: {read_value}")
             else:
-                #Write has been UNsuccesful
+                #Write has been UNsuccessful
                 _LOGGER.warning(f"Cannot WRITE Register: 14 Value: {new_value} - Aborting")
                 return
 
@@ -312,7 +313,7 @@ class ServiceHelper:
 
         if luxpower_client is not None:
             # This change stops Spamming of Lux Server Database
-            # Really needs seperate function refresh_two_registers
+            # Really needs separate function refresh_two_registers
             # for address_bank in range(0, 3):
             for address_bank in range(0, bank_count):
                 _LOGGER.info("send_refresh_registers for address_bank: %s", address_bank)

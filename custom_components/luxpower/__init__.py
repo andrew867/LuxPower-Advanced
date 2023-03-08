@@ -1,19 +1,20 @@
 """Example Load Platform integration."""
+import asyncio
+import logging
+from datetime import timedelta
 from distutils.log import info
 from typing import Optional
 
+import voluptuous as vol
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import discovery
-from homeassistant.config_entries import ConfigEntry
-import voluptuous as vol
-from datetime import timedelta
-import logging
-import asyncio
-from .LXPPacket import LXPPacket
-from .const import DOMAIN, ATTR_LUX_PORT, ATTR_LUX_HOST, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
-    ATTR_LUX_USE_SERIAL
-from .helpers import Event
+
 from .connector import LuxPowerClient, ServiceHelper
+from .const import (ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_HOST, ATTR_LUX_PORT,
+                    ATTR_LUX_SERIAL_NUMBER, ATTR_LUX_USE_SERIAL, DOMAIN)
+from .helpers import Event
+from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
 

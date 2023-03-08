@@ -267,13 +267,13 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
             flow_value = -1 * negative_value
         else:
             flow_value = positive_value
-        self._state = "{}".format(round(flow_value,1))
+        self._state = f"{round(flow_value,1)}"
 
         self.schedule_update_ha_state()
         return self._state
 
 
-class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity): #Used for both live and daily consumption calcuation.
+class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity): #Used for both live and daily consumption calculation.
     '''
     Template equation state = attribute1 - attribute2 + attribute3 - attribute4
     '''
@@ -293,7 +293,7 @@ class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity): #Used for both live a
         from_inverter = float(self._data.get(self._device_attribute3, 0.0))
         to_grid = float(self._data.get(self._device_attribute4, 0.0))
         consumption_value = grid - to_inverter + from_inverter - to_grid
-        self._state = "{}".format(round(consumption_value, 1))
+        self._state = f"{round(consumption_value, 1)}"
 
         self.schedule_update_ha_state()
         return self._state

@@ -4,7 +4,7 @@
 
 1.9.8 Service call at startup refactured and added an init delay.
 
-1.9.7 Service bug fix for seperating the holding register and input register r…
+1.9.7 Service bug fix for separating the holding register and input register r…
 
 1.9.6 Added functionality to reconnect to the Lux server
 

@@ -161,7 +161,7 @@ https://opensource.com/article/21/2/home-assistant-custom-sensors
 We cannot support the ethernet dongle, only WIFI!
 
 Also be aware that you can set the times in HA but they will not pull (new) times from the Lux Server so if you set times in the app / website they will not change in HA.
-There is a blueprint and you need to create a helper (please contact me for a demo on how to do this if required) I don't recomend it as I would use the AC Charge Switch.
+There is a blueprint and you need to create a helper (please contact me for a demo on how to do this if required) I don't recommend it as I would use the AC Charge Switch.
 
 # 2 (or more inverters)
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
@@ -172,7 +172,7 @@ Do you want to refresh more often than 6 minutes or do you want to change times 
 https://github.com/guybw/LuxPython_DEV/blob/master/README_ADVANCED.md
 
 # BACKUPS
-The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail! I HIGHLY recomend this https://github.com/sabeechen/hassio-google-drive-backup
+The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail! I HIGHLY recommend this https://github.com/sabeechen/hassio-google-drive-backup
 
 # Thanks!
 

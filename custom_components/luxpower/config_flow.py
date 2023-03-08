@@ -1,16 +1,18 @@
-import logging
 import ipaddress
+import logging
 import re
 
+import voluptuous as vol
 from homeassistant import config_entries, data_entry_flow
 ##from homeassistant.components.mqtt import MqttServiceInfo
 from homeassistant.core import callback
 
-from .const import DOMAIN, ATTR_LUX_HOST, ATTR_LUX_PORT, ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_SERIAL_NUMBER, \
-    ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_HOST, PLACEHOLDER_LUX_PORT, PLACEHOLDER_LUX_DONGLE_SERIAL, \
-    PLACEHOLDER_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_USE_SERIAL
+from .const import (ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_HOST, ATTR_LUX_PORT,
+                    ATTR_LUX_SERIAL_NUMBER, ATTR_LUX_USE_SERIAL, DOMAIN,
+                    PLACEHOLDER_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_HOST,
+                    PLACEHOLDER_LUX_PORT, PLACEHOLDER_LUX_SERIAL_NUMBER,
+                    PLACEHOLDER_LUX_USE_SERIAL)
 
-import voluptuous as vol
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -23,8 +25,7 @@ def host_valid(host):
         disallowed = re.compile(r"[^a-zA-Z\d\-]")
         return all(x and not disallowed.search(x) for x in host.split("."))
 
-
-class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type:ignore
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
 
