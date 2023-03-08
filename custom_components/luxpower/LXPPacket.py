@@ -4,8 +4,8 @@ import struct
 
 _LOGGER = logging.getLogger(__name__)
 
-class LXPPacket:
 
+class LXPPacket:
     CHARGE_POWER_PERCENT_CMD = 64
 
     # System Discharge Rate (%)
@@ -27,33 +27,24 @@ class LXPPacket:
     WRITE_SINGLE = 6
     WRITE_MULTI = 16
 
-    NULL_DONGLE = b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
-    NULL_SERIAL = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+    NULL_DONGLE = b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+    NULL_SERIAL = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
-    TCP_FUNCTION = {
-        193: 'HEARTBEAT',
-        194: 'TRANSLATED_DATA',
-        195: 'READ_PARAM',
-        196: 'WRITE_PARAM'
-    }
+    TCP_FUNCTION = {193: "HEARTBEAT", 194: "TRANSLATED_DATA", 195: "READ_PARAM", 196: "WRITE_PARAM"}
 
     ACTION_WRITE = 0
     ACTION_READ = 1
-    ADDRESS_ACTION = {
-        0: 'writing',
-        1: 'reading'
-    }
+    ADDRESS_ACTION = {0: "writing", 1: "reading"}
 
     DEVICE_FUNCTION = {
-        3: 'READ_HOLD',
-        4: 'READ_INPUT',
-        6: 'WRITE_SINGLE',
-        16: 'WRITE_MULTI',
-
-        131: 'READ_HOLD_ERROR',
-        132: 'READ_INPUT_ERROR',
-        133: 'WRITE_SINGLE_ERROR',
-        134: 'WRITE_MULTI_ERROR',
+        3: "READ_HOLD",
+        4: "READ_INPUT",
+        6: "WRITE_SINGLE",
+        16: "WRITE_MULTI",
+        131: "READ_HOLD_ERROR",
+        132: "READ_INPUT_ERROR",
+        133: "WRITE_SINGLE_ERROR",
+        134: "WRITE_MULTI_ERROR",
     }
 
     ###
@@ -80,15 +71,13 @@ class LXPPacket:
 
     # Not a recommendation, just what my defaults appeared to be when
     # setting up the unit for the first time, so probably sane..?
-    R21_DEFAULTS = FEED_IN_GRID | DCI_ENABLE | GFCI_ENABLE | R21_UNKNOWN_BIT_12 | NORMAL_OR_STANDBY | \
-                   SEAMLESS_EPS_SWITCHING | GRID_ON_POWER_SS | ANTI_ISLAND_ENABLE | DRMS_ENABLE
+    R21_DEFAULTS = FEED_IN_GRID | DCI_ENABLE | GFCI_ENABLE | R21_UNKNOWN_BIT_12 | NORMAL_OR_STANDBY | SEAMLESS_EPS_SWITCHING | GRID_ON_POWER_SS | ANTI_ISLAND_ENABLE | DRMS_ENABLE
 
     ###
     ### Register 105, Least Significant Byte
     ###
     MICRO_GRID_ENABLE = 1 << 2
     FAST_ZERO_EXPORT_ENABLE = 1 << 1
-
 
     ###
     ### Register 110, Most Significant Byte
@@ -169,27 +158,26 @@ class LXPPacket:
     bat_count = "bat_count"
     bat_capacity = "bat_capacity"
 
-
-    def __init__(self, packet=b'', dongle_serial=b'', serial_number=b'', debug=True):
+    def __init__(self, packet=b"", dongle_serial=b"", serial_number=b"", debug=True):
         self.packet = packet
         self.packet_length = 0
         self.packet_length_calced = 0
         self.packet_error = True
-        self.prefix = b'\xa1\x1a'
+        self.prefix = b"\xa1\x1a"
         self.protocol_number = 0
         self.frame_length = 0
         self.tcp_function = 0
         self.dongle_serial = dongle_serial
         self.data_length = 0
-        self.data_frame = b''
+        self.data_frame = b""
         self.crc_modbus = 0
-        self.address_action = b''
-        self.device_function = b''
+        self.address_action = b""
+        self.device_function = b""
         self.serial_number = serial_number
         self.register = 0
         self.value_length_byte_present = False
         self.value_length = 0
-        self.value = b''
+        self.value = b""
         self.regValues = {}
         self.regValuesHex = {}
         self.regValuesInt = {}
@@ -222,7 +210,6 @@ class LXPPacket:
             io_confirmed = False
 
             while retry_count < 3 and not io_confirmed:
-
                 retry_count = retry_count + 1
 
                 if iotype == self.READ_HOLD:
@@ -230,18 +217,18 @@ class LXPPacket:
                 elif iotype == self.WRITE_SINGLE:
                     packet = self.prepare_packet_for_write(register, value)
                 else:
-                    return 
+                    return
 
                 sock.send(packet)
 
                 data = sock.recv(1000)
-                read_value=self.process_socket_received_single(data, register)
+                read_value = self.process_socket_received_single(data, register)
                 if read_value is not None:
-                    #i/o has been successful - exit loop
+                    # i/o has been successful - exit loop
                     io_confirmed = True
                 else:
                     _LOGGER.info(f"Cannot read/write Register {register} - Current retry count is {retry_count}")
- 
+
             sock.close()
             _LOGGER.debug("Closing socket...")
         except Exception as e:
@@ -249,41 +236,39 @@ class LXPPacket:
         _LOGGER.debug("register_io_with_retry done")
         return read_value
 
-
     def process_socket_received_single(self, data, register_reqd):
-        _LOGGER.debug('Inverter: %s', self.serial_number)
+        _LOGGER.debug("Inverter: %s", self.serial_number)
         _LOGGER.debug(data)
         packet = data
         packet_remains = data
         packet_remains_length = len(packet_remains)
-        _LOGGER.debug('TCP OVERALL Packet Remains Length : %s', packet_remains_length)
+        _LOGGER.debug("TCP OVERALL Packet Remains Length : %s", packet_remains_length)
 
         frame_number = 0
 
         while packet_remains_length > 0:
-
             frame_number = frame_number + 1
             if frame_number > 1:
-                _LOGGER.debug('*** Multi-Frame *** : %s', frame_number)
+                _LOGGER.debug("*** Multi-Frame *** : %s", frame_number)
 
             prefix = packet_remains[0:2]
             if prefix != self.prefix:
-                _LOGGER.debug('Invalid Start Of Packet Prefix %s', prefix)
+                _LOGGER.debug("Invalid Start Of Packet Prefix %s", prefix)
                 return
 
-            protocol_number = struct.unpack('H', packet_remains[2:4])[0]
-            frame_length_remaining = struct.unpack('H', packet_remains[4:6])[0]
+            protocol_number = struct.unpack("H", packet_remains[2:4])[0]
+            frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
             frame_length_calced = frame_length_remaining + 6
-            _LOGGER.debug('CALCULATED Frame Length : %s', frame_length_calced)
+            _LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
 
             this_frame = packet_remains[0:frame_length_calced]
 
-            _LOGGER.debug('THIS Packet Remains Length : %s', packet_remains_length)
+            _LOGGER.debug("THIS Packet Remains Length : %s", packet_remains_length)
             packet_remains = packet_remains[frame_length_calced:packet_remains_length]
             packet_remains_length = len(packet_remains)
-            _LOGGER.debug('NEXT Packet Remains Length : %s', packet_remains_length)
+            _LOGGER.debug("NEXT Packet Remains Length : %s", packet_remains_length)
 
-            _LOGGER.debug('Received: %s', this_frame)
+            _LOGGER.debug("Received: %s", this_frame)
             result = self.parse_packet(this_frame)
             if not self.packet_error:
                 _LOGGER.debug(result)
@@ -300,25 +285,24 @@ class LXPPacket:
             else:
                 _LOGGER.error(result)
 
-
     def parse_packet(self, packet):
         self.packet_error = True
         if self.debug:
             _LOGGER.debug("*********************** PARSING PACKET *************************************")
         self.packet_length = len(packet)
 
-        #Check if packet contains only serial number
+        # Check if packet contains only serial number
         if self.packet_length == 19 or self.packet_length == 21:
             _LOGGER.debug(f"Packet received. Serial number number: {packet}. No other data.")
             return
-        #Check if packet contains data
+        # Check if packet contains data
         elif self.packet_length < 37:
             _LOGGER.error(f"Received packet is TOO SMALL with length {self.packet_length}")
             return
 
         prefix = packet[0:2]
-        self.protocol_number = struct.unpack('H', packet[2:4])[0]
-        self.frame_length = struct.unpack('H', packet[4:6])[0]
+        self.protocol_number = struct.unpack("H", packet[2:4])[0]
+        self.frame_length = struct.unpack("H", packet[4:6])[0]
         self.packet_length_calced = self.frame_length + 6
 
         _LOGGER.debug("self.packet_length: %s", self.packet_length)
@@ -326,24 +310,24 @@ class LXPPacket:
 
         if self.packet_length != self.packet_length_calced:
             if self.packet_length > self.packet_length_calced:
-                _LOGGER.warning('Long Packet - Continuing - packet length (real/calced) %s %s', self.packet_length, self.packet_length_calced)
-                _LOGGER.warning('Probably An Unhandled MultiFrame - Report To Devs')
+                _LOGGER.warning("Long Packet - Continuing - packet length (real/calced) %s %s", self.packet_length, self.packet_length_calced)
+                _LOGGER.warning("Probably An Unhandled MultiFrame - Report To Devs")
             else:
-                _LOGGER.error('Bad Packet -  Too Short - (real/calced) %s %s', self.packet_length, self.packet_length_calced)
+                _LOGGER.error("Bad Packet -  Too Short - (real/calced) %s %s", self.packet_length, self.packet_length_calced)
                 return
 
         unknown_byte = packet[6]
         self.tcp_function = packet[7]
         self.dongle_serial = packet[8:18]
-        self.data_length = struct.unpack('H', packet[18:20])[0]
+        self.data_length = struct.unpack("H", packet[18:20])[0]
 
-        self.data_frame = packet[20:self.packet_length_calced - 2]
+        self.data_frame = packet[20 : self.packet_length_calced - 2]
 
         if self.debug:
             _LOGGER.debug("prefix: %s", prefix)
 
         if prefix != self.prefix:
-            _LOGGER.error('Invalid packet - Bad Prefix')
+            _LOGGER.error("Invalid packet - Bad Prefix")
             return
 
         if self.debug:
@@ -358,10 +342,10 @@ class LXPPacket:
             return
 
         if self.data_length != len(self.data_frame) + 2:
-            _LOGGER.error('Invalid packet - Bad data length %s', len(self.data_frame))
+            _LOGGER.error("Invalid packet - Bad data length %s", len(self.data_frame))
             return
 
-        self.crc_modbus = struct.unpack('H', packet[self.packet_length_calced - 2: self.packet_length_calced])[0]
+        self.crc_modbus = struct.unpack("H", packet[self.packet_length_calced - 2 : self.packet_length_calced])[0]
 
         if self.debug:
             _LOGGER.debug("data_frame : %s", self.data_frame)
@@ -379,17 +363,17 @@ class LXPPacket:
         self.address_action = self.data_frame[0]
         self.device_function = self.data_frame[1]
         self.serial_number = self.data_frame[2:12]
-        self.register = struct.unpack('H', self.data_frame[12:14])[0]
+        self.register = struct.unpack("H", self.data_frame[12:14])[0]
         self.value_length_byte_present = (self.protocol_number == 2 or self.protocol_number == 5) and self.device_function != self.WRITE_SINGLE
         self.value_length = 2
         if self.value_length_byte_present:
             self.value_length = self.data_frame[14]
-            self.value = self.data_frame[15: 15 + self.value_length]
+            self.value = self.data_frame[15 : 15 + self.value_length]
         else:
             self.value = self.data_frame[14:16]
 
         if self.debug:
-            #_LOGGER.debug("address_action : %s %s", self.address_action, self.ADDRESS_ACTION[self.address_action])
+            # _LOGGER.debug("address_action : %s %s", self.address_action, self.ADDRESS_ACTION[self.address_action])
             _LOGGER.debug("device_function : %s %s", self.device_function, self.DEVICE_FUNCTION[self.device_function])
             _LOGGER.debug("serial_number : %s", self.serial_number)
             _LOGGER.debug("register : %s", self.register)
@@ -403,9 +387,7 @@ class LXPPacket:
         self.process_packet()
         self.packet_error = False
 
-        return {"tcp_function": self.TCP_FUNCTION[self.tcp_function],
-                "device_function": self.DEVICE_FUNCTION[self.device_function],
-                "register": self.register, "value": self.value, "data": self.data, "thesedata": self.readValuesThis, "registers": self.regValuesInt, "thesereg": self.regValuesThis}
+        return {"tcp_function": self.TCP_FUNCTION[self.tcp_function], "device_function": self.DEVICE_FUNCTION[self.device_function], "register": self.register, "value": self.value, "data": self.data, "thesedata": self.readValuesThis, "registers": self.regValuesInt, "thesereg": self.regValuesThis}
 
     def computeCRC(self, data):
         length = len(data)
@@ -436,7 +418,7 @@ class LXPPacket:
             self.regValuesThis = {}
             not_found = True
             for i in range(0, number_of_registers):
-                if self.register + i in [68,69,70,71,72,73,76,77,78,79,80,81,84,85,86,87,88,89] and not_found:
+                if self.register + i in [68, 69, 70, 71, 72, 73, 76, 77, 78, 79, 80, 81, 84, 85, 86, 87, 88, 89] and not_found:
                     _LOGGER.debug(f"Trying to Add Register 21 to this List if it already Exists")
                     if 21 in self.regValuesInt:
                         self.regValuesThis[21] = self.regValuesInt[21]
@@ -444,8 +426,7 @@ class LXPPacket:
                 self.regValuesThis[self.register + i] = self.get_read_value_int(self.register + i)
                 self.regValues[self.register + i] = self.get_read_value(self.register + i)
                 self.regValuesInt[self.register + i] = self.get_read_value_int(self.register + i)
-                self.regValuesHex[self.register + i] = ''.join(format(x, '02X')
-                                                                for x in self.get_read_value(self.register + i))
+                self.regValuesHex[self.register + i] = "".join(format(x, "02X") for x in self.get_read_value(self.register + i))
             if self.debug:
                 _LOGGER.debug(self.regValuesThis)
                 _LOGGER.debug(self.regValues)
@@ -456,8 +437,7 @@ class LXPPacket:
             for i in range(0, number_of_registers):
                 self.readValues[self.register + i] = self.get_read_value(self.register + i)
                 self.readValuesInt[self.register + i] = self.get_read_value_int(self.register + i)
-                self.readValuesHex[self.register + i] = ''.join(format(x, '02X')
-                                                                for x in self.get_read_value(self.register + i))
+                self.readValuesHex[self.register + i] = "".join(format(x, "02X") for x in self.get_read_value(self.register + i))
 
             self.readValuesThis = {}
 
@@ -487,7 +467,7 @@ class LXPPacket:
                     self.get_device_values_bank2()
 
             self.data.update(self.readValuesThis)
-        
+
             _LOGGER.debug(f"This Packet Data {self.readValuesThis}")
             _LOGGER.debug(f"Total Data {self.data}")
 
@@ -495,7 +475,6 @@ class LXPPacket:
                 _LOGGER.debug(self.readValues)
                 _LOGGER.debug(self.readValuesInt)
                 _LOGGER.debug(self.readValuesHex)
-
 
     def prepare_packet_for_write(self, register, value):
         _LOGGER.debug(f"Started Creating Packet For Write Register {register} With Value {value} ")
@@ -506,29 +485,29 @@ class LXPPacket:
 
         packet = self.prefix
         _LOGGER.debug(f"Created Packet With Prefix {packet} , {len(packet)}")
-        packet = packet + struct.pack('H', protocol)
+        packet = packet + struct.pack("H", protocol)
         _LOGGER.debug(f"Created Packet Inc Protocol {packet} , {len(packet)}")
-        packet = packet + struct.pack('H', frame_length)
+        packet = packet + struct.pack("H", frame_length)
         _LOGGER.debug(f"Created Packet Inc Frame Length {packet} , {len(packet)}")
-        packet = packet + b'\x01'
-        packet = packet + struct.pack('B', self.TRANSLATED_DATA)
+        packet = packet + b"\x01"
+        packet = packet + struct.pack("B", self.TRANSLATED_DATA)
         _LOGGER.debug(f"Created Packet Inc Translated Data {packet} , {len(packet)}")
         packet = packet + self.dongle_serial
         _LOGGER.debug(f"Created Packet Inc Dongle Serial {packet} , {len(packet)}")
-        packet = packet + struct.pack('H', data_length)
+        packet = packet + struct.pack("H", data_length)
 
         _LOGGER.debug(f"Created Packet Header {packet} , {len(packet)}")
 
-        data_frame = struct.pack('B', self.ACTION_WRITE)
-        data_frame = data_frame + struct.pack('B', self.WRITE_SINGLE)
+        data_frame = struct.pack("B", self.ACTION_WRITE)
+        data_frame = data_frame + struct.pack("B", self.WRITE_SINGLE)
         data_frame = data_frame + self.serial_number
-        data_frame = data_frame + struct.pack('H', register)
-        data_frame = data_frame + struct.pack('H', value)
+        data_frame = data_frame + struct.pack("H", register)
+        data_frame = data_frame + struct.pack("H", value)
 
         _LOGGER.debug(f"Created Data Frame {data_frame} , {len(data_frame)}")
 
         crc_modbus = self.computeCRC(data_frame)
-        packet = packet + data_frame + struct.pack('H', crc_modbus)
+        packet = packet + data_frame + struct.pack("H", crc_modbus)
 
         _LOGGER.debug(f"Created Packet {packet} , {len(packet)}")
         return packet
@@ -541,29 +520,29 @@ class LXPPacket:
         data_length = 18
 
         packet = self.prefix
-        packet = packet + struct.pack('H', protocol)
-        packet = packet + struct.pack('H', frame_length)
-        packet = packet + b'\x01'
-        packet = packet + struct.pack('B', self.TRANSLATED_DATA)
+        packet = packet + struct.pack("H", protocol)
+        packet = packet + struct.pack("H", frame_length)
+        packet = packet + b"\x01"
+        packet = packet + struct.pack("B", self.TRANSLATED_DATA)
         packet = packet + self.dongle_serial
-        #packet = packet + self.NULL_DONGLE
-        packet = packet + struct.pack('H', data_length)
+        # packet = packet + self.NULL_DONGLE
+        packet = packet + struct.pack("H", data_length)
 
         # This Change Makes Packets Same as App in Local Mode
         # And Solves issue Of Slow Connect on 2nd Parallel Inverter
         # data_frame = struct.pack('B', self.ACTION_READ)
-        data_frame = struct.pack('B', self.ACTION_WRITE)
+        data_frame = struct.pack("B", self.ACTION_WRITE)
 
-        data_frame = data_frame + struct.pack('B', type)
+        data_frame = data_frame + struct.pack("B", type)
         data_frame = data_frame + self.serial_number
-        #data_frame = data_frame + self.NULL_SERIAL
-        data_frame = data_frame + struct.pack('H', register)
-        data_frame = data_frame + struct.pack('H', value)
+        # data_frame = data_frame + self.NULL_SERIAL
+        data_frame = data_frame + struct.pack("H", register)
+        data_frame = data_frame + struct.pack("H", value)
         crc_modbus = self.computeCRC(data_frame)
-        packet = packet + data_frame + struct.pack('H', crc_modbus)
+        packet = packet + data_frame + struct.pack("H", crc_modbus)
 
-        _LOGGER.debug(f"{packet} LEN: %s ",len(packet))
-        #_LOGGER.debug(packet, len(packet))
+        _LOGGER.debug(f"{packet} LEN: %s ", len(packet))
+        # _LOGGER.debug(packet, len(packet))
         return packet
 
     def get_read_value_int(self, reg):
@@ -574,7 +553,7 @@ class LXPPacket:
             return self.get_value_int(offset)
 
     def get_value_int(self, offset=0):
-        return struct.unpack('H', self.value[offset:2 + offset])[0]
+        return struct.unpack("H", self.value[offset : 2 + offset])[0]
 
     def get_read_value(self, reg):
         offset = (reg - self.register) * 2
@@ -584,24 +563,24 @@ class LXPPacket:
             return self.get_value(offset)
 
     def get_value(self, offset=0):
-        return self.value[offset:2 + offset]
+        return self.value[offset : 2 + offset]
 
     def get_read_value_combined(self, reg1, reg2):
-        return self.readValues.get(reg1, b'\x00\x00') + self.readValues.get(reg2, b'\x00\x00')
+        return self.readValues.get(reg1, b"\x00\x00") + self.readValues.get(reg2, b"\x00\x00")
 
     def get_read_value_combined_int(self, reg1, reg2):
-        raw_value = self.readValues.get(reg1, b'\x00\x00') + self.readValues.get(reg2, b'\x00\x00')
-        return struct.unpack('I', raw_value)[0]
+        raw_value = self.readValues.get(reg1, b"\x00\x00") + self.readValues.get(reg2, b"\x00\x00")
+        return struct.unpack("I", raw_value)[0]
 
     def convert_to_int(self, value):
-        return struct.unpack('H', value)[0]
+        return struct.unpack("H", value)[0]
 
     def print_register_values(self):
         pass
 
     def convert_to_time(self, value):
         # Has To Be Integer Type value Coming In - NOT BYTE ARRAY
-        return value & 0x00ff, (value & 0xff00) >> 8
+        return value & 0x00FF, (value & 0xFF00) >> 8
 
     def get_device_values_bank0(self):
         if self.inputRead1:
@@ -693,11 +672,11 @@ class LXPPacket:
             if self.debug:
                 _LOGGER.debug("f_ac(Hz) %s", f_eps)
             self.readValuesThis[LXPPacket.f_eps] = f_eps
-            
+
             p_to_eps = self.readValuesInt.get(24, 0)
             p_to_grid = self.readValuesInt.get(26, 0)
             p_to_user = self.readValuesInt.get(27, 0)
-            p_load =  p_to_user - p_rec
+            p_load = p_to_user - p_rec
             if p_load < 0:
                 p_load = 0
             if self.debug:
@@ -843,7 +822,7 @@ class LXPPacket:
             if self.debug:
                 _LOGGER.debug("bat_capacity %s", bat_capacity)
             self.readValuesThis[LXPPacket.bat_capacity] = bat_capacity
-            
+
             max_cell_volt = self.readValuesInt.get(101, 0) / 1000
             min_cell_volt = self.readValuesInt.get(102, 0) / 1000
             max_cell_temp = self.readValuesInt.get(103, 0) / 10
@@ -853,15 +832,14 @@ class LXPPacket:
                 _LOGGER.debug("min_cell_volt %s", min_cell_volt)
                 _LOGGER.debug("min_cell_temp %s", min_cell_temp)
                 _LOGGER.debug("max_cell_temp %s", max_cell_temp)
-            self.readValuesThis[LXPPacket.max_cell_volt ] = max_cell_volt 
-            self.readValuesThis[LXPPacket.min_cell_volt ] = min_cell_volt 
-            self.readValuesThis[LXPPacket.max_cell_temp ] = max_cell_temp 
-            self.readValuesThis[LXPPacket.min_cell_temp ] = min_cell_temp  
+            self.readValuesThis[LXPPacket.max_cell_volt] = max_cell_volt
+            self.readValuesThis[LXPPacket.min_cell_volt] = min_cell_volt
+            self.readValuesThis[LXPPacket.max_cell_temp] = max_cell_temp
+            self.readValuesThis[LXPPacket.min_cell_temp] = min_cell_temp
 
     def update_value(self, oldvalue, mask, enable=True):
         return oldvalue | mask if enable else oldvalue & (65535 - mask)
 
+
 if __name__ == "__main__":
     pass
-
-

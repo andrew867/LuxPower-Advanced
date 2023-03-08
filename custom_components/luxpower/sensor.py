@@ -6,22 +6,38 @@ from typing import Any, Dict, List, Optional, Union
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (CONF_MODE, DEVICE_CLASS_BATTERY,
-                                 DEVICE_CLASS_CURRENT, DEVICE_CLASS_ENERGY,
-                                 DEVICE_CLASS_POWER, DEVICE_CLASS_TEMPERATURE,
-                                 DEVICE_CLASS_VOLTAGE, ELECTRIC_CURRENT_AMPERE,
-                                 ELECTRIC_POTENTIAL_VOLT,
-                                 ENERGY_KILO_WATT_HOUR, PERCENTAGE, POWER_WATT,
-                                 TEMP_CELSIUS)
+from homeassistant.const import (
+    CONF_MODE,
+    DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_CURRENT,
+    DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_POWER,
+    DEVICE_CLASS_TEMPERATURE,
+    DEVICE_CLASS_VOLTAGE,
+    ELECTRIC_CURRENT_AMPERE,
+    ELECTRIC_POTENTIAL_VOLT,
+    ENERGY_KILO_WATT_HOUR,
+    PERCENTAGE,
+    POWER_WATT,
+    TEMP_CELSIUS,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, Entity
-from homeassistant.helpers.event import (async_track_point_in_time,
-                                         async_track_time_interval,
-                                         track_time_interval)
+from homeassistant.helpers.event import (
+    async_track_point_in_time,
+    async_track_time_interval,
+    track_time_interval,
+)
 from homeassistant.helpers.typing import StateType
 
-from .const import (ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_HOST, ATTR_LUX_PORT,
-                    ATTR_LUX_SERIAL_NUMBER, ATTR_LUX_USE_SERIAL, DOMAIN)
+from .const import (
+    ATTR_LUX_DONGLE_SERIAL,
+    ATTR_LUX_HOST,
+    ATTR_LUX_PORT,
+    ATTR_LUX_SERIAL_NUMBER,
+    ATTR_LUX_USE_SERIAL,
+    DOMAIN,
+)
 from .helpers import Event
 from .LXPPacket import LXPPacket
 
@@ -44,10 +60,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
 
-    entityID_prefix = SERIAL if USE_SERIAL else ''
-    hyphen = ' -' if USE_SERIAL else '-'
+    entityID_prefix = SERIAL if USE_SERIAL else ""
+    hyphen = " -" if USE_SERIAL else "-"
     # Get Rid Of Hyphen 15/02/2023
-    hyphen = ''
+    hyphen = ""
 
     _LOGGER.info(f"Lux sensor platform_config: {platform_config}")
 
@@ -65,111 +81,122 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     sensors = []
 
     # Attribute sensor
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Live)", "entity": 'lux_battery_discharge', 'bank': 0, 'attribute': LXPPacket.p_discharge, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Live)", "entity": 'lux_battery_charge', 'bank': 0, 'attribute': LXPPacket.p_charge, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery %", "entity": 'lux_battery_percent', 'bank': 0, 'attribute': LXPPacket.soc, 'device_class': DEVICE_CLASS_BATTERY, 'unit_measure': PERCENTAGE})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Daily)", "entity": 'lux_daily_battery_discharge', 'bank': 0, 'attribute': LXPPacket.e_dischg_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Total)", "entity": 'lux_total_battery_discharge', 'bank': 1, 'attribute': LXPPacket.e_dischg_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Daily)", "entity": 'lux_daily_battery_charge', 'bank': 0, 'attribute': LXPPacket.e_chg_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Total)", "entity": 'lux_total_battery_charge', 'bank': 1, 'attribute': LXPPacket.e_chg_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Voltage (Live)", "entity": 'lux_battery_voltage', 'bank': 0, 'attribute': LXPPacket.v_bat, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} BMS Limit Charge (Live)", "entity": 'lux_bms_limit_charge', 'bank': 2, 'attribute': LXPPacket.max_chg_curr, 'device_class': DEVICE_CLASS_CURRENT, 'unit_measure': ELECTRIC_CURRENT_AMPERE})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} BMS Limit Discharge (Live)", "entity": 'lux_bms_limit_discharge', 'bank': 2, 'attribute': LXPPacket.max_dischg_curr, 'device_class': DEVICE_CLASS_CURRENT, 'unit_measure': ELECTRIC_CURRENT_AMPERE})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Inverter (Live)", "entity": 'lux_power_from_inverter_live', 'bank': 0, 'attribute': LXPPacket.p_inv, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Inverter (Live)", "entity": 'lux_power_to_inverter_live', 'bank': 0, 'attribute': LXPPacket.p_rec, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid to HOUSE (Live)", "entity": 'lux_power_to_home', 'bank': 0, 'attribute': LXPPacket.p_load, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To EPS (Live)", "entity": 'lux_power_to_eps', 'bank': 0, 'attribute': LXPPacket.p_to_eps, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Live)", "entity": 'lux_power_from_grid_live', 'bank': 0, 'attribute': LXPPacket.p_to_user, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Daily)", "entity": 'lux_power_from_grid_daily', 'bank': 0, 'attribute': LXPPacket.e_to_user_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Total)", "entity": 'lux_power_from_grid_total', 'bank': 1, 'attribute': LXPPacket.e_to_user_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Live)", "entity": 'lux_power_to_grid_live', 'bank': 0, 'attribute': LXPPacket.p_to_grid, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Daily)", "entity": 'lux_power_to_grid_daily', 'bank': 0, 'attribute': LXPPacket.e_to_grid_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Total)", "entity": 'lux_power_to_grid_total', 'bank': 1, 'attribute': LXPPacket.e_to_grid_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Grid Voltage (Live) ", "entity": 'lux_grid_voltage_live', 'bank': 0, 'attribute': LXPPacket.v_ac_r, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power from Inverter to Home (Daily)", "entity": 'lux_power_from_inverter_daily', 'bank': 0, 'attribute': LXPPacket.e_inv_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power to Inverter (Daily)", "entity": 'lux_power_to_inverter_daily', 'bank': 0, 'attribute': LXPPacket.e_rec_day, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Live)", "entity": 'lux_current_solar_output', 'bank': 0, 'attribute': LXPPacket.p_pv_total, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 1 (Live)", "entity": 'lux_current_solar_output_1', 'bank': 0, 'attribute': LXPPacket.p_pv_1, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 2 (Live)", "entity": 'lux_current_solar_output_2', 'bank': 0, 'attribute': LXPPacket.p_pv_2, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 3 (Live)", "entity": 'lux_current_solar_output_3', 'bank': 0, 'attribute': LXPPacket.p_pv_3, 'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Daily)", "entity": 'lux_daily_solar', 'bank': 0, 'attribute': LXPPacket.e_pv_total, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Total)", "entity": 'lux_total_solar', 'bank': 1, 'attribute': LXPPacket.e_pv_all, 'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR, 'state_class': SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Internal Temperature (Live)", "entity": 'lux_internal_temp', 'bank': 1, 'attribute': LXPPacket.t_inner, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Radiator 1 Temperature (Live)", "entity": 'lux_radiator1_temp', 'bank': 1, 'attribute': LXPPacket.t_rad_1, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Radiator 2 temperature (Live)", "entity": 'lux_radiator2_temp', 'bank': 1, 'attribute': LXPPacket.t_rad_2, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Max Cell Voltage (Live)", "entity": 'max_cell_volt', 'bank': 2, 'attribute': LXPPacket.max_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT, 'decimal_places': 3})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Min Cell Voltage (Live)", "entity": 'min_cell_volt', 'bank': 2, 'attribute': LXPPacket.min_cell_volt, 'device_class': DEVICE_CLASS_VOLTAGE, 'unit_measure': ELECTRIC_POTENTIAL_VOLT, 'decimal_places': 3})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Max Cell Temperature (Live)", "entity": 'max_cell_temp', 'bank': 2, 'attribute': LXPPacket.max_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Min Cell Temperature (Live)", "entity": 'min_cell_temp', 'bank': 2, 'attribute': LXPPacket.min_cell_temp, 'device_class': DEVICE_CLASS_TEMPERATURE, 'unit_measure': TEMP_CELSIUS})  
-    
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Status", "entity": 'lux_status', 'bank': 0, 'attribute': LXPPacket.status})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Live)", "entity": "lux_battery_discharge", "bank": 0, "attribute": LXPPacket.p_discharge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Live)", "entity": "lux_battery_charge", "bank": 0, "attribute": LXPPacket.p_charge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery %", "entity": "lux_battery_percent", "bank": 0, "attribute": LXPPacket.soc, "device_class": DEVICE_CLASS_BATTERY, "unit_measure": PERCENTAGE})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Daily)", "entity": "lux_daily_battery_discharge", "bank": 0, "attribute": LXPPacket.e_dischg_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Total)", "entity": "lux_total_battery_discharge", "bank": 1, "attribute": LXPPacket.e_dischg_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Daily)", "entity": "lux_daily_battery_charge", "bank": 0, "attribute": LXPPacket.e_chg_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Total)", "entity": "lux_total_battery_charge", "bank": 1, "attribute": LXPPacket.e_chg_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Voltage (Live)", "entity": "lux_battery_voltage", "bank": 0, "attribute": LXPPacket.v_bat, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} BMS Limit Charge (Live)", "entity": "lux_bms_limit_charge", "bank": 2, "attribute": LXPPacket.max_chg_curr, "device_class": DEVICE_CLASS_CURRENT, "unit_measure": ELECTRIC_CURRENT_AMPERE})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} BMS Limit Discharge (Live)", "entity": "lux_bms_limit_discharge", "bank": 2, "attribute": LXPPacket.max_dischg_curr, "device_class": DEVICE_CLASS_CURRENT, "unit_measure": ELECTRIC_CURRENT_AMPERE})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Inverter (Live)", "entity": "lux_power_from_inverter_live", "bank": 0, "attribute": LXPPacket.p_inv, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Inverter (Live)", "entity": "lux_power_to_inverter_live", "bank": 0, "attribute": LXPPacket.p_rec, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid to HOUSE (Live)", "entity": "lux_power_to_home", "bank": 0, "attribute": LXPPacket.p_load, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To EPS (Live)", "entity": "lux_power_to_eps", "bank": 0, "attribute": LXPPacket.p_to_eps, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Live)", "entity": "lux_power_from_grid_live", "bank": 0, "attribute": LXPPacket.p_to_user, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Daily)", "entity": "lux_power_from_grid_daily", "bank": 0, "attribute": LXPPacket.e_to_user_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Total)", "entity": "lux_power_from_grid_total", "bank": 1, "attribute": LXPPacket.e_to_user_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Live)", "entity": "lux_power_to_grid_live", "bank": 0, "attribute": LXPPacket.p_to_grid, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Daily)", "entity": "lux_power_to_grid_daily", "bank": 0, "attribute": LXPPacket.e_to_grid_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Total)", "entity": "lux_power_to_grid_total", "bank": 1, "attribute": LXPPacket.e_to_grid_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Grid Voltage (Live) ", "entity": "lux_grid_voltage_live", "bank": 0, "attribute": LXPPacket.v_ac_r, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power from Inverter to Home (Daily)", "entity": "lux_power_from_inverter_daily", "bank": 0, "attribute": LXPPacket.e_inv_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power to Inverter (Daily)", "entity": "lux_power_to_inverter_daily", "bank": 0, "attribute": LXPPacket.e_rec_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Live)", "entity": "lux_current_solar_output", "bank": 0, "attribute": LXPPacket.p_pv_total, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 1 (Live)", "entity": "lux_current_solar_output_1", "bank": 0, "attribute": LXPPacket.p_pv_1, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 2 (Live)", "entity": "lux_current_solar_output_2", "bank": 0, "attribute": LXPPacket.p_pv_2, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 3 (Live)", "entity": "lux_current_solar_output_3", "bank": 0, "attribute": LXPPacket.p_pv_3, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Daily)", "entity": "lux_daily_solar", "bank": 0, "attribute": LXPPacket.e_pv_total, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Total)", "entity": "lux_total_solar", "bank": 1, "attribute": LXPPacket.e_pv_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Internal Temperature (Live)", "entity": "lux_internal_temp", "bank": 1, "attribute": LXPPacket.t_inner, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Radiator 1 Temperature (Live)", "entity": "lux_radiator1_temp", "bank": 1, "attribute": LXPPacket.t_rad_1, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Radiator 2 temperature (Live)", "entity": "lux_radiator2_temp", "bank": 1, "attribute": LXPPacket.t_rad_2, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Max Cell Voltage (Live)", "entity": "max_cell_volt", "bank": 2, "attribute": LXPPacket.max_cell_volt, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT, "decimal_places": 3})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Min Cell Voltage (Live)", "entity": "min_cell_volt", "bank": 2, "attribute": LXPPacket.min_cell_volt, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT, "decimal_places": 3})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Max Cell Temperature (Live)", "entity": "max_cell_temp", "bank": 2, "attribute": LXPPacket.max_cell_temp, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Min Cell Temperature (Live)", "entity": "min_cell_temp", "bank": 2, "attribute": LXPPacket.min_cell_temp, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+
+    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Status", "entity": "lux_status", "bank": 0, "attribute": LXPPacket.status})
     for sensor_data in sensors:
         stateSensors.append(LuxpowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # Setup Data Received Timestamp sensor
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Data Received Time", "entity": 'lux_data_last_received_time',
-                   'bank': 0, 'attribute': LXPPacket.status}
+    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Data Received Time", "entity": "lux_data_last_received_time", "bank": 0, "attribute": LXPPacket.status}
     stateSensors.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # Setup State Text sensor
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Status (Text)", "entity": 'lux_status_text',
-                   'bank': 0, 'attribute': LXPPacket.status}
+    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Status (Text)", "entity": "lux_status_text", "bank": 0, "attribute": LXPPacket.status}
     stateSensors.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # Multiple attribute models
     # 1. Battery Flow Live
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Battery Flow (Live)", "entity": 'lux_battery_flow', 'bank': 0, 'attribute': LXPPacket.p_discharge,
-                   'attribute1': LXPPacket.p_discharge, 'attribute2': LXPPacket.p_charge,  # Attribute dependencies
-                   'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
+    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Battery Flow (Live)", "entity": "lux_battery_flow", "bank": 0, "attribute": LXPPacket.p_discharge, "attribute1": LXPPacket.p_discharge, "attribute2": LXPPacket.p_charge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT}  # Attribute dependencies
     stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # 2. Grid Flow Live
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Grid Flow (Live)", "entity": 'lux_grid_flow', 'bank': 0, 'attribute': LXPPacket.p_to_user,
-                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_to_grid,   # Attribute dependencies
-                   'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
+    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Grid Flow (Live)", "entity": "lux_grid_flow", "bank": 0, "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_to_grid, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT}  # Attribute dependencies
     stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-
     # 3. Home Consumption Live
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Live)", "entity": 'lux_home_consumption_live', 'bank': 0, 'attribute': LXPPacket.p_to_user,
-                   'attribute1': LXPPacket.p_to_user, 'attribute2': LXPPacket.p_rec, 'attribute3': LXPPacket.p_inv, 'attribute4': LXPPacket.p_to_grid, # Attribute dependencies
-                   # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
-                   'device_class': DEVICE_CLASS_POWER, 'unit_measure': POWER_WATT}
+    sensor_data = {
+        "name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Live)",
+        "entity": "lux_home_consumption_live",
+        "bank": 0,
+        "attribute": LXPPacket.p_to_user,
+        "attribute1": LXPPacket.p_to_user,
+        "attribute2": LXPPacket.p_rec,
+        "attribute3": LXPPacket.p_inv,
+        "attribute4": LXPPacket.p_to_grid,  # Attribute dependencies
+        # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
+        "device_class": DEVICE_CLASS_POWER,
+        "unit_measure": POWER_WATT,
+    }
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # 4. Home Consumption Daily
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Daily)", "entity": 'lux_home_consumption', 'bank': 0, 'attribute': LXPPacket.e_to_user_day,
-                   'attribute1': LXPPacket.e_to_user_day, 'attribute2': LXPPacket.e_rec_day, 'attribute3': LXPPacket.e_inv_day, 'attribute4': LXPPacket.e_to_grid_day, # Attribute dependencies
-                   'device_class': DEVICE_CLASS_ENERGY, 'unit_measure': ENERGY_KILO_WATT_HOUR}
+    sensor_data = {
+        "name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Daily)",
+        "entity": "lux_home_consumption",
+        "bank": 0,
+        "attribute": LXPPacket.e_to_user_day,
+        "attribute1": LXPPacket.e_to_user_day,
+        "attribute2": LXPPacket.e_rec_day,
+        "attribute3": LXPPacket.e_inv_day,
+        "attribute4": LXPPacket.e_to_grid_day,  # Attribute dependencies
+        "device_class": DEVICE_CLASS_ENERGY,
+        "unit_measure": ENERGY_KILO_WATT_HOUR,
+    }
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     async_add_devices(stateSensors, True)
 
     _LOGGER.info("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
 
+
 class LuxpowerSensorEntity(SensorEntity):
     """Representation of a sensor of Type HAVC, Pressure, Power, Volume."""
-    def __init__(
-        self, hass, host, port, dongle, serial, sensor_data, event: Event
-    ):
+
+    def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         """Initialize the sensor."""
         self.hass = hass
         self._host = host
         self._port = port
-        self._name = sensor_data['name']
+        self._name = sensor_data["name"]
         self._state = "Unavailable"
         self._stateval = None
         self.serial = serial
         self.dongle = dongle
-        self._device_class = sensor_data.get('device_class', None)
-        self._unit_of_measurement = sensor_data.get('unit_measure', None)
+        self._device_class = sensor_data.get("device_class", None)
+        self._unit_of_measurement = sensor_data.get("unit_measure", None)
         self.is_added_to_hass = False
         self._data: Dict[str, str] = {}
-        self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, sensor_data['entity'])
-        self._bank = sensor_data.get('bank', 0)
-        self._device_attribute = sensor_data['attribute']
-        self._state_class = sensor_data.get('state_class', None)
-        self.decimal_places = sensor_data.get('decimal_places', 1)
+        self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, sensor_data["entity"])
+        self._bank = sensor_data.get("bank", 0)
+        self._device_attribute = sensor_data["attribute"]
+        self._state_class = sensor_data.get("state_class", None)
+        self.decimal_places = sensor_data.get("decimal_places", 1)
         self.lastupdated_time = 0
         self.event = event
 
@@ -189,7 +216,7 @@ class LuxpowerSensorEntity(SensorEntity):
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._name}")
-        self._data = event.data.get('data', {})
+        self._data = event.data.get("data", {})
         value = self._data.get(self._device_attribute)
         value = round(value, self.decimal_places) if isinstance(value, (int, float)) else "unavailable"
         self._state = f"{value}"
@@ -233,7 +260,6 @@ class LuxpowerSensorEntity(SensorEntity):
         """Return the device class of the sensor."""
         return self._device_class
 
-
     @property
     def name(self):
         """Return the name of the sensor."""
@@ -249,17 +275,18 @@ class LuxpowerSensorEntity(SensorEntity):
 
 
 class LuxPowerFlowSensor(LuxpowerSensorEntity):
-    '''
+    """
     Template equation state = -1*attribute1 if attribute1 > 0 else attribute2
-    '''
+    """
+
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
-        self._device_attribute1 = sensor_data['attribute1']
-        self._device_attribute2 = sensor_data['attribute2']
+        self._device_attribute1 = sensor_data["attribute1"]
+        self._device_attribute2 = sensor_data["attribute2"]
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._name}")
-        self._data = event.data.get('data', {})
+        self._data = event.data.get("data", {})
 
         negative_value = float(self._data.get(self._device_attribute1, 0.0))
         positive_value = float(self._data.get(self._device_attribute2, 0.0))
@@ -273,20 +300,21 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
         return self._state
 
 
-class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity): #Used for both live and daily consumption calculation.
-    '''
+class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):  # Used for both live and daily consumption calculation.
+    """
     Template equation state = attribute1 - attribute2 + attribute3 - attribute4
-    '''
+    """
+
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
-        self._device_attribute1 = sensor_data['attribute1'] # Power from grid to consumer unit
-        self._device_attribute2 = sensor_data['attribute2'] # Power from consumer unit to inverter
-        self._device_attribute3 = sensor_data['attribute3'] # Power from inverter to consumer unit
-        self._device_attribute4 = sensor_data['attribute4'] # Power from consumer unit to grid
-                
+        self._device_attribute1 = sensor_data["attribute1"]  # Power from grid to consumer unit
+        self._device_attribute2 = sensor_data["attribute2"]  # Power from consumer unit to inverter
+        self._device_attribute3 = sensor_data["attribute3"]  # Power from inverter to consumer unit
+        self._device_attribute4 = sensor_data["attribute4"]  # Power from consumer unit to grid
+
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._name}")
-        self._data = event.data.get('data', {})
+        self._data = event.data.get("data", {})
 
         grid = float(self._data.get(self._device_attribute1, 0.0))
         to_inverter = float(self._data.get(self._device_attribute2, 0.0))
@@ -298,51 +326,52 @@ class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity): #Used for both live a
         self.schedule_update_ha_state()
         return self._state
 
+
 class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._name}")
-        self._data = event.data.get('data', {})
-        state_text = ''
+        self._data = event.data.get("data", {})
+        state_text = ""
         status = int(self._data.get(self._device_attribute, 0.0))
         if status == 0:
-            state_text = 'Standby'
+            state_text = "Standby"
         elif status == 2:
-            state_text = 'Inverting'
+            state_text = "Inverting"
         elif status == 4:
-            state_text = 'Silent'
+            state_text = "Silent"
         elif status == 5:
-            state_text = 'Float'
+            state_text = "Float"
         elif status == 64:
-            state_text = 'No AC Power'
+            state_text = "No AC Power"
         elif status == 7:
-            state_text = 'Charger Off'
+            state_text = "Charger Off"
         elif status == 8:
-            state_text = 'Support'
+            state_text = "Support"
         elif status == 9:
-            state_text = 'Selling'
+            state_text = "Selling"
         elif status == 10:
-            state_text = 'Pass Through'
+            state_text = "Pass Through"
         elif status == 12:
-            state_text = 'Solar + Battery Charging'
+            state_text = "Solar + Battery Charging"
         elif status == 16:
-            state_text = 'Battery Discharging'
+            state_text = "Battery Discharging"
         elif status == 17:
-            state_text = 'Temperature Over Range'
+            state_text = "Temperature Over Range"
         elif status == 20:
-            state_text = 'Solar + Battery Discharging'
+            state_text = "Solar + Battery Discharging"
         elif status == 32:
-            state_text = 'Battery Charging'
+            state_text = "Battery Charging"
         elif status == 40:
-            state_text = 'Solar + Grid + Battery Charging'
+            state_text = "Solar + Grid + Battery Charging"
         elif status == 11:
-            state_text = 'Offsetting'
+            state_text = "Offsetting"
         elif status == 192:
-            state_text = 'No grid power available, using solar + battery'
+            state_text = "No grid power available, using solar + battery"
         else:
-            state_text = 'Unknown'
+            state_text = "Unknown"
         self._state = f"{state_text}"
 
         self.schedule_update_ha_state()
@@ -356,7 +385,7 @@ class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._name}")
-        self._data = event.data.get('data', {})
+        self._data = event.data.get("data", {})
         self.datetime_last_received = datetime.now()
         self._state = "{}".format(datetime.now().strftime("%A %B %-d, %I:%M %p"))
 
@@ -366,20 +395,18 @@ class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
-        state_attributes['dongle'] = self.dongle
+        state_attributes["dongle"] = self.dongle
         if self.datetime_last_received is not None:
-            state_attributes['timestamp'] = self.datetime_last_received.timestamp()
+            state_attributes["timestamp"] = self.datetime_last_received.timestamp()
         else:
-            state_attributes['timestamp'] = 0
+            state_attributes["timestamp"] = 0
         return state_attributes
 
 
 class LuxStateSensorEntity(Entity):
     """Representation of a sensor of Type HAVC, Pressure, Power, Volume."""
 
-    def __init__(
-        self, hass, host, port, dongle, serial, name, device_class, unit_measure, luxpower_client, event:Event
-    ):
+    def __init__(self, hass, host, port, dongle, serial, name, device_class, unit_measure, luxpower_client, event: Event):
         """Initialize the sensor."""
         self.hass = hass
         self._host = host
@@ -401,72 +428,72 @@ class LuxStateSensorEntity(Entity):
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
-        state_attributes[LXPPacket.status] = "{}".format( self.totaldata.get(LXPPacket.status, "unavailable"))
-        state_attributes[LXPPacket.v_pv_1] = "{}".format( self.totaldata.get(LXPPacket.v_pv_1, "unavailable"))
-        state_attributes[LXPPacket.v_pv_2] = "{}".format( self.totaldata.get(LXPPacket.v_pv_2, "unavailable"))
-        state_attributes[LXPPacket.v_pv_3] = "{}".format( self.totaldata.get(LXPPacket.v_pv_3, "unavailable"))
-        state_attributes[LXPPacket.v_bat] = "{}".format( self.totaldata.get(LXPPacket.v_bat, "unavailable"))
-        state_attributes[LXPPacket.soc] = "{}".format( self.totaldata.get(LXPPacket.soc, "unavailable"))
-        state_attributes[LXPPacket.p_pv_1] = "{}".format( self.totaldata.get(LXPPacket.p_pv_1, "unavailable"))
-        state_attributes[LXPPacket.p_pv_2] = "{}".format( self.totaldata.get(LXPPacket.p_pv_2, "unavailable"))
-        state_attributes[LXPPacket.p_pv_3] = "{}".format( self.totaldata.get(LXPPacket.p_pv_3, "unavailable"))
-        state_attributes[LXPPacket.p_pv_total] = "{}".format( self.totaldata.get(LXPPacket.p_pv_total, "unavailable"))
-        state_attributes[LXPPacket.p_charge] = "{}".format( self.totaldata.get(LXPPacket.p_charge, "unavailable"))
-        state_attributes[LXPPacket.p_discharge] = "{}".format( self.totaldata.get(LXPPacket.p_discharge, "unavailable"))
-        state_attributes[LXPPacket.v_ac_r] = "{}".format( self.totaldata.get(LXPPacket.v_ac_r, "unavailable"))
-        state_attributes[LXPPacket.v_ac_s] = "{}".format( self.totaldata.get(LXPPacket.v_ac_s, "unavailable"))
-        state_attributes[LXPPacket.v_ac_t] = "{}".format( self.totaldata.get(LXPPacket.v_ac_t, "unavailable"))
-        state_attributes[LXPPacket.f_ac] = "{}".format( self.totaldata.get(LXPPacket.f_ac, "unavailable"))
-        state_attributes[LXPPacket.p_inv] = "{}".format( self.totaldata.get(LXPPacket.p_inv, "unavailable"))
-        state_attributes[LXPPacket.p_rec] = "{}".format( self.totaldata.get(LXPPacket.p_rec, "unavailable"))
-        state_attributes[LXPPacket.pf] = "{}".format( self.totaldata.get(LXPPacket.pf, "unavailable"))
-        state_attributes[LXPPacket.v_eps_r] = "{}".format( self.totaldata.get(LXPPacket.v_eps_r, "unavailable"))
-        state_attributes[LXPPacket.v_eps_s] = "{}".format( self.totaldata.get(LXPPacket.v_eps_s, "unavailable"))
-        state_attributes[LXPPacket.v_eps_t] = "{}".format( self.totaldata.get(LXPPacket.v_eps_t, "unavailable"))
-        state_attributes[LXPPacket.f_eps] = "{}".format( self.totaldata.get(LXPPacket.f_eps, "unavailable"))
-        state_attributes[LXPPacket.p_to_eps] = "{}".format( self.totaldata.get(LXPPacket.p_to_eps, "unavailable"))
-        state_attributes[LXPPacket.p_to_grid] = "{}".format( self.totaldata.get(LXPPacket.p_to_grid, "unavailable"))
-        state_attributes[LXPPacket.p_to_user] = "{}".format( self.totaldata.get(LXPPacket.p_to_user, "unavailable"))
-        state_attributes[LXPPacket.p_load] = "{}".format( self.totaldata.get(LXPPacket.p_load, "unavailable"))
-        state_attributes[LXPPacket.e_pv_1_day] = "{}".format( self.totaldata.get(LXPPacket.e_pv_1_day, "unavailable"))
-        state_attributes[LXPPacket.e_pv_2_day] = "{}".format( self.totaldata.get(LXPPacket.e_pv_2_day, "unavailable"))
-        state_attributes[LXPPacket.e_pv_3_day] = "{}".format( self.totaldata.get(LXPPacket.e_pv_3_day, "unavailable"))
-        state_attributes[LXPPacket.e_pv_total] = "{}".format( self.totaldata.get(LXPPacket.e_pv_total, "unavailable"))
-        state_attributes[LXPPacket.e_inv_day] = "{}".format( self.totaldata.get(LXPPacket.e_inv_day, "unavailable"))
-        state_attributes[LXPPacket.e_rec_day] = "{}".format( self.totaldata.get(LXPPacket.e_rec_day, "unavailable"))
-        state_attributes[LXPPacket.e_chg_day] =  "{}".format( self.totaldata.get(LXPPacket.e_chg_day, "unavailable"))
-        state_attributes[LXPPacket.e_dischg_day] = "{}".format( self.totaldata.get(LXPPacket.e_dischg_day, "unavailable"))
-        state_attributes[LXPPacket.e_eps_day] = "{}".format( self.totaldata.get(LXPPacket.e_eps_day, "unavailable"))
-        state_attributes[LXPPacket.e_to_grid_day] = "{}".format( self.totaldata.get(LXPPacket.e_to_grid_day, "unavailable"))
-        state_attributes[LXPPacket.e_to_user_day] = "{}".format( self.totaldata.get(LXPPacket.e_to_user_day, "unavailable"))
-        state_attributes[LXPPacket.v_bus_1] = "{}".format( self.totaldata.get(LXPPacket.v_bus_1, "unavailable"))
-        state_attributes[LXPPacket.v_bus_2] = "{}".format( self.totaldata.get(LXPPacket.v_bus_2, "unavailable"))
-        state_attributes[LXPPacket.e_pv_1_all] = "{}".format( self.totaldata.get(LXPPacket.e_pv_1_all, "unavailable"))
-        state_attributes[LXPPacket.e_pv_2_all] = "{}".format( self.totaldata.get(LXPPacket.e_pv_2_all, "unavailable"))
-        state_attributes[LXPPacket.e_pv_3_all] = "{}".format( self.totaldata.get(LXPPacket.e_pv_3_all, "unavailable"))
-        state_attributes[LXPPacket.e_pv_all] = "{}".format( self.totaldata.get(LXPPacket.e_pv_all, "unavailable"))
-        state_attributes[LXPPacket.e_inv_all] = "{}".format( self.totaldata.get(LXPPacket.e_inv_all, "unavailable"))
-        state_attributes[LXPPacket.e_rec_all] = "{}".format( self.totaldata.get(LXPPacket.e_rec_all, "unavailable"))
-        state_attributes[LXPPacket.e_chg_all] = "{}".format( self.totaldata.get(LXPPacket.e_chg_all, "unavailable"))
-        state_attributes[LXPPacket.e_dischg_all] = "{}".format( self.totaldata.get(LXPPacket.e_dischg_all, "unavailable"))
-        state_attributes[LXPPacket.e_eps_all] = "{}".format( self.totaldata.get(LXPPacket.e_eps_all, "unavailable"))
-        state_attributes[LXPPacket.e_to_grid_all] = "{}".format( self.totaldata.get(LXPPacket.e_to_grid_all, "unavailable"))
-        state_attributes[LXPPacket.e_to_user_all] = "{}".format( self.totaldata.get(LXPPacket.e_to_user_all, "unavailable"))
-        state_attributes[LXPPacket.t_inner] = "{}".format( self.totaldata.get(LXPPacket.t_inner, "unavailable"))
-        state_attributes[LXPPacket.t_rad_1] = "{}".format( self.totaldata.get(LXPPacket.t_rad_1, "unavailable"))
-        state_attributes[LXPPacket.t_rad_2] = "{}".format( self.totaldata.get(LXPPacket.t_rad_2, "unavailable"))
-        state_attributes[LXPPacket.t_bat] = "{}".format( self.totaldata.get(LXPPacket.t_bat, "unavailable"))
-        state_attributes[LXPPacket.uptime] = "{}".format( self.totaldata.get(LXPPacket.uptime, "unavailable"))
-        state_attributes[LXPPacket.max_chg_curr] = "{}".format( self.totaldata.get(LXPPacket.max_chg_curr, "unavailable"))
-        state_attributes[LXPPacket.max_dischg_curr] = "{}".format( self.totaldata.get(LXPPacket.max_dischg_curr, "unavailable"))
-        state_attributes[LXPPacket.charge_volt_ref] = "{}".format( self.totaldata.get(LXPPacket.charge_volt_ref, "unavailable"))
-        state_attributes[LXPPacket.dischg_cut_volt] = "{}".format( self.totaldata.get(LXPPacket.dischg_cut_volt, "unavailable"))
-        state_attributes[LXPPacket.bat_count] = "{}".format( self.totaldata.get(LXPPacket.bat_count, "unavailable"))
-        state_attributes[LXPPacket.bat_capacity] = "{}".format( self.totaldata.get(LXPPacket.bat_capacity, "unavailable"))
-        state_attributes[LXPPacket.max_cell_volt] = "{}".format( self.totaldata.get(LXPPacket.max_cell_volt, "unavailable"))
-        state_attributes[LXPPacket.min_cell_volt] = "{}".format( self.totaldata.get(LXPPacket.min_cell_volt, "unavailable"))
-        state_attributes[LXPPacket.max_cell_temp] = "{}".format( self.totaldata.get(LXPPacket.max_cell_temp, "unavailable"))
-        state_attributes[LXPPacket.min_cell_temp] = "{}".format( self.totaldata.get(LXPPacket.min_cell_temp, "unavailable"))
+        state_attributes[LXPPacket.status] = "{}".format(self.totaldata.get(LXPPacket.status, "unavailable"))
+        state_attributes[LXPPacket.v_pv_1] = "{}".format(self.totaldata.get(LXPPacket.v_pv_1, "unavailable"))
+        state_attributes[LXPPacket.v_pv_2] = "{}".format(self.totaldata.get(LXPPacket.v_pv_2, "unavailable"))
+        state_attributes[LXPPacket.v_pv_3] = "{}".format(self.totaldata.get(LXPPacket.v_pv_3, "unavailable"))
+        state_attributes[LXPPacket.v_bat] = "{}".format(self.totaldata.get(LXPPacket.v_bat, "unavailable"))
+        state_attributes[LXPPacket.soc] = "{}".format(self.totaldata.get(LXPPacket.soc, "unavailable"))
+        state_attributes[LXPPacket.p_pv_1] = "{}".format(self.totaldata.get(LXPPacket.p_pv_1, "unavailable"))
+        state_attributes[LXPPacket.p_pv_2] = "{}".format(self.totaldata.get(LXPPacket.p_pv_2, "unavailable"))
+        state_attributes[LXPPacket.p_pv_3] = "{}".format(self.totaldata.get(LXPPacket.p_pv_3, "unavailable"))
+        state_attributes[LXPPacket.p_pv_total] = "{}".format(self.totaldata.get(LXPPacket.p_pv_total, "unavailable"))
+        state_attributes[LXPPacket.p_charge] = "{}".format(self.totaldata.get(LXPPacket.p_charge, "unavailable"))
+        state_attributes[LXPPacket.p_discharge] = "{}".format(self.totaldata.get(LXPPacket.p_discharge, "unavailable"))
+        state_attributes[LXPPacket.v_ac_r] = "{}".format(self.totaldata.get(LXPPacket.v_ac_r, "unavailable"))
+        state_attributes[LXPPacket.v_ac_s] = "{}".format(self.totaldata.get(LXPPacket.v_ac_s, "unavailable"))
+        state_attributes[LXPPacket.v_ac_t] = "{}".format(self.totaldata.get(LXPPacket.v_ac_t, "unavailable"))
+        state_attributes[LXPPacket.f_ac] = "{}".format(self.totaldata.get(LXPPacket.f_ac, "unavailable"))
+        state_attributes[LXPPacket.p_inv] = "{}".format(self.totaldata.get(LXPPacket.p_inv, "unavailable"))
+        state_attributes[LXPPacket.p_rec] = "{}".format(self.totaldata.get(LXPPacket.p_rec, "unavailable"))
+        state_attributes[LXPPacket.pf] = "{}".format(self.totaldata.get(LXPPacket.pf, "unavailable"))
+        state_attributes[LXPPacket.v_eps_r] = "{}".format(self.totaldata.get(LXPPacket.v_eps_r, "unavailable"))
+        state_attributes[LXPPacket.v_eps_s] = "{}".format(self.totaldata.get(LXPPacket.v_eps_s, "unavailable"))
+        state_attributes[LXPPacket.v_eps_t] = "{}".format(self.totaldata.get(LXPPacket.v_eps_t, "unavailable"))
+        state_attributes[LXPPacket.f_eps] = "{}".format(self.totaldata.get(LXPPacket.f_eps, "unavailable"))
+        state_attributes[LXPPacket.p_to_eps] = "{}".format(self.totaldata.get(LXPPacket.p_to_eps, "unavailable"))
+        state_attributes[LXPPacket.p_to_grid] = "{}".format(self.totaldata.get(LXPPacket.p_to_grid, "unavailable"))
+        state_attributes[LXPPacket.p_to_user] = "{}".format(self.totaldata.get(LXPPacket.p_to_user, "unavailable"))
+        state_attributes[LXPPacket.p_load] = "{}".format(self.totaldata.get(LXPPacket.p_load, "unavailable"))
+        state_attributes[LXPPacket.e_pv_1_day] = "{}".format(self.totaldata.get(LXPPacket.e_pv_1_day, "unavailable"))
+        state_attributes[LXPPacket.e_pv_2_day] = "{}".format(self.totaldata.get(LXPPacket.e_pv_2_day, "unavailable"))
+        state_attributes[LXPPacket.e_pv_3_day] = "{}".format(self.totaldata.get(LXPPacket.e_pv_3_day, "unavailable"))
+        state_attributes[LXPPacket.e_pv_total] = "{}".format(self.totaldata.get(LXPPacket.e_pv_total, "unavailable"))
+        state_attributes[LXPPacket.e_inv_day] = "{}".format(self.totaldata.get(LXPPacket.e_inv_day, "unavailable"))
+        state_attributes[LXPPacket.e_rec_day] = "{}".format(self.totaldata.get(LXPPacket.e_rec_day, "unavailable"))
+        state_attributes[LXPPacket.e_chg_day] = "{}".format(self.totaldata.get(LXPPacket.e_chg_day, "unavailable"))
+        state_attributes[LXPPacket.e_dischg_day] = "{}".format(self.totaldata.get(LXPPacket.e_dischg_day, "unavailable"))
+        state_attributes[LXPPacket.e_eps_day] = "{}".format(self.totaldata.get(LXPPacket.e_eps_day, "unavailable"))
+        state_attributes[LXPPacket.e_to_grid_day] = "{}".format(self.totaldata.get(LXPPacket.e_to_grid_day, "unavailable"))
+        state_attributes[LXPPacket.e_to_user_day] = "{}".format(self.totaldata.get(LXPPacket.e_to_user_day, "unavailable"))
+        state_attributes[LXPPacket.v_bus_1] = "{}".format(self.totaldata.get(LXPPacket.v_bus_1, "unavailable"))
+        state_attributes[LXPPacket.v_bus_2] = "{}".format(self.totaldata.get(LXPPacket.v_bus_2, "unavailable"))
+        state_attributes[LXPPacket.e_pv_1_all] = "{}".format(self.totaldata.get(LXPPacket.e_pv_1_all, "unavailable"))
+        state_attributes[LXPPacket.e_pv_2_all] = "{}".format(self.totaldata.get(LXPPacket.e_pv_2_all, "unavailable"))
+        state_attributes[LXPPacket.e_pv_3_all] = "{}".format(self.totaldata.get(LXPPacket.e_pv_3_all, "unavailable"))
+        state_attributes[LXPPacket.e_pv_all] = "{}".format(self.totaldata.get(LXPPacket.e_pv_all, "unavailable"))
+        state_attributes[LXPPacket.e_inv_all] = "{}".format(self.totaldata.get(LXPPacket.e_inv_all, "unavailable"))
+        state_attributes[LXPPacket.e_rec_all] = "{}".format(self.totaldata.get(LXPPacket.e_rec_all, "unavailable"))
+        state_attributes[LXPPacket.e_chg_all] = "{}".format(self.totaldata.get(LXPPacket.e_chg_all, "unavailable"))
+        state_attributes[LXPPacket.e_dischg_all] = "{}".format(self.totaldata.get(LXPPacket.e_dischg_all, "unavailable"))
+        state_attributes[LXPPacket.e_eps_all] = "{}".format(self.totaldata.get(LXPPacket.e_eps_all, "unavailable"))
+        state_attributes[LXPPacket.e_to_grid_all] = "{}".format(self.totaldata.get(LXPPacket.e_to_grid_all, "unavailable"))
+        state_attributes[LXPPacket.e_to_user_all] = "{}".format(self.totaldata.get(LXPPacket.e_to_user_all, "unavailable"))
+        state_attributes[LXPPacket.t_inner] = "{}".format(self.totaldata.get(LXPPacket.t_inner, "unavailable"))
+        state_attributes[LXPPacket.t_rad_1] = "{}".format(self.totaldata.get(LXPPacket.t_rad_1, "unavailable"))
+        state_attributes[LXPPacket.t_rad_2] = "{}".format(self.totaldata.get(LXPPacket.t_rad_2, "unavailable"))
+        state_attributes[LXPPacket.t_bat] = "{}".format(self.totaldata.get(LXPPacket.t_bat, "unavailable"))
+        state_attributes[LXPPacket.uptime] = "{}".format(self.totaldata.get(LXPPacket.uptime, "unavailable"))
+        state_attributes[LXPPacket.max_chg_curr] = "{}".format(self.totaldata.get(LXPPacket.max_chg_curr, "unavailable"))
+        state_attributes[LXPPacket.max_dischg_curr] = "{}".format(self.totaldata.get(LXPPacket.max_dischg_curr, "unavailable"))
+        state_attributes[LXPPacket.charge_volt_ref] = "{}".format(self.totaldata.get(LXPPacket.charge_volt_ref, "unavailable"))
+        state_attributes[LXPPacket.dischg_cut_volt] = "{}".format(self.totaldata.get(LXPPacket.dischg_cut_volt, "unavailable"))
+        state_attributes[LXPPacket.bat_count] = "{}".format(self.totaldata.get(LXPPacket.bat_count, "unavailable"))
+        state_attributes[LXPPacket.bat_capacity] = "{}".format(self.totaldata.get(LXPPacket.bat_capacity, "unavailable"))
+        state_attributes[LXPPacket.max_cell_volt] = "{}".format(self.totaldata.get(LXPPacket.max_cell_volt, "unavailable"))
+        state_attributes[LXPPacket.min_cell_volt] = "{}".format(self.totaldata.get(LXPPacket.min_cell_volt, "unavailable"))
+        state_attributes[LXPPacket.max_cell_temp] = "{}".format(self.totaldata.get(LXPPacket.max_cell_temp, "unavailable"))
+        state_attributes[LXPPacket.min_cell_temp] = "{}".format(self.totaldata.get(LXPPacket.min_cell_temp, "unavailable"))
         return state_attributes
 
     async def async_added_to_hass(self) -> None:
@@ -484,12 +511,12 @@ class LuxStateSensorEntity(Entity):
 
     def push_update(self, event):
         _LOGGER.debug(f"LUXPOWER State Sensor: register event received Name: {self._name}")
-        self._data = event.data.get('data', {})
+        self._data = event.data.get("data", {})
         self._state = "ONLINE"
 
         self.totaldata = self.luxpower_client.lxpPacket.data
         _LOGGER.debug(f"TotalData: {self.totaldata}")
- 
+
         self.schedule_update_ha_state()
         return self._state
 

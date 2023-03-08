@@ -4,14 +4,23 @@ import re
 
 import voluptuous as vol
 from homeassistant import config_entries, data_entry_flow
+
 ##from homeassistant.components.mqtt import MqttServiceInfo
 from homeassistant.core import callback
 
-from .const import (ATTR_LUX_DONGLE_SERIAL, ATTR_LUX_HOST, ATTR_LUX_PORT,
-                    ATTR_LUX_SERIAL_NUMBER, ATTR_LUX_USE_SERIAL, DOMAIN,
-                    PLACEHOLDER_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_HOST,
-                    PLACEHOLDER_LUX_PORT, PLACEHOLDER_LUX_SERIAL_NUMBER,
-                    PLACEHOLDER_LUX_USE_SERIAL)
+from .const import (
+    ATTR_LUX_DONGLE_SERIAL,
+    ATTR_LUX_HOST,
+    ATTR_LUX_PORT,
+    ATTR_LUX_SERIAL_NUMBER,
+    ATTR_LUX_USE_SERIAL,
+    DOMAIN,
+    PLACEHOLDER_LUX_DONGLE_SERIAL,
+    PLACEHOLDER_LUX_HOST,
+    PLACEHOLDER_LUX_PORT,
+    PLACEHOLDER_LUX_SERIAL_NUMBER,
+    PLACEHOLDER_LUX_USE_SERIAL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +34,8 @@ def host_valid(host):
         disallowed = re.compile(r"[^a-zA-Z\d\-]")
         return all(x and not disallowed.search(x) for x in host.split("."))
 
-class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type:ignore
+
+class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
 
@@ -44,39 +54,29 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN): # type:ignore
         )
 
         if user_input is None:
-            return self.async_show_form(
-                step_id="user", data_schema=data_schema, errors=errors
-            )
+            return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
 
         self.data = user_input
 
         is_valid = host_valid(self.data[ATTR_LUX_HOST])
         if not is_valid:
             errors["base"] = "host_error"
-            return self.async_show_form(
-                step_id="user", data_schema=data_schema, errors=errors
-            )
+            return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
         is_valid = len(self.data[ATTR_LUX_DONGLE_SERIAL]) == 10
         if not is_valid:
             errors["base"] = "dongle_error"
-            return self.async_show_form(
-                step_id="user", data_schema=data_schema, errors=errors
-            )
+            return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
         is_valid = len(self.data[ATTR_LUX_SERIAL_NUMBER]) == 10
         if not is_valid:
             errors["base"] = "serial_error"
-            return self.async_show_form(
-                step_id="user", data_schema=data_schema, errors=errors
-            )
+            return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
         if self.hass.data.get(DOMAIN, None) is not None and self.hass.data[DOMAIN].__len__() > 0:
             dongle_check = self.data[ATTR_LUX_DONGLE_SERIAL]
             for entry in self.hass.data[DOMAIN]:
                 entry_data = self.hass.data[DOMAIN][entry]
-                if entry_data['DONGLE'] == dongle_check:
+                if entry_data["DONGLE"] == dongle_check:
                     errors["base"] = "exist_error"
-                    return self.async_show_form(
-                        step_id="user", data_schema=data_schema, errors=errors
-                    )
+                    return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
 
         return self.async_create_entry(
             title=f"LuxPower - ({self.data[ATTR_LUX_DONGLE_SERIAL]})",
@@ -108,9 +108,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Manage the options."""
         return await self.async_step_user(user_input=None)
 
-    async def async_step_user(
-            self, user_input
-    ):
+    async def async_step_user(self, user_input):
         if user_input is not None:
             _LOGGER.info("OptionsFlowHandler: saving options ")
             return self.async_create_entry(title="LuxPower ()", data=user_input)
@@ -120,10 +118,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             config_entry = self.config_entry.options
         data_schema = vol.Schema(
             {
-                vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, '')): str,
-                vol.Required(ATTR_LUX_PORT, default=config_entry.get(ATTR_LUX_PORT, '')): vol.All(int, vol.Range(min=1001, max=60001)),
-                vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, '')): str,
-                vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, '')): str,
+                vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, "")): str,
+                vol.Required(ATTR_LUX_PORT, default=config_entry.get(ATTR_LUX_PORT, "")): vol.All(int, vol.Range(min=1001, max=60001)),
+                vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, "")): str,
+                vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, "")): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
             }
         )

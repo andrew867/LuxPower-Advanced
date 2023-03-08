@@ -1,4 +1,4 @@
-DOMAIN = 'luxpower'
+DOMAIN = "luxpower"
 
 # Config UI Attributes
 ATTR_LUX_HOST = "lux_host"
@@ -17,4 +17,3 @@ PLACEHOLDER_LUX_USE_SERIAL = False
 EVENT_DATA_FORMAT = "{DOMAIN}_{DONGLE}_data_receive_{GROUP}_event"
 EVENT_REGISTER_FORMAT = "{DOMAIN}_{DONGLE}_register_receive_{GROUP}_event"
 CLIENT_DAEMON_FORMAT = "{DOMAIN}_{DONGLE}_client_daemon"
-
