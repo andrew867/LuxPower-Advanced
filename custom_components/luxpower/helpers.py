@@ -1,3 +1,11 @@
+"""
+
+This is a docstring placeholder.
+
+This is where we will describe what this module does
+
+"""
+
 from .const import (
     CLIENT_DAEMON_FORMAT,
     DOMAIN,
@@ -7,8 +15,24 @@ from .const import (
 
 # fmt: off
 
+
 class Event:
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
+    """
+
     def __init__(self, dongle) -> None:
+        """
+
+        This is a docstring placeholder.
+
+        This is where we will describe what this __init__ does
+
+        """
         self.INVERTER_ID = dongle
         self.EVENT_DATA_RECEIVED = EVENT_DATA_FORMAT.format(DOMAIN=DOMAIN, DONGLE=self.INVERTER_ID, GROUP="all")
         self.EVENT_DATA_BANK0_RECEIVED = EVENT_DATA_FORMAT.format(DOMAIN=DOMAIN, DONGLE=self.INVERTER_ID, GROUP="bank0")

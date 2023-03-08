@@ -1,7 +1,14 @@
+"""
+
+This is a docstring placeholder.
+
+This is where we will describe what this module does
+
+"""
+
 import asyncio
 import datetime
 import logging
-import socket
 import struct
 from typing import Optional
 
@@ -13,7 +20,22 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class LuxPowerClient(asyncio.Protocol):
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
+    """
+
     def __init__(self, hass, server, port, dongle_serial, serial_number, events: Event):
+        """
+
+        This is a docstring placeholder.
+
+        This is where we will describe what this __init__ does
+
+        """
         self.hass = hass
         self.server = server
         self.port = port
@@ -28,13 +50,18 @@ class LuxPowerClient(asyncio.Protocol):
 
     def factory(self):
         """
-        returns reference to itself for using in protocol_factory with
-        create_server
+        Returns reference to itself for using in protocol_factory.
+
+        With create_server
         """
         return self
 
     def connection_made(self, transport):
-        """is called as soon as an ISM8 connects to server"""
+        """
+        Is called as soon as an ISM8 connects to server.
+
+        Description Of Function
+        """
         _peername = transport.get_extra_info("peername")
         _LOGGER.info("Connected to LUXPower Server: %s", _peername)
         self._transport = transport
@@ -47,7 +74,7 @@ class LuxPowerClient(asyncio.Protocol):
     def data_received(self, data):
         _LOGGER.debug("Inverter: %s", self.lxpPacket.serial_number)
         _LOGGER.debug(data)
-        packet = data
+        # packet = data
         packet_remains = data
         packet_remains_length = len(packet_remains)
         _LOGGER.debug("TCP OVERALL Packet Remains Length : %s", packet_remains_length)
@@ -64,7 +91,7 @@ class LuxPowerClient(asyncio.Protocol):
                 _LOGGER.debug("Invalid Start Of Packet Prefix %s", prefix)
                 return
 
-            protocol_number = struct.unpack("H", packet_remains[2:4])[0]
+            # protocol_number = struct.unpack("H", packet_remains[2:4])[0]
             frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
             frame_length_calced = frame_length_remaining + 6
             _LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
@@ -191,7 +218,7 @@ class LuxPowerClient(asyncio.Protocol):
             _LOGGER.info("Old12: %s, Oldmonth: %s, Oldyear: %s", old12, oldmonth, oldyear)
         else:
             # Read has been UNsuccessful
-            _LOGGER.warning(f"Cannot READ Register: 12 - Aborting")
+            _LOGGER.warning("Cannot READ Register: 12 - Aborting")
             return
 
         _LOGGER.info("Register to be read 13")
@@ -206,7 +233,7 @@ class LuxPowerClient(asyncio.Protocol):
             _LOGGER.info("Old13: %s, Oldhour: %s, Oldday: %s", old13, oldhour, oldday)
         else:
             # Read has been UNsuccessful
-            _LOGGER.warning(f"Cannot READ Register: 13 - Aborting")
+            _LOGGER.warning("Cannot READ Register: 13 - Aborting")
             return
 
         _LOGGER.info("Register to be read 14")
@@ -221,7 +248,7 @@ class LuxPowerClient(asyncio.Protocol):
             _LOGGER.info("Old14: %s, Oldsecond: %s, Oldminute: %s", old14, oldsecond, oldminute)
         else:
             # Read has been UNsuccessful
-            _LOGGER.warning(f"Cannot READ Register: 14 - Aborting")
+            _LOGGER.warning("Cannot READ Register: 14 - Aborting")
             return
 
         was = datetime.datetime(int(oldyear), int(oldmonth), int(oldday), int(oldhour), int(oldminute), int(oldsecond))
@@ -287,7 +314,22 @@ class LuxPowerClient(asyncio.Protocol):
 
 
 class ServiceHelper:
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
+    """
+
     def __init__(self, hass) -> None:
+        """
+
+        This is a docstring placeholder.
+
+        This is where we will describe what this __init__ does
+
+        """
         self.hass = hass
 
     async def send_reconnect(self, dongle):

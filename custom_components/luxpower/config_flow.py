@@ -1,11 +1,17 @@
+"""
+
+This is a docstring placeholder.
+
+This is where we will describe what this module does
+
+"""
+
 import ipaddress
 import logging
 import re
 
 import voluptuous as vol
-from homeassistant import config_entries, data_entry_flow
-
-##from homeassistant.components.mqtt import MqttServiceInfo
+from homeassistant import config_entries
 from homeassistant.core import callback
 
 from .const import (
@@ -36,6 +42,14 @@ def host_valid(host):
 
 
 class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
+    """
+
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
 
@@ -83,16 +97,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             data=self.data,
         )
 
-    # async def async_step_mqtt(self, discovery_info: MqttServiceInfo) -> data_entry_flow.FlowResult:
-    #     _LOGGER.debug(f"async_step_mqtt: {discovery_info}")
-    #     if self.hass.data.get(DOMAIN, None) is not None and self.hass.data[DOMAIN].__len__() > 0:
-    #         return self.async_abort(reason="already_configured")
-    #     self.data = {}
-    #     return self.async_create_entry(
-    #                 title="Wiring Central",
-    #                 data=self.data,
-    #             )
-
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
@@ -100,6 +104,14 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
+    """
+
     def __init__(self, config_entry):
         """Initialize options flow."""
         self.config_entry = config_entry

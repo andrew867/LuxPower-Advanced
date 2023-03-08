@@ -1,3 +1,12 @@
+"""
+
+This is a docstring placeholder.
+
+This is where we will describe what this module does
+
+"""
+
+
 import logging
 import socket
 import struct
@@ -6,6 +15,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class LXPPacket:
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
+    """
+
     CHARGE_POWER_PERCENT_CMD = 64
 
     # System Discharge Rate (%)
@@ -33,9 +50,9 @@ class LXPPacket:
     # fmt: off
 
     TCP_FUNCTION = {
-        193: "HEARTBEAT", 
-        194: "TRANSLATED_DATA", 
-        195: "READ_PARAM", 
+        193: "HEARTBEAT",
+        194: "TRANSLATED_DATA",
+        195: "READ_PARAM",
         196: "WRITE_PARAM"
     }
 
@@ -56,9 +73,10 @@ class LXPPacket:
         134: "WRITE_MULTI_ERROR",
     }
 
-    ###
-    ### Register 21, Most Significant Byte
-    ###
+    #
+    # Register 21, Most Significant Byte
+    #
+
     FEED_IN_GRID = 1 << 15
     DCI_ENABLE = 1 << 14
     GFCI_ENABLE = 1 << 13
@@ -68,7 +86,7 @@ class LXPPacket:
     NORMAL_OR_STANDBY = 1 << 9
     SEAMLESS_EPS_SWITCHING = 1 << 8
 
-    ### Register 21, Least Significant Byte
+    # Register 21, Least Significant Byte
     AC_CHARGE_ENABLE = 1 << 7
     GRID_ON_POWER_SS = 1 << 6
     NEUTRAL_DETECT_ENABLE = 1 << 5
@@ -92,21 +110,22 @@ class LXPPacket:
         | DRMS_ENABLE
     )
 
-    ###
-    ### Register 105, Least Significant Byte
-    ###
+    #
+    # Register 105, Least Significant Byte
+    #
+
     MICRO_GRID_ENABLE = 1 << 2
     FAST_ZERO_EXPORT_ENABLE = 1 << 1
 
-    ###
-    ### Register 110, Most Significant Byte
-    ###
+    #
+    # Register 110, Most Significant Byte
+    #
 
     TAKE_LOAD_TOGETHER = 1 << 10
 
-    ###
-    ### Register 110, Least Significant Byte
-    ###
+    #
+    # Register 110, Least Significant Byte
+    #
 
     CHARGE_LAST = 1 << 4
 
@@ -178,6 +197,12 @@ class LXPPacket:
     bat_capacity = "bat_capacity"
 
     def __init__(self, packet=b"", dongle_serial=b"", serial_number=b"", debug=True):
+        """
+        Initialises the LXPPacket Class.
+
+        This is where we will describe what this __init__ does
+
+        """
         self.packet = packet
         self.packet_length = 0
         self.packet_length_calced = 0
@@ -258,7 +283,7 @@ class LXPPacket:
     def process_socket_received_single(self, data, register_reqd):
         _LOGGER.debug("Inverter: %s", self.serial_number)
         _LOGGER.debug(data)
-        packet = data
+        # packet = data
         packet_remains = data
         packet_remains_length = len(packet_remains)
         _LOGGER.debug("TCP OVERALL Packet Remains Length : %s", packet_remains_length)
@@ -275,7 +300,7 @@ class LXPPacket:
                 _LOGGER.debug("Invalid Start Of Packet Prefix %s", prefix)
                 return
 
-            protocol_number = struct.unpack("H", packet_remains[2:4])[0]
+            # protocol_number = struct.unpack("H", packet_remains[2:4])[0]
             frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
             frame_length_calced = frame_length_remaining + 6
             _LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
@@ -345,12 +370,12 @@ class LXPPacket:
                 )
                 return
 
-        unknown_byte = packet[6]
+        # unknown_byte = packet[6]
         self.tcp_function = packet[7]
         self.dongle_serial = packet[8:18]
         self.data_length = struct.unpack("H", packet[18:20])[0]
 
-        self.data_frame = packet[20 : self.packet_length_calced - 2]
+        self.data_frame = packet[20:self.packet_length_calced - 2]  # fmt: skip
 
         if self.debug:
             _LOGGER.debug("prefix: %s", prefix)
@@ -374,7 +399,7 @@ class LXPPacket:
             _LOGGER.error("Invalid packet - Bad data length %s", len(self.data_frame))
             return
 
-        self.crc_modbus = struct.unpack("H", packet[self.packet_length_calced - 2 : self.packet_length_calced])[0]
+        self.crc_modbus = struct.unpack("H", packet[self.packet_length_calced - 2:self.packet_length_calced])[0]  # fmt: skip
 
         if self.debug:
             _LOGGER.debug("data_frame : %s", self.data_frame)
@@ -399,7 +424,7 @@ class LXPPacket:
         self.value_length = 2
         if self.value_length_byte_present:
             self.value_length = self.data_frame[14]
-            self.value = self.data_frame[15 : 15 + self.value_length]
+            self.value = self.data_frame[15:15 + self.value_length]  # fmt: skip
         else:
             self.value = self.data_frame[14:16]
 
@@ -459,7 +484,7 @@ class LXPPacket:
             not_found = True
             for i in range(0, number_of_registers):
                 if self.register + i in [68, 69, 70, 71, 72, 73, 76, 77, 78, 79, 80, 81, 84, 85, 86, 87, 88, 89] and not_found:  # fmt: skip
-                    _LOGGER.debug(f"Trying to Add Register 21 to this List if it already Exists")
+                    _LOGGER.debug("Trying to Add Register 21 to this List if it already Exists")
                     if 21 in self.regValuesInt:
                         self.regValuesThis[21] = self.regValuesInt[21]
                         not_found = False
@@ -597,7 +622,7 @@ class LXPPacket:
             return self.get_value_int(offset)
 
     def get_value_int(self, offset=0):
-        return struct.unpack("H", self.value[offset : 2 + offset])[0]
+        return struct.unpack("H", self.value[offset:2 + offset])[0]  # fmt: skip
 
     def get_read_value(self, reg):
         offset = (reg - self.register) * 2
@@ -607,7 +632,7 @@ class LXPPacket:
             return self.get_value(offset)
 
     def get_value(self, offset=0):
-        return self.value[offset : 2 + offset]
+        return self.value[offset:2 + offset]  # fmt: skip
 
     def get_read_value_combined(self, reg1, reg2):
         return self.readValues.get(reg1, b"\x00\x00") + self.readValues.get(reg2, b"\x00\x00")

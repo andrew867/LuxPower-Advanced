@@ -1,7 +1,12 @@
+"""
+
+This is a docstring placeholder.
+
+This is where we will describe what this module does
+
+"""
 import logging
-import socket
-import struct
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import voluptuous as vol
 from homeassistant.components.number import NumberEntity
@@ -32,9 +37,16 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def floatzero(incoming):
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this function does
+
+    """
     try:
         value_we_got = float(incoming)
-    except:
+    except Exception:
         value_we_got = 0
     return value_we_got
 
@@ -60,7 +72,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     hyphen = ""
 
     event = Event(dongle=DONGLE)
-    luxpower_client = hass.data[event.CLIENT_DAEMON]
+    # luxpower_client = hass.data[event.CLIENT_DAEMON]
 
     _LOGGER.info(f"Lux number platform_config: {platform_config}")
 
@@ -329,7 +341,7 @@ class LuxNormalNumberEntity(NumberEntity):
         return 1.0
 
     def set_register(self, new_value=0):
-        _LOGGER.debug(f"Started set_register")
+        _LOGGER.debug("Started set_register")
 
         lxpPacket = LXPPacket(
             debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
@@ -351,7 +363,7 @@ class LuxNormalNumberEntity(NumberEntity):
         return self._read_value
 
     def get_register(self):
-        _LOGGER.debug(f"Started get_register")
+        _LOGGER.debug("Started get_register")
 
         lxpPacket = LXPPacket(
             debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))

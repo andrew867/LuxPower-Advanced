@@ -1,8 +1,13 @@
-import asyncio
+"""
+
+This is a docstring placeholder.
+
+This is where we will describe what this module does
+
+"""
 import logging
 import socket
-import struct
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from homeassistant.components.binary_sensor import DEVICE_CLASS_OPENING
 from homeassistant.components.switch import SwitchEntity
@@ -87,9 +92,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
 
 class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
-    """Represent a binary sensor."""
+    """Represent a LUX binary switch sensor."""
 
     def __init__(self, hass, host, port, dongle, serial, register_address, bitmask, object_id, create_enabled, device_class, luxpower_client, event: Event) -> None:  # fmt: skip
+        """Initialize the Lux****Switch entity."""
         super().__init__()
         self.hass = hass
         self._host = host
@@ -270,7 +276,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                     )
                 else:
                     _LOGGER.warning(
-                        f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {num_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
+                        f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {new_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
                     )
             else:
                 _LOGGER.warning(

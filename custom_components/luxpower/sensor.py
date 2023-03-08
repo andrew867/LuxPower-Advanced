@@ -1,7 +1,13 @@
-import asyncio
+"""
+
+This is a docstring placeholder.
+
+This is where we will describe what this module does
+
+"""
 import logging
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Union
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
@@ -23,11 +29,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, Entity
-from homeassistant.helpers.event import (
-    async_track_point_in_time,
-    async_track_time_interval,
-    track_time_interval,
-)
 from homeassistant.helpers.typing import StateType
 
 from .const import (
@@ -132,7 +133,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Status (Text)", "entity": "lux_status_text", "bank": 0, "attribute": LXPPacket.status}
     stateSensors.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # Multiple attribute models
+    # Multiple attribute calculated sensors
     # 1. Battery Flow Live
     sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Battery Flow (Live)", "entity": "lux_battery_flow", "bank": 0, "attribute": LXPPacket.p_discharge, "attribute1": LXPPacket.p_discharge, "attribute2": LXPPacket.p_charge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT}  # Attribute dependencies
     stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
@@ -143,8 +144,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     # 3. Home Consumption Live
     sensor_data = {
-        "name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Live)", "entity": "lux_home_consumption_live", "bank": 0, 
-        "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_rec, "attribute3": LXPPacket.p_inv, "attribute4": LXPPacket.p_to_grid, 
+        "name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Live)", "entity": "lux_home_consumption_live", "bank": 0,
+        "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_rec, "attribute3": LXPPacket.p_inv, "attribute4": LXPPacket.p_to_grid,
         "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT,
     }
     # Attribute dependencies
@@ -153,8 +154,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     # 4. Home Consumption Daily
     sensor_data = {
-        "name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Daily)", "entity": "lux_home_consumption", "bank": 0, 
-        "attribute": LXPPacket.e_to_user_day, "attribute1": LXPPacket.e_to_user_day, "attribute2": LXPPacket.e_rec_day, "attribute3": LXPPacket.e_inv_day, "attribute4": LXPPacket.e_to_grid_day, 
+        "name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Daily)", "entity": "lux_home_consumption", "bank": 0,
+        "attribute": LXPPacket.e_to_user_day, "attribute1": LXPPacket.e_to_user_day, "attribute2": LXPPacket.e_rec_day, "attribute3": LXPPacket.e_inv_day, "attribute4": LXPPacket.e_to_grid_day,
         "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR,
     }
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
@@ -167,7 +168,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
 
 class LuxpowerSensorEntity(SensorEntity):
-    """Representation of a sensor of Type HAVC, Pressure, Power, Volume."""
+    """Representation of a general numeric LUXpower sensor."""
 
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):  # fmt: skip
         """Initialize the sensor."""
@@ -269,10 +270,13 @@ class LuxpowerSensorEntity(SensorEntity):
 
 class LuxPowerFlowSensor(LuxpowerSensorEntity):
     """
+    Representation of a Numeric LUXpower Flow sensor.
+
     Template equation state = -1*attribute1 if attribute1 > 0 else attribute2
     """
 
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
+        """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
         self._device_attribute1 = sensor_data["attribute1"]
         self._device_attribute2 = sensor_data["attribute2"]
@@ -296,10 +300,14 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
 
 
 class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
-    # Used for both live and daily consumption calculation.
-    # Template equation state = attribute1 - attribute2 + attribute3 - attribute4
+    """
+    Used for both live and daily consumption calculation.
+
+    Template equation state = attribute1 - attribute2 + attribute3 - attribute4
+    """
 
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
+        """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
         self._device_attribute1 = sensor_data["attribute1"]  # Power from grid to consumer unit
         self._device_attribute2 = sensor_data["attribute2"]  # Power from consumer unit to inverter
@@ -324,7 +332,10 @@ class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
 
 
 class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
+    """Representation of a Status sensor for a LUXPower Inverter."""
+
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):  # fmt: skip
+        """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
 
     def push_update(self, event):
@@ -377,7 +388,10 @@ class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
 
 
 class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
+    """Representation of an Date & Time updated sensor for a LUXPower Inverter."""
+
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):  # fmt: skip
+        """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, sensor_data, event)
         self.datetime_last_received = None
 
@@ -404,7 +418,7 @@ class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
 
 
 class LuxStateSensorEntity(Entity):
-    """Representation of a sensor of Type HAVC, Pressure, Power, Volume."""
+    """Representation of an overall sensor for a LUXPower Inverter."""
 
     def __init__(self, hass, host, port, dongle, serial, name, device_class, unit_measure, luxpower_client, event: Event):  # fmt: skip
         """Initialize the sensor."""
