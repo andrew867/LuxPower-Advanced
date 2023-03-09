@@ -1,23 +1,48 @@
-import struct
+"""
+
+This is a docstring placeholder.
+
+This is where we will describe what this module does
+
+"""
+
 import asyncio
-import logging
-import socket
 import datetime
-from .helpers import Event
+import logging
+import struct
 from typing import Optional
+
 from .const import DOMAIN
+from .helpers import Event
 from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class LuxPowerClient(asyncio.Protocol):
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
+    """
+
     def __init__(self, hass, server, port, dongle_serial, serial_number, events: Event):
+        """
+
+        This is a docstring placeholder.
+
+        This is where we will describe what this __init__ does
+
+        """
         self.hass = hass
         self.server = server
         self.port = port
         self.dongle_serial = dongle_serial
         self.serial_number = serial_number
         self.events = events
+        self._warn_registers = False
         self._stop_client = False
         self._transport = None
         self._connected = False
@@ -26,14 +51,19 @@ class LuxPowerClient(asyncio.Protocol):
 
     def factory(self):
         """
-        returns reference to itself for using in protocol_factory with
-        create_server
+        Returns reference to itself for using in protocol_factory.
+
+        With create_server
         """
         return self
 
     def connection_made(self, transport):
-        """ is called as soon as an ISM8 connects to server """
-        _peername = transport.get_extra_info('peername')
+        """
+        Is called as soon as an ISM8 connects to server.
+
+        Description Of Function
+        """
+        _peername = transport.get_extra_info("peername")
         _LOGGER.info("Connected to LUXPower Server: %s", _peername)
         self._transport = transport
         self._connected = True
@@ -43,45 +73,44 @@ class LuxPowerClient(asyncio.Protocol):
         _LOGGER.error("Disconnected from Luxpower server")
 
     def data_received(self, data):
-        _LOGGER.debug('Inverter: %s', self.lxpPacket.serial_number)
+        _LOGGER.debug("Inverter: %s", self.lxpPacket.serial_number)
         _LOGGER.debug(data)
-        packet = data
+        # packet = data
         packet_remains = data
         packet_remains_length = len(packet_remains)
-        _LOGGER.debug('TCP OVERALL Packet Remains Length : %s', packet_remains_length)
+        _LOGGER.debug("TCP OVERALL Packet Remains Length : %s", packet_remains_length)
 
         frame_number = 0
 
         while packet_remains_length > 0:
-
             frame_number = frame_number + 1
             if frame_number > 1:
-                _LOGGER.debug('*** Multi-Frame *** : %s', frame_number)
+                _LOGGER.debug("*** Multi-Frame *** : %s", frame_number)
 
             prefix = packet_remains[0:2]
             if prefix != self.lxpPacket.prefix:
-                _LOGGER.debug('Invalid Start Of Packet Prefix %s', prefix)
+                _LOGGER.debug("Invalid Start Of Packet Prefix %s", prefix)
                 return
 
-            protocol_number = struct.unpack('H', packet_remains[2:4])[0]
-            frame_length_remaining = struct.unpack('H', packet_remains[4:6])[0]
+            # protocol_number = struct.unpack("H", packet_remains[2:4])[0]
+            frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
             frame_length_calced = frame_length_remaining + 6
-            _LOGGER.debug('CALCULATED Frame Length : %s', frame_length_calced)
+            _LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
 
             this_frame = packet_remains[0:frame_length_calced]
 
-            _LOGGER.debug('THIS Packet Remains Length : %s', packet_remains_length)
+            _LOGGER.debug("THIS Packet Remains Length : %s", packet_remains_length)
             packet_remains = packet_remains[frame_length_calced:packet_remains_length]
             packet_remains_length = len(packet_remains)
-            _LOGGER.debug('NEXT Packet Remains Length : %s', packet_remains_length)
+            _LOGGER.debug("NEXT Packet Remains Length : %s", packet_remains_length)
 
-            _LOGGER.debug('Received: %s', this_frame)
+            _LOGGER.debug("Received: %s", this_frame)
             result = self.lxpPacket.parse_packet(this_frame)
             if not self.lxpPacket.packet_error:
                 _LOGGER.debug(result)
                 if self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
-                    total_data = {"data": result.get('data', {})}
-                    event_data = {"data": result.get('thesedata', {})}
+                    total_data = {"data": result.get("data", {})}
+                    event_data = {"data": result.get("thesedata", {})}
                     _LOGGER.debug("EVENT DATA: %s ", event_data)
                     if 0 <= self.lxpPacket.register <= 39:
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
@@ -89,14 +118,18 @@ class LuxPowerClient(asyncio.Protocol):
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
                     elif 80 <= self.lxpPacket.register <= 119:
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
- 
-                    #self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
-                elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:
-                    total_data = {"registers": result.get('registers', {})}
-                    event_data = {"registers": result.get('thesereg', {})}
+
+                    # self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
+                elif (
+                    self.lxpPacket.device_function == self.lxpPacket.READ_HOLD
+                    or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE
+                ):
+                    total_data = {"registers": result.get("registers", {})}
+                    event_data = {"registers": result.get("thesereg", {})}
                     _LOGGER.debug("EVENT REGISTER: %s ", event_data)
-                    if self.lxpPacket.register == 160:
+                    if self.lxpPacket.register == 160 and self._warn_registers:
                         _LOGGER.warning("REGISTERS: %s ", total_data)
+                        self._warn_registers = False
                     if 0 <= self.lxpPacket.register <= 39:
                         self.hass.bus.fire(self.events.EVENT_REGISTER_BANK0_RECEIVED, event_data)
                         self.hass.bus.fire(self.events.EVENT_REGISTER_21_RECEIVED, event_data)
@@ -111,9 +144,9 @@ class LuxPowerClient(asyncio.Protocol):
                     elif 160 <= self.lxpPacket.register <= 199:
                         self.hass.bus.fire(self.events.EVENT_REGISTER_BANK4_RECEIVED, event_data)
 
-                    #self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
+                    # self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
 
-    async def start_luxpower_client_daemon(self, ):
+    async def start_luxpower_client_daemon(self):
         while not self._stop_client:
             if not self._connected:
                 try:
@@ -140,9 +173,13 @@ class LuxPowerClient(asyncio.Protocol):
             number_of_registers = 40
         try:
             _LOGGER.debug(f"get_holding_data for {serial} address_bank: {address_bank} , {number_of_registers}")
-            packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, number_of_registers, type=LXPPacket.READ_HOLD)
+            packet = self.lxpPacket.prepare_packet_for_read(
+                address_bank * 40, number_of_registers, type=LXPPacket.READ_HOLD
+            )
             self._transport.write(packet)
-            _LOGGER.debug(f"Packet Written for getting {serial} HOLDING address_bank {address_bank} , {number_of_registers}")
+            _LOGGER.debug(
+                f"Packet Written for getting {serial} HOLDING address_bank {address_bank} , {number_of_registers}"
+            )
         except Exception as e:
             _LOGGER.error("Exception get_holding_data %s", e)
 
@@ -166,7 +203,6 @@ class LuxPowerClient(asyncio.Protocol):
         self._connected = False
         _LOGGER.info("reconnect client finished")
 
-
     async def synctime(self):
         _LOGGER.info("Syncing Time to Luxpower Inverter")
 
@@ -176,45 +212,45 @@ class LuxPowerClient(asyncio.Protocol):
         read_value = lxpPacket.register_io_with_retry(self.server, self.port, 12, value=1, iotype=lxpPacket.READ_HOLD)
 
         if read_value is not None:
-            #Read has been succesful - use read value
+            # Read has been successful - use read value
             _LOGGER.info(f"READ Register OK - Using INVERTER Register: 12 Value: {read_value}")
             old12 = read_value
-            oldmonth = int(old12/256)
-            oldyear = int((old12-(oldmonth*256))+2000)
-            _LOGGER.info("Old12: %s, Oldmonth: %s, Oldyear: %s",old12,oldmonth,oldyear)
+            oldmonth = int(old12 / 256)
+            oldyear = int((old12 - (oldmonth * 256)) + 2000)
+            _LOGGER.info("Old12: %s, Oldmonth: %s, Oldyear: %s", old12, oldmonth, oldyear)
         else:
-            #Read has been UNsuccesful
-            _LOGGER.warning(f"Cannot READ Register: 12 - Aborting")
+            # Read has been UNsuccessful
+            _LOGGER.warning("Cannot READ Register: 12 - Aborting")
             return
 
         _LOGGER.info("Register to be read 13")
         read_value = lxpPacket.register_io_with_retry(self.server, self.port, 13, value=1, iotype=lxpPacket.READ_HOLD)
 
         if read_value is not None:
-            #Read has been succesful - use read value
+            # Read has been successful - use read value
             _LOGGER.info(f"READ Register OK - Using INVERTER Register: 13 Value: {read_value}")
             old13 = read_value
-            oldhour = int(old13/256)
-            oldday = int(old13-(oldhour*256))
-            _LOGGER.info("Old13: %s, Oldhour: %s, Oldday: %s",old13,oldhour,oldday)
+            oldhour = int(old13 / 256)
+            oldday = int(old13 - (oldhour * 256))
+            _LOGGER.info("Old13: %s, Oldhour: %s, Oldday: %s", old13, oldhour, oldday)
         else:
-            #Read has been UNsuccesful
-            _LOGGER.warning(f"Cannot READ Register: 13 - Aborting")
+            # Read has been UNsuccessful
+            _LOGGER.warning("Cannot READ Register: 13 - Aborting")
             return
 
         _LOGGER.info("Register to be read 14")
         read_value = lxpPacket.register_io_with_retry(self.server, self.port, 14, value=1, iotype=lxpPacket.READ_HOLD)
 
         if read_value is not None:
-            #Read has been succesful - use read value
+            # Read has been successful - use read value
             _LOGGER.info(f"READ Register OK - Using INVERTER Register: 14 Value: {read_value}")
             old14 = read_value
-            oldsecond = int(old14/256)
-            oldminute = int(old14-(oldsecond*256))
-            _LOGGER.info("Old14: %s, Oldsecond: %s, Oldminute: %s",old14,oldsecond,oldminute)
+            oldsecond = int(old14 / 256)
+            oldminute = int(old14 - (oldsecond * 256))
+            _LOGGER.info("Old14: %s, Oldsecond: %s, Oldminute: %s", old14, oldsecond, oldminute)
         else:
-            #Read has been UNsuccesful
-            _LOGGER.warning(f"Cannot READ Register: 14 - Aborting")
+            # Read has been UNsuccessful
+            _LOGGER.warning("Cannot READ Register: 14 - Aborting")
             return
 
         was = datetime.datetime(int(oldyear), int(oldmonth), int(oldday), int(oldhour), int(oldminute), int(oldsecond))
@@ -223,45 +259,53 @@ class LuxPowerClient(asyncio.Protocol):
         now = datetime.datetime.now()
         _LOGGER.info("now: %s %s %s %s %s %s", now.year, now.month, now.day, now.hour, now.minute, now.second)
 
-        _LOGGER.warning("%s Old Time: %s, New Time: %s, Seconds Diff: %s", str(self.serial_number), was, now, abs(now-was))
+        _LOGGER.warning(
+            "%s Old Time: %s, New Time: %s, Seconds Diff: %s", str(self.serial_number), was, now, abs(now - was)
+        )
 
         if 1 == 1:
-            new_value = (now.month*256)+(now.year-2000)
-            
+            new_value = (now.month * 256) + (now.year - 2000)
+
             _LOGGER.info(f"Register to be written 12 with value {new_value}")
-            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 12, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+            read_value = lxpPacket.register_io_with_retry(
+                self.server, self.port, 12, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+            )
 
             if read_value is not None:
-                #Write has been succesful
+                # Write has been successful
                 _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 12 Value: {read_value}")
             else:
-                #Write has been UNsuccesful
+                # Write has been UNsuccessful
                 _LOGGER.warning(f"Cannot WRITE Register: 12 Value: {new_value} - Aborting")
                 return
 
-            new_value = (now.hour*256)+(now.day)
-            
+            new_value = (now.hour * 256) + (now.day)
+
             _LOGGER.info(f"Register to be written 13 with value {new_value}")
-            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 13, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+            read_value = lxpPacket.register_io_with_retry(
+                self.server, self.port, 13, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+            )
 
             if read_value is not None:
-                #Write has been succesful
+                # Write has been successful
                 _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 13 Value: {read_value}")
             else:
-                #Write has been UNsuccesful
+                # Write has been UNsuccessful
                 _LOGGER.warning(f"Cannot WRITE Register: 13 Value: {new_value} - Aborting")
                 return
 
-            new_value = ((now.second+1)*256)+(now.minute)
-            
+            new_value = ((now.second + 1) * 256) + (now.minute)
+
             _LOGGER.info(f"Register to be written 14 with value {new_value}")
-            read_value = lxpPacket.register_io_with_retry(self.server, self.port, 14, value=new_value, iotype=lxpPacket.WRITE_SINGLE)
+            read_value = lxpPacket.register_io_with_retry(
+                self.server, self.port, 14, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+            )
 
             if read_value is not None:
-                #Write has been succesful
+                # Write has been successful
                 _LOGGER.info(f"WRITE Register OK - Setting INVERTER Register: 14 Value: {read_value}")
             else:
-                #Write has been UNsuccesful
+                # Write has been UNsuccessful
                 _LOGGER.warning(f"Cannot WRITE Register: 14 Value: {new_value} - Aborting")
                 return
 
@@ -272,15 +316,30 @@ class LuxPowerClient(asyncio.Protocol):
 
 
 class ServiceHelper:
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
+    """
+
     def __init__(self, hass) -> None:
+        """
+
+        This is a docstring placeholder.
+
+        This is where we will describe what this __init__ does
+
+        """
         self.hass = hass
 
     async def send_reconnect(self, dongle):
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
-            if dongle == entry_data['DONGLE']:
-                luxpower_client = entry_data.get('client')
+            if dongle == entry_data["DONGLE"]:
+                luxpower_client = entry_data.get("client")
                 break
 
         if luxpower_client is not None:
@@ -292,8 +351,8 @@ class ServiceHelper:
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
-            if dongle == entry_data['DONGLE']:
-                luxpower_client = entry_data.get('client')
+            if dongle == entry_data["DONGLE"]:
+                luxpower_client = entry_data.get("client")
                 break
 
         if luxpower_client is not None:
@@ -306,13 +365,13 @@ class ServiceHelper:
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
-            if dongle == entry_data['DONGLE']:
-                luxpower_client = entry_data.get('client')
+            if dongle == entry_data["DONGLE"]:
+                luxpower_client = entry_data.get("client")
                 break
 
         if luxpower_client is not None:
             # This change stops Spamming of Lux Server Database
-            # Really needs seperate function refresh_two_registers
+            # Really needs separate function refresh_two_registers
             # for address_bank in range(0, 3):
             for address_bank in range(0, bank_count):
                 _LOGGER.info("send_refresh_registers for address_bank: %s", address_bank)
@@ -324,11 +383,12 @@ class ServiceHelper:
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
-            if dongle == entry_data['DONGLE']:
-                luxpower_client = entry_data.get('client')
+            if dongle == entry_data["DONGLE"]:
+                luxpower_client = entry_data.get("client")
                 break
 
         if luxpower_client is not None:
+            luxpower_client._warn_registers = True
             for address_bank in range(0, 5):
                 _LOGGER.debug("send_holding_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_holding_data(address_bank)
@@ -339,8 +399,8 @@ class ServiceHelper:
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
-            if dongle == entry_data['DONGLE']:
-                luxpower_client = entry_data.get('client')
+            if dongle == entry_data["DONGLE"]:
+                luxpower_client = entry_data.get("client")
                 break
 
         if luxpower_client is not None:

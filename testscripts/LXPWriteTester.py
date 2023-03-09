@@ -1,7 +1,7 @@
+import asyncio
 import sys
 
 from LXPPacket import LXPPacket
-import asyncio
 
 # SERVER_URL = "172.16.255.120"
 SERVER_URL = "127.0.0.1"
