@@ -116,6 +116,7 @@ class LXPPacket:
 
     MICRO_GRID_ENABLE = 1 << 2
     FAST_ZERO_EXPORT_ENABLE = 1 << 1
+    PV_GRID_OFF_ENABLE = 1 << 0
 
     #
     # Register 110, Most Significant Byte
@@ -128,6 +129,7 @@ class LXPPacket:
     #
 
     CHARGE_LAST = 1 << 4
+    RUN_WITHOUT_GRID = 1 << 1
 
     status = "status"
     v_pv_1 = "v_pv_1"
