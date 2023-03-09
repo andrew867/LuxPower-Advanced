@@ -406,15 +406,13 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
             reg07_val = registers.get(7, None)
             reg08_val = registers.get(8, None)
             reg09_val = registers.get(9, None)
-            # reg10_val = registers.get(10, None)
+            reg10_val = registers.get(10, None)
             if reg07_val is None or reg08_val is None:
                 return
             reg07_str = int(reg07_val).to_bytes(2, "little").decode()
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
             reg09_str = int(reg09_val).to_bytes(2, byteorder="big").hex()[0:2]
-            reg10_str = "XX"
-            # reg09_str = int(reg09_val).to_bytes(2, "little").decode()
-            # reg10_str = int(reg10_val).to_bytes(2, "little").decode()
+            reg10_str = int(reg10_val).to_bytes(2, byteorder="little").hex()[0:2]
 
             oldstate = self._state
             self._state = reg07_str + reg08_str + "-" + reg09_str + reg10_str
