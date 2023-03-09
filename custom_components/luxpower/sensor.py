@@ -162,6 +162,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     }
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
+    # 5. Firmware Version
+    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Firmware Version", "entity": "lux_firmware_version", "bank": 0, "register": 7}
+    stateSensors.append(LuxPowerFirmwareSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+
     # fmt: on
 
     async_add_devices(stateSensors, True)
@@ -188,7 +192,7 @@ class LuxpowerSensorEntity(SensorEntity):
         self._data: Dict[str, str] = {}
         self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, sensor_data["entity"])
         self._bank = sensor_data.get("bank", 0)
-        self._device_attribute = sensor_data["attribute"]
+        self._device_attribute = sensor_data.get("attribute", None)
         self._state_class = sensor_data.get("state_class", None)
         self.decimal_places = sensor_data.get("decimal_places", 1)
         self.lastupdated_time = 0
@@ -330,6 +334,93 @@ class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
         self._state = f"{round(consumption_value, 1)}"
 
         self.schedule_update_ha_state()
+        return self._state
+
+
+class LuxPowerRegisterSensor(LuxpowerSensorEntity):
+    """
+    Used for both live and daily consumption calculation.
+
+    Template equation state = attribute1 - attribute2 + attribute3 - attribute4
+    """
+
+    def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, sensor_data, event)
+        self._register_address = sensor_data["register"]
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        _LOGGER.debug("async_added_to_hasss %s", self._name)
+        self.is_added_to_hass = True
+        if self.hass is not None:
+            if self._register_address == 21:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
+            elif 0 <= self._register_address <= 39:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update)
+            elif 40 <= self._register_address <= 79:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update)
+            elif 80 <= self._register_address <= 119:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update)
+            elif 120 <= self._register_address <= 159:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
+            elif 160 <= self._register_address <= 199:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+
+    def push_update(self, event):
+        _LOGGER.debug(
+            f"Sensor: register event received Bank: {self._bank} Register: {self._register_address} Name: {self._name}"
+        )
+        registers = event.data.get("registers", {})
+        self._data = registers
+
+        if self._register_address in registers.keys():
+            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
+            register_val = registers.get(self._register_address, None)
+            if register_val is None:
+                return
+            oldstate = self._state
+            self._state = float(register_val)
+            if oldstate != self._state:
+                _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._state}")
+                self.schedule_update_ha_state()
+        return self._state
+
+
+class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
+    """
+    Used for both live and daily consumption calculation.
+
+    Template equation state = attribute1 - attribute2 + attribute3 - attribute4
+    """
+
+    def push_update(self, event):
+        _LOGGER.debug(
+            f"Sensor: register event received Bank: {self._bank} Register: {self._register_address} Name: {self._name}"
+        )
+        registers = event.data.get("registers", {})
+        self._data = registers
+
+        if self._register_address in registers.keys():
+            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
+            reg07_val = registers.get(7, None)
+            reg08_val = registers.get(8, None)
+            reg09_val = registers.get(9, None)
+            # reg10_val = registers.get(10, None)
+            if reg07_val is None or reg08_val is None:
+                return
+            reg07_str = int(reg07_val).to_bytes(2, "little").decode()
+            reg08_str = int(reg08_val).to_bytes(2, "little").decode()
+            reg09_str = int(reg09_val).to_bytes(2, byteorder="big").hex()[0:2]
+            reg10_str = "XX"
+            # reg09_str = int(reg09_val).to_bytes(2, "little").decode()
+            # reg10_str = int(reg10_val).to_bytes(2, "little").decode()
+
+            oldstate = self._state
+            self._state = reg07_str + reg08_str + "-" + reg09_str + reg10_str
+            if oldstate != self._state:
+                _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._state}")
+                self.schedule_update_ha_state()
         return self._state
 
 
