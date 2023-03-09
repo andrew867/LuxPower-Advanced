@@ -42,6 +42,7 @@ class LuxPowerClient(asyncio.Protocol):
         self.dongle_serial = dongle_serial
         self.serial_number = serial_number
         self.events = events
+        self._warn_registers = False
         self._stop_client = False
         self._transport = None
         self._connected = False
@@ -126,8 +127,9 @@ class LuxPowerClient(asyncio.Protocol):
                     total_data = {"registers": result.get("registers", {})}
                     event_data = {"registers": result.get("thesereg", {})}
                     _LOGGER.debug("EVENT REGISTER: %s ", event_data)
-                    if self.lxpPacket.register == 160:
+                    if self.lxpPacket.register == 160 and self._warn_registers:
                         _LOGGER.warning("REGISTERS: %s ", total_data)
+                        self._warn_registers = False
                     if 0 <= self.lxpPacket.register <= 39:
                         self.hass.bus.fire(self.events.EVENT_REGISTER_BANK0_RECEIVED, event_data)
                         self.hass.bus.fire(self.events.EVENT_REGISTER_21_RECEIVED, event_data)
@@ -386,6 +388,7 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
+            luxpower_client._warn_registers = True
             for address_bank in range(0, 5):
                 _LOGGER.debug("send_holding_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_holding_data(address_bank)
