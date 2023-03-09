@@ -20,6 +20,7 @@ from .const import (
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
+    VERSION,
 )
 from .helpers import Event
 from .LXPPacket import LXPPacket
@@ -289,7 +290,7 @@ class LuxNormalNumberEntity(NumberEntity):
             manufacturer="LuxPower",
             model="LUXPower Inverter",
             name=self.dongle,
-            sw_version="1.1",
+            sw_version=VERSION,
         )
 
     @property

@@ -6,7 +6,6 @@ This is where we will describe what this module does
 
 """
 import logging
-import socket
 from typing import Any, Dict, Optional
 
 from homeassistant.components.binary_sensor import DEVICE_CLASS_OPENING
@@ -22,6 +21,7 @@ from .const import (
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
+    VERSION,
 )
 from .helpers import Event
 from .LXPPacket import LXPPacket
@@ -167,7 +167,6 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                     self.schedule_update_ha_state()
         return self._state
 
-    # @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         # self._state = self._protocol._dp_values.get(self._dp_id, None)
         _LOGGER.debug(f"{self._register_address} {self._bitmask} updating state to {self._state}")
@@ -217,22 +216,8 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             manufacturer="LuxPower",
             model="LUXPower Inverter",
             name=self.dongle,
-            sw_version="1.1",
+            sw_version=VERSION,
         )
-
-    def ping_register(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            sock.connect((self._host, self._port))
-            _LOGGER.debug("Connected to server")
-            lxpPacket = LXPPacket(
-                dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
-            )
-            packet = lxpPacket.prepare_packet_for_read(self._register_address, 1, type=LXPPacket.READ_HOLD)
-            sock.send(packet)
-            sock.close()
-        except Exception as e:
-            _LOGGER.error("Exception ", e)
 
     def set_register_bit(self, bit_polarity=False):
         lxpPacket = LXPPacket(
@@ -285,57 +270,45 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
 
         _LOGGER.debug("set_register_bit done")
 
+    def convert_to_time(self, value: int):
+        # Has To Be Integer Type value Coming In - NOT BYTE ARRAY
+        return value & 0x00FF, (value & 0xFF00) >> 8
+
+    # fmt: off
+
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
         if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
-            lxpPacket = LXPPacket(
-                dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
-            )
+
             _LOGGER.debug("Attrib totalregs: %s", self.totalregs)
             _LOGGER.debug("Attrib registers: %s", self.registers)
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(68, 0))
-            state_attributes["AC_CHARGE_START"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(69, 0))
-            state_attributes["AC_CHARGE_END"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(70, 0))
-            state_attributes["AC_CHARGE_START_1"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(71, 0))
-            state_attributes["AC_CHARGE_END_1"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(72, 0))
-            state_attributes["AC_CHARGE_START_2"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(73, 0))
-            state_attributes["AC_CHARGE_END_2"] = f"{hour}:{min}"
+
+            state_attributes["AC_CHARGE_START_1"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(68, 0)))
+            state_attributes["AC_CHARGE_END_1"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(69, 0)))
+            state_attributes["AC_CHARGE_START_2"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(70, 0)))
+            state_attributes["AC_CHARGE_END_2"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(71, 0)))
+            state_attributes["AC_CHARGE_START_3"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(72, 0)))
+            state_attributes["AC_CHARGE_END_3"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(73, 0)))
+
         if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
-            lxpPacket = LXPPacket(
-                dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
-            )
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(76, 0))
-            state_attributes["PRIORITY_CHARGE_START"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(77, 0))
-            state_attributes["PRIORITY_CHARGE_END"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(78, 0))
-            state_attributes["PRIORITY_CHARGE_START_1"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(79, 0))
-            state_attributes["PRIORITY_CHARGE_END_1"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(80, 0))
-            state_attributes["PRIORITY_CHARGE_START_2"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(81, 0))
-            state_attributes["PRIORITY_CHARGE_END_2"] = f"{hour}:{min}"
+
+            state_attributes["PRIORITY_CHARGE_START_1"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(76, 0)))
+            state_attributes["PRIORITY_CHARGE_END_1"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(77, 0)))
+            state_attributes["PRIORITY_CHARGE_START_2"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(78, 0)))
+            state_attributes["PRIORITY_CHARGE_END_2"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(79, 0)))
+            state_attributes["PRIORITY_CHARGE_START_3"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(80, 0)))
+            state_attributes["PRIORITY_CHARGE_END_3"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(81, 0)))
+
         if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
-            lxpPacket = LXPPacket(
-                dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
-            )
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(84, 0))
-            state_attributes["FORCED_DISCHARGE_START"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(85, 0))
-            state_attributes["FORCED_DISCHARGE_END"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(86, 0))
-            state_attributes["FORCED_DISCHARGE_START_1"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(87, 0))
-            state_attributes["FORCED_DISCHARGE_END_1"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(88, 0))
-            state_attributes["FORCED_DISCHARGE_START_2"] = f"{hour}:{min}"
-            hour, min = lxpPacket.convert_to_time(self.totalregs.get(89, 0))
-            state_attributes["FORCED_DISCHARGE_END_2"] = f"{hour}:{min}"
+
+            state_attributes["FORCED_DISCHARGE_START_1"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(84, 0)))
+            state_attributes["FORCED_DISCHARGE_END_1"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(85, 0)))
+            state_attributes["FORCED_DISCHARGE_START_2"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(86, 0)))
+            state_attributes["FORCED_DISCHARGE_END_2"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(87, 0)))
+            state_attributes["FORCED_DISCHARGE_START_3"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(88, 0)))
+            state_attributes["FORCED_DISCHARGE_END_3"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(89, 0)))
+
         return state_attributes
+
+    # fmt: on

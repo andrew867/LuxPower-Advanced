@@ -38,6 +38,8 @@ from .const import (
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
+    UA,
+    VERSION,
 )
 from .helpers import Event
 from .LXPPacket import LXPPacket
@@ -212,7 +214,7 @@ class LuxpowerSensorEntity(SensorEntity):
         )
         self._data = event.data.get("data", {})
         value = self._data.get(self._device_attribute)
-        value = round(value, self.decimal_places) if isinstance(value, (int, float)) else "unavailable"
+        value = round(value, self.decimal_places) if isinstance(value, (int, float)) else UA
         self._state = f"{value}"
 
         self.schedule_update_ha_state()
@@ -232,7 +234,7 @@ class LuxpowerSensorEntity(SensorEntity):
             manufacturer="LuxPower",
             model="LUXPower Inverter",
             name=self.dongle,
-            sw_version="1.1",
+            sw_version=VERSION,
         )
 
     @property
@@ -444,72 +446,72 @@ class LuxStateSensorEntity(Entity):
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
-        state_attributes[LXPPacket.status] = "{}".format(self.totaldata.get(LXPPacket.status, "unavailable"))
-        state_attributes[LXPPacket.v_pv_1] = "{}".format(self.totaldata.get(LXPPacket.v_pv_1, "unavailable"))
-        state_attributes[LXPPacket.v_pv_2] = "{}".format(self.totaldata.get(LXPPacket.v_pv_2, "unavailable"))
-        state_attributes[LXPPacket.v_pv_3] = "{}".format(self.totaldata.get(LXPPacket.v_pv_3, "unavailable"))
-        state_attributes[LXPPacket.v_bat] = "{}".format(self.totaldata.get(LXPPacket.v_bat, "unavailable"))
-        state_attributes[LXPPacket.soc] = "{}".format(self.totaldata.get(LXPPacket.soc, "unavailable"))
-        state_attributes[LXPPacket.p_pv_1] = "{}".format(self.totaldata.get(LXPPacket.p_pv_1, "unavailable"))
-        state_attributes[LXPPacket.p_pv_2] = "{}".format(self.totaldata.get(LXPPacket.p_pv_2, "unavailable"))
-        state_attributes[LXPPacket.p_pv_3] = "{}".format(self.totaldata.get(LXPPacket.p_pv_3, "unavailable"))
-        state_attributes[LXPPacket.p_pv_total] = "{}".format(self.totaldata.get(LXPPacket.p_pv_total, "unavailable"))
-        state_attributes[LXPPacket.p_charge] = "{}".format(self.totaldata.get(LXPPacket.p_charge, "unavailable"))
-        state_attributes[LXPPacket.p_discharge] = "{}".format(self.totaldata.get(LXPPacket.p_discharge, "unavailable"))
-        state_attributes[LXPPacket.v_ac_r] = "{}".format(self.totaldata.get(LXPPacket.v_ac_r, "unavailable"))
-        state_attributes[LXPPacket.v_ac_s] = "{}".format(self.totaldata.get(LXPPacket.v_ac_s, "unavailable"))
-        state_attributes[LXPPacket.v_ac_t] = "{}".format(self.totaldata.get(LXPPacket.v_ac_t, "unavailable"))
-        state_attributes[LXPPacket.f_ac] = "{}".format(self.totaldata.get(LXPPacket.f_ac, "unavailable"))
-        state_attributes[LXPPacket.p_inv] = "{}".format(self.totaldata.get(LXPPacket.p_inv, "unavailable"))
-        state_attributes[LXPPacket.p_rec] = "{}".format(self.totaldata.get(LXPPacket.p_rec, "unavailable"))
-        state_attributes[LXPPacket.pf] = "{}".format(self.totaldata.get(LXPPacket.pf, "unavailable"))
-        state_attributes[LXPPacket.v_eps_r] = "{}".format(self.totaldata.get(LXPPacket.v_eps_r, "unavailable"))
-        state_attributes[LXPPacket.v_eps_s] = "{}".format(self.totaldata.get(LXPPacket.v_eps_s, "unavailable"))
-        state_attributes[LXPPacket.v_eps_t] = "{}".format(self.totaldata.get(LXPPacket.v_eps_t, "unavailable"))
-        state_attributes[LXPPacket.f_eps] = "{}".format(self.totaldata.get(LXPPacket.f_eps, "unavailable"))
-        state_attributes[LXPPacket.p_to_eps] = "{}".format(self.totaldata.get(LXPPacket.p_to_eps, "unavailable"))
-        state_attributes[LXPPacket.p_to_grid] = "{}".format(self.totaldata.get(LXPPacket.p_to_grid, "unavailable"))
-        state_attributes[LXPPacket.p_to_user] = "{}".format(self.totaldata.get(LXPPacket.p_to_user, "unavailable"))
-        state_attributes[LXPPacket.p_load] = "{}".format(self.totaldata.get(LXPPacket.p_load, "unavailable"))
-        state_attributes[LXPPacket.e_pv_1_day] = "{}".format(self.totaldata.get(LXPPacket.e_pv_1_day, "unavailable"))
-        state_attributes[LXPPacket.e_pv_2_day] = "{}".format(self.totaldata.get(LXPPacket.e_pv_2_day, "unavailable"))
-        state_attributes[LXPPacket.e_pv_3_day] = "{}".format(self.totaldata.get(LXPPacket.e_pv_3_day, "unavailable"))
-        state_attributes[LXPPacket.e_pv_total] = "{}".format(self.totaldata.get(LXPPacket.e_pv_total, "unavailable"))
-        state_attributes[LXPPacket.e_inv_day] = "{}".format(self.totaldata.get(LXPPacket.e_inv_day, "unavailable"))
-        state_attributes[LXPPacket.e_rec_day] = "{}".format(self.totaldata.get(LXPPacket.e_rec_day, "unavailable"))
-        state_attributes[LXPPacket.e_chg_day] = "{}".format(self.totaldata.get(LXPPacket.e_chg_day, "unavailable"))
-        state_attributes[LXPPacket.e_dischg_day] = "{}".format(self.totaldata.get(LXPPacket.e_dischg_day, "unavailable"))
-        state_attributes[LXPPacket.e_eps_day] = "{}".format(self.totaldata.get(LXPPacket.e_eps_day, "unavailable"))
-        state_attributes[LXPPacket.e_to_grid_day] = "{}".format(self.totaldata.get(LXPPacket.e_to_grid_day, "unavailable"))
-        state_attributes[LXPPacket.e_to_user_day] = "{}".format(self.totaldata.get(LXPPacket.e_to_user_day, "unavailable"))
-        state_attributes[LXPPacket.v_bus_1] = "{}".format(self.totaldata.get(LXPPacket.v_bus_1, "unavailable"))
-        state_attributes[LXPPacket.v_bus_2] = "{}".format(self.totaldata.get(LXPPacket.v_bus_2, "unavailable"))
-        state_attributes[LXPPacket.e_pv_1_all] = "{}".format(self.totaldata.get(LXPPacket.e_pv_1_all, "unavailable"))
-        state_attributes[LXPPacket.e_pv_2_all] = "{}".format(self.totaldata.get(LXPPacket.e_pv_2_all, "unavailable"))
-        state_attributes[LXPPacket.e_pv_3_all] = "{}".format(self.totaldata.get(LXPPacket.e_pv_3_all, "unavailable"))
-        state_attributes[LXPPacket.e_pv_all] = "{}".format(self.totaldata.get(LXPPacket.e_pv_all, "unavailable"))
-        state_attributes[LXPPacket.e_inv_all] = "{}".format(self.totaldata.get(LXPPacket.e_inv_all, "unavailable"))
-        state_attributes[LXPPacket.e_rec_all] = "{}".format(self.totaldata.get(LXPPacket.e_rec_all, "unavailable"))
-        state_attributes[LXPPacket.e_chg_all] = "{}".format(self.totaldata.get(LXPPacket.e_chg_all, "unavailable"))
-        state_attributes[LXPPacket.e_dischg_all] = "{}".format(self.totaldata.get(LXPPacket.e_dischg_all, "unavailable"))
-        state_attributes[LXPPacket.e_eps_all] = "{}".format(self.totaldata.get(LXPPacket.e_eps_all, "unavailable"))
-        state_attributes[LXPPacket.e_to_grid_all] = "{}".format(self.totaldata.get(LXPPacket.e_to_grid_all, "unavailable"))
-        state_attributes[LXPPacket.e_to_user_all] = "{}".format(self.totaldata.get(LXPPacket.e_to_user_all, "unavailable"))
-        state_attributes[LXPPacket.t_inner] = "{}".format(self.totaldata.get(LXPPacket.t_inner, "unavailable"))
-        state_attributes[LXPPacket.t_rad_1] = "{}".format(self.totaldata.get(LXPPacket.t_rad_1, "unavailable"))
-        state_attributes[LXPPacket.t_rad_2] = "{}".format(self.totaldata.get(LXPPacket.t_rad_2, "unavailable"))
-        state_attributes[LXPPacket.t_bat] = "{}".format(self.totaldata.get(LXPPacket.t_bat, "unavailable"))
-        state_attributes[LXPPacket.uptime] = "{}".format(self.totaldata.get(LXPPacket.uptime, "unavailable"))
-        state_attributes[LXPPacket.max_chg_curr] = "{}".format(self.totaldata.get(LXPPacket.max_chg_curr, "unavailable"))
-        state_attributes[LXPPacket.max_dischg_curr] = "{}".format(self.totaldata.get(LXPPacket.max_dischg_curr, "unavailable"))
-        state_attributes[LXPPacket.charge_volt_ref] = "{}".format(self.totaldata.get(LXPPacket.charge_volt_ref, "unavailable"))
-        state_attributes[LXPPacket.dischg_cut_volt] = "{}".format(self.totaldata.get(LXPPacket.dischg_cut_volt, "unavailable"))
-        state_attributes[LXPPacket.bat_count] = "{}".format(self.totaldata.get(LXPPacket.bat_count, "unavailable"))
-        state_attributes[LXPPacket.bat_capacity] = "{}".format(self.totaldata.get(LXPPacket.bat_capacity, "unavailable"))
-        state_attributes[LXPPacket.max_cell_volt] = "{}".format(self.totaldata.get(LXPPacket.max_cell_volt, "unavailable"))
-        state_attributes[LXPPacket.min_cell_volt] = "{}".format(self.totaldata.get(LXPPacket.min_cell_volt, "unavailable"))
-        state_attributes[LXPPacket.max_cell_temp] = "{}".format(self.totaldata.get(LXPPacket.max_cell_temp, "unavailable"))
-        state_attributes[LXPPacket.min_cell_temp] = "{}".format(self.totaldata.get(LXPPacket.min_cell_temp, "unavailable"))
+        state_attributes[LXPPacket.status] = f"{self.totaldata.get(LXPPacket.status, UA)}"
+        state_attributes[LXPPacket.v_pv_1] = f"{self.totaldata.get(LXPPacket.v_pv_1, UA)}"
+        state_attributes[LXPPacket.v_pv_2] = f"{self.totaldata.get(LXPPacket.v_pv_2, UA)}"
+        state_attributes[LXPPacket.v_pv_3] = f"{self.totaldata.get(LXPPacket.v_pv_3, UA)}"
+        state_attributes[LXPPacket.v_bat] = f"{self.totaldata.get(LXPPacket.v_bat, UA)}"
+        state_attributes[LXPPacket.soc] = f"{self.totaldata.get(LXPPacket.soc, UA)}"
+        state_attributes[LXPPacket.p_pv_1] = f"{self.totaldata.get(LXPPacket.p_pv_1, UA)}"
+        state_attributes[LXPPacket.p_pv_2] = f"{self.totaldata.get(LXPPacket.p_pv_2, UA)}"
+        state_attributes[LXPPacket.p_pv_3] = f"{self.totaldata.get(LXPPacket.p_pv_3, UA)}"
+        state_attributes[LXPPacket.p_pv_total] = f"{self.totaldata.get(LXPPacket.p_pv_total, UA)}"
+        state_attributes[LXPPacket.p_charge] = f"{self.totaldata.get(LXPPacket.p_charge, UA)}"
+        state_attributes[LXPPacket.p_discharge] = f"{self.totaldata.get(LXPPacket.p_discharge, UA)}"
+        state_attributes[LXPPacket.v_ac_r] = f"{self.totaldata.get(LXPPacket.v_ac_r, UA)}"
+        state_attributes[LXPPacket.v_ac_s] = f"{self.totaldata.get(LXPPacket.v_ac_s, UA)}"
+        state_attributes[LXPPacket.v_ac_t] = f"{self.totaldata.get(LXPPacket.v_ac_t, UA)}"
+        state_attributes[LXPPacket.f_ac] = f"{self.totaldata.get(LXPPacket.f_ac, UA)}"
+        state_attributes[LXPPacket.p_inv] = f"{self.totaldata.get(LXPPacket.p_inv, UA)}"
+        state_attributes[LXPPacket.p_rec] = f"{self.totaldata.get(LXPPacket.p_rec, UA)}"
+        state_attributes[LXPPacket.pf] = f"{self.totaldata.get(LXPPacket.pf, UA)}"
+        state_attributes[LXPPacket.v_eps_r] = f"{self.totaldata.get(LXPPacket.v_eps_r, UA)}"
+        state_attributes[LXPPacket.v_eps_s] = f"{self.totaldata.get(LXPPacket.v_eps_s, UA)}"
+        state_attributes[LXPPacket.v_eps_t] = f"{self.totaldata.get(LXPPacket.v_eps_t, UA)}"
+        state_attributes[LXPPacket.f_eps] = f"{self.totaldata.get(LXPPacket.f_eps, UA)}"
+        state_attributes[LXPPacket.p_to_eps] = f"{self.totaldata.get(LXPPacket.p_to_eps, UA)}"
+        state_attributes[LXPPacket.p_to_grid] = f"{self.totaldata.get(LXPPacket.p_to_grid, UA)}"
+        state_attributes[LXPPacket.p_to_user] = f"{self.totaldata.get(LXPPacket.p_to_user, UA)}"
+        state_attributes[LXPPacket.p_load] = f"{self.totaldata.get(LXPPacket.p_load, UA)}"
+        state_attributes[LXPPacket.e_pv_1_day] = f"{self.totaldata.get(LXPPacket.e_pv_1_day, UA)}"
+        state_attributes[LXPPacket.e_pv_2_day] = f"{self.totaldata.get(LXPPacket.e_pv_2_day, UA)}"
+        state_attributes[LXPPacket.e_pv_3_day] = f"{self.totaldata.get(LXPPacket.e_pv_3_day, UA)}"
+        state_attributes[LXPPacket.e_pv_total] = f"{self.totaldata.get(LXPPacket.e_pv_total, UA)}"
+        state_attributes[LXPPacket.e_inv_day] = f"{self.totaldata.get(LXPPacket.e_inv_day, UA)}"
+        state_attributes[LXPPacket.e_rec_day] = f"{self.totaldata.get(LXPPacket.e_rec_day, UA)}"
+        state_attributes[LXPPacket.e_chg_day] = f"{self.totaldata.get(LXPPacket.e_chg_day, UA)}"
+        state_attributes[LXPPacket.e_dischg_day] = f"{self.totaldata.get(LXPPacket.e_dischg_day, UA)}"
+        state_attributes[LXPPacket.e_eps_day] = f"{self.totaldata.get(LXPPacket.e_eps_day, UA)}"
+        state_attributes[LXPPacket.e_to_grid_day] = f"{self.totaldata.get(LXPPacket.e_to_grid_day, UA)}"
+        state_attributes[LXPPacket.e_to_user_day] = f"{self.totaldata.get(LXPPacket.e_to_user_day, UA)}"
+        state_attributes[LXPPacket.v_bus_1] = f"{self.totaldata.get(LXPPacket.v_bus_1, UA)}"
+        state_attributes[LXPPacket.v_bus_2] = f"{self.totaldata.get(LXPPacket.v_bus_2, UA)}"
+        state_attributes[LXPPacket.e_pv_1_all] = f"{self.totaldata.get(LXPPacket.e_pv_1_all, UA)}"
+        state_attributes[LXPPacket.e_pv_2_all] = f"{self.totaldata.get(LXPPacket.e_pv_2_all, UA)}"
+        state_attributes[LXPPacket.e_pv_3_all] = f"{self.totaldata.get(LXPPacket.e_pv_3_all, UA)}"
+        state_attributes[LXPPacket.e_pv_all] = f"{self.totaldata.get(LXPPacket.e_pv_all, UA)}"
+        state_attributes[LXPPacket.e_inv_all] = f"{self.totaldata.get(LXPPacket.e_inv_all, UA)}"
+        state_attributes[LXPPacket.e_rec_all] = f"{self.totaldata.get(LXPPacket.e_rec_all, UA)}"
+        state_attributes[LXPPacket.e_chg_all] = f"{self.totaldata.get(LXPPacket.e_chg_all, UA)}"
+        state_attributes[LXPPacket.e_dischg_all] = f"{self.totaldata.get(LXPPacket.e_dischg_all, UA)}"
+        state_attributes[LXPPacket.e_eps_all] = f"{self.totaldata.get(LXPPacket.e_eps_all, UA)}"
+        state_attributes[LXPPacket.e_to_grid_all] = f"{self.totaldata.get(LXPPacket.e_to_grid_all, UA)}"
+        state_attributes[LXPPacket.e_to_user_all] = f"{self.totaldata.get(LXPPacket.e_to_user_all, UA)}"
+        state_attributes[LXPPacket.t_inner] = f"{self.totaldata.get(LXPPacket.t_inner, UA)}"
+        state_attributes[LXPPacket.t_rad_1] = f"{self.totaldata.get(LXPPacket.t_rad_1, UA)}"
+        state_attributes[LXPPacket.t_rad_2] = f"{self.totaldata.get(LXPPacket.t_rad_2, UA)}"
+        state_attributes[LXPPacket.t_bat] = f"{self.totaldata.get(LXPPacket.t_bat, UA)}"
+        state_attributes[LXPPacket.uptime] = f"{self.totaldata.get(LXPPacket.uptime, UA)}"
+        state_attributes[LXPPacket.max_chg_curr] = f"{self.totaldata.get(LXPPacket.max_chg_curr, UA)}"
+        state_attributes[LXPPacket.max_dischg_curr] = f"{self.totaldata.get(LXPPacket.max_dischg_curr, UA)}"
+        state_attributes[LXPPacket.charge_volt_ref] = f"{self.totaldata.get(LXPPacket.charge_volt_ref, UA)}"
+        state_attributes[LXPPacket.dischg_cut_volt] = f"{self.totaldata.get(LXPPacket.dischg_cut_volt, UA)}"
+        state_attributes[LXPPacket.bat_count] = f"{self.totaldata.get(LXPPacket.bat_count, UA)}"
+        state_attributes[LXPPacket.bat_capacity] = f"{self.totaldata.get(LXPPacket.bat_capacity, UA)}"
+        state_attributes[LXPPacket.max_cell_volt] = f"{self.totaldata.get(LXPPacket.max_cell_volt, UA)}"
+        state_attributes[LXPPacket.min_cell_volt] = f"{self.totaldata.get(LXPPacket.min_cell_volt, UA)}"
+        state_attributes[LXPPacket.max_cell_temp] = f"{self.totaldata.get(LXPPacket.max_cell_temp, UA)}"
+        state_attributes[LXPPacket.min_cell_temp] = f"{self.totaldata.get(LXPPacket.min_cell_temp, UA)}"
         return state_attributes
 
     # fmt: on
