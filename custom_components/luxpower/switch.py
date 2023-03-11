@@ -97,11 +97,20 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     def __init__(self, hass, host, port, dongle, serial, register_address, bitmask, object_id, create_enabled, device_class, luxpower_client, event: Event) -> None:  # fmt: skip
         """Initialize the Lux****Switch entity."""
         super().__init__()
+
+        # Visible Instance Attributes Outside Class
         self.hass = hass
-        self._host = host
-        self._port = port
+        self.luxpower_client = luxpower_client
         self.dongle = dongle
         self.serial = serial
+        self.event = event
+
+        # Hidden Inherited Instance Attributes
+        self._attr_entity_registry_enabled_default = create_enabled
+
+        # Hidden Extended Instance Attributes
+        self._host = host
+        self._port = port
         self._register_address = register_address
         self._register_value = None
         self._bitmask = bitmask
@@ -110,12 +119,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self._device_class = device_class
         self._state = False
         self._read_value = 0
-        self._attr_entity_registry_enabled_default = create_enabled
-        self.luxpower_client = luxpower_client
         # self.lxppacket = luxpower_client.lxpPacket
         self.registers: Dict[int, int] = {}
         self.totalregs: Dict[int, int] = {}
-        self.event = event
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
