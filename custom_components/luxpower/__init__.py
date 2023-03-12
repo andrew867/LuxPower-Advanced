@@ -78,7 +78,7 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     This is where we will describe what this function does
 
     """
-    await asyncio.sleep(10)
+    await asyncio.sleep(20)
     await hass.services.async_call(
         DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True
     )

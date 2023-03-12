@@ -30,6 +30,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.typing import StateType
+from homeassistant.util import slugify
 
 from .const import (
     ATTR_LUX_DONGLE_SERIAL,
@@ -63,7 +64,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
 
-    entityID_prefix = SERIAL if USE_SERIAL else ""
+    nameID_midfix = SERIAL if USE_SERIAL else ""
+    entityID_midfix = SERIAL if USE_SERIAL else ""
     hyphen = " -" if USE_SERIAL else "-"
     # Get Rid Of Hyphen 15/02/2023
     hyphen = ""
@@ -78,81 +80,87 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     # fmt: off
 
+    # 1. Create Overall Master State Sensor
     device_class = CONF_MODE
     unit = ""
-    name = f"LUXPower {entityID_prefix}"
+    name = f"LUXPower {nameID_midfix}"
     stateSensors.append(LuxStateSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, name, device_class, unit, luxpower_client, event))
+
+    # 2. Create HOLDING Register Based Sensors 1st - As they Are Only Populated By Default At Integration Load
+    # Firmware Version
+    sensor_data = {"name": f"Lux {nameID_midfix}{hyphen} Firmware Version", "entity": f"Lux {entityID_midfix}{hyphen} Firmware Version", "unique": "lux_firmware_version", "bank": 0, "register": 7}
+    stateSensors.append(LuxPowerFirmwareSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     sensors = []
 
-    # Attribute sensor
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Live)", "unique": "lux_battery_discharge", "bank": 0, "attribute": LXPPacket.p_discharge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Live)", "unique": "lux_battery_charge", "bank": 0, "attribute": LXPPacket.p_charge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery %", "unique": "lux_battery_percent", "bank": 0, "attribute": LXPPacket.soc, "device_class": DEVICE_CLASS_BATTERY, "unit_measure": PERCENTAGE})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Daily)", "unique": "lux_daily_battery_discharge", "bank": 0, "attribute": LXPPacket.e_dischg_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Discharge (Total)", "unique": "lux_total_battery_discharge", "bank": 1, "attribute": LXPPacket.e_dischg_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Daily)", "unique": "lux_daily_battery_charge", "bank": 0, "attribute": LXPPacket.e_chg_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Charge (Total)", "unique": "lux_total_battery_charge", "bank": 1, "attribute": LXPPacket.e_chg_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Voltage (Live)", "unique": "lux_battery_voltage", "bank": 0, "attribute": LXPPacket.v_bat, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} BMS Limit Charge (Live)", "unique": "lux_bms_limit_charge", "bank": 2, "attribute": LXPPacket.max_chg_curr, "device_class": DEVICE_CLASS_CURRENT, "unit_measure": ELECTRIC_CURRENT_AMPERE})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} BMS Limit Discharge (Live)", "unique": "lux_bms_limit_discharge", "bank": 2, "attribute": LXPPacket.max_dischg_curr, "device_class": DEVICE_CLASS_CURRENT, "unit_measure": ELECTRIC_CURRENT_AMPERE})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Inverter (Live)", "unique": "lux_power_from_inverter_live", "bank": 0, "attribute": LXPPacket.p_inv, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Inverter (Live)", "unique": "lux_power_to_inverter_live", "bank": 0, "attribute": LXPPacket.p_rec, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid to HOUSE (Live)", "unique": "lux_power_to_home", "bank": 0, "attribute": LXPPacket.p_load, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To EPS (Live)", "unique": "lux_power_to_eps", "bank": 0, "attribute": LXPPacket.p_to_eps, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Live)", "unique": "lux_power_from_grid_live", "bank": 0, "attribute": LXPPacket.p_to_user, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Daily)", "unique": "lux_power_from_grid_daily", "bank": 0, "attribute": LXPPacket.e_to_user_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power From Grid (Total)", "unique": "lux_power_from_grid_total", "bank": 1, "attribute": LXPPacket.e_to_user_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Live)", "unique": "lux_power_to_grid_live", "bank": 0, "attribute": LXPPacket.p_to_grid, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Daily)", "unique": "lux_power_to_grid_daily", "bank": 0, "attribute": LXPPacket.e_to_grid_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power To Grid (Total)", "unique": "lux_power_to_grid_total", "bank": 1, "attribute": LXPPacket.e_to_grid_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Grid Voltage (Live) ", "unique": "lux_grid_voltage_live", "bank": 0, "attribute": LXPPacket.v_ac_r, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power from Inverter to Home (Daily)", "unique": "lux_power_from_inverter_daily", "bank": 0, "attribute": LXPPacket.e_inv_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Power to Inverter (Daily)", "unique": "lux_power_to_inverter_daily", "bank": 0, "attribute": LXPPacket.e_rec_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Live)", "unique": "lux_current_solar_output", "bank": 0, "attribute": LXPPacket.p_pv_total, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 1 (Live)", "unique": "lux_current_solar_output_1", "bank": 0, "attribute": LXPPacket.p_pv_1, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 2 (Live)", "unique": "lux_current_solar_output_2", "bank": 0, "attribute": LXPPacket.p_pv_2, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 3 (Live)", "unique": "lux_current_solar_output_3", "bank": 0, "attribute": LXPPacket.p_pv_3, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Daily)", "unique": "lux_daily_solar", "bank": 0, "attribute": LXPPacket.e_pv_total, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 1 (Daily)", "unique": "lux_daily_solar_array_1", "bank": 0, "attribute": LXPPacket.e_pv_1_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 2 (Daily)", "unique": "lux_daily_solar_array_2", "bank": 0, "attribute": LXPPacket.e_pv_2_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 3 (Daily)", "unique": "lux_daily_solar_array_3", "bank": 0, "attribute": LXPPacket.e_pv_3_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output (Total)", "unique": "lux_total_solar", "bank": 1, "attribute": LXPPacket.e_pv_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 1 (Total)", "unique": "lux_total_solar_array_1", "bank": 1, "attribute": LXPPacket.e_pv_1_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 2 (Total)", "unique": "lux_total_solar_array_2", "bank": 1, "attribute": LXPPacket.e_pv_2_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Solar Output Array 3 (Total)", "unique": "lux_total_solar_array_3", "bank": 1, "attribute": LXPPacket.e_pv_3_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Internal Temperature (Live)", "unique": "lux_internal_temp", "bank": 1, "attribute": LXPPacket.t_inner, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Radiator 1 Temperature (Live)", "unique": "lux_radiator1_temp", "bank": 1, "attribute": LXPPacket.t_rad_1, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Radiator 2 temperature (Live)", "unique": "lux_radiator2_temp", "bank": 1, "attribute": LXPPacket.t_rad_2, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Max Cell Voltage (Live)", "unique": "max_cell_volt", "bank": 2, "attribute": LXPPacket.max_cell_volt, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT, "decimal_places": 3})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Min Cell Voltage (Live)", "unique": "min_cell_volt", "bank": 2, "attribute": LXPPacket.min_cell_volt, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT, "decimal_places": 3})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Max Cell Temperature (Live)", "unique": "max_cell_temp", "bank": 2, "attribute": LXPPacket.max_cell_temp, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Battery Min Cell Temperature (Live)", "unique": "min_cell_temp", "bank": 2, "attribute": LXPPacket.min_cell_temp, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    # 3. Create Attribute Sensors Based On LuxPowerSensorEntity Class
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Discharge (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Discharge (Live)", "unique": "lux_battery_discharge", "bank": 0, "attribute": LXPPacket.p_discharge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Charge (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Charge (Live)", "unique": "lux_battery_charge", "bank": 0, "attribute": LXPPacket.p_charge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery %", "entity": f"Lux {entityID_midfix}{hyphen} Battery %", "unique": "lux_battery_percent", "bank": 0, "attribute": LXPPacket.soc, "device_class": DEVICE_CLASS_BATTERY, "unit_measure": PERCENTAGE})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Discharge (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Discharge (Daily)", "unique": "lux_daily_battery_discharge", "bank": 0, "attribute": LXPPacket.e_dischg_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Discharge (Total)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Discharge (Total)", "unique": "lux_total_battery_discharge", "bank": 1, "attribute": LXPPacket.e_dischg_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Charge (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Charge (Daily)", "unique": "lux_daily_battery_charge", "bank": 0, "attribute": LXPPacket.e_chg_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Charge (Total)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Charge (Total)", "unique": "lux_total_battery_charge", "bank": 1, "attribute": LXPPacket.e_chg_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Voltage (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Voltage (Live)", "unique": "lux_battery_voltage", "bank": 0, "attribute": LXPPacket.v_bat, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} BMS Limit Charge (Live)", "entity": f"Lux {entityID_midfix}{hyphen} BMS Limit Charge (Live)", "unique": "lux_bms_limit_charge", "bank": 2, "attribute": LXPPacket.max_chg_curr, "device_class": DEVICE_CLASS_CURRENT, "unit_measure": ELECTRIC_CURRENT_AMPERE})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} BMS Limit Discharge (Live)", "entity": f"Lux {entityID_midfix}{hyphen} BMS Limit Discharge (Live)", "unique": "lux_bms_limit_discharge", "bank": 2, "attribute": LXPPacket.max_dischg_curr, "device_class": DEVICE_CLASS_CURRENT, "unit_measure": ELECTRIC_CURRENT_AMPERE})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power From Inverter (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Power From Inverter (Live)", "unique": "lux_power_from_inverter_live", "bank": 0, "attribute": LXPPacket.p_inv, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power To Inverter (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Power To Inverter (Live)", "unique": "lux_power_to_inverter_live", "bank": 0, "attribute": LXPPacket.p_rec, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power From Grid to HOUSE (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Power From Grid to HOUSE (Live)", "unique": "lux_power_to_home", "bank": 0, "attribute": LXPPacket.p_load, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power To EPS (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Power To EPS (Live)", "unique": "lux_power_to_eps", "bank": 0, "attribute": LXPPacket.p_to_eps, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power From Grid (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Power From Grid (Live)", "unique": "lux_power_from_grid_live", "bank": 0, "attribute": LXPPacket.p_to_user, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power From Grid (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Power From Grid (Daily)", "unique": "lux_power_from_grid_daily", "bank": 0, "attribute": LXPPacket.e_to_user_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power From Grid (Total)", "entity": f"Lux {entityID_midfix}{hyphen} Power From Grid (Total)", "unique": "lux_power_from_grid_total", "bank": 1, "attribute": LXPPacket.e_to_user_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power To Grid (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Power To Grid (Live)", "unique": "lux_power_to_grid_live", "bank": 0, "attribute": LXPPacket.p_to_grid, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power To Grid (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Power To Grid (Daily)", "unique": "lux_power_to_grid_daily", "bank": 0, "attribute": LXPPacket.e_to_grid_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power To Grid (Total)", "entity": f"Lux {entityID_midfix}{hyphen} Power To Grid (Total)", "unique": "lux_power_to_grid_total", "bank": 1, "attribute": LXPPacket.e_to_grid_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Grid Voltage (Live) ", "entity": f"Lux {entityID_midfix}{hyphen} Grid Voltage (Live) ", "unique": "lux_grid_voltage_live", "bank": 0, "attribute": LXPPacket.v_ac_r, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power from Inverter to Home (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Power from Inverter to Home (Daily)", "unique": "lux_power_from_inverter_daily", "bank": 0, "attribute": LXPPacket.e_inv_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Power to Inverter (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Power to Inverter (Daily)", "unique": "lux_power_to_inverter_daily", "bank": 0, "attribute": LXPPacket.e_rec_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output (Live)", "unique": "lux_current_solar_output", "bank": 0, "attribute": LXPPacket.p_pv_total, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 1 (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 1 (Live)", "unique": "lux_current_solar_output_1", "bank": 0, "attribute": LXPPacket.p_pv_1, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 2 (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 2 (Live)", "unique": "lux_current_solar_output_2", "bank": 0, "attribute": LXPPacket.p_pv_2, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 3 (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 3 (Live)", "unique": "lux_current_solar_output_3", "bank": 0, "attribute": LXPPacket.p_pv_3, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output (Daily)", "unique": "lux_daily_solar", "bank": 0, "attribute": LXPPacket.e_pv_total, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 1 (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 1 (Daily)", "unique": "lux_daily_solar_array_1", "bank": 0, "attribute": LXPPacket.e_pv_1_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 2 (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 2 (Daily)", "unique": "lux_daily_solar_array_2", "bank": 0, "attribute": LXPPacket.e_pv_2_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 3 (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 3 (Daily)", "unique": "lux_daily_solar_array_3", "bank": 0, "attribute": LXPPacket.e_pv_3_day, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output (Total)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output (Total)", "unique": "lux_total_solar", "bank": 1, "attribute": LXPPacket.e_pv_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 1 (Total)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 1 (Total)", "unique": "lux_total_solar_array_1", "bank": 1, "attribute": LXPPacket.e_pv_1_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 2 (Total)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 2 (Total)", "unique": "lux_total_solar_array_2", "bank": 1, "attribute": LXPPacket.e_pv_2_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Solar Output Array 3 (Total)", "entity": f"Lux {entityID_midfix}{hyphen} Solar Output Array 3 (Total)", "unique": "lux_total_solar_array_3", "bank": 1, "attribute": LXPPacket.e_pv_3_all, "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Internal Temperature (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Internal Temperature (Live)", "unique": "lux_internal_temp", "bank": 1, "attribute": LXPPacket.t_inner, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Radiator 1 Temperature (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Radiator 1 Temperature (Live)", "unique": "lux_radiator1_temp", "bank": 1, "attribute": LXPPacket.t_rad_1, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Radiator 2 temperature (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Radiator 2 temperature (Live)", "unique": "lux_radiator2_temp", "bank": 1, "attribute": LXPPacket.t_rad_2, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Max Cell Voltage (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Max Cell Voltage (Live)", "unique": "max_cell_volt", "bank": 2, "attribute": LXPPacket.max_cell_volt, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT, "decimal_places": 3})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Min Cell Voltage (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Min Cell Voltage (Live)", "unique": "min_cell_volt", "bank": 2, "attribute": LXPPacket.min_cell_volt, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT, "decimal_places": 3})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Max Cell Temperature (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Max Cell Temperature (Live)", "unique": "max_cell_temp", "bank": 2, "attribute": LXPPacket.max_cell_temp, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Battery Min Cell Temperature (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Min Cell Temperature (Live)", "unique": "min_cell_temp", "bank": 2, "attribute": LXPPacket.min_cell_temp, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS})
 
-    sensors.append({"name": f"Lux {entityID_prefix}{hyphen} Status", "unique": "lux_status", "bank": 0, "attribute": LXPPacket.status})
+    sensors.append({"name": f"Lux {nameID_midfix}{hyphen} Status", "entity": f"Lux {entityID_midfix}{hyphen} Status", "unique": "lux_status", "bank": 0, "attribute": LXPPacket.status})
     for sensor_data in sensors:
-        stateSensors.append(LuxpowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
+        stateSensors.append(LuxPowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # Setup Data Received Timestamp sensor
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Data Received Time", "unique": "lux_data_last_received_time", "bank": 0, "attribute": LXPPacket.status}
+    # 4. Setup Data Received Timestamp sensor
+    sensor_data = {"name": f"Lux {nameID_midfix}{hyphen} Data Received Time", "entity": f"Lux {entityID_midfix}{hyphen} Data Received Time", "unique": "lux_data_last_received_time", "bank": 0, "attribute": LXPPacket.status}
     stateSensors.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # Setup State Text sensor
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Status (Text)", "unique": "lux_status_text", "bank": 0, "attribute": LXPPacket.status}
+    # 5. Setup State Text sensor
+    sensor_data = {"name": f"Lux {nameID_midfix}{hyphen} Status (Text)", "entity": f"Lux {entityID_midfix}{hyphen} Status (Text)", "unique": "lux_status_text", "bank": 0, "attribute": LXPPacket.status}
     stateSensors.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # Multiple attribute calculated sensors
-    # 1. Battery Flow Live
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Battery Flow (Live)", "unique": "lux_battery_flow", "bank": 0, "attribute": LXPPacket.p_discharge, "attribute1": LXPPacket.p_discharge, "attribute2": LXPPacket.p_charge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT}  # Attribute dependencies
+    # 6. Battery Flow Live
+    sensor_data = {"name": f"Lux {nameID_midfix}{hyphen} Battery Flow (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Battery Flow (Live)", "unique": "lux_battery_flow", "bank": 0, "attribute": LXPPacket.p_discharge, "attribute1": LXPPacket.p_discharge, "attribute2": LXPPacket.p_charge, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT}  # Attribute dependencies
     stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # 2. Grid Flow Live
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Grid Flow (Live)", "unique": "lux_grid_flow", "bank": 0, "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_to_grid, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT}  # Attribute dependencies
+    # 7. Grid Flow Live
+    sensor_data = {"name": f"Lux {nameID_midfix}{hyphen} Grid Flow (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Grid Flow (Live)", "unique": "lux_grid_flow", "bank": 0, "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_to_grid, "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT}  # Attribute dependencies
     stateSensors.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # 3. Home Consumption Live
+    # 8. Home Consumption Live
     sensor_data = {
-        "name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Live)", "unique": "lux_home_consumption_live", "bank": 0,
+        "name": f"Lux {nameID_midfix}{hyphen} Home Consumption (Live)", "entity": f"Lux {entityID_midfix}{hyphen} Home Consumption (Live)", "unique": "lux_home_consumption_live", "bank": 0,
         "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_rec, "attribute3": LXPPacket.p_inv, "attribute4": LXPPacket.p_to_grid,
         "device_class": DEVICE_CLASS_POWER, "unit_measure": POWER_WATT,
     }
@@ -160,20 +168,16 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # 4. Home Consumption Daily
+    # 9. Home Consumption Daily
     sensor_data = {
-        "name": f"Lux {entityID_prefix}{hyphen} Home Consumption (Daily)", "unique": "lux_home_consumption", "bank": 0,
+        "name": f"Lux {nameID_midfix}{hyphen} Home Consumption (Daily)", "entity": f"Lux {entityID_midfix}{hyphen} Home Consumption (Daily)", "unique": "lux_home_consumption", "bank": 0,
         "attribute": LXPPacket.e_to_user_day, "attribute1": LXPPacket.e_to_user_day, "attribute2": LXPPacket.e_rec_day, "attribute3": LXPPacket.e_inv_day, "attribute4": LXPPacket.e_to_grid_day,
         "device_class": DEVICE_CLASS_ENERGY, "unit_measure": ENERGY_KILO_WATT_HOUR,
     }
     stateSensors.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
-    # 5. Firmware Version
-    sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Firmware Version", "unique": "lux_firmware_version", "bank": 0, "register": 7}
-    stateSensors.append(LuxPowerFirmwareSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
-
-    # 6. Test Sensor
-    # sensor_data = {"name": f"Lux {entityID_prefix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5}
+    # 10. Test Sensor
+    # sensor_data = {"name": f"Lux {nameID_midfix}{hyphen} Testing", "entity": f"Lux {entityID_midfix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5}
     # stateSensors.append(LuxPowerTestSensor(hass, HOST, PORT, DONGLE, SERIAL, sensor_data, event))
 
     # fmt: on
@@ -183,7 +187,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     _LOGGER.info("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
 
 
-class LuxpowerSensorEntity(SensorEntity):
+class LuxPowerSensorEntity(SensorEntity):
     """Representation of a general numeric LUXpower sensor."""
 
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):  # fmt: skip
@@ -202,6 +206,7 @@ class LuxpowerSensorEntity(SensorEntity):
         self._port = port
         self._name = sensor_data["name"]
         self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, sensor_data["unique"])
+        # _LOGGER.warning("The slugged entity name %s", slugify(sensor_data.get("entity", None)))
         self._state = "Unavailable"
         self._stateval = None
         self._device_class = sensor_data.get("device_class", None)
@@ -288,7 +293,7 @@ class LuxpowerSensorEntity(SensorEntity):
         return self._unit_of_measurement
 
 
-class LuxPowerFlowSensor(LuxpowerSensorEntity):
+class LuxPowerFlowSensor(LuxPowerSensorEntity):
     """
     Representation of a Numeric LUXpower Flow sensor.
 
@@ -319,7 +324,7 @@ class LuxPowerFlowSensor(LuxpowerSensorEntity):
         return self._state
 
 
-class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
+class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
     """
     Used for both live and daily consumption calculation.
 
@@ -351,7 +356,7 @@ class LuxPowerHomeConsumptionSensor(LuxpowerSensorEntity):
         return self._state
 
 
-class LuxPowerRegisterSensor(LuxpowerSensorEntity):
+class LuxPowerRegisterSensor(LuxPowerSensorEntity):
     """
     Used for both live and daily consumption calculation.
 
@@ -450,7 +455,7 @@ class LuxPowerTestSensor(LuxPowerRegisterSensor):
         self.entity_id = "sensor.{}_{}_{}".format("lux", serial, sensor_data["unique"])
 
 
-class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
+class LuxPowerStatusTextSensor(LuxPowerSensorEntity):
     """Representation of a Status sensor for a LUXPower Inverter."""
 
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):  # fmt: skip
@@ -506,7 +511,7 @@ class LuxPowerStatusTextSensor(LuxpowerSensorEntity):
         return self._state
 
 
-class LuxPowerDataReceivedTimestampSensor(LuxpowerSensorEntity):
+class LuxPowerDataReceivedTimestampSensor(LuxPowerSensorEntity):
     """Representation of an Date & Time updated sensor for a LUXPower Inverter."""
 
     def __init__(self, hass, host, port, dongle, serial, sensor_data, event: Event):  # fmt: skip
