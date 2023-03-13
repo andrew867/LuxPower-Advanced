@@ -6,13 +6,14 @@ This is where we will describe what this module does
 
 """
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from homeassistant.components.binary_sensor import DEVICE_CLASS_OPENING
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.util import slugify
 
 from .const import (
     ATTR_LUX_DONGLE_SERIAL,
@@ -28,6 +29,10 @@ from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
 
+hyphen = "test"
+nameID_midfix = "mid"
+entityID_midfix = "mid"
+
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
     """Set up the switch platform."""
@@ -35,58 +40,72 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     _LOGGER.info("Loading the Lux switch platform")
     _LOGGER.info("Set up the switch platform %s", config_entry.data)
     _LOGGER.info("Options %s", len(config_entry.options))
+
+    global hyphen
+    global nameID_midfix
+    global entityID_midfix
+
     platform_config = config_entry.data or {}
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
     HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = platform_config.get(ATTR_LUX_PORT, 8000)
-    DONGLE_SERIAL = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL_NUMBER = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
 
-    entityID_prefix = SERIAL_NUMBER if USE_SERIAL else ""
-    hyphen = " -" if USE_SERIAL else "-"
-    # Get Rid Of Hyphen 15/02/2023
+    # Options For Name Midfix Based Upon Serial Number - Suggest Last Two Digits
+    # nameID_midfix = SERIAL if USE_SERIAL else ""
+    nameID_midfix = SERIAL[-2:] if USE_SERIAL else ""
+
+    # Options For Entity Midfix Based Upon Serial Number - Suggest Full Serial Number
+    entityID_midfix = SERIAL if USE_SERIAL else ""
+
+    # Options For Hyphen Use Before Entity Description - Suggest No Hyphen As Of 15/02/23
+    # hyphen = " -" if USE_SERIAL else "-"
     hyphen = ""
 
-    event = Event(dongle=DONGLE_SERIAL)
-    luxpower_client = hass.data[event.CLIENT_DAEMON]
-    binarySwitchs = []
-    device_class = DEVICE_CLASS_OPENING
+    event = Event(dongle=DONGLE)
+    # luxpower_client = hass.data[event.CLIENT_DAEMON]
+    # device_class = DEVICE_CLASS_OPENING
 
     _LOGGER.info(f"Lux switch platform_config: {platform_config}")
 
     # fmt: off
 
+    switchEntities: List[SwitchEntity] = []
+
     """ Common Switches Displayed In The App/Web """
     switches = [
-        {"name": f"Lux {entityID_prefix}{hyphen} Normal/Standby(ON/OFF)", "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} Power Backup Enable", "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} Feed-In Grid", "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} DCI Enable", "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} GFCI Enable", "register_address": 21, "bitmask": LXPPacket.GFCI_ENABLE, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} Seamless EPS Switching", "register_address": 21, "bitmask": LXPPacket.SEAMLESS_EPS_SWITCHING, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} Grid On Power SS", "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "enabled": False},
-        {"name": f"Lux {entityID_prefix}{hyphen} Neutral Detect Enable", "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "enabled": False},
-        {"name": f"Lux {entityID_prefix}{hyphen} Anti Island Enable", "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "enabled": False},
-        {"name": f"Lux {entityID_prefix}{hyphen} DRMS Enable", "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "enabled": False},
-        {"name": f"Lux {entityID_prefix}{hyphen} OVF Load Derate Enable", "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "enabled": False},
-        {"name": f"Lux {entityID_prefix}{hyphen} R21 Unknown Bit 12", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "enabled": False},
-        {"name": f"Lux {entityID_prefix}{hyphen} R21 Unknown Bit 3", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3, "enabled": False},
-        {"name": f"Lux {entityID_prefix}{hyphen} AC Charge Enable", "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} Charge Priority", "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} Force Discharge Enable", "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": True},
-        {"name": f"Lux {entityID_prefix}{hyphen} Take Load Together", "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
-        {"name": f"Lux {entityID_prefix}{hyphen} Charge Last", "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Normal/Standby(ON/OFF)", "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Power Backup Enable", "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Feed-In Grid", "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DCI Enable", "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} GFCI Enable", "register_address": 21, "bitmask": LXPPacket.GFCI_ENABLE, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Seamless EPS Switching", "register_address": 21, "bitmask": LXPPacket.SEAMLESS_EPS_SWITCHING, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid On Power SS", "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Neutral Detect Enable", "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Anti Island Enable", "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable", "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} OVF Load Derate Enable", "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} R21 Unknown Bit 12", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} R21 Unknown Bit 3", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Enable", "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Priority", "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Enable", "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Take Load Together", "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Last", "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": False},
     ]
 
-    for switch_data in switches:
-        binarySwitchs.append(LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, DONGLE_SERIAL, SERIAL_NUMBER, switch_data["register_address"], switch_data["bitmask"], switch_data["name"], switch_data["enabled"], device_class, luxpower_client, event))
+    for entity_definition in switches:
+        etype = entity_definition["etype"]
+        if etype == "LVSE":
+            switchEntities.append(LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
 
     # fmt: on
 
-    async_add_devices(binarySwitchs, True)
+    async_add_devices(switchEntities, True)
 
     _LOGGER.info("LuxPower switch async_setup_platform switch done")
 
@@ -94,29 +113,28 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     """Represent a LUX binary switch sensor."""
 
-    def __init__(self, hass, host, port, dongle, serial, register_address, bitmask, object_id, create_enabled, device_class, luxpower_client, event: Event) -> None:  # fmt: skip
-        """Initialize the Lux****Switch entity."""
-        super().__init__()
-
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+        """Initialize the Lux****Number entity."""
+        #
         # Visible Instance Attributes Outside Class
+        self.entity_id = (f"switch.{slugify(entity_definition['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}")  # fmt: skip
         self.hass = hass
-        self.luxpower_client = luxpower_client
+        self.luxpower_client = hass.data[event.CLIENT_DAEMON]
         self.dongle = dongle
         self.serial = serial
         self.event = event
 
         # Hidden Inherited Instance Attributes
-        self._attr_entity_registry_enabled_default = create_enabled
+        self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
 
         # Hidden Extended Instance Attributes
         self._host = host
         self._port = port
-        self._register_address = register_address
+        self._register_address = entity_definition["register_address"]
         self._register_value = None
-        self._bitmask = bitmask
-        self._name = object_id
-        self._object_id = object_id
-        self._device_class = device_class
+        self._bitmask = entity_definition["bitmask"]
+        self._name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        self._device_class = DEVICE_CLASS_OPENING
         self._state = False
         self._read_value = 0
         # self.lxppacket = luxpower_client.lxpPacket
