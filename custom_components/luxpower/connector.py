@@ -114,10 +114,13 @@ class LuxPowerClient(asyncio.Protocol):
                     _LOGGER.debug("EVENT DATA: %s ", event_data)
                     if 0 <= self.lxpPacket.register <= 39:
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
                     elif 40 <= self.lxpPacket.register <= 79:
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
                     elif 80 <= self.lxpPacket.register <= 119:
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
 
                     # self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
                 elif (
