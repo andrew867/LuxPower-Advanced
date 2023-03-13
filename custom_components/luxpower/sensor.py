@@ -228,6 +228,7 @@ class LuxPowerSensorEntity(SensorEntity):
         self._name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
         self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, entity_definition["unique"])
         self._state = "Unavailable"
+        self._attr_available = False
         self._stateval = None
         self._device_class = entity_definition.get("device_class", None)
         self._unit_of_measurement = entity_definition.get("unit_measure", None)
@@ -259,9 +260,13 @@ class LuxPowerSensorEntity(SensorEntity):
         )
         self._data = event.data.get("data", {})
         value = self._data.get(self._device_attribute)
-        value = round(value, self._decimal_places) if isinstance(value, (int, float)) else UA
+        if isinstance(value, (int, float)):
+            value = round(value, self._decimal_places)
+            self._attr_available = True
+        else:
+            value = UA
+            self._attr_available = False
         self._state = f"{value}"
-
         self.schedule_update_ha_state()
         return self._state
 
@@ -342,6 +347,7 @@ class LuxPowerFlowSensor(LuxPowerSensorEntity):
             flow_value = positive_value
         self._state = f"{round(flow_value,1)}"
 
+        self._attr_available = True
         self.schedule_update_ha_state()
         return self._state
 
@@ -374,6 +380,7 @@ class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
         consumption_value = grid - to_inverter + from_inverter - to_grid
         self._state = f"{round(consumption_value, 1)}"
 
+        self._attr_available = True
         self.schedule_update_ha_state()
         return self._state
 
@@ -422,6 +429,7 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
                 return
             oldstate = self._state
             self._state = float(register_val)
+            self._attr_available = True
             if oldstate != self._state:
                 _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._state}")
                 self.schedule_update_ha_state()
@@ -457,6 +465,7 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
 
             oldstate = self._state
             self._state = reg07_str + reg08_str + "-" + reg09_str + reg10_str
+            self._attr_available = True
             if oldstate != self._state:
                 _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._state}")
                 self.schedule_update_ha_state()
@@ -529,6 +538,7 @@ class LuxPowerStatusTextSensor(LuxPowerSensorEntity):
             state_text = "Unknown"
         self._state = f"{state_text}"
 
+        self._attr_available = True
         self.schedule_update_ha_state()
         return self._state
 
@@ -549,6 +559,7 @@ class LuxPowerDataReceivedTimestampSensor(LuxPowerSensorEntity):
         self.datetime_last_received = datetime.now()
         self._state = "{}".format(datetime.now().strftime("%A %B %-d, %I:%M %p"))
 
+        self._attr_available = True
         self.schedule_update_ha_state()
         return self._state
 
