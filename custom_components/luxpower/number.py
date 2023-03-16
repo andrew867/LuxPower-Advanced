@@ -130,6 +130,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End2", "register_address": 87, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "assumed": False, "enabled": True},
         {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start3", "register_address": 88, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "assumed": False, "enabled": True},
         {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End3", "register_address": 89, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "assumed": False, "enabled": True},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} EPS Voltage Target", "register_address": 90, "def_val": 42.0, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "assumed": False, "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} EPS Frequency Target", "register_address": 91, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "assumed": False, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Feed-in Grid Power(%)", "register_address": 103, "def_val": 42.0, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "assumed": False, "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} On-grid Discharge Cut-off SOC", "register_address": 105, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "assumed": False, "enabled": True},
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "max_val": maxnumb, "icon": "mdi:knob", "assumed": False, "enabled": True},
@@ -158,19 +160,23 @@ class LuxNormalNumberEntity(NumberEntity):
     def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
-        # Exposed Variables Outside Class
+        # Visible Instance Attributes Outside Class
         self.entity_id = (f"number.{slugify(entity_definition['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}")  # fmt: skip
         self.hass = hass
         self.dongle = dongle
         self.serial = serial
         self.event = event
 
-        # Hidden Variables Outside Class
+        # Hidden Inherited Instance Attributes
+        self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
+
+        # Hidden Class Extended Instance Attributes
         self._host = host
         self._port = port
         self._register_address = entity_definition["register_address"]
         self._name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
         self._state = entity_definition.get("def_val", None)
+        self._attr_available = False
         self._maxval = entity_definition.get("max_val", 0)
         self._icon = entity_definition.get("icon", None)
         self._assumed = entity_definition.get("assumed", False)
@@ -207,7 +213,6 @@ class LuxNormalNumberEntity(NumberEntity):
 
         registers = event.data.get("registers", {})
         self.registers = registers
-
         if self._register_address in registers.keys():
             _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
             register_val = registers.get(self._register_address, None)
@@ -215,7 +220,8 @@ class LuxNormalNumberEntity(NumberEntity):
                 return
             oldstate = self._state
             self._state = float(register_val)
-            if oldstate != self._state:
+            if oldstate != self._state or not self._attr_available:
+                self._attr_available = True
                 _LOGGER.debug(f"Changing the number from {oldstate} to {self._state}")
                 if self.is_time_entity:
                     self.hour_val, self.minute_val = self.convert_to_time(register_val)

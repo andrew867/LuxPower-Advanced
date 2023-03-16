@@ -127,7 +127,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         # Hidden Inherited Instance Attributes
         self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
 
-        # Hidden Extended Instance Attributes
+        # Hidden Class Extended Instance Attributes
         self._host = host
         self._port = port
         self._register_address = entity_definition["register_address"]
