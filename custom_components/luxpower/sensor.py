@@ -143,6 +143,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Min Cell Voltage (Live)", "unique": "min_cell_volt", "bank": 2, "attribute": LXPPacket.min_cell_volt, "device_class": DEVICE_CLASS_VOLTAGE, "unit_measure": ELECTRIC_POTENTIAL_VOLT, "decimal_places": 3},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Max Cell Temperature (Live)", "unique": "max_cell_temp", "bank": 2, "attribute": LXPPacket.max_cell_temp, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Min Cell Temperature (Live)", "unique": "min_cell_temp", "bank": 2, "attribute": LXPPacket.min_cell_temp, "device_class": DEVICE_CLASS_TEMPERATURE, "unit_measure": TEMP_CELSIUS},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Count", "unique": "lux_battery_count", "bank": 2, "attribute": LXPPacket.bat_count, "device_class": None, "unit_measure": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Capacity Ah", "unique": "lux_battery_capacity_ah", "bank": 2, "attribute": LXPPacket.bat_capacity, "device_class": None, "unit_measure": None},
 
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Status", "unique": "lux_status", "bank": 0, "attribute": LXPPacket.status},
 
