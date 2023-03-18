@@ -172,12 +172,13 @@ class LuxPowerClient(asyncio.Protocol):
     async def get_holding_data(self, address_bank):
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
-        if address_bank == 4:
-            number_of_registers = 40
+        start_register = address_bank * 40
+        if address_bank == 5:
+            start_register = 560
         try:
             _LOGGER.debug(f"get_holding_data for {serial} address_bank: {address_bank} , {number_of_registers}")
             packet = self.lxpPacket.prepare_packet_for_read(
-                address_bank * 40, number_of_registers, type=LXPPacket.READ_HOLD
+                start_register, number_of_registers, type=LXPPacket.READ_HOLD
             )
             self._transport.write(packet)
             _LOGGER.debug(
@@ -396,6 +397,10 @@ class ServiceHelper:
                 _LOGGER.debug("send_holding_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_holding_data(address_bank)
                 await asyncio.sleep(2)
+            if 1 == 0:
+                await luxpower_client.get_holding_data(5)
+                await asyncio.sleep(2)
+
         _LOGGER.debug("send_holding_registers done")
 
     async def send_refresh_register_bank(self, dongle, address_bank):
