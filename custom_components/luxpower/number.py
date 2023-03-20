@@ -14,7 +14,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_POWER,
+    DEVICE_CLASS_VOLTAGE,
     ELECTRIC_CURRENT_AMPERE,
+    ELECTRIC_POTENTIAL_VOLT,
     POWER_WATT,
 )
 from homeassistant.helpers.entity import DeviceInfo
@@ -138,13 +140,36 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End3", "register_address": 89, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} EPS Voltage Target", "register_address": 90, "def_val": 42.0, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": False},
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} EPS Frequency Target", "register_address": 91, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Charge Voltage", "register_address": 99, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Cut-off Voltage", "register_address": 100, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Charge Current Limit", "register_address": 101, "def_val": 42.0, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Current Limit", "register_address": 102, "def_val": 42.0, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Feed-in Grid Power(%)", "register_address": 103, "def_val": 42.0, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} On-grid Discharge Cut-off SOC", "register_address": 105, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "max_val": maxnumb, "icon": "mdi:knob", "enabled": True},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Off-grid Discharge Cut-off SOC", "register_address": 125, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Floating Voltage", "register_address": 144, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Voltage", "register_address": 149, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Period(Days)", "register_address": 150, "def_val": 42.0, "max_val": maxnumb, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Time(Hours)", "register_address": 151, "def_val": 42.0, "max_val": maxnumb, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start1", "register_address": 152, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End1", "register_address": 153, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start2", "register_address": 154, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End2", "register_address": 155, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start3", "register_address": 156, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End3", "register_address": 157, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start Battery Voltage", "register_address": 158, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End Battery Voltage", "register_address": 159, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start Battery SOC(%)", "register_address": 160, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End Battery SOC(%)", "register_address": 161, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-100", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Voltage", "register_address": 162, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery Voltage", "register_address": 163, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning SOC(%)", "register_address": 164, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery SOC(%)", "register_address": 165, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} On Grid EOD Voltage", "register_address": 169, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Input Power", "register_address": 177, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Battery Voltage", "register_address": 194, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Battery Voltage", "register_address": 195, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Battery SOC(%)", "register_address": 196, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Battery SOC(%)", "register_address": 197, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-80", "enabled": False},
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Battery Current", "register_address": 198, "def_val": 42.0, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
@@ -158,6 +183,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
             numberEntities.append(LuxPercentageNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LTNE":
             numberEntities.append(LuxTimeNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+        elif etype == "LDTE":
+            numberEntities.append(LuxVoltageDivideByTenEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
 
     async_add_devices(numberEntities, True)
 
@@ -236,7 +263,10 @@ class LuxNormalNumberEntity(NumberEntity):
             if register_val is None:
                 return
             oldstate = self._state
-            self._state = float(register_val)
+            if self.is_divbyten_entity:
+                self._state = float(register_val) / 10
+            else:
+                self._state = float(register_val)
             if oldstate != self._state or not self._attr_available:
                 self._attr_available = True
                 _LOGGER.debug(f"Changing the number from {oldstate} to {self._state}")
@@ -259,6 +289,10 @@ class LuxNormalNumberEntity(NumberEntity):
 
     @property
     def is_time_entity(self):
+        return False
+
+    @property
+    def is_divbyten_entity(self):
         return False
 
     @property
@@ -321,14 +355,17 @@ class LuxNormalNumberEntity(NumberEntity):
 
     def set_native_value(self, value):
         """Update the current value."""
-        num_value = float(value)
-        if int(num_value) != int(floatzero(self._state)):
-            _LOGGER.debug(f"Started set_value {num_value}")
-
-            if num_value < self.min_value or num_value > self.max_value:
+        if value != self._state:
+            _LOGGER.debug(f"Started set_value {value}")
+            if value < self.min_value or value > self.max_value:
                 raise vol.Invalid(
                     f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})"
                 )
+
+            if self.is_divbyten_entity:
+                num_value = float(value) * 10
+            else:
+                num_value = float(value)
 
             self._read_value = self.set_register(int(num_value))
             if self._read_value is not None:
@@ -344,10 +381,13 @@ class LuxNormalNumberEntity(NumberEntity):
                         _LOGGER.info(
                             f"CAN confirm READ_BACK value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
                         )
-                        self._state = self._read_value
-                        if self.is_time_entity:
-                            self.hour_val, self.minute_val = self.convert_to_time(int(self._state))
-                            _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
+                        if self.is_divbyten_entity:
+                            self._state = float(self._read_value) / 10
+                        else:
+                            self._state = self._read_value
+                            if self.is_time_entity:
+                                self.hour_val, self.minute_val = self.convert_to_time(int(self._state))
+                                _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
                         self.schedule_update_ha_state()
                     else:
                         _LOGGER.warning(
@@ -365,10 +405,6 @@ class LuxNormalNumberEntity(NumberEntity):
 
 class LuxPercentageNumberEntity(LuxNormalNumberEntity):
     """Representation of a Percentage Number entity."""
-
-    @property
-    def is_time_entity(self):
-        return False
 
     @property
     def unique_id(self) -> Optional[str]:
@@ -396,3 +432,15 @@ class LuxTimeNumberEntity(LuxNormalNumberEntity):
         state_attributes["hour"] = self.hour_val
         state_attributes["minute"] = self.minute_val
         return state_attributes
+
+
+class LuxVoltageDivideByTenEntity(LuxNormalNumberEntity):
+    """Representation of a Divide By Ten Number entity."""
+
+    @property
+    def is_divbyten_entity(self):
+        return True
+
+    @property
+    def unique_id(self) -> Optional[str]:
+        return f"{DOMAIN}_{self.dongle}_numberdivbyten_{self._register_address}"
