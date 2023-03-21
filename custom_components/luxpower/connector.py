@@ -130,9 +130,8 @@ class LuxPowerClient(asyncio.Protocol):
                     total_data = {"registers": result.get("registers", {})}
                     event_data = {"registers": result.get("thesereg", {})}
                     _LOGGER.debug("EVENT REGISTER: %s ", event_data)
-                    if self.lxpPacket.register == 160 and self._warn_registers:
+                    if self.lxpPacket.register >= 160 and self._warn_registers:
                         _LOGGER.warning("REGISTERS: %s ", total_data)
-                        self._warn_registers = False
                     if 0 <= self.lxpPacket.register <= 39:
                         self.hass.bus.fire(self.events.EVENT_REGISTER_BANK0_RECEIVED, event_data)
                         self.hass.bus.fire(self.events.EVENT_REGISTER_21_RECEIVED, event_data)
@@ -146,6 +145,8 @@ class LuxPowerClient(asyncio.Protocol):
                         self.hass.bus.fire(self.events.EVENT_REGISTER_BANK3_RECEIVED, event_data)
                     elif 160 <= self.lxpPacket.register <= 199:
                         self.hass.bus.fire(self.events.EVENT_REGISTER_BANK4_RECEIVED, event_data)
+                    elif 200 <= self.lxpPacket.register <= 239:
+                        self.hass.bus.fire(self.events.EVENT_REGISTER_BANK5_RECEIVED, event_data)
 
                     # self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
 
@@ -172,12 +173,13 @@ class LuxPowerClient(asyncio.Protocol):
     async def get_holding_data(self, address_bank):
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
-        if address_bank == 4:
-            number_of_registers = 40
+        start_register = address_bank * 40
+        if address_bank == 6:
+            start_register = 560
         try:
             _LOGGER.debug(f"get_holding_data for {serial} address_bank: {address_bank} , {number_of_registers}")
             packet = self.lxpPacket.prepare_packet_for_read(
-                address_bank * 40, number_of_registers, type=LXPPacket.READ_HOLD
+                start_register, number_of_registers, type=LXPPacket.READ_HOLD
             )
             self._transport.write(packet)
             _LOGGER.debug(
@@ -297,7 +299,9 @@ class LuxPowerClient(asyncio.Protocol):
                 _LOGGER.warning(f"Cannot WRITE Register: 13 Value: {new_value} - Aborting")
                 return
 
-            new_value = ((now.second + 1) * 256) + (now.minute)
+            write_time_allowance = 0
+
+            new_value = ((now.second + write_time_allowance) * 256) + (now.minute)
 
             _LOGGER.info(f"Register to be written 14 with value {new_value}")
             read_value = lxpPacket.register_io_with_retry(
@@ -390,13 +394,27 @@ class ServiceHelper:
                 luxpower_client = entry_data.get("client")
                 break
 
+        luxpower_client._warn_registers = True
         if luxpower_client is not None:
-            luxpower_client._warn_registers = True
             for address_bank in range(0, 5):
                 _LOGGER.debug("send_holding_registers for address_bank: %s", address_bank)
                 await luxpower_client.get_holding_data(address_bank)
                 await asyncio.sleep(2)
+            if 1 == 1:
+                # Request registers 200-239
+                _LOGGER.debug("send_holding_registers for EXTENDED address_bank: %s", 5)
+                self._warn_registers = True
+                await luxpower_client.get_holding_data(5)
+                await asyncio.sleep(2)
+            if 1 == 0:
+                # Request registers 560-599
+                _LOGGER.debug("send_holding_registers for HIGH EXTENDED address_bank: %s", 6)
+                self._warn_registers = True
+                await luxpower_client.get_holding_data(6)
+                await asyncio.sleep(2)
+
         _LOGGER.debug("send_holding_registers done")
+        luxpower_client._warn_registers = False
 
     async def send_refresh_register_bank(self, dongle, address_bank):
         luxpower_client = None

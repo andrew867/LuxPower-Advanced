@@ -416,6 +416,8 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
             elif 160 <= self._register_address <= 199:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+            elif 200 <= self._register_address <= 239:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update)
 
     def push_update(self, event):
         _LOGGER.debug(
