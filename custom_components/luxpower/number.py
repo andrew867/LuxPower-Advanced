@@ -9,7 +9,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import voluptuous as vol
-from homeassistant.components.number import NumberEntity
+from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     DEVICE_CLASS_CURRENT,
@@ -17,6 +17,7 @@ from homeassistant.const import (
     DEVICE_CLASS_VOLTAGE,
     ELECTRIC_CURRENT_AMPERE,
     ELECTRIC_POTENTIAL_VOLT,
+    POWER_KILO_WATT,
     POWER_WATT,
 )
 from homeassistant.helpers.entity import DeviceInfo
@@ -102,9 +103,12 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 
     _LOGGER.info(f"Lux number platform_config: {platform_config}")
 
+    minnumb = 0.0
+
     maxperc = 100.0
     maxbyte = 255.0
-    maxtime = 65000.0
+    # maxtime = 65000.0
+    maxtime = 15127.0
     maxnumb = 65535.0
 
     # fmt: off
@@ -112,79 +116,80 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     numberEntities: List[LuxNormalNumberEntity] = []
 
     numbers = [
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Charge Power Rate(%)", "register_address": 64, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Discharge Power Rate(%)", "register_address": 65, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Power Rate(%)", "register_address": 66, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Battery Charge Level(%)", "register_address": 67, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start1", "register_address": 68, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End1", "register_address": 69, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start2", "register_address": 70, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End2", "register_address": 71, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start3", "register_address": 72, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End3", "register_address": 73, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Priority Charge Rate(%)", "register_address": 74, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Priority Charge Level(%)", "register_address": 75, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start1", "register_address": 76, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End1", "register_address": 77, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start2", "register_address": 78, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End2", "register_address": 79, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start3", "register_address": 80, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End3", "register_address": 81, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Forced Discharge Power Rate(%)", "register_address": 82, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Forced Discharge Battery Level(%)", "register_address": 83, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start1", "register_address": 84, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End1", "register_address": 85, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start2", "register_address": 86, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End2", "register_address": 87, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start3", "register_address": 88, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End3", "register_address": 89, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} EPS Voltage Target", "register_address": 90, "def_val": 42.0, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": False},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} EPS Frequency Target", "register_address": 91, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Charge Voltage", "register_address": 99, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Cut-off Voltage", "register_address": 100, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Charge Current Limit", "register_address": 101, "def_val": 42.0, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Current Limit", "register_address": 102, "def_val": 42.0, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Feed-in Grid Power(%)", "register_address": 103, "def_val": 42.0, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} On-grid Discharge Cut-off SOC", "register_address": 105, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Off-grid Discharge Cut-off SOC", "register_address": 125, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Floating Voltage", "register_address": 144, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Voltage", "register_address": 149, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Period(Days)", "register_address": 150, "def_val": 42.0, "max_val": maxnumb, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Time(Hours)", "register_address": 151, "def_val": 42.0, "max_val": maxnumb, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start1", "register_address": 152, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End1", "register_address": 153, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start2", "register_address": 154, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End2", "register_address": 155, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start3", "register_address": 156, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End3", "register_address": 157, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start Battery Voltage", "register_address": 158, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End Battery Voltage", "register_address": 159, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start Battery SOC(%)", "register_address": 160, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End Battery SOC(%)", "register_address": 161, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-100", "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Voltage", "register_address": 162, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery Voltage", "register_address": 163, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning SOC(%)", "register_address": 164, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery SOC(%)", "register_address": 165, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} On Grid EOD Voltage", "register_address": 169, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Input Power", "register_address": 177, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Battery Voltage", "register_address": 194, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Battery Voltage", "register_address": 195, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Battery SOC(%)", "register_address": 196, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Battery SOC(%)", "register_address": 197, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-80", "enabled": False},
-        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Battery Current", "register_address": 198, "def_val": 42.0, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving SOC 1(%)", "register_address": 207, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-80", "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving Volt 1", "register_address": 208, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving Start1", "register_address": 209, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving End1", "register_address": 210, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving Start2", "register_address": 211, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving End2", "register_address": 212, "def_val": 0.0, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving SOC 2(%)", "register_address": 218, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-80", "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving Volt 2", "register_address": 219, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC(%)", "register_address": 220, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC(%)", "register_address": 221, "def_val": 42.0, "max_val": maxperc, "icon": "mdi:battery-charging-100", "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage", "register_address": 222, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage", "register_address": 223, "def_val": 42.0, "max_val": maxnumb, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Charge Power Rate(%)", "register_address": 64, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Discharge Power Rate(%)", "register_address": 65, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Power Rate(%)", "register_address": 66, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Battery Charge Level(%)", "register_address": 67, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start1", "register_address": 68, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End1", "register_address": 69, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start2", "register_address": 70, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End2", "register_address": 71, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start3", "register_address": 72, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End3", "register_address": 73, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Priority Charge Rate(%)", "register_address": 74, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Priority Charge Level(%)", "register_address": 75, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start1", "register_address": 76, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End1", "register_address": 77, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start2", "register_address": 78, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End2", "register_address": 79, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start3", "register_address": 80, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End3", "register_address": 81, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Forced Discharge Power Rate(%)", "register_address": 82, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Forced Discharge Battery Level(%)", "register_address": 83, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start1", "register_address": 84, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End1", "register_address": 85, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start2", "register_address": 86, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End2", "register_address": 87, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start3", "register_address": 88, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End3", "register_address": 89, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} EPS Voltage Target", "register_address": 90, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} EPS Frequency Target", "register_address": 91, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Charge Voltage", "register_address": 99, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Cut-off Voltage", "register_address": 100, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Charge Current Limit", "register_address": 101, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Current Limit", "register_address": 102, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Feed-in Grid Power(%)", "register_address": 103, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} On-grid Discharge Cut-off SOC", "register_address": 105, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "min_val": minnumb, "max_val": 90, "step": 0.1, "mode": NumberMode.BOX, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Off-grid Discharge Cut-off SOC", "register_address": 125, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Floating Voltage", "register_address": 144, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Voltage", "register_address": 149, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Period(Days)", "register_address": 150, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Time(Hours)", "register_address": 151, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start1", "register_address": 152, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End1", "register_address": 153, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start2", "register_address": 154, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End2", "register_address": 155, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start3", "register_address": 156, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End3", "register_address": 157, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start Battery Voltage", "register_address": 158, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End Battery Voltage", "register_address": 159, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start Battery SOC(%)", "register_address": 160, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End Battery SOC(%)", "register_address": 161, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-100", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Voltage", "register_address": 162, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery Voltage", "register_address": 163, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning SOC(%)", "register_address": 164, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery SOC(%)", "register_address": 165, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} On Grid EOD Voltage", "register_address": 169, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Input Power", "register_address": 177, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Battery Voltage", "register_address": 194, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Battery Voltage", "register_address": 195, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Battery SOC(%)", "register_address": 196, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Battery SOC(%)", "register_address": 197, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-80", "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Battery Current", "register_address": 198, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Grid Peak-Shaving Power", "register_address": 206, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "step": 0.1, "mode": NumberMode.BOX, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_KILO_WATT, "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving SOC 1(%)", "register_address": 207, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-80", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving Volt 1", "register_address": 208, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving Start1", "register_address": 209, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving End1", "register_address": 210, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving Start2", "register_address": 211, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving End2", "register_address": 212, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving SOC 2(%)", "register_address": 218, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-80", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving Volt 2", "register_address": 219, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC(%)", "register_address": 220, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC(%)", "register_address": 221, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-100", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage", "register_address": 222, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage", "register_address": 223, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
     ]
 
     for entity_definition in numbers:
@@ -231,10 +236,11 @@ class LuxNormalNumberEntity(NumberEntity):
         self._attr_available = False
         self._attr_device_class = entity_definition.get("device_class", None)
         self._attr_icon = entity_definition.get("icon", None)
+        self._attr_mode = entity_definition.get("mode", NumberMode.AUTO)
         self._attr_native_unit_of_measurement = entity_definition.get("unit_of_measurement", None)
-        self._attr_native_min_value = 0
+        self._attr_native_min_value = entity_definition.get("min_val", None)
         self._attr_native_max_value = entity_definition.get("max_val", None)
-        self._attr_native_step = 1.0
+        self._attr_native_step = entity_definition.get("step", 1.0)
         self._attr_should_poll = False
         self._read_value = 0
         self.registers: Dict[int, str] = {}
