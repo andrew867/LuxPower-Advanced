@@ -126,6 +126,36 @@ class LXPPacket:
     RUN_WITHOUT_GRID = 1 << 1
     PV_GRID_OFF_ENABLE = 1 << 0
 
+    # fmt: off
+
+    #
+    # Register 179, Most Significant Byte
+    #
+
+    R179_UNKNOWN_BIT_15 = 1 << 15  # = 32768
+    R179_UNKNOWN_BIT_14 = 1 << 14  # = 16384
+    R179_UNKNOWN_BIT_13 = 1 << 13  # =  8192
+    R179_UNKNOWN_BIT_12 = 1 << 12  # =  4096   True
+    R179_UNKNOWN_BIT_11 = 1 << 11  # =  2048   True
+    R179_UNKNOWN_BIT_10 = 1 << 10  # =  1024
+    R179_UNKNOWN_BIT_09 = 1 << 9   # =   512
+    R179_UNKNOWN_BIT_08 = 1 << 8   # =   256
+
+    #
+    # Register 179, Least Significant Byte
+    #
+
+    ENABLE_PEAK_SHAVING = 1 << 7   # =   128   True
+    R179_UNKNOWN_BIT_06 = 1 << 6   # =    64   True
+    R179_UNKNOWN_BIT_05 = 1 << 5   # =    32
+    R179_UNKNOWN_BIT_04 = 1 << 4   # =    16
+    R179_UNKNOWN_BIT_03 = 1 << 3   # =     8
+    R179_UNKNOWN_BIT_02 = 1 << 2   # =     4
+    R179_UNKNOWN_BIT_01 = 1 << 1   # =     2
+    R179_UNKNOWN_BIT_00 = 1 << 0   # =     1
+
+    # fmt: on
+
     status = "status"
     v_pv_1 = "v_pv_1"
     v_pv_2 = "v_pv_2"

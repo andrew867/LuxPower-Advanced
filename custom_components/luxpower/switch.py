@@ -8,7 +8,6 @@ This is where we will describe what this module does
 import logging
 from typing import Any, Dict, List, Optional
 
-from homeassistant.components.binary_sensor import DEVICE_CLASS_OPENING
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -68,7 +67,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     event = Event(dongle=DONGLE)
     # luxpower_client = hass.data[event.CLIENT_DAEMON]
-    # device_class = DEVICE_CLASS_OPENING
 
     _LOGGER.info(f"Lux switch platform_config: {platform_config}")
 
@@ -96,6 +94,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Enable", "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": True},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Take Load Together", "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Last", "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid Peak-Shaving", "register_address": 179, "bitmask": LXPPacket.ENABLE_PEAK_SHAVING, "enabled": False},
     ]
 
     for entity_definition in switches:
@@ -134,7 +133,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self._register_value = None
         self._bitmask = entity_definition["bitmask"]
         self._name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
-        self._device_class = DEVICE_CLASS_OPENING
+        self._attr_available = False
+        # self._attr_device_class = DEVICE_CLASS_OPENING
+        self._attr_should_poll = False
         self._state = False
         self._read_value = 0
         # self.lxppacket = luxpower_client.lxpPacket
@@ -158,6 +159,8 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
             elif 160 <= self._register_address <= 199:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+            elif 200 <= self._register_address <= 239:
+                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update)
 
     def push_update(self, event):
         registers = event.data.get("registers", {})
@@ -175,7 +178,8 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             # _LOGGER.debug("totalregs: %s" , self.totalregs)
             oldstate = self._state
             self._state = register_val & self._bitmask == self._bitmask
-            if oldstate != self._state:
+            if oldstate != self._state or not self._attr_available:
+                self._attr_available = True
                 _LOGGER.debug(
                     f"Reading: {self._register_address} {self._bitmask} Old State {oldstate} Updating state to {self._state} - {self._name}"
                 )
@@ -199,20 +203,6 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     @property
     def unique_id(self) -> Optional[str]:
         return f"{DOMAIN}_{self.dongle}_{self._register_address}_{self._bitmask}"
-
-    @property
-    def available(self):
-        return True
-
-    @property
-    def device_class(self):
-        """Return device class."""
-        return self._device_class
-
-    @property
-    def should_poll(self):
-        """Return True if entity has to be polled for state."""
-        return False
 
     @property
     def name(self):
