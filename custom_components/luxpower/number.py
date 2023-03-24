@@ -151,6 +151,9 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Feed-in Grid Power(%)", "register_address": 103, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} On-grid Discharge Cut-off SOC", "register_address": 105, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "min_val": minnumb, "max_val": 90, "step": 0.1, "mode": NumberMode.BOX, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": True},
+        {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Mode", "register_address": 120, "bitmask": LXPPacket.AC_CHARGE_MODE_BITMASK, "def_val": 42.0, "min_val": 0, "max_val": 6, "step": 2, "mode": NumberMode.BOX, "icon": "mdi:fan", "enabled": False},
+        {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Control", "register_address": 120, "bitmask": LXPPacket.DISCHARG_ACC_TO_SOC, "def_val": 42.0, "min_val": 0, "max_val": 16, "step": 16, "mode": NumberMode.BOX, "icon": "mdi:fan", "enabled": False},
+        {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Type", "register_address": 120, "bitmask": LXPPacket.GEN_CHRG_ACC_TO_SOC, "def_val": 42.0, "min_val": 0, "max_val": 128, "step": 128, "mode": NumberMode.BOX, "icon": "mdi:fan", "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Off-grid Discharge Cut-off SOC", "register_address": 125, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Floating Voltage", "register_address": 144, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Voltage", "register_address": 149, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "enabled": False},
@@ -206,6 +209,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
             numberEntities.append(LuxVoltageDivideByTenEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LFPE":
             numberEntities.append(LuxFanPercentageNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+        elif etype == "LBNE":
+            numberEntities.append(LuxBitmaskNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
 
     async_add_devices(numberEntities, True)
 
@@ -559,6 +564,106 @@ class LuxFanPercentageNumberEntity(LuxPercentageNumberEntity):
                         _LOGGER.info(
                             f"CAN confirm WRITTEN value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
                         )
+                        self._state = value
+                        self.schedule_update_ha_state()
+                    else:
+                        _LOGGER.warning(
+                            f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {new_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
+                        )
+                else:
+                    _LOGGER.warning(
+                        f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}"
+                    )
+
+            _LOGGER.debug("set_native_value done")
+
+
+class LuxBitmaskNumberEntity(LuxNormalNumberEntity):
+    """Representation of a Percentage Number entity."""
+
+    @property
+    def unique_id(self) -> Optional[str]:
+        return f"{DOMAIN}_{self.dongle}_numberbitmask_{self._register_address}_{self._bitmask}"
+
+    def push_update(self, event):
+        _LOGGER.debug(
+            f"Register Event Received Lux****NumberEntity: {self._name} - Register Address: {self._register_address}"
+        )
+
+        registers = event.data.get("registers", {})
+        self.registers = registers
+        if self._register_address in registers.keys():
+            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
+            register_val = registers.get(self._register_address, None)
+            if register_val is None:
+                return
+            # Save current register int value
+            self._register_value = register_val
+            oldstate = self._state
+            self._state = register_val & self._bitmask
+            if oldstate != self._state or not self._attr_available:
+                self._attr_available = True
+                _LOGGER.debug(f"Changing the number from {oldstate} to {self._state}")
+                self.schedule_update_ha_state()
+        return self._state
+
+    def set_native_value(self, value):
+        """Update the current value."""
+        _LOGGER.debug("set_value called")
+        if value != self._state:
+            _LOGGER.debug(f"Started set_value {value}")
+            if value < self.min_value or value > self.max_value:
+                raise vol.Invalid(
+                    f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})"
+                )
+
+            lxpPacket = LXPPacket(
+                debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
+            )
+
+            self._read_value = lxpPacket.register_io_with_retry(
+                self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD
+            )
+
+            if self._read_value is not None:
+                # Read has been successful - use read value
+                _LOGGER.info(
+                    f"Read Register OK - Using INVERTER Register {self._register_address} value of {self._read_value}"
+                )
+                old_value = int(self._read_value)
+            else:
+                # Read has been UNsuccessful - use LAST KNOWN register value
+                _LOGGER.warning(
+                    f"Cannot read Register - Using LAST KNOWN Register {self._register_address} value of {self._register_value}"
+                )
+                old_value = int(self._register_value)
+
+            # old_value = 65535
+
+            new_value = (old_value & ~self._bitmask) | (int(float(value)) & self._bitmask)
+
+            _LOGGER.warning(
+                f"Calcs: VALUE: {value} OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask:04x} NEW: {new_value}"
+            )
+
+            if new_value != old_value:
+                _LOGGER.info(
+                    f"Writing: OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask} NEW {new_value}"
+                )
+                self._read_value = lxpPacket.register_io_with_retry(
+                    self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+                )
+
+                if self._read_value is not None:
+                    _LOGGER.info(
+                        f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                    )
+                    if self._read_value == new_value:
+                        _LOGGER.info(
+                            f"CAN confirm WRITTEN value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                        )
+                        self._state = value
+                        self.schedule_update_ha_state()
                     else:
                         _LOGGER.warning(
                             f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {new_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
