@@ -28,9 +28,9 @@ from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
 
-hyphen = "test"
-nameID_midfix = "mid"
-entityID_midfix = "mid"
+hyphen = ""
+nameID_midfix = ""
+entityID_midfix = ""
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
@@ -132,7 +132,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self._register_address = entity_definition["register_address"]
         self._register_value = None
         self._bitmask = entity_definition["bitmask"]
-        self._name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
         self._attr_available = False
         # self._attr_device_class = DEVICE_CLASS_OPENING
         self._attr_should_poll = False
@@ -144,7 +144,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        _LOGGER.debug("async_added_to_hass %s", self._name)
+        _LOGGER.debug("async_added_to_hass %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
             if self._register_address == 21:
@@ -181,7 +181,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             if oldstate != self._state or not self._attr_available:
                 self._attr_available = True
                 _LOGGER.debug(
-                    f"Reading: {self._register_address} {self._bitmask} Old State {oldstate} Updating state to {self._state} - {self._name}"
+                    f"Reading: {self._register_address} {self._bitmask} Old State {oldstate} Updating state to {self._state} - {self._attr_name}"
                 )
                 self.schedule_update_ha_state()
             if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
@@ -203,11 +203,6 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     @property
     def unique_id(self) -> Optional[str]:
         return f"{DOMAIN}_{self.dongle}_{self._register_address}_{self._bitmask}"
-
-    @property
-    def name(self):
-        """Return entity name."""
-        return self._name
 
     @property
     def is_on(self):
