@@ -208,7 +208,7 @@ class LuxPowerClient(asyncio.Protocol):
         self._connected = False
         _LOGGER.info("reconnect client finished")
 
-    async def synctime(self):
+    async def synctime(self, do_set_time):
         _LOGGER.info("Syncing Time to Luxpower Inverter")
 
         lxpPacket = LXPPacket(debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number)
@@ -265,10 +265,10 @@ class LuxPowerClient(asyncio.Protocol):
         _LOGGER.info("now: %s %s %s %s %s %s", now.year, now.month, now.day, now.hour, now.minute, now.second)
 
         _LOGGER.warning(
-            "%s Old Time: %s, New Time: %s, Seconds Diff: %s", str(self.serial_number), was, now, abs(now - was)
+            f"{str(self.serial_number)} Old Time: {was}, New Time: {now}, Seconds Diff: {abs(now - was)} - Updating: {str(do_set_time)}"
         )
 
-        if 1 == 1:
+        if do_set_time:
             new_value = (now.month * 256) + (now.year - 2000)
 
             _LOGGER.info(f"Register to be written 12 with value {new_value}")
@@ -317,7 +317,7 @@ class LuxPowerClient(asyncio.Protocol):
                 return
 
         else:
-            _LOGGER.warning("Inverter Time Update Disabled In Code")
+            _LOGGER.debug("Inverter Time Update Disabled By Parameter")
 
         _LOGGER.debug("synctime finished")
 
@@ -354,7 +354,7 @@ class ServiceHelper:
             await asyncio.sleep(1)
         _LOGGER.debug("send_reconnect done")
 
-    async def send_synctime(self, dongle):
+    async def send_synctime(self, dongle, do_set_time):
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
@@ -363,7 +363,7 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
-            await luxpower_client.synctime()
+            await luxpower_client.synctime(do_set_time)
             await asyncio.sleep(1)
         _LOGGER.info("send_synctime done")
 

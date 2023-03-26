@@ -66,6 +66,7 @@ SCHEME_RECONNECT = vol.Schema(
 SCHEME_SETTIME = vol.Schema(
     {
         vol.Required("dongle"): vol.Coerce(str),
+        vol.Optional("do_set_time", default="False"): vol.Coerce(str),
     }
 )
 
@@ -125,8 +126,9 @@ async def async_setup(hass: HomeAssistant, config: dict):
     async def handle_synctime(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
+        do_set_time = call.data.get("do_set_time", "False").lower() in ("yes", "true", "t", "1")
         _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
-        await service_helper.send_synctime(dongle=dongle)
+        await service_helper.send_synctime(dongle=dongle, do_set_time=do_set_time)
 
     hass.services.async_register(
         DOMAIN, "luxpower_refresh_register_bank", handle_refresh_register_bank, schema=SCHEME_REGISTER_BANK
