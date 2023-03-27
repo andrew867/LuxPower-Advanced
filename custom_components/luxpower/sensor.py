@@ -224,6 +224,7 @@ class LuxPowerSensorEntity(SensorEntity):
         self.lastupdated_time = 0
 
         # Hidden Inherited Instance Attributes
+        self._attr_unique_id = "{}_{}_{}".format(DOMAIN, dongle, entity_definition["unique"])
         self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
         self._attr_native_value = "Unavailable"
         self._attr_available = False
@@ -235,7 +236,6 @@ class LuxPowerSensorEntity(SensorEntity):
         # Hidden Class Extended Instance Attributes
         self._host = host
         self._port = port
-        self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, entity_definition["unique"])
         self._data: Dict[str, str] = {}
         self._bank = entity_definition.get("bank", 0)
         self._device_attribute = entity_definition.get("attribute", None)
@@ -273,12 +273,6 @@ class LuxPowerSensorEntity(SensorEntity):
         self.schedule_update_ha_state()
         return self._attr_native_value
 
-    def update(self):
-        if not self.is_added_to_hass:
-            return
-        # _LOGGER.warning("IS THIS EVER CALLED??  {} updating state to {}".format(self._dp_id, "Unknown"))
-        return self._attr_native_value
-
     @property
     def device_info(self):
         """Return device info."""
@@ -289,11 +283,6 @@ class LuxPowerSensorEntity(SensorEntity):
             name=self.dongle,
             sw_version=VERSION,
         )
-
-    @property
-    def unique_id(self):
-        """Return the unique id."""
-        return self._unique_id
 
 
 class LuxPowerFlowSensor(LuxPowerSensorEntity):
@@ -558,7 +547,7 @@ class LuxStateSensorEntity(SensorEntity):
     def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the sensor."""
         #
-        # Exposed Variables Outside Class
+        # Visible Instance Attributes Outside Class
         self.entity_id = (f"sensor.{slugify(entity_definition['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}")  # fmt: skip
         self.hass = hass
         self.dongle = dongle
@@ -568,13 +557,15 @@ class LuxStateSensorEntity(SensorEntity):
         self.lastupdated_time = 0
         self.luxpower_client = entity_definition.get("luxpower_client", None)
 
-        # Hidden Variables Outside Class
-        self._host = host
-        self._port = port
+        # Hidden Inherited Instance Attributes
+        self._attr_unique_id = "{}_{}_{}".format(DOMAIN, self.dongle, "states")
         self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
-        # self._unique_id = "{}_{}_{}".format(DOMAIN, dongle, entity_definition["unique"])
         self._attr_native_value = "Waiting"
         self._attr_should_poll = False
+
+        # Hidden Class Extended Instance Attributes
+        self._host = host
+        self._port = port
         self._data: Dict[str, str] = {}
 
         self.totaldata: Dict[str, str] = {}
@@ -677,16 +668,6 @@ class LuxStateSensorEntity(SensorEntity):
 
         self.schedule_update_ha_state()
         return self._attr_native_value
-
-    def update(self):
-        if not self.is_added_to_hass:
-            return
-        # _LOGGER.debug("IS THIS EVER CALLED 222 ?? {} updating state to {}".format(self._dp_id, "Unknown"))
-        return self._attr_native_value
-
-    @property
-    def unique_id(self) -> Optional[str]:
-        return "{}_{}_{}".format(DOMAIN, self.dongle, "states")
 
     @property
     def device_info(self):

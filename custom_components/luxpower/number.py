@@ -17,6 +17,7 @@ from homeassistant.const import (
     DEVICE_CLASS_VOLTAGE,
     ELECTRIC_CURRENT_AMPERE,
     ELECTRIC_POTENTIAL_VOLT,
+    PERCENTAGE,
     POWER_KILO_WATT,
     POWER_WATT,
 )
@@ -228,9 +229,11 @@ class LuxNormalNumberEntity(NumberEntity):
         self.hass = hass
         self.dongle = dongle
         self.serial = serial
+        self.register_address = entity_definition["register_address"]
         self.event = event
 
         # Hidden Inherited Instance Attributes
+        self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numbernormal_{self.register_address}"
         self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
         self._attr_native_value = entity_definition.get("def_val", None)
         self._attr_assumed_state = entity_definition.get("assumed", False)
@@ -248,33 +251,32 @@ class LuxNormalNumberEntity(NumberEntity):
         # Hidden Class Extended Instance Attributes
         self._host = host
         self._port = port
-        self._register_address = entity_definition["register_address"]
         self._register_value = 0
         self._bitmask = entity_definition.get("bitmask", 0xFFFF)
         self._bitshift = entity_definition.get("bitshift", 0)
         self._divisor = entity_definition.get("divisor", 1)
         self._read_value = 0
-        self.registers: Dict[int, str] = {}
-        self.hour_val = -1
-        self.minute_val = -1
+        self._is_time_entity = False
+        self._hour_value = -1
+        self._minute_value = -1
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         _LOGGER.debug(f"async_added_to_hass {self._attr_name},  {self.entity_id},  {self.unique_id}")
         if self.hass is not None:
-            if self._register_address == 21:
+            if self.register_address == 21:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
-            elif 0 <= self._register_address <= 39:
+            elif 0 <= self.register_address <= 39:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update)
-            elif 40 <= self._register_address <= 79:
+            elif 40 <= self.register_address <= 79:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update)
-            elif 80 <= self._register_address <= 119:
+            elif 80 <= self.register_address <= 119:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update)
-            elif 120 <= self._register_address <= 159:
+            elif 120 <= self.register_address <= 159:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
-            elif 160 <= self._register_address <= 199:
+            elif 160 <= self.register_address <= 199:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
-            elif 200 <= self._register_address <= 239:
+            elif 200 <= self.register_address <= 239:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update)
 
     def convert_to_time(self, value):
@@ -283,14 +285,13 @@ class LuxNormalNumberEntity(NumberEntity):
 
     def push_update(self, event):
         _LOGGER.debug(
-            f"Register Event Received Lux****NumberEntity: {self._attr_name} - Register Address: {self._register_address}"
+            f"Register Event Received Lux****NumberEntity: {self._attr_name} - Register Address: {self.register_address}"
         )
 
         registers = event.data.get("registers", {})
-        self.registers = registers
-        if self._register_address in registers.keys():
-            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
-            register_val = registers.get(self._register_address, None)
+        if self.register_address in registers.keys():
+            _LOGGER.debug(f"Register Address: {self.register_address} is in register.keys")
+            register_val = registers.get(self.register_address, None)
             if register_val is None:
                 return
             # Save current register int value
@@ -300,9 +301,9 @@ class LuxNormalNumberEntity(NumberEntity):
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
                 _LOGGER.debug(f"Changing the number from {oldstate} to {self._attr_native_value}")
-                if self.is_time_entity:
-                    self.hour_val, self.minute_val = self.convert_to_time(register_val)
-                    _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
+                if self._is_time_entity:
+                    self._hour_value, self._minute_value = self.convert_to_time(register_val)
+                    _LOGGER.debug(f"Translating To Time {self._hour_value}:{self._minute_value}")
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
@@ -316,14 +317,6 @@ class LuxNormalNumberEntity(NumberEntity):
             name=self.dongle,
             sw_version=VERSION,
         )
-
-    @property
-    def is_time_entity(self):
-        return False
-
-    @property
-    def unique_id(self) -> Optional[str]:
-        return f"{DOMAIN}_{self.dongle}_numbernormal_{self._register_address}"
 
     def set_native_value(self, value):
         """Update the current value."""
@@ -344,19 +337,19 @@ class LuxNormalNumberEntity(NumberEntity):
                 # Not A Full Bitmask 16 bit Integer - Partial Bitmask So READ Register 1st if Possible
 
                 self._read_value = lxpPacket.register_io_with_retry(
-                    self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD
+                    self._host, self._port, self.register_address, value=1, iotype=lxpPacket.READ_HOLD
                 )
 
                 if self._read_value is not None:
                     # Read has been successful - use read value
                     _LOGGER.info(
-                        f"Read Register OK - Using INVERTER Register {self._register_address} value of {self._read_value}"
+                        f"Read Register OK - Using INVERTER Register {self.register_address} value of {self._read_value}"
                     )
                     old_value = int(self._read_value)
                 else:
                     # Read has been UNsuccessful - use LAST KNOWN register value
                     _LOGGER.warning(
-                        f"Cannot read Register - Using LAST KNOWN Register {self._register_address} value of {self._register_value}"
+                        f"Cannot read Register - Using LAST KNOWN Register {self.register_address} value of {self._register_value}"
                     )
                     old_value = int(self._register_value)
             else:
@@ -365,37 +358,37 @@ class LuxNormalNumberEntity(NumberEntity):
             new_value = (old_value & ~self._bitmask) | ((int(round(float(value) * self._divisor, 0)) << self._bitshift) & self._bitmask)  # fmt: skip
 
             _LOGGER.warning(
-                f"ENTITY_ID: {self.entity_id} VALUE: {value} OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask:04x} SHIFT: {self._bitshift} DIVISOR: {self._divisor} NEW: {new_value}"
+                f"ENTITY_ID: {self.entity_id} VALUE: {value} OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask:04x} SHIFT: {self._bitshift} DIVISOR: {self._divisor} NEW: {new_value}"
             )
 
             if new_value != old_value or self._bitmask == 0xFFFF:
                 _LOGGER.info(
-                    f"Writing: OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask} NEW {new_value}"
+                    f"Writing: OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask} NEW {new_value}"
                 )
                 self._read_value = lxpPacket.register_io_with_retry(
-                    self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE
+                    self._host, self._port, self.register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE
                 )
 
                 if self._read_value is not None:
                     _LOGGER.info(
-                        f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                        f"CAN confirm successful WRITE of SET Register: {self.register_address} Value: {self._read_value} Entity: {self.entity_id}"
                     )
                     if self._read_value == new_value:
                         _LOGGER.info(
-                            f"CAN confirm WRITTEN value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
+                            f"CAN confirm WRITTEN value is same as that sent to SET Register: {self.register_address} Value: {self._read_value} Entity: {self.entity_id}"
                         )
                         self._attr_native_value = value
-                        if self.is_time_entity:
-                            self.hour_val, self.minute_val = self.convert_to_time(int(self._attr_native_value))
-                            _LOGGER.debug(f"Translating To Time {self.hour_val}:{self.minute_val}")
+                        if self._is_time_entity:
+                            self._hour_value, self._minute_value = self.convert_to_time(int(self._attr_native_value))
+                            _LOGGER.debug(f"Translating To Time {self._hour_value}:{self._minute_value}")
                         self.schedule_update_ha_state()
                     else:
                         _LOGGER.warning(
-                            f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {new_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
+                            f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self.register_address} ValueSENT: {new_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
                         )
                 else:
                     _LOGGER.warning(
-                        f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}"
+                        f"CanNOT confirm successful WRITE of SET Register: {self.register_address} Entity: {self.entity_id}"
                     )
 
             _LOGGER.debug("set_native_value done")
@@ -404,31 +397,29 @@ class LuxNormalNumberEntity(NumberEntity):
 class LuxPercentageNumberEntity(LuxNormalNumberEntity):
     """Representation of a Percentage Number entity."""
 
-    @property
-    def unique_id(self) -> Optional[str]:
-        return f"{DOMAIN}_{self.dongle}_numberpercent_{self._register_address}"
-
-    @property
-    def native_unit_of_measurement(self) -> Optional[str]:
-        return "%"
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+        """Initialize the Lux****Number entity."""
+        #
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberpercent_{self.register_address}"
+        self._attr_native_unit_of_measurement = PERCENTAGE
 
 
 class LuxTimeNumberEntity(LuxNormalNumberEntity):
     """Representation of a Time Number entity."""
 
-    @property
-    def is_time_entity(self):
-        return True
-
-    @property
-    def unique_id(self) -> Optional[str]:
-        return f"{DOMAIN}_{self.dongle}_hour_{self._register_address}"
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+        """Initialize the Lux****Number entity."""
+        #
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        self._attr_unique_id = f"{DOMAIN}_{self.dongle}_hour_{self.register_address}"
+        self._is_time_entity = True
 
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         state_attributes = self.state_attributes or {}
-        state_attributes["hour"] = self.hour_val
-        state_attributes["minute"] = self.minute_val
+        state_attributes["hour"] = self._hour_value
+        state_attributes["minute"] = self._minute_value
         return state_attributes
 
 
@@ -439,16 +430,15 @@ class LuxVoltageDivideByTenEntity(LuxNormalNumberEntity):
         """Initialize the Lux****Number entity."""
         #
         super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberdivbyten_{self.register_address}"
         self._divisor = 10
-
-    @property
-    def unique_id(self) -> Optional[str]:
-        return f"{DOMAIN}_{self.dongle}_numberdivbyten_{self._register_address}"
 
 
 class LuxBitmaskNumberEntity(LuxNormalNumberEntity):
     """Representation of a Percentage Number entity."""
 
-    @property
-    def unique_id(self) -> Optional[str]:
-        return f"{DOMAIN}_{self.dongle}_numberbitmask_{self._register_address}_{self._bitmask}"
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+        """Initialize the Lux****Number entity."""
+        #
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberbitmask_{self.register_address}_{self._bitmask}"
