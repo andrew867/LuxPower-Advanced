@@ -467,43 +467,49 @@ class LuxPowerStatusTextSensor(LuxPowerSensorEntity):
         self._data = event.data.get("data", {})
         state_text = ""
         status = int(self._data.get(self._device_attribute, 0.0))
+        # fmt: off
         if status == 0:
             state_text = "Standby"
+        elif status == 1:
+            state_text = "Error"
         elif status == 2:
             state_text = "Inverting"
         elif status == 4:
-            state_text = "Silent"
+            state_text = "Solar > Load - Surplus > Grid"
         elif status == 5:
             state_text = "Float"
-        elif status == 64:
-            state_text = "No AC Power"
         elif status == 7:
             state_text = "Charger Off"
         elif status == 8:
-            state_text = "Support"
+            state_text = "Supporting"
         elif status == 9:
             state_text = "Selling"
         elif status == 10:
             state_text = "Pass Through"
+        elif status == 11:
+            state_text = "Offsetting"
         elif status == 12:
-            state_text = "Solar + Battery Charging"
+            state_text = "Solar > Battery Charging"
         elif status == 16:
-            state_text = "Battery Discharging"
+            state_text = "Battery Discharging > LOAD - Surplus > Grid"
         elif status == 17:
             state_text = "Temperature Over Range"
         elif status == 20:
-            state_text = "Solar + Battery Discharging"
+            state_text = "Solar + Battery Discharging > LOAD - Surplus > Grid"
         elif status == 32:
-            state_text = "Battery Charging"
+            state_text = "AC Battery Charging"
         elif status == 40:
-            state_text = "Solar + Grid + Battery Charging"
-        elif status == 11:
-            state_text = "Offsetting"
+            state_text = "Solar + Grid > Battery Charging"
+        elif status == 64:
+            state_text = "No Grid : Battery > EPS"
+        elif status == 136:
+            state_text = "No Grid : Solar > EPS - Surplus > Battery Charging"
         elif status == 192:
-            state_text = "No grid power available, using solar + battery"
+            state_text = "No Grid : Solar + Battery Discharging > EPS"
         else:
             state_text = "Unknown"
         self._attr_native_value = f"{state_text}"
+        # fmt: on
 
         self._attr_available = True
         self.schedule_update_ha_state()
