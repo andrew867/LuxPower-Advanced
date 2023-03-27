@@ -129,6 +129,34 @@ class LXPPacket:
     # fmt: off
 
     #
+    # Register 120, Most Significant Byte
+    #
+
+    R120_UNKNOWN_BIT_15 = 1 << 15  # = 32768
+    R120_UNKNOWN_BIT_14 = 1 << 14  # = 16384
+    R120_UNKNOWN_BIT_13 = 1 << 13  # =  8192
+    R120_UNKNOWN_BIT_12 = 1 << 12  # =  4096
+    R120_UNKNOWN_BIT_11 = 1 << 11  # =  2048
+    R120_UNKNOWN_BIT_10 = 1 << 10  # =  1024
+    R120_UNKNOWN_BIT_09 = 1 << 9   # =   512
+    R120_UNKNOWN_BIT_08 = 1 << 8   # =   256
+
+    #
+    # Register 120, Least Significant Byte
+    #
+
+    GEN_CHRG_ACC_TO_SOC = 1 << 7   # =   128  As Opposed To According To Voltage
+    R120_UNKNOWN_BIT_06 = 1 << 6   # =    64
+    R120_UNKNOWN_BIT_05 = 1 << 5   # =    32
+    DISCHARG_ACC_TO_SOC = 1 << 4   # =    16  As Opposed To According To Voltage
+    R120_UNKNOWN_BIT_03 = 1 << 3   # =     8
+    AC_CHARGE_MODE_B_02 = 1 << 2   # =     4  AC CHARGE  - Off Disable 2 On 4 /4 Both On SOC
+    AC_CHARGE_MODE_B_01 = 1 << 1   # =     2  AC CHARGE  - Off Disable 4 On Voltage On with 4 Off Time
+    R120_UNKNOWN_BIT_00 = 1 << 0   # =     1
+
+    AC_CHARGE_MODE_BITMASK = AC_CHARGE_MODE_B_01 | AC_CHARGE_MODE_B_02
+
+    #
     # Register 179, Most Significant Byte
     #
 
