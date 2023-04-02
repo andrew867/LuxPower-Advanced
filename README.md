@@ -134,22 +134,26 @@ https://opensource.com/article/21/2/home-assistant-custom-sensors
 :
 ```
 ## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor code. However, there's a new name to prevent conflict. 
+- platform: template
+  sensors:
     lux_new_home_consumption:
-      friendly_name: "Lux - Home Consumption (Daily)"
+      friendly_name: "Lux Home Consumption (Daily)"
+      icon_template: mdi:lightning-bolt
       unit_of_measurement: 'kWh'
       value_template: >
         {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float(0) + 
-                            states('sensor.lux_power_from_inverter_daily') | float(0) +
-                            states('sensor.lux_daily_solar') | float(0) - 
+                            states('sensor.lux_power_from_inverter_to_home_daily') | float(0) +
+                            states('sensor.lux_solar_output_daily') | float(0) - 
                             states('sensor.lux_power_to_inverter_daily') | float(0) - 
                             states('sensor.lux_power_to_grid_daily') | float(0)) }}
     lux_new_home_consumption_live:
-      friendly_name: "Lux - Home Consumption (Live)"
+      friendly_name: "Lux Home Consumption (Live)"
+      icon_template: mdi:lightning-bolt
       unit_of_measurement: 'W'
       value_template: >
         {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float(0) + 
                             states('sensor.lux_power_from_inverter_live') | float(0) +
-                            states('sensor.lux_current_solar_output') | float(0) - 
+                            states('sensor.lux_solar_output_live') | float(0) - 
                             states('sensor.lux_power_to_inverter_live') | float(0) - 
                             states('sensor.lux_power_to_grid_live') | float(0)) }}
                             
