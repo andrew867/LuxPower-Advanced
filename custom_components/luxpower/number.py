@@ -357,7 +357,7 @@ class LuxNormalNumberEntity(NumberEntity):
 
             new_value = (old_value & ~self._bitmask) | ((int(round(float(value) * self._divisor, 0)) << self._bitshift) & self._bitmask)  # fmt: skip
 
-            _LOGGER.warning(
+            _LOGGER.debug(
                 f"ENTITY_ID: {self.entity_id} VALUE: {value} OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask:04x} SHIFT: {self._bitshift} DIVISOR: {self._divisor} NEW: {new_value}"
             )
 
