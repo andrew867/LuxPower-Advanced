@@ -199,7 +199,7 @@ If you find a bug, please open up an issue on Github with as much information as
 To help with this please edit your configuration.yaml and add the following
 ```
 logger:
-  default: debug
+  default: warning
   logs:
     custom_components.luxpower: debug
 ```
