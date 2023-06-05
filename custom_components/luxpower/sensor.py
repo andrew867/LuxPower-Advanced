@@ -26,6 +26,7 @@ from homeassistant.const import (
     POWER_WATT,
     DEVICE_CLASS_FREQUENCY,
     TEMP_CELSIUS,
+    UnitOfFrequency,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, Entity
