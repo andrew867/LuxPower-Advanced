@@ -110,7 +110,14 @@ To install,
 ![image](https://user-images.githubusercontent.com/435874/188263388-8814be9b-6075-4e66-98a0-8818cdb2b321.png)
 
 #  GUI SETUP
-I HIGHLY recommend you install this power card:
+
+I've changing my advise here:
+I would highly suggest you install this:
+https://github.com/DanteWinters/lux-power-distribution-card
+![image](https://github.com/guybw/LuxPython_DEV/assets/64648444/572761b3-3ba3-45aa-8cfc-25c038cf243b)
+
+
+I sugges you install this as well as it's a simple power card:
 https://github.com/gurbyz/power-wheel-card#readme
 Import that and then use the below yaml for the card.
 ```
