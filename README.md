@@ -1,5 +1,5 @@
 # LuxPython (Full Home Assistant UI Integration)
-LuxPython is a custom integration into Home Assistant (HA) to allow local access to the Lux Powertek Inverter
+LuxPython is a custom integration into Home Assistant (HA) to allow local access to the Lux Powertek Inverter. This has also been confirmed to work with EG$ Electronics inverters which are rebranded LUX units.
 
 # IMPORTANT PLEASE READ!
 
