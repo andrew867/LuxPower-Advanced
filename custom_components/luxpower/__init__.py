@@ -63,6 +63,12 @@ SCHEME_RECONNECT = vol.Schema(
     }
 )
 
+SCHEME_RESTART = vol.Schema(
+    {
+        vol.Required("dongle"): vol.Coerce(str),
+    }
+)
+
 SCHEME_SETTIME = vol.Schema(
     {
         vol.Required("dongle"): vol.Coerce(str),
@@ -123,6 +129,12 @@ async def async_setup(hass: HomeAssistant, config: dict):
         _LOGGER.debug("handle_reconnect service: %s %s", DOMAIN, dongle)
         await service_helper.send_reconnect(dongle=dongle)
 
+    async def handle_restart(call):
+        """Handle the service call."""
+        dongle = call.data.get("dongle")
+        _LOGGER.debug("handle_restart service: %s %s", DOMAIN, dongle)
+        await service_helper.send_restart(dongle=dongle)
+
     async def handle_synctime(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
@@ -144,6 +156,10 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
     hass.services.async_register(
         DOMAIN, "luxpower_reconnect", handle_reconnect, schema=SCHEME_RECONNECT
+    )  # fmt: skip
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_restart", handle_restart, schema=SCHEME_RESTART
     )  # fmt: skip
 
     hass.services.async_register(
