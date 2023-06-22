@@ -178,8 +178,8 @@ class LuxTimeTimeEntity(TimeEntity):
         self._attr_icon = entity_definition.get("icon", None)
         # self._attr_mode = entity_definition.get("mode", NumberMode.AUTO)
         # self._attr_native_unit_of_measurement = entity_definition.get("unit_of_measurement", None)
-        self._attr_native_min_value = entity_definition.get("min_val", None)
-        self._attr_native_max_value = entity_definition.get("max_val", None)
+        self._reg_min_value = entity_definition.get("min_val", None)
+        self._reg_max_value = entity_definition.get("max_val", None)
         # self._attr_native_step = entity_definition.get("step", 1.0)
         self._attr_should_poll = False
         self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
@@ -250,9 +250,9 @@ class LuxTimeTimeEntity(TimeEntity):
             _LOGGER.warning(f"Started set_value {value}")
             new_reg_value = value.minute * 256 + value.hour
 
-            if new_reg_value < self.min_value or new_reg_value > self.max_value:
+            if new_reg_value < self._reg_min_value or new_reg_value > self._reg_max_value:
                 raise vol.Invalid(
-                    f"Invalid value for {self.entity_id}: {new_reg_value} (range {self.min_value} - {self.max_value})"
+                    f"Invalid value for {self.entity_id}: {new_reg_value} (range {self._reg_min_value} - {self._reg_max_value})"
                 )
                 return
 
