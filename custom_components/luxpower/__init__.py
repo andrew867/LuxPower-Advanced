@@ -35,7 +35,7 @@ from .helpers import Event
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "switch", "number"]
+PLATFORMS = ["sensor", "switch", "number", "time"]
 
 SCHEME_REGISTER_BANK = vol.Schema(
     {
