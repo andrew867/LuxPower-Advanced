@@ -209,20 +209,20 @@ class LuxPowerClient(asyncio.Protocol):
         _LOGGER.info("reconnect client finished")
 
     async def restart(self):
-        _LOGGER.info("Restarting Luxpower Inverter")
+        _LOGGER.warning("Restarting Luxpower Inverter")
 
         lxpPacket = LXPPacket(debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number)
 
-        _LOGGER.info("Register to be written 11 with value 128")
+        _LOGGER.warning("Register to be written 11 with value 128")
         lxpPacket.register_io_no_retry(self.server, self.port, 11, value=128, iotype=lxpPacket.WRITE_SINGLE)
 
         if self._transport is not None:
             try:
                 self._transport.close()
             except Exception as e:
-                _LOGGER.error("Exception reconnect %s", e)
+                _LOGGER.error("Exception restart %s", e)
         self._connected = False
-        _LOGGER.info("restart inverter finished")
+        _LOGGER.warning("restart inverter finished")
 
     async def synctime(self, do_set_time):
         _LOGGER.info("Syncing Time to Luxpower Inverter")
@@ -379,9 +379,9 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
-            # await luxpower_client.restart()
+            await luxpower_client.restart()
             await asyncio.sleep(1)
-        _LOGGER.debug("send_restart done")
+        _LOGGER.warning("send_restart done")
 
     async def send_synctime(self, dongle, do_set_time):
         luxpower_client = None

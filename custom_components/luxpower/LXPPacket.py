@@ -302,7 +302,7 @@ class LXPPacket:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((host, port))
-            _LOGGER.debug(f"register_io_no_retry: Connected to server {host}, {port}, {register}")
+            _LOGGER.warning(f"register_io_no_retry: Connected to server {host}, {port}, {register}")
 
             read_value = None
 
@@ -319,7 +319,7 @@ class LXPPacket:
             _LOGGER.debug("Closing socket...")
         except Exception as e:
             _LOGGER.error("Exception ", e)
-        _LOGGER.debug("register_io_no_retry done")
+        _LOGGER.warning("register_io_no_retry done")
         return read_value
 
     def register_io_with_retry(self, host, port, register, value=1, iotype=READ_HOLD):
