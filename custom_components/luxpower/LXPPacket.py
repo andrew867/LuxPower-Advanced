@@ -298,6 +298,30 @@ class LXPPacket:
     def parse(self):
         self.parse_packet(self.packet)
 
+    def register_io_no_retry(self, host, port, register, value=1, iotype=READ_HOLD):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sock.connect((host, port))
+            _LOGGER.warning(f"register_io_no_retry: Connected to server {host}, {port}, {register}")
+
+            read_value = None
+
+            if iotype == self.READ_HOLD:
+                packet = self.prepare_packet_for_read(register, 1, type=self.READ_HOLD)
+            elif iotype == self.WRITE_SINGLE:
+                packet = self.prepare_packet_for_write(register, value)
+            else:
+                return
+
+            sock.send(packet)
+
+            sock.close()
+            _LOGGER.debug("Closing socket...")
+        except Exception as e:
+            _LOGGER.error("Exception ", e)
+        _LOGGER.warning("register_io_no_retry done")
+        return read_value
+
     def register_io_with_retry(self, host, port, register, value=1, iotype=READ_HOLD):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -442,7 +466,9 @@ class LXPPacket:
         if self.debug:
             _LOGGER.debug("protocol_number: %s", self.protocol_number)
             _LOGGER.debug("frame_length : %s", self.frame_length)
-            _LOGGER.debug("tcp_function : %s", self.tcp_function, self.TCP_FUNCTION[self.tcp_function])
+            _LOGGER.debug(
+                "tcp_function : %s %s", self.tcp_function, self.TCP_FUNCTION.get(self.tcp_function, "UNKNOWN")
+            )
             _LOGGER.debug("dongle_serial : %s", self.dongle_serial)
             _LOGGER.debug("data_length : %s", self.data_length)
 
