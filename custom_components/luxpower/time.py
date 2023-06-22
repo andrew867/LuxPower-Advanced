@@ -111,35 +111,34 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     timeEntities: List[LuxTimeTimeEntity] = []
 
     times = [
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start1", "register_address": 68, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start1T", "register_address": 68, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End1", "register_address": 69, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start2", "register_address": 70, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End2", "register_address": 71, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start3", "register_address": 72, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End3", "register_address": 73, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start1", "register_address": 76, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End1", "register_address": 77, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start2", "register_address": 78, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End2", "register_address": 79, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start3", "register_address": 80, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End3", "register_address": 81, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start1", "register_address": 84, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End1", "register_address": 85, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start2", "register_address": 86, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End2", "register_address": 87, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start3", "register_address": 88, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End3", "register_address": 89, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start1", "register_address": 152, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End1", "register_address": 153, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start2", "register_address": 154, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End2", "register_address": 155, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start3", "register_address": 156, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} AC First End3", "register_address": 157, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving Start1", "register_address": 209, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving End1", "register_address": 210, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving Start2", "register_address": 211, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
-        {"etype": "LTNE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving End2", "register_address": 212, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start1", "register_address": 68, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End1", "register_address": 69, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start2", "register_address": 70, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End2", "register_address": 71, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start3", "register_address": 72, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End3", "register_address": 73, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start1", "register_address": 76, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End1", "register_address": 77, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start2", "register_address": 78, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End2", "register_address": 79, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge Start3", "register_address": 80, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Charge End3", "register_address": 81, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start1", "register_address": 84, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End1", "register_address": 85, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start2", "register_address": 86, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End2", "register_address": 87, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Start3", "register_address": 88, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End3", "register_address": 89, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start1", "register_address": 152, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First End1", "register_address": 153, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start2", "register_address": 154, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First End2", "register_address": 155, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start3", "register_address": 156, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First End3", "register_address": 157, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving Start1", "register_address": 209, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving End1", "register_address": 210, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving Start2", "register_address": 211, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Peak-Shaving End2", "register_address": 212, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
     ]
 
     for entity_definition in times:
@@ -171,15 +170,16 @@ class LuxTimeTimeEntity(TimeEntity):
         # Hidden Inherited Instance Attributes
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_time_{self.register_address}"
         self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
-        self._attr_native_value = entity_definition.get("def_val", None)
+        # self._attr_native_value = entity_definition.get("def_val", None)
+        self._attr_native_value = None
         self._attr_assumed_state = entity_definition.get("assumed", False)
         self._attr_available = False
         self._attr_device_class = entity_definition.get("device_class", None)
         self._attr_icon = entity_definition.get("icon", None)
         # self._attr_mode = entity_definition.get("mode", NumberMode.AUTO)
         # self._attr_native_unit_of_measurement = entity_definition.get("unit_of_measurement", None)
-        # self._attr_native_min_value = entity_definition.get("min_val", None)
-        # self._attr_native_max_value = entity_definition.get("max_val", None)
+        self._attr_native_min_value = entity_definition.get("min_val", None)
+        self._attr_native_max_value = entity_definition.get("max_val", None)
         # self._attr_native_step = entity_definition.get("step", 1.0)
         self._attr_should_poll = False
         self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
@@ -245,13 +245,14 @@ class LuxTimeTimeEntity(TimeEntity):
     def set_value(self, value):
         """Update the current Time value."""
         _LOGGER.warning(f"TIME set_value called {value}")
-        return
 
         if value != self._attr_native_value:
-            _LOGGER.debug(f"Started set_value {value}")
-            if value < self.min_value or value > self.max_value:
+            _LOGGER.warning(f"Started set_value {value}")
+            new_reg_value = value.minute * 256 + value.hour
+
+            if new_reg_value < self.min_value or new_reg_value > self.max_value:
                 raise vol.Invalid(
-                    f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})"
+                    f"Invalid value for {self.entity_id}: {new_reg_value} (range {self.min_value} - {self.max_value})"
                 )
                 return
 
@@ -281,10 +282,10 @@ class LuxTimeTimeEntity(TimeEntity):
             else:
                 old_value = int(self._register_value)  # Can be anything!!
 
-            new_value = (old_value & ~self._bitmask) | ((int(round(float(value) * self._divisor, 0)) << self._bitshift) & self._bitmask)  # fmt: skip
+            new_value = (old_value & ~self._bitmask) | ((int(round(float(new_reg_value) * self._divisor, 0)) << self._bitshift) & self._bitmask)  # fmt: skip
 
-            _LOGGER.debug(
-                f"ENTITY_ID: {self.entity_id} VALUE: {value} OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask:04x} SHIFT: {self._bitshift} DIVISOR: {self._divisor} NEW: {new_value}"
+            _LOGGER.warning(
+                f"ENTITY_ID: {self.entity_id} VALUE: {new_reg_value} OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask:04x} SHIFT: {self._bitshift} DIVISOR: {self._divisor} NEW: {new_value}"
             )
 
             if new_value != old_value or self._bitmask == 0xFFFF:
@@ -305,7 +306,8 @@ class LuxTimeTimeEntity(TimeEntity):
                         )
                         self._attr_native_value = value
                         if self._is_time_entity:
-                            self._hour_value, self._minute_value = self.convert_to_time(int(self._attr_native_value))
+                            self._hour_value = self._attr_native_value.hour
+                            self._minute_value = self._attr_native_value.minute
                             _LOGGER.debug(f"Translating To Time {self._hour_value}:{self._minute_value}")
                         self.schedule_update_ha_state()
                     else:
@@ -317,7 +319,7 @@ class LuxTimeTimeEntity(TimeEntity):
                         f"CanNOT confirm successful WRITE of SET Register: {self.register_address} Entity: {self.entity_id}"
                     )
 
-            _LOGGER.debug("set_native_value done")
+            _LOGGER.debug("set_value done")
 
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
