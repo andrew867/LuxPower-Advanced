@@ -151,7 +151,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Current Limit", "register_address": 102, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Feed-in Grid Power(%)", "register_address": 103, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} On-grid Discharge Cut-off SOC", "register_address": 105, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "min_val": minnumb, "max_val": 90, "step": 0.1, "mode": NumberMode.BOX, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": True},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "min_val": -99, "max_val": 99, "step": 0.1, "signed": True, "mode": NumberMode.BOX, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": True},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Mode", "register_address": 120, "bitmask": LXPPacket.AC_CHARGE_MODE_BITMASK, "def_val": 42.0, "min_val": 0, "max_val": 6, "step": 2, "mode": NumberMode.BOX, "icon": "mdi:battery-positive", "enabled": False},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Control", "register_address": 120, "bitmask": LXPPacket.DISCHARG_ACC_TO_SOC, "def_val": 42.0, "min_val": 0, "max_val": 16, "step": 16, "mode": NumberMode.BOX, "icon": "mdi:battery-negative", "enabled": False},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Type", "register_address": 120, "bitmask": LXPPacket.GEN_CHRG_ACC_TO_SOC, "def_val": 42.0, "min_val": 0, "max_val": 128, "step": 128, "mode": NumberMode.BOX, "icon": "mdi:engine", "enabled": False},
@@ -257,6 +257,7 @@ class LuxNormalNumberEntity(NumberEntity):
         self._divisor = entity_definition.get("divisor", 1)
         self._read_value = 0
         self._is_time_entity = False
+        self._is_signed = entity_definition.get("signed", False)
         self._hour_value = -1
         self._minute_value = -1
 
@@ -283,6 +284,12 @@ class LuxNormalNumberEntity(NumberEntity):
         # Has To Be Integer Type value Coming In - NOT BYTE ARRAY
         return value & 0x00FF, (value & 0xFF00) >> 8
 
+    def unsigned_short_to_signed_short(self, value):
+        return -(value & 0x8000) | (value & 0x7FFF)
+
+    def signed_short_to_unsigned_short(self, value):
+        return (value + (1 << 16)) & 0xFFFF
+
     def push_update(self, event):
         _LOGGER.debug(
             f"Register Event Received Lux****NumberEntity: {self._attr_name} - Register Address: {self.register_address}"
@@ -297,7 +304,12 @@ class LuxNormalNumberEntity(NumberEntity):
             # Save current register int value
             self._register_value = register_val
             oldstate = self._attr_native_value
-            self._attr_native_value = ((register_val & self._bitmask) >> self._bitshift) / self._divisor
+            if self._is_signed:
+                self._attr_native_value = self.unsigned_short_to_signed_short(
+                    ((register_val & self._bitmask) >> self._bitshift) / self._divisor
+                )
+            else:
+                self._attr_native_value = ((register_val & self._bitmask) >> self._bitshift) / self._divisor
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
                 _LOGGER.debug(f"Changing the number from {oldstate} to {self._attr_native_value}")
@@ -355,7 +367,10 @@ class LuxNormalNumberEntity(NumberEntity):
             else:
                 old_value = int(self._register_value)  # Can be anything!!
 
-            new_value = (old_value & ~self._bitmask) | ((int(round(float(value) * self._divisor, 0)) << self._bitshift) & self._bitmask)  # fmt: skip
+            if self._is_signed:
+                new_value = self.signed_short_to_unsigned_short(int(round(float(value) * self._divisor, 0)))  # fmt: skip
+            else:
+                new_value = (old_value & ~self._bitmask) | ((int(round(float(value) * self._divisor, 0)) << self._bitshift) & self._bitmask)  # fmt: skip
 
             _LOGGER.debug(
                 f"ENTITY_ID: {self.entity_id} VALUE: {value} OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask:04x} SHIFT: {self._bitshift} DIVISOR: {self._divisor} NEW: {new_value}"
