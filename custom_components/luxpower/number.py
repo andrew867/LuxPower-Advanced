@@ -151,7 +151,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Current Limit", "register_address": 102, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "device_class": DEVICE_CLASS_CURRENT, "unit_of_measurement": ELECTRIC_CURRENT_AMPERE, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Feed-in Grid Power(%)", "register_address": 103, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "icon": "mdi:car-turbocharger", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} On-grid Discharge Cut-off SOC", "register_address": 105, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "min_val": -99, "max_val": 99, "step": 0.1, "signed": True, "mode": NumberMode.BOX, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": True},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp Offset Amount", "register_address": 119, "def_val": 42.0, "min_val": -199, "max_val": 199, "step": 0.1, "signed": True, "mode": NumberMode.BOX, "device_class": DEVICE_CLASS_POWER, "unit_of_measurement": POWER_WATT, "enabled": True},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Mode", "register_address": 120, "bitmask": LXPPacket.AC_CHARGE_MODE_BITMASK, "def_val": 42.0, "min_val": 0, "max_val": 6, "step": 2, "mode": NumberMode.BOX, "icon": "mdi:battery-positive", "enabled": False},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Discharge Control", "register_address": 120, "bitmask": LXPPacket.DISCHARG_ACC_TO_SOC, "def_val": 42.0, "min_val": 0, "max_val": 16, "step": 16, "mode": NumberMode.BOX, "icon": "mdi:battery-negative", "enabled": False},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Type", "register_address": 120, "bitmask": LXPPacket.GEN_CHRG_ACC_TO_SOC, "def_val": 42.0, "min_val": 0, "max_val": 128, "step": 128, "mode": NumberMode.BOX, "icon": "mdi:engine", "enabled": False},
@@ -305,9 +305,7 @@ class LuxNormalNumberEntity(NumberEntity):
             self._register_value = register_val
             oldstate = self._attr_native_value
             if self._is_signed:
-                self._attr_native_value = self.unsigned_short_to_signed_short(
-                    ((register_val & self._bitmask) >> self._bitshift) / self._divisor
-                )
+                self._attr_native_value = self.unsigned_short_to_signed_short(register_val) / self._divisor  # fmt: skip
             else:
                 self._attr_native_value = ((register_val & self._bitmask) >> self._bitshift) / self._divisor
             if oldstate != self._attr_native_value or not self._attr_available:
