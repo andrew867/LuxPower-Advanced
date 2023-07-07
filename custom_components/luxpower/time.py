@@ -221,13 +221,13 @@ class LuxTimeTimeEntity(TimeEntity):
         return value & 0x00FF, (value & 0xFF00) >> 8
 
     def push_update(self, event):
-        _LOGGER.info(
+        _LOGGER.warning(
             f"Register Event Received Lux****TimeEntity: {self._attr_name} - Register Address: {self.register_address}"
         )
 
         registers = event.data.get("registers", {})
         if self.register_address in registers.keys():
-            _LOGGER.debug(f"Register Address: {self.register_address} is in register.keys")
+            _LOGGER.warning(f"Register Address: {self.register_address} is in register.keys")
             register_val = registers.get(self.register_address, None)
             if register_val is None:
                 return
@@ -238,16 +238,16 @@ class LuxTimeTimeEntity(TimeEntity):
             self._attr_native_value = datetime.time(self._hour_value, self._minute_value)
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
-                _LOGGER.debug(f"Changing the Time from {oldstate} to {self._attr_native_value}")
+                _LOGGER.warning(f"Changing the Time from {oldstate} to {self._attr_native_value}")
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
     def set_value(self, value):
         """Update the current Time value."""
-        _LOGGER.info(f"TIME set_value called {value}")
+        _LOGGER.warning(f"TIME set_value called {value}")
 
         if value != self._attr_native_value:
-            _LOGGER.debug(f"Started set_value {value}")
+            _LOGGER.warning(f"Started set_value {value}")
             new_reg_value = value.minute * 256 + value.hour
 
             if new_reg_value < self._reg_min_value or new_reg_value > self._reg_max_value:
@@ -269,7 +269,7 @@ class LuxTimeTimeEntity(TimeEntity):
 
                 if self._read_value is not None:
                     # Read has been successful - use read value
-                    _LOGGER.debug(
+                    _LOGGER.info(
                         f"Read Register OK - Using INVERTER Register {self.register_address} value of {self._read_value}"
                     )
                     old_value = int(self._read_value)
@@ -284,12 +284,12 @@ class LuxTimeTimeEntity(TimeEntity):
 
             new_value = (old_value & ~self._bitmask) | ((int(round(float(new_reg_value) * self._divisor, 0)) << self._bitshift) & self._bitmask)  # fmt: skip
 
-            _LOGGER.debug(
+            _LOGGER.warning(
                 f"ENTITY_ID: {self.entity_id} VALUE: {new_reg_value} OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask:04x} SHIFT: {self._bitshift} DIVISOR: {self._divisor} NEW: {new_value}"
             )
 
             if new_value != old_value or self._bitmask == 0xFFFF:
-                _LOGGER.debug(
+                _LOGGER.info(
                     f"Writing: OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask} NEW {new_value}"
                 )
                 self._read_value = lxpPacket.register_io_with_retry(
@@ -297,11 +297,11 @@ class LuxTimeTimeEntity(TimeEntity):
                 )
 
                 if self._read_value is not None:
-                    _LOGGER.debug(
+                    _LOGGER.info(
                         f"CAN confirm successful WRITE of SET Register: {self.register_address} Value: {self._read_value} Entity: {self.entity_id}"
                     )
                     if self._read_value == new_value:
-                        _LOGGER.debug(
+                        _LOGGER.info(
                             f"CAN confirm WRITTEN value is same as that sent to SET Register: {self.register_address} Value: {self._read_value} Entity: {self.entity_id}"
                         )
                         self._attr_native_value = value

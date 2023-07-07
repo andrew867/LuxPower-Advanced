@@ -182,9 +182,6 @@ I can't test this as I don't have 2 inverters but if you do try it out and let m
 Do you want to refresh more often than 6 minutes or do you want to change times in HA? Want to set the times in HA easily? Have a read of this file but be warned it's a bit more complex! Many thanks for the work from @maegibbons for the setup of the times for this.
 https://github.com/guybw/LuxPython_DEV/blob/master/README_ADVANCED.md
 
-# Fix your IP
-Most home routers don't give you a fixed IP so when the dongle gets a new IP (anything from every few hours to every few weeks) Once that happens the IP that is in HA changes. 
-I HIGHLY recommend giving both the inverter a fixed IP AND Home Assistant. I would suggest doing this by doing a dhcp reservation, this is beyond what this project covers but MOST routers will be able to do this. Google is going to be your friend on this. If it absolutely doesn't then you can assign an IP manually for both the dongle and HA.
 # BACKUPS
 The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail! I HIGHLY recommend this https://github.com/sabeechen/hassio-google-drive-backup
 
