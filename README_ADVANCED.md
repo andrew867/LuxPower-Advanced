@@ -1,27 +1,6 @@
 Please read the first readme BEFORE following any instructions on this page, this is more of a notes page and likely will not work for you the first time around.
 
 
-# Below will refresh the data in HA every 30 seconds.
-This is a work in progress  
-
-Import the automation below, this will refresh the data roughly every 30 seconds depending when the inverter reads our request. WARNING: DO NOT SET IT LOWER OR IT WILL BREAK! This is due to the inverter taking time to respond, not my code!
-
-You MUST include your dongle number below!
-```
-alias: "DEBUG - refresh Lux regularly "
-description: ""
-trigger:
-  - platform: time_pattern
-    seconds: "30"
-condition: []
-action:
-  - service: luxpower.luxpower_refresh_registers
-    data:
-      dongle: BA*******
-mode: single
-
-```
-
 # LoveLace (GUI Example)
 In order to help you off, you can create a new card in LoveLace. 
 Simply go to, Settings > Dashboards> Click on the Dashboard you want to add or click on "Open" on Overview if you don't have a custom one.

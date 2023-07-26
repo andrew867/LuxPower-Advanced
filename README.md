@@ -133,6 +133,11 @@ battery_power_entity: sensor.lux_battery_flow_live
 At the end of this, you should be able to add the following sensors to HA Energy and it will start tracking:
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
+# Changing the refresh interval
+The LUX dongle updates the website every 5/6 minutes, this is useless!
+In order to help you refresh the dataq more often we have included a blueprint which is location at: \blueprints\automation\luxpower\refresh_interval.yaml
+You should be able to manually import this however I will create a button on here to do that soon.
+
 # ACS Inverter (AC ONLY)
 If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!)
 You can add sensor: !include sensors.yaml line into your configuration and then create a sensors.yaml file with the below. Have a look at the link below for more help on this.
@@ -174,6 +179,10 @@ We cannot support the ethernet dongle, only WIFI!
 Also be aware that you can set the times in HA but they will not pull (new) times from the Lux Server so if you set times in the app / website they will not change in HA.
 There is a blueprint and you need to create a helper (please contact me for a demo on how to do this if required) I don't recommend it as I would use the AC Charge Switch.
 
+# Fix your IP
+Most home routers don't give you a fixed IP so when the dongle gets a new IP (anything from every few hours to every few weeks) Once that happens the IP that is in HA changes. 
+I HIGHLY recommend giving both the inverter a fixed IP AND Home Assistant. I would suggest doing this by doing a dhcp reservation, this is beyond what this project covers but MOST routers will be able to do this. Google is going to be your friend on this. If it absolutely doesn't then you can assign an IP manually for both the dongle and HA.
+
 # 2 (or more inverters)
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
 I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_templae.yaml is the file.
@@ -187,6 +196,14 @@ Most home routers don't give you a fixed IP so when the dongle gets a new IP (an
 I HIGHLY recommend giving both the inverter a fixed IP AND Home Assistant. I would suggest doing this by doing a dhcp reservation, this is beyond what this project covers but MOST routers will be able to do this. Google is going to be your friend on this. If it absolutely doesn't then you can assign an IP manually for both the dongle and HA.
 # BACKUPS
 The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail! I HIGHLY recommend this https://github.com/sabeechen/hassio-google-drive-backup
+
+# Upgrades
+This is an intresting thread. Most people seem to set this up and then never change it. Personally, as people like Mark have spent a lot of time fixing the code and making it more streamlined and added more features, I would personally recomend doing it as often as you can.
+We never remove funionality (if something doesn't work, I have kept a very good history of copies of the intergration on here) so we can always roll back if required but remember this intergration was orginally for ME. If it's not absolutely 100% stable, I wouldn't run it! I have a dev box this is tested on for a few hours / days but after that it's running 24/7/365 on my production box!
+To upgrade, simple find the luxpower folder in the custom intergrations and back it up, then select all the files in the folder and delete them, now just paste the latest files so it looks like it did before you deleted the files. It should take around 20 seconds to do this and then just reboot Home Assistant. It's so quick it's just not an issue. 
+
+# Breaking Changes
+@maegibbons has spent a huge amount of time sorting out the time settings. In the lastest release of LUXPython with HA 2023.06 we now have native time settings so any custom helpers / automations can now be deleted. We will not remove the old way of doing this yet but it will go in the next few releases. Going forward you can just add "time.lux_ac_charge_start1" for example.
 
 # Thanks!
 
