@@ -36,6 +36,9 @@ from .const import (
 from .helpers import Event
 from .LXPPacket import LXPPacket
 
+# from homeassistant.const import EntityCategory
+
+
 """
 Setup some options from this page in Home-assistant and allow times and % to be set.
 
@@ -235,6 +238,7 @@ class LuxNormalNumberEntity(NumberEntity):
         # Hidden Inherited Instance Attributes
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numbernormal_{self.register_address}"
         self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        # self._attr_entity_category = entity_definition.get("ent_cat", None)
         self._attr_native_value = entity_definition.get("def_val", None)
         self._attr_assumed_state = entity_definition.get("assumed", False)
         self._attr_available = False

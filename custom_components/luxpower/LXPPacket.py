@@ -601,6 +601,13 @@ class LXPPacket:
             elif self.register == 80 and number_of_registers == 40:
                 self.inputRead3 = True
                 self.get_device_values_bank2()
+            elif self.register == 0 and number_of_registers == 127:
+                self.inputRead1 = True
+                self.inputRead2 = True
+                self.inputRead3 = True
+                self.get_device_values_bank0()
+                self.get_device_values_bank1()
+                self.get_device_values_bank2()
             else:
                 if number_of_registers == 1:
                     # Decode Single Register
