@@ -146,20 +146,11 @@ class LuxPowerClient(asyncio.Protocol):
                                 self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
                         else:
                             # Decode Series of Registers - Possibly Over Block Boundaries
-                            self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
-                            self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
-                            self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
-                            self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
-
-                    if 0 <= register <= 39:
-                        self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
-                        self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
-                    elif 40 <= register <= 79:
-                        self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
-                        self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
-                    elif 80 <= register <= 119:
-                        self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
-                        self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                            if 0 <= register <= 119:
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
 
                 elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:  # fmt: skip
                     total_data = {"registers": result.get("registers", {})}

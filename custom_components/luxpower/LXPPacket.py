@@ -619,9 +619,10 @@ class LXPPacket:
                         self.get_device_values_bank2()
                 else:
                     # Decode Series of Registers - Possibly Over Block Boundaries
-                    self.get_device_values_bank0()
-                    self.get_device_values_bank1()
-                    self.get_device_values_bank2()
+                    if 0 <= self.register <= 119:
+                        self.get_device_values_bank0()
+                        self.get_device_values_bank1()
+                        self.get_device_values_bank2()
 
             self.data.update(self.readValuesThis)
 
