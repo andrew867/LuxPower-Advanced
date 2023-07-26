@@ -110,9 +110,9 @@ class LuxPowerClient(asyncio.Protocol):
                 _LOGGER.debug(result)
                 if self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
                     register = self.lxpPacket.register
-                    _LOGGER.warning("register: %s ", register)
+                    _LOGGER.debug("register: %s ", register)
                     number_of_registers = int(len(result.get("value", "")) / 2)
-                    _LOGGER.warning("number_of_registers: %s ", number_of_registers)
+                    _LOGGER.debug("number_of_registers: %s ", number_of_registers)
                     total_data = {"data": result.get("data", {})}
                     event_data = {"data": result.get("thesedata", {})}
                     _LOGGER.debug("EVENT DATA: %s ", event_data)
