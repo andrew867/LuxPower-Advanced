@@ -109,24 +109,50 @@ class LuxPowerClient(asyncio.Protocol):
             if not self.lxpPacket.packet_error:
                 _LOGGER.debug(result)
                 if self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
+                    register = self.lxpPacket.register
+                    _LOGGER.debug("register: %s ", register)
+                    number_of_registers = int(len(result.get("value", "")) / 2)
+                    _LOGGER.debug("number_of_registers: %s ", number_of_registers)
                     total_data = {"data": result.get("data", {})}
                     event_data = {"data": result.get("thesedata", {})}
                     _LOGGER.debug("EVENT DATA: %s ", event_data)
-                    if 0 <= self.lxpPacket.register <= 39:
+
+                    # Decode Standard Block Registers
+                    if register == 0 and number_of_registers == 40:
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
                         self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
-                    elif 40 <= self.lxpPacket.register <= 79:
+                    elif register == 40 and number_of_registers == 40:
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
                         self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
-                    elif 80 <= self.lxpPacket.register <= 119:
+                    elif register == 80 and number_of_registers == 40:
                         self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
                         self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                    elif register == 0 and number_of_registers == 127:
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
+                        self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                    else:
+                        if number_of_registers == 1:
+                            # Decode Single Register
+                            if 0 <= register <= 39:
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                            elif 40 <= register <= 79:
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                            elif 80 <= register <= 119:
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                        else:
+                            # Decode Series of Registers - Possibly Over Block Boundaries
+                            if 0 <= register <= 119:
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK1_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
+                                self.hass.bus.fire(self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
 
-                    # self.hass.bus.fire(self.events.EVENT_DATA_RECEIVED, event_data)
-                elif (
-                    self.lxpPacket.device_function == self.lxpPacket.READ_HOLD
-                    or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE
-                ):
+                elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:  # fmt: skip
                     total_data = {"registers": result.get("registers", {})}
                     event_data = {"registers": result.get("thesereg", {})}
                     _LOGGER.debug("EVENT REGISTER: %s ", event_data)

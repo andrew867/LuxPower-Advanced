@@ -27,7 +27,7 @@ from .const import (
 from .helpers import Event
 from .LXPPacket import LXPPacket
 
-# from homeassistant.const import ()
+# from homeassistant.const import EntityCategory
 
 
 """
@@ -62,7 +62,7 @@ nameID_midfix = ""
 entityID_midfix = ""
 
 
-async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
+async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities):
     """Set up the time platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux time platform")
@@ -146,7 +146,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         if etype == "LTTE":
             timeEntities.append(LuxTimeTimeEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
 
-    async_add_devices(timeEntities, True)
+    async_add_entities(timeEntities, True)
 
     _LOGGER.info("LuxPower time async_setup_platform time done")
 
@@ -170,6 +170,7 @@ class LuxTimeTimeEntity(TimeEntity):
         # Hidden Inherited Instance Attributes
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_time_{self.register_address}"
         self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        # self._attr_entity_category = entity_definition.get("ent_cat", None)
         # self._attr_native_value = entity_definition.get("def_val", None)
         self._attr_native_value = None
         self._attr_assumed_state = entity_definition.get("assumed", False)
