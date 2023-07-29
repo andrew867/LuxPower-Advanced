@@ -202,6 +202,7 @@ class LuxTimeTimeEntity(TimeEntity):
         await super().async_added_to_hass()
         _LOGGER.debug(f"async_added_to_hass {self._attr_name},  {self.entity_id},  {self.unique_id}")
         if self.hass is not None:
+            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
             if self.register_address == 21:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
             elif 0 <= self.register_address <= 39:
@@ -222,9 +223,7 @@ class LuxTimeTimeEntity(TimeEntity):
         return value & 0x00FF, (value & 0xFF00) >> 8
 
     def push_update(self, event):
-        _LOGGER.info(
-            f"Register Event Received Lux****TimeEntity: {self._attr_name} - Register Address: {self.register_address}"
-        )
+        _LOGGER.info(f"Register Event Received Lux****TimeEntity: {self._attr_name} - Register Address: {self.register_address}")  # fmt: skip
 
         registers = event.data.get("registers", {})
         if self.register_address in registers.keys():
@@ -242,6 +241,11 @@ class LuxTimeTimeEntity(TimeEntity):
                 _LOGGER.debug(f"Changing the Time from {oldstate} to {self._attr_native_value}")
                 self.schedule_update_ha_state()
         return self._attr_native_value
+
+    def gone_unavailable(self, event):
+        _LOGGER.warning(f"Register: gone_unavailable event received Name: {self._attr_name} - Register Address: {self.register_address}")  # fmt: skip
+        self._attr_available = False
+        self.schedule_update_ha_state()
 
     def set_value(self, value):
         """Update the current Time value."""

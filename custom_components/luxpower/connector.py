@@ -69,6 +69,7 @@ class LuxPowerClient(asyncio.Protocol):
         self._connected = True
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
+        self.hass.bus.fire(self.events.EVENT_UNAVAILABLE_RECEIVED, "")
         self._connected = False
         _LOGGER.error("Disconnected from Luxpower server")
 
@@ -231,6 +232,7 @@ class LuxPowerClient(asyncio.Protocol):
                 self._transport.close()
             except Exception as e:
                 _LOGGER.error("Exception reconnect %s", e)
+        self.hass.bus.fire(self.events.EVENT_UNAVAILABLE_RECEIVED, "")
         self._connected = False
         _LOGGER.info("reconnect client finished")
 

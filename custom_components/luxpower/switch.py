@@ -147,6 +147,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         _LOGGER.debug("async_added_to_hass %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
+            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
             if self._register_address == 21:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
             elif 0 <= self._register_address <= 39:
@@ -195,8 +196,12 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                     self.schedule_update_ha_state()
         return self._state
 
+    def gone_unavailable(self, event):
+        _LOGGER.warning(f"Register: gone_unavailable event received Name: {self._attr_name} - Register Address: {self.register_address}")  # fmt: skip
+        self._attr_available = False
+        self.schedule_update_ha_state()
+
     def update(self):
-        # self._state = self._protocol._dp_values.get(self._dp_id, None)
         _LOGGER.debug(f"{self._register_address} {self._bitmask} updating state to {self._state}")
         return self._state
 
@@ -321,4 +326,3 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         return state_attributes
 
     # fmt: on
-#
