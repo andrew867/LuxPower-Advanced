@@ -14,6 +14,9 @@ This has cost me money to develop and all the money goes to the developer (paid 
 Once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it ALL goes to bug fixes and features!
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
 
+If that link doesn't work then my paypal is guybw@hotmail.com please use friends and family as Paypal take a good % otherwise. Thank you!
+
+
 # Videos
 I've recorded some very quick videos, only 1 has audio yet.
 They aren't great but it might help someone.
