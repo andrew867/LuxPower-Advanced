@@ -86,13 +86,8 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
 
     """
     await asyncio.sleep(20)
-    await hass.services.async_call(
-        DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True
-    )
-
-    await hass.services.async_call(
-        DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True
-    )  # fmt: skip
+    await hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True)  # fmt: skip
+    await hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True)  # fmt: skip
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -194,8 +189,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     events = Event(dongle=DONGLE_SERIAL)
     luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)), serial_number=str.encode(str(SERIAL_NUMBER)), events=events,)  # fmt: skip
+
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
-    hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
+
+    # We used to start here:
+    # hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
+
     # await hass.async_add_job(luxpower_client.start_luxpower_client_daemon())
 
     hass.data[events.CLIENT_DAEMON] = luxpower_client
@@ -210,8 +209,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
+    await asyncio.sleep(20)
+    hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
+
     # Refresh ALL Platforms By Issuing Service Call, After Suitable Delay To Give The Platforms Time To Initialise
-    hass.async_create_task(refreshALLPlatforms(hass, dongle=DONGLE_SERIAL))
+
+    # We used to force platform refresh
+    # hass.async_create_task(refreshALLPlatforms(hass, dongle=DONGLE_SERIAL))
 
     _LOGGER.info("LuxPower init async_setup done")
     return True

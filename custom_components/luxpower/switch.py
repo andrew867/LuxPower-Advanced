@@ -197,7 +197,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         return self._state
 
     def gone_unavailable(self, event):
-        _LOGGER.warning(f"Register: gone_unavailable event received Name: {self._attr_name} - Register Address: {self.register_address}")  # fmt: skip
+        _LOGGER.warning(f"Register: gone_unavailable event received Name: {self._attr_name} - Register Address: {self._register_address}")  # fmt: skip
         self._attr_available = False
         self.schedule_update_ha_state()
 

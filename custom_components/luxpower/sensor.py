@@ -250,7 +250,7 @@ class LuxPowerSensorEntity(SensorEntity):
         self._device_attribute = entity_definition.get("attribute", None)
         self._decimal_places = entity_definition.get("decimal_places", 1)
 
-        _LOGGER.debug("Slugified entity_id: %s", self.entity_id)
+        # _LOGGER.debug("Slugified entity_id: %s", self.entity_id)
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -404,8 +404,8 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
                 return
             oldstate = self._attr_native_value
             self._attr_native_value = float(register_val)
-            self._attr_available = True
-            if oldstate != self._attr_native_value:
+            if oldstate != self._attr_native_value or not self._attr_available:
+                self._attr_available = True
                 _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._attr_native_value}")
                 self.schedule_update_ha_state()
         return self._attr_native_value
@@ -419,17 +419,18 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
     """
 
     def push_update(self, event):
-        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Register: {self._register_address} Name: {self._attr_name}")  # fmt: skip
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} FIRMWARE Register: {self._register_address} Name: {self._attr_name}")  # fmt: skip
         registers = event.data.get("registers", {})
         self._data = registers
 
         if self._register_address in registers.keys():
-            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
+            _LOGGER.debug(f"Register Address For FIRMWARE: {self._register_address} is in register.keys")
             reg07_val = registers.get(7, None)
             reg08_val = registers.get(8, None)
             reg09_val = registers.get(9, None)
             reg10_val = registers.get(10, None)
             if reg07_val is None or reg08_val is None:
+                _LOGGER.debug(f"ABORTING: reg07_val: {reg07_val} - reg08_val: {reg08_val}")
                 return
             reg07_str = int(reg07_val).to_bytes(2, "little").decode()
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
@@ -438,8 +439,8 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
 
             oldstate = self._attr_native_value
             self._attr_native_value = reg07_str + reg08_str + "-" + reg09_str + reg10_str
-            self._attr_available = True
-            if oldstate != self._attr_native_value:
+            if oldstate != self._attr_native_value or not self._attr_available:
+                self._attr_available = True
                 _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._attr_native_value}")
                 self.schedule_update_ha_state()
         return self._attr_native_value
@@ -569,6 +570,7 @@ class LuxStateSensorEntity(SensorEntity):
         self._attr_unique_id = "{}_{}_{}".format(DOMAIN, self.dongle, "states")
         self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
         self._attr_native_value = "Waiting"
+        self._attr_available = False
         self._attr_should_poll = False
 
         # Hidden Class Extended Instance Attributes
@@ -675,6 +677,7 @@ class LuxStateSensorEntity(SensorEntity):
         self.totaldata = self.luxpower_client.lxpPacket.data
         _LOGGER.debug(f"TotalData: {self.totaldata}")
 
+        self._attr_available = True
         self.schedule_update_ha_state()
         return self._attr_native_value
 
