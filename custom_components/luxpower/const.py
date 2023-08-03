@@ -9,7 +9,7 @@ This is where we will describe what this module does
 UA = "unavailable"
 
 DOMAIN = "luxpower"
-VERSION = "4.2.5"
+VERSION = "4.2.6"
 
 # Config UI Attributes
 ATTR_LUX_HOST = "lux_host"

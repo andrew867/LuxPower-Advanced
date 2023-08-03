@@ -130,6 +130,10 @@ SInvSN = "1212016024"  # Slave  Inverter Serial Number
 @state_trigger(
     f"sensor.lux_{SInvSN}_battery != 'unavailable' \
       and sensor.lux_{MInvSN}_battery != 'unavailable' \
+      and number.lux_{MInvSN}_system_charge_power_rate != 'unavailable' \
+      and number.lux_{MInvSN}_system_discharge_power_rate != 'unavailable' \
+      and number.lux_{SInvSN}_system_charge_power_rate != 'unavailable' \
+      and number.lux_{SInvSN}_system_discharge_power_rate != 'unavailable' \
       and abs(int(sensor.lux_{SInvSN}_battery)-int(sensor.lux_{MInvSN}_battery)) > 1"
 )
 
@@ -137,7 +141,7 @@ SInvSN = "1212016024"  # Slave  Inverter Serial Number
 
 
 def auto_balance():
-    log.debug(f"auto_balance has fired")
+    log.info(f"auto_balance has fired")
     # log.log(info, f"auto_balance has fired")
 
     if state.get(f"sensor.lux_{MInvSN}_battery").lower() in ["unknown", "unavailable"] or state.get(
@@ -216,12 +220,16 @@ def auto_balance():
 @task_unique("set_dis_and_charge_rates_to_100", kill_me=True)
 @state_trigger(
     f"sensor.lux_{SInvSN}_battery != 'unavailable' \
-             and sensor.lux_{MInvSN}_battery != 'unavailable' \
-             and int(sensor.lux_{SInvSN}_battery) == int(sensor.lux_{MInvSN}_battery) \
-             and int(float(number.lux_{MInvSN}_system_charge_power_rate) \
-                   + float(number.lux_{MInvSN}_system_discharge_power_rate) \
-                   + float(number.lux_{SInvSN}_system_charge_power_rate) \
-                   + float(number.lux_{SInvSN}_system_discharge_power_rate)) != 400"
+      and sensor.lux_{MInvSN}_battery != 'unavailable' \
+      and number.lux_{MInvSN}_system_charge_power_rate != 'unavailable' \
+      and number.lux_{MInvSN}_system_discharge_power_rate != 'unavailable' \
+      and number.lux_{SInvSN}_system_charge_power_rate != 'unavailable' \
+      and number.lux_{SInvSN}_system_discharge_power_rate != 'unavailable' \
+      and int(sensor.lux_{SInvSN}_battery) == int(sensor.lux_{MInvSN}_battery) \
+      and int(float(number.lux_{MInvSN}_system_charge_power_rate) \
+            + float(number.lux_{MInvSN}_system_discharge_power_rate) \
+            + float(number.lux_{SInvSN}_system_charge_power_rate) \
+            + float(number.lux_{SInvSN}_system_discharge_power_rate)) != 400"
 )
 def set_dis_and_charge_rates_to_100():
     log.debug(f"set_dis_and_charge_rates_to_100 has fired")
