@@ -16,6 +16,7 @@ from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
+    DEVICE_CLASS_FREQUENCY,
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLTAGE,
@@ -24,7 +25,6 @@ from homeassistant.const import (
     ENERGY_KILO_WATT_HOUR,
     PERCENTAGE,
     POWER_WATT,
-    DEVICE_CLASS_FREQUENCY,
     TEMP_CELSIUS,
     UnitOfFrequency,
 )
@@ -135,7 +135,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 1 (Live)", "unique": "lux_current_solar_voltage_1", "bank": 0, "attribute": LXPPacket.v_pv_1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 2 (Live)", "unique": "lux_current_solar_voltage_2", "bank": 0, "attribute": LXPPacket.v_pv_2, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 3 (Live)", "unique": "lux_current_solar_voltage_3", "bank": 0, "attribute": LXPPacket.v_pv_3, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT},
-              
+
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output (Daily)", "unique": "lux_daily_solar", "bank": 0, "attribute": LXPPacket.e_pv_total, "device_class": DEVICE_CLASS_ENERGY, "unit_of_measurement": ENERGY_KILO_WATT_HOUR},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 1 (Daily)", "unique": "lux_daily_solar_array_1", "bank": 0, "attribute": LXPPacket.e_pv_1_day, "device_class": DEVICE_CLASS_ENERGY, "unit_of_measurement": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 2 (Daily)", "unique": "lux_daily_solar_array_2", "bank": 0, "attribute": LXPPacket.e_pv_2_day, "device_class": DEVICE_CLASS_ENERGY, "unit_of_measurement": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
@@ -250,13 +250,14 @@ class LuxPowerSensorEntity(SensorEntity):
         self._device_attribute = entity_definition.get("attribute", None)
         self._decimal_places = entity_definition.get("decimal_places", 1)
 
-        _LOGGER.debug("Slugified entity_id: %s", self.entity_id)
+        # _LOGGER.debug("Slugified entity_id: %s", self.entity_id)
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         _LOGGER.debug("async_added_to_hasss %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
+            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
             if self._bank == 0:
                 self.hass.bus.async_listen(self.event.EVENT_DATA_BANK0_RECEIVED, self.push_update)
             elif self._bank == 1:
@@ -267,9 +268,7 @@ class LuxPowerSensorEntity(SensorEntity):
                 self.hass.bus.async_listen(self.event.EVENT_DATA_RECEIVED, self.push_update)
 
     def push_update(self, event):
-        _LOGGER.debug(
-            f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}"
-        )
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
         value = self._data.get(self._device_attribute)
         if isinstance(value, (int, float)):
@@ -281,6 +280,11 @@ class LuxPowerSensorEntity(SensorEntity):
         self._attr_native_value = f"{value}"
         self.schedule_update_ha_state()
         return self._attr_native_value
+
+    def gone_unavailable(self, event):
+        _LOGGER.warning(f"Sensor: gone_unavailable event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+        self._attr_available = False
+        self.schedule_update_ha_state()
 
     @property
     def device_info(self):
@@ -308,9 +312,7 @@ class LuxPowerFlowSensor(LuxPowerSensorEntity):
         self._device_attribute2 = entity_definition["attribute2"]
 
     def push_update(self, event):
-        _LOGGER.debug(
-            f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}"
-        )
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
 
         negative_value = float(self._data.get(self._device_attribute1, 0.0))
@@ -342,9 +344,7 @@ class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
         self._device_attribute4 = entity_definition["attribute4"]  # Power from consumer unit to grid
 
     def push_update(self, event):
-        _LOGGER.debug(
-            f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}"
-        )
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
 
         grid = float(self._data.get(self._device_attribute1, 0.0))
@@ -376,6 +376,7 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
         _LOGGER.debug("async_added_to_hasss %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
+            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
             if self._register_address == 21:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
             elif 0 <= self._register_address <= 39:
@@ -392,9 +393,7 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update)
 
     def push_update(self, event):
-        _LOGGER.debug(
-            f"Sensor: register event received Bank: {self._bank} Register: {self._register_address} Name: {self._attr_name}"
-        )
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Register: {self._register_address} Name: {self._attr_name}")  # fmt: skip
         registers = event.data.get("registers", {})
         self._data = registers
 
@@ -405,8 +404,8 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
                 return
             oldstate = self._attr_native_value
             self._attr_native_value = float(register_val)
-            self._attr_available = True
-            if oldstate != self._attr_native_value:
+            if oldstate != self._attr_native_value or not self._attr_available:
+                self._attr_available = True
                 _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._attr_native_value}")
                 self.schedule_update_ha_state()
         return self._attr_native_value
@@ -420,19 +419,18 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
     """
 
     def push_update(self, event):
-        _LOGGER.debug(
-            f"Sensor: register event received Bank: {self._bank} Register: {self._register_address} Name: {self._attr_name}"
-        )
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} FIRMWARE Register: {self._register_address} Name: {self._attr_name}")  # fmt: skip
         registers = event.data.get("registers", {})
         self._data = registers
 
         if self._register_address in registers.keys():
-            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
+            _LOGGER.debug(f"Register Address For FIRMWARE: {self._register_address} is in register.keys")
             reg07_val = registers.get(7, None)
             reg08_val = registers.get(8, None)
             reg09_val = registers.get(9, None)
             reg10_val = registers.get(10, None)
             if reg07_val is None or reg08_val is None:
+                _LOGGER.debug(f"ABORTING: reg07_val: {reg07_val} - reg08_val: {reg08_val}")
                 return
             reg07_str = int(reg07_val).to_bytes(2, "little").decode()
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
@@ -441,8 +439,8 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
 
             oldstate = self._attr_native_value
             self._attr_native_value = reg07_str + reg08_str + "-" + reg09_str + reg10_str
-            self._attr_available = True
-            if oldstate != self._attr_native_value:
+            if oldstate != self._attr_native_value or not self._attr_available:
+                self._attr_available = True
                 _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._attr_native_value}")
                 self.schedule_update_ha_state()
         return self._attr_native_value
@@ -470,9 +468,7 @@ class LuxPowerStatusTextSensor(LuxPowerSensorEntity):
         super().__init__(hass, host, port, dongle, serial, entity_definition, event)
 
     def push_update(self, event):
-        _LOGGER.debug(
-            f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}"
-        )
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
         state_text = ""
         status = int(self._data.get(self._device_attribute, 0.0))
@@ -534,9 +530,7 @@ class LuxPowerDataReceivedTimestampSensor(LuxPowerSensorEntity):
         self.datetime_last_received = None
 
     def push_update(self, event):
-        _LOGGER.debug(
-            f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}"
-        )
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
         self.datetime_last_received = datetime.now()
         self._attr_native_value = "{}".format(datetime.now().strftime("%A %B %-d, %I:%M %p"))
@@ -576,6 +570,7 @@ class LuxStateSensorEntity(SensorEntity):
         self._attr_unique_id = "{}_{}_{}".format(DOMAIN, self.dongle, "states")
         self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
         self._attr_native_value = "Waiting"
+        self._attr_available = False
         self._attr_should_poll = False
 
         # Hidden Class Extended Instance Attributes
@@ -665,6 +660,7 @@ class LuxStateSensorEntity(SensorEntity):
         _LOGGER.debug("async_added_to_hasss %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
+            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
             self.hass.bus.async_listen(self.event.EVENT_DATA_BANKX_RECEIVED, self.push_update)
 
     def checkonline(self, *args, **kwargs):
@@ -674,15 +670,21 @@ class LuxStateSensorEntity(SensorEntity):
         self.schedule_update_ha_state()
 
     def push_update(self, event):
-        _LOGGER.debug(f"LUXPOWER State Sensor: register event received Name: {self._attr_name}")
+        _LOGGER.debug(f"LUXPOWER State Sensor: register event received Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
         self._attr_native_value = "ONLINE"
 
         self.totaldata = self.luxpower_client.lxpPacket.data
         _LOGGER.debug(f"TotalData: {self.totaldata}")
 
+        self._attr_available = True
         self.schedule_update_ha_state()
         return self._attr_native_value
+
+    def gone_unavailable(self, event):
+        _LOGGER.warning(f"LUXPOWER State Sensor: gone_unavailable event received Name: {self._attr_name}")  # fmt: skip
+        self._attr_available = False
+        self.schedule_update_ha_state()
 
     @property
     def device_info(self):

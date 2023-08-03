@@ -86,13 +86,8 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
 
     """
     await asyncio.sleep(20)
-    await hass.services.async_call(
-        DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True
-    )
-
-    await hass.services.async_call(
-        DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True
-    )  # fmt: skip
+    await hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True)  # fmt: skip
+    await hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True)  # fmt: skip
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -101,57 +96,57 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
     service_helper = ServiceHelper(hass=hass)
 
-    async def handle_refresh_register_bank(call):
+    async def handle_refresh_data_register_bank(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
         address_bank = call.data.get("address_bank")
-        _LOGGER.debug("handle_refresh_register_bank service: %s %s %s", DOMAIN, dongle, address_bank)
-        await service_helper.send_refresh_register_bank(dongle=dongle, address_bank=int(address_bank))
+        _LOGGER.debug("handle_refresh_data_register_bank service: %s %s %s", DOMAIN, dongle, address_bank)
+        await service_helper.service_refresh_data_register_bank(dongle=dongle, address_bank=int(address_bank))
 
-    async def handle_refresh_registers(call):
+    async def handle_refresh_data_registers(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
         bank_count = call.data.get("bank_count")
         if int(bank_count) == 0:
             bank_count = 2
-        _LOGGER.debug("handle_refresh_registers service: %s %s", DOMAIN, dongle)
-        await service_helper.send_refresh_registers(dongle=dongle, bank_count=int(bank_count))
+        _LOGGER.debug("handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
+        await service_helper.service_refresh_data_registers(dongle=dongle, bank_count=int(bank_count))
 
-    async def handle_holding_registers(call):
+    async def handle_refresh_hold_registers(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_holding_registers service: %s %s", DOMAIN, dongle)
-        await service_helper.send_holding_registers(dongle=dongle)
+        _LOGGER.debug("handle_refresh_hold_registers service: %s %s", DOMAIN, dongle)
+        await service_helper.service_refresh_hold_registers(dongle=dongle)
 
     async def handle_reconnect(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
         _LOGGER.debug("handle_reconnect service: %s %s", DOMAIN, dongle)
-        await service_helper.send_reconnect(dongle=dongle)
+        await service_helper.service_reconnect(dongle=dongle)
 
     async def handle_restart(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
         _LOGGER.debug("handle_restart service: %s %s", DOMAIN, dongle)
-        await service_helper.send_restart(dongle=dongle)
+        await service_helper.service_restart(dongle=dongle)
 
     async def handle_synctime(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
         do_set_time = call.data.get("do_set_time", "False").lower() in ("yes", "true", "t", "1")
         _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
-        await service_helper.send_synctime(dongle=dongle, do_set_time=do_set_time)
+        await service_helper.service_synctime(dongle=dongle, do_set_time=do_set_time)
 
     hass.services.async_register(
-        DOMAIN, "luxpower_refresh_register_bank", handle_refresh_register_bank, schema=SCHEME_REGISTER_BANK
+        DOMAIN, "luxpower_refresh_register_bank", handle_refresh_data_register_bank, schema=SCHEME_REGISTER_BANK
     )
 
     hass.services.async_register(
-        DOMAIN, "luxpower_refresh_registers", handle_refresh_registers, schema=SCHEME_REGISTERS_COUNT
+        DOMAIN, "luxpower_refresh_registers", handle_refresh_data_registers, schema=SCHEME_REGISTERS_COUNT
     )
 
     hass.services.async_register(
-        DOMAIN, "luxpower_refresh_holdings", handle_holding_registers, schema=SCHEME_REGISTERS
+        DOMAIN, "luxpower_refresh_holdings", handle_refresh_hold_registers, schema=SCHEME_REGISTERS
     )
 
     hass.services.async_register(
@@ -194,8 +189,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     events = Event(dongle=DONGLE_SERIAL)
     luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)), serial_number=str.encode(str(SERIAL_NUMBER)), events=events,)  # fmt: skip
+
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
-    hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
+
+    # We used to start here:
+    # hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
+
     # await hass.async_add_job(luxpower_client.start_luxpower_client_daemon())
 
     hass.data[events.CLIENT_DAEMON] = luxpower_client
@@ -210,8 +209,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
+    # wait to make sure all entities have been initialised
+    await asyncio.sleep(20)
+
+    # start the main Inverter Polling asycnio loop
+    hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
+
     # Refresh ALL Platforms By Issuing Service Call, After Suitable Delay To Give The Platforms Time To Initialise
-    hass.async_create_task(refreshALLPlatforms(hass, dongle=DONGLE_SERIAL))
+
+    # We used to force platform refresh
+    # hass.async_create_task(refreshALLPlatforms(hass, dongle=DONGLE_SERIAL))
 
     _LOGGER.info("LuxPower init async_setup done")
     return True
@@ -225,6 +232,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
             *[hass.config_entries.async_forward_entry_unload(entry, component) for component in PLATFORMS]
         )
     )
+
+    # In the entity unload do we remove triggers to each entity created in async_added?
 
     if unload_ok:
         entry_data = hass.data[DOMAIN].pop(entry.entry_id)

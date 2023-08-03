@@ -6,6 +6,19 @@ This is where we will describe what this module does
 
 """
 
+# TO DO'S
+#
+# Constants really do not belong here in the most part
+#
+# Packet parsing is mixed up with packet processing
+#
+# This module should just be for low level PACKET read/write and basic parsing
+#
+# Processing of payload should be back in LuxpowerClient or separate module/class (perhaps favoured) together with storage of registers -
+# It appears ITS ALL INVERTER BASED not Packet
+#
+# More thinking required
+
 
 import logging
 import socket

@@ -9,14 +9,45 @@ This is where we will describe what this module does
 import asyncio
 import datetime
 import logging
+import socket
 import struct
 from typing import Optional
+
+from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 from .helpers import Event
 from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
+
+
+async def refreshALLPlatforms(hass: HomeAssistant, dongle):
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this function does
+
+    """
+    await asyncio.sleep(20)
+    await hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True)  # fmt: skip
+    await asyncio.sleep(10)
+    await hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True)  # fmt: skip
+
+
+def make_log_marker(serial, dongle, tag):
+    """
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this function does
+
+    """
+    now = datetime.datetime.now()
+    marker = str(int((now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds() * 1000)).zfill(8)
+    marker = marker + " " + serial.decode() + "/" + dongle.decode() + " " + tag
+    return marker
 
 
 class LuxPowerClient(asyncio.Protocol):
@@ -46,6 +77,10 @@ class LuxPowerClient(asyncio.Protocol):
         self._stop_client = False
         self._transport = None
         self._connected = False
+        self._connect_twice = False
+        self._connect_after_failure = False
+        self._reachable = False
+        self._already_processing = False
         self._LOGGER = logging.getLogger(__name__)
         self.lxpPacket = LXPPacket(debug=False, dongle_serial=dongle_serial, serial_number=serial_number)
 
@@ -69,8 +104,9 @@ class LuxPowerClient(asyncio.Protocol):
         self._connected = True
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
+        self.hass.bus.fire(self.events.EVENT_UNAVAILABLE_RECEIVED, "")
         self._connected = False
-        _LOGGER.error("Disconnected from Luxpower server")
+        _LOGGER.error("connection_lost: Disconnected from Luxpower server")
 
     def data_received(self, data):
         _LOGGER.debug("Inverter: %s", self.lxpPacket.serial_number)
@@ -184,35 +220,142 @@ class LuxPowerClient(asyncio.Protocol):
                     await self.hass.loop.create_connection(self.factory, self.server, self.port)
                     _LOGGER.info("luxpower daemon: Connected to lux power server")
                 except Exception as e:
-                    _LOGGER.error(f"Exception luxpower daemon client in open connection retrying in 10 seconds : {e}")
+                    _LOGGER.error(f"Exception luxpower daemon client open failed - retrying in 10 seconds : {e}")
+
+                await asyncio.sleep(1)
+                if self._connected:
+                    if not self._connect_twice:
+                        self._connect_twice = False
+                        _LOGGER.warning("Refreshing Lux Platforms With Data")
+                        # await self.hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": self.dongle_serial.decode(), "bank_count": 3}, blocking=False)  # fmt: skip
+                        # await self.hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": self.dongle_serial.decode()}, blocking=False)  # fmt: skip
+                        # self.hass.async_create_task(refreshALLPlatforms(self.hass, dongle=self.dongle_serial.decode()))
+                        # self.hass.async_create_task(self.do_refresh_data_registers(3, True))
+                        # self.hass.async_create_task(self.do_refresh_hold_registers(True))
+                        if self._connect_after_failure:
+                            await asyncio.sleep(60)
+                            self._connect_after_failure = False
+                        await self.do_refresh_data_registers(3, True)
+                        await self.do_refresh_hold_registers(True)
+                    else:
+                        self._connect_twice = True
+                        await self.reconnect()
+
             await asyncio.sleep(10)
-        _LOGGER.info("Exiting start_luxpower_client_daemon")
+        _LOGGER.info("Stop Called - Exiting start_luxpower_client_daemon")
 
-    async def get_register_data(self, address_bank):
+    async def inverter_is_reachable(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
         try:
-            _LOGGER.debug("get_register_data for address_bank: %s", address_bank)
-            packet = self.lxpPacket.prepare_packet_for_read(address_bank * 40, 40, type=LXPPacket.READ_INPUT)
-            self._transport.write(packet)
+            sock.connect((self.server, self.port))
+            _LOGGER.info(f"Test Connection To Inverter {self.dongle_serial.decode()} At {self.server}:{self.port} Has Succeeded")  # fmt: skip
+            self._reachable = True
         except Exception as e:
-            _LOGGER.error("Exception get_register_data %s", e)
+            _LOGGER.error(f"Test Connection To Inverter {self.dongle_serial.decode()} At {self.server}:{self.port} Has Failed {e}")  # fmt: skip
+            self._reachable = False
+        sock.close()
+        return self._reachable
 
-    async def get_holding_data(self, address_bank):
+    async def request_data_bank(self, address_bank):
+        serial = self.lxpPacket.serial_number
+        number_of_registers = 40
+        start_register = address_bank * 40
+        try:
+            _LOGGER.debug("request_data_bank for address_bank: %s", address_bank)
+            packet = self.lxpPacket.prepare_packet_for_read(start_register, number_of_registers, type=LXPPacket.READ_INPUT)  # fmt: skip
+            self._transport.write(packet)
+            _LOGGER.debug(f"Packet Written for getting {serial} DATA registers address_bank {address_bank} , {number_of_registers}")  # fmt: skip
+            await asyncio.sleep(1)
+        except Exception as e:
+            _LOGGER.error("Exception request_data_bank %s", e)
+
+    async def do_refresh_data_registers(self, bank_count, must_run):
+        log_marker = make_log_marker(self.serial_number, self.dongle_serial, "do_refresh_data_registers")
+
+        if not self._connected:
+            return
+
+        _LOGGER.debug(f"{log_marker} start - Count: {bank_count}")
+        if self._already_processing:
+            if must_run:
+                _LOGGER.debug(f"{log_marker} waiting - Count: {bank_count}")
+                while self._already_processing:
+                    await asyncio.sleep(1)
+                _LOGGER.debug(f"{log_marker} continuing - Count: {bank_count}")
+            else:
+                _LOGGER.debug(f"{log_marker} aborted - Count: {bank_count}")
+                return
+
+        self._already_processing = True
+        await self.inverter_is_reachable()
+        if self._reachable:
+            for address_bank in range(0, bank_count):
+                _LOGGER.info(f"{log_marker} call request_data - Bank: {address_bank}")
+                await self.request_data_bank(address_bank)
+                # await asyncio.sleep(1)
+        else:
+            _LOGGER.info(f"{log_marker} Inv Not Reachable - Attempting Reconnect")
+            self._connect_after_failure = True
+            await self.reconnect()
+            await asyncio.sleep(1)
+
+        self._already_processing = False
+        _LOGGER.debug(f"{log_marker} finish - Count: {bank_count}")
+
+    async def request_hold_bank(self, address_bank):
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
         start_register = address_bank * 40
         if address_bank == 6:
             start_register = 560
         try:
-            _LOGGER.debug(f"get_holding_data for {serial} address_bank: {address_bank} , {number_of_registers}")
-            packet = self.lxpPacket.prepare_packet_for_read(
-                start_register, number_of_registers, type=LXPPacket.READ_HOLD
-            )
+            _LOGGER.debug(f"request_hold_bank for {serial} address_bank: {address_bank} , {number_of_registers}")
+            packet = self.lxpPacket.prepare_packet_for_read(start_register, number_of_registers, type=LXPPacket.READ_HOLD)  # fmt: skip
             self._transport.write(packet)
-            _LOGGER.debug(
-                f"Packet Written for getting {serial} HOLDING address_bank {address_bank} , {number_of_registers}"
-            )
+            _LOGGER.debug(f"Packet Written for getting {serial} HOLD registers address_bank {address_bank} , {number_of_registers}")  # fmt: skip
+            await asyncio.sleep(1)
         except Exception as e:
-            _LOGGER.error("Exception get_holding_data %s", e)
+            _LOGGER.error("Exception request_hold_bank %s", e)
+
+    async def do_refresh_hold_registers(self, must_run):
+        log_marker = make_log_marker(self.serial_number, self.dongle_serial, "do_refresh_hold_registers")
+
+        _LOGGER.debug(f"{log_marker} start")
+        if self._already_processing:
+            if must_run:
+                _LOGGER.debug(f"{log_marker} waiting")
+                while self._already_processing:
+                    await asyncio.sleep(1)
+                _LOGGER.debug(f"{log_marker} continuing")
+            else:
+                _LOGGER.debug(f"{log_marker} aborted")
+                return
+
+        self._already_processing = True
+        self._warn_registers = True
+        await asyncio.sleep(1)
+        for address_bank in range(0, 5):
+            _LOGGER.info(f"{log_marker} call request_hold - Bank: {address_bank}")
+            await self.request_hold_bank(address_bank)
+            # await asyncio.sleep(1)
+        if 1 == 1:
+            # Request registers 200-239
+            _LOGGER.info(f"{log_marker} call request_hold - EXTENDED Bank: 5")
+            self._warn_registers = True
+            await self.request_hold_bank(5)
+            # await asyncio.sleep(1)
+        if 1 == 0:
+            # Request registers 560-599
+            _LOGGER.info(f"{log_marker} call request_hold - HIGH EXTENDED Bank: 6")
+            self._warn_registers = True
+            await self.request_hold_bank(6)
+            # await asyncio.sleep(1)
+
+        self._warn_registers = False
+        self._already_processing = False
+
+        _LOGGER.debug(f"{log_marker} finish")
 
     def stop_client(self):
         _LOGGER.info("stop_client called")
@@ -231,6 +374,7 @@ class LuxPowerClient(asyncio.Protocol):
                 self._transport.close()
             except Exception as e:
                 _LOGGER.error("Exception reconnect %s", e)
+        self.hass.bus.fire(self.events.EVENT_UNAVAILABLE_RECEIVED, "")
         self._connected = False
         _LOGGER.info("reconnect client finished")
 
@@ -383,7 +527,7 @@ class ServiceHelper:
         """
         self.hass = hass
 
-    async def send_reconnect(self, dongle):
+    async def service_reconnect(self, dongle):
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
@@ -394,9 +538,9 @@ class ServiceHelper:
         if luxpower_client is not None:
             await luxpower_client.reconnect()
             await asyncio.sleep(1)
-        _LOGGER.debug("send_reconnect done")
+        _LOGGER.debug("service_reconnect done")
 
-    async def send_restart(self, dongle):
+    async def service_restart(self, dongle):
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
@@ -407,9 +551,9 @@ class ServiceHelper:
         if luxpower_client is not None:
             await luxpower_client.restart()
             await asyncio.sleep(1)
-        _LOGGER.warning("send_restart done")
+        _LOGGER.warning("service_restart done")
 
-    async def send_synctime(self, dongle, do_set_time):
+    async def service_synctime(self, dongle, do_set_time):
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
@@ -420,10 +564,10 @@ class ServiceHelper:
         if luxpower_client is not None:
             await luxpower_client.synctime(do_set_time)
             await asyncio.sleep(1)
-        _LOGGER.info("send_synctime done")
+        _LOGGER.info("service_synctime done")
 
-    async def send_refresh_registers(self, dongle, bank_count):
-        _LOGGER.info(f"send_refresh_registers start - Count: {bank_count}")
+    async def service_refresh_data_registers(self, dongle, bank_count):
+        _LOGGER.info(f"service_refresh_data_registers start - Count: {bank_count}")
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
@@ -432,46 +576,23 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
-            # This change stops Spamming of Lux Server Database
-            # Really needs separate function refresh_two_registers
-            # for address_bank in range(0, 3):
-            for address_bank in range(0, bank_count):
-                _LOGGER.info("send_refresh_registers for address_bank: %s", address_bank)
-                await luxpower_client.get_register_data(address_bank)
-                await asyncio.sleep(1)
-        _LOGGER.info("send_refresh_registers done")
+            await luxpower_client.do_refresh_data_registers(bank_count, False)
 
-    async def send_holding_registers(self, dongle):
-        luxpower_client = None
-        for entry_id in self.hass.data[DOMAIN]:
-            entry_data = self.hass.data[DOMAIN][entry_id]
-            if dongle == entry_data["DONGLE"]:
-                luxpower_client = entry_data.get("client")
-                break
+            # await luxpower_client.inverter_is_reachable()
+            # if luxpower_client._reachable:
+            #    for address_bank in range(0, bank_count):
+            #        _LOGGER.info("service_refresh_data_registers for address_bank: %s", address_bank)
+            #        await luxpower_client.request_data_bank(address_bank)
+            #        await asyncio.sleep(1)
+            # else:
+            #    _LOGGER.info("Inverter Is Not Reachable - Attempting Reconnect")
+            #    await luxpower_client.reconnect()
+            #    await asyncio.sleep(1)
 
-        luxpower_client._warn_registers = True
-        if luxpower_client is not None:
-            for address_bank in range(0, 5):
-                _LOGGER.debug("send_holding_registers for address_bank: %s", address_bank)
-                await luxpower_client.get_holding_data(address_bank)
-                await asyncio.sleep(2)
-            if 1 == 1:
-                # Request registers 200-239
-                _LOGGER.debug("send_holding_registers for EXTENDED address_bank: %s", 5)
-                self._warn_registers = True
-                await luxpower_client.get_holding_data(5)
-                await asyncio.sleep(2)
-            if 1 == 0:
-                # Request registers 560-599
-                _LOGGER.debug("send_holding_registers for HIGH EXTENDED address_bank: %s", 6)
-                self._warn_registers = True
-                await luxpower_client.get_holding_data(6)
-                await asyncio.sleep(2)
+        _LOGGER.debug("service_refresh_data_registers done")
 
-        _LOGGER.debug("send_holding_registers done")
-        luxpower_client._warn_registers = False
-
-    async def send_refresh_register_bank(self, dongle, address_bank):
+    async def service_refresh_hold_registers(self, dongle):
+        _LOGGER.debug("service_refresh_hold_registers start")
         luxpower_client = None
         for entry_id in self.hass.data[DOMAIN]:
             entry_data = self.hass.data[DOMAIN][entry_id]
@@ -480,7 +601,40 @@ class ServiceHelper:
                 break
 
         if luxpower_client is not None:
-            _LOGGER.debug("send_refresh_registers for address_bank: %s", address_bank)
-            await luxpower_client.get_register_data(address_bank)
+            await luxpower_client.do_refresh_hold_registers(False)
+
+            # luxpower_client._warn_registers = True
+            # await asyncio.sleep(5)
+            # for address_bank in range(0, 5):
+            #    _LOGGER.debug("service_refresh_hold_registers for address_bank: %s", address_bank)
+            #    await luxpower_client.request_hold_bank(address_bank)
+            #    await asyncio.sleep(2)
+            # if 1 == 1:
+            #    # Request registers 200-239
+            #    _LOGGER.debug("service_holding_register for EXTENDED address_bank: %s", 5)
+            #    self._warn_registers = True
+            #    await luxpower_client.request_hold_bank(5)
+            #    await asyncio.sleep(2)
+            # if 1 == 0:
+            #    # Request registers 560-599
+            #    _LOGGER.debug("service_refresh_hold_registers for HIGH EXTENDED address_bank: %s", 6)
+            #    self._warn_registers = True
+            #    await luxpower_client.request_hold_bank(6)
+            #    await asyncio.sleep(2)
+            # luxpower_client._warn_registers = False
+
+        _LOGGER.debug("service_refresh_hold_registers finish")
+
+    async def service_refresh_data_register_bank(self, dongle, address_bank):
+        luxpower_client = None
+        for entry_id in self.hass.data[DOMAIN]:
+            entry_data = self.hass.data[DOMAIN][entry_id]
+            if dongle == entry_data["DONGLE"]:
+                luxpower_client = entry_data.get("client")
+                break
+
+        if luxpower_client is not None:
+            _LOGGER.debug("service_refresh_register for address_bank: %s", address_bank)
+            await luxpower_client.request_data_bank(address_bank)
             await asyncio.sleep(1)
-        _LOGGER.debug("send_refresh_register_bank done")
+        _LOGGER.debug("service_refresh_data_register_bank done")

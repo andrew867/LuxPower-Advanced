@@ -269,6 +269,7 @@ class LuxNormalNumberEntity(NumberEntity):
         await super().async_added_to_hass()
         _LOGGER.debug(f"async_added_to_hass {self._attr_name},  {self.entity_id},  {self.unique_id}")
         if self.hass is not None:
+            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
             if self.register_address == 21:
                 self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
             elif 0 <= self.register_address <= 39:
@@ -295,9 +296,7 @@ class LuxNormalNumberEntity(NumberEntity):
         return (value + (1 << 16)) & 0xFFFF
 
     def push_update(self, event):
-        _LOGGER.debug(
-            f"Register Event Received Lux****NumberEntity: {self._attr_name} - Register Address: {self.register_address}"
-        )
+        _LOGGER.debug(f"Register Event Received Lux****NumberEntity: {self._attr_name} - Register Address: {self.register_address}")  # fmt: skip
 
         registers = event.data.get("registers", {})
         if self.register_address in registers.keys():
@@ -320,6 +319,11 @@ class LuxNormalNumberEntity(NumberEntity):
                     _LOGGER.debug(f"Translating To Time {self._hour_value}:{self._minute_value}")
                 self.schedule_update_ha_state()
         return self._attr_native_value
+
+    def gone_unavailable(self, event):
+        _LOGGER.warning(f"Register: gone_unavailable event received Name: {self._attr_name} - Register Address: {self.register_address}")  # fmt: skip
+        self._attr_available = False
+        self.schedule_update_ha_state()
 
     @property
     def device_info(self):
