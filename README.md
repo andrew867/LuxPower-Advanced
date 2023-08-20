@@ -10,9 +10,10 @@ IF YOU ARE READING THIS AND YOU ARE SELLING MY PROJECT - YOU SUCK! I DON'T MAKE 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com - I would like to know how you get on and if this works for you!
 
-This has cost me money to develop and all the money goes to the developer (paid gigs) to fix issues!
-Once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it ALL goes to bug fixes and features!
+This has cost me a lot of time and money to develop and the first few versions of this were a paid project to a developer so it came directly out of my pocket!
+As we move forward Mark has done a massive amount of work to make this code better and add features / fixes. Mark runs on beer and I run on coffee so if it works, once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it all goes to keeping this project running!
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
+
 
 If that link doesn't work then my paypal is guybw@hotmail.com please use friends and family as Paypal take a good % otherwise. Thank you!
 
