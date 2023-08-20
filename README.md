@@ -12,6 +12,7 @@ Please keep in touch at guybw@hotmail.com - I would like to know how you get on 
 
 This has cost me a lot of time and money to develop and the first few versions of this were a paid project to a developer so it came directly out of my pocket!
 As we move forward Mark has done a massive amount of work to make this code better and add features / fixes. Mark runs on beer and I run on coffee so if it works, once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it all goes to keeping this project running!
+
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
 
 
