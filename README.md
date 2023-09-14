@@ -191,7 +191,7 @@ https://opensource.com/article/21/2/home-assistant-custom-sensors
 
 # IMPORTANT  - Things to note
 
-We cannot support the ethernet dongle, only WIFI!
+We cannot support the LUX ethernet dongle - only WIFI -  this is due to ports not being open on the ethernet dongle.
 
 
 # Fix your IP
@@ -212,7 +212,7 @@ We never remove funionality (if something doesn't work, I have kept a very good 
 
 To upgrade the LuxPower integration, follow these steps:
 1. Backup the current "luxpower" folder in the custom integrations directory.
-2. Delete all files in the "luxpower" folder.
+2. Delete all files in the "luxpower" folder (including the cache folder which might be hidden!)
 3. Paste the latest files from the update.
 4. Reboot Home Assistant.
 This process should take around 20 seconds and ensures a smooth upgrade.
