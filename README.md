@@ -178,6 +178,7 @@ https://opensource.com/article/21/2/home-assistant-custom-sensors
     lux_new_home_consumption_live:
       friendly_name: "Lux Home Consumption (Live)"
       icon_template: mdi:lightning-bolt
+	  unique_id: sensor.lux_home_consumption_live
       unit_of_measurement: 'W'
       value_template: >
         {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float(0) + 
