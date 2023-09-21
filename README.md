@@ -10,27 +10,24 @@ IF YOU ARE READING THIS AND YOU ARE SELLING MY PROJECT - YOU SUCK! I DON'T MAKE 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com - I would like to know how you get on and if this works for you!
 
-This has cost me money to develop and all the money goes to the developer (paid gigs) to fix issues!
-Once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it ALL goes to bug fixes and features!
+This has cost me a lot of time and money to develop and the first few versions of this were a paid project to a developer so it came directly out of my pocket!
+As we move forward Mark has done a massive amount of work to make this code better and add features / fixes. Mark runs on beer and I run on coffee so if it works, once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it all goes to keeping this project running!
+
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
+
 
 If that link doesn't work then my paypal is guybw@hotmail.com please use friends and family as Paypal take a good % otherwise. Thank you!
 
 
-# Videos
-I've recorded some very quick videos, only 1 has audio yet.
-They aren't great but it might help someone.
+## Videos
 
-HOWTO - Install Samba Share on Home Assistant https://youtu.be/Pld5siYLNL8
+I've created some quick tutorial videos that might assist you (you may notice some audio / video issues but if you get stuck let me know and I will re-upload for you):
 
-HOWTO - Install an Integration into Home Assistant (NO AUDIO) https://youtu.be/wk_9kCNjLRE
-
-HOWTO - Setup a basic refresh and reconnect in Home Assistant https://youtu.be/iCmv_w5aAJE
-
-HOWTO - Setup Energy Monitoring in Home Assistant https://youtu.be/pnp1y5CQRPY
-
-HOWTO - Install Power Card in Home Assistant https://youtu.be/2petWQXWue0
-
+- [How to Install Samba Share on Home Assistant](https://youtu.be/Pld5siYLNL8)
+- [How to Install an Integration into Home Assistant (NO AUDIO)](https://youtu.be/wk_9kCNjLRE)
+- [How to Setup a Basic Refresh and Reconnect in Home Assistant](https://youtu.be/iCmv_w5aAJE)
+- [How to Setup Energy Monitoring in Home Assistant](https://youtu.be/pnp1y5CQRPY)
+- [How to Install Power Card in Home Assistant](https://youtu.be/2petWQXWue0)
 
 
 # SETUP THE DONGLE
@@ -60,20 +57,23 @@ Type into Windows File Explorer: "\\\172.16.255.30\config\custom_components\luxp
 
 ![image](https://user-images.githubusercontent.com/64648444/204362676-f96ca53a-8713-45a8-a0ee-38edea1c132a.png)
 
-# SETUP THE INTEGRATION
-Open up Settings>Devices and Services> Add Integration and search for "LuxPower Inverter"
-** If it doesn't show up, clear your cache in your browser as it's very likely your browser is the issue!**
+## Setting Up the Integration
 
-![image](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
+1. Open Settings > Devices and Services > Add Integration in Home Assistant.
+2. Search for "LuxPower Inverter".
+   - **Note:** If it doesn't appear, try clearing your browser cache as it may be the issue.
 
-Fill in your IP, Port (8000), dongle serial and inverter serial ( this can be found on the Lux website at server.luxpowertek.com
+![Integration Setup](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
-![image](https://user-images.githubusercontent.com/64648444/169526428-a508e905-19ef-45e5-ab2c-185b454489e3.png)
+3. Fill in your IP, Port (8000), dongle serial, and inverter serial (available on the Lux website at server.luxpowertek.com).
 
-Once you have added this into HA, you should see some sensors in HA.
-![image](https://user-images.githubusercontent.com/64648444/169526605-0f667815-87dc-4ab7-86f5-dbffe85ff765.png)
+![Integration Details](https://user-images.githubusercontent.com/64648444/169526428-a508e905-19ef-45e5-ab2c-185b454489e3.png)
 
-Use Developer Tools to view `sensor.luxpower`.  Initially, the state will be `Waiting` but after a few minutes when the inverter pushes an update the state will change to `ONLINE` and data will be populated in the attributes.
+4. After adding the integration, you should see some sensors in HA.
+
+![HA Sensors](https://user-images.githubusercontent.com/64648444/169526605-0f667815-87dc-4ab7-86f5-dbffe85ff765.png)
+
+5. Use Developer Tools to view `sensor.luxpower`. Initially, the state will be "Waiting," but after a few minutes, when the inverter updates, the state will change to "ONLINE," and data will populate in the attributes.
 
 # HOW TO REFRESH THE DATA
 On a dashboard create a new card and type this (CHANGE THE DONGLE TO YOUR DONGLE SERIAL)
@@ -95,6 +95,17 @@ name: Refresh LUX Data
 show_state: false
 ```
 This will then give you a button to refresh your data as often as you like.
+
+# Changing the refresh interval
+The LUX dongle updates the website every 5/6 minutes, this is useless!
+In order to help you refresh the data more often we have included a blueprint which is location at: \blueprints\automation\luxpower\refresh_interval.yaml
+You should NEVER refresh more than every 20 second, this is becuase the dongle takes time to request and respond and 20 seconds is the safest I have found. Other people say they do it every few seconds, this just isn't true!
+You can also click below to add it automatically to HA.
+
+[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/refresh_interval.yaml)
+
+
+
 
 # LUX INVERTER DISCONNECTS OFTEN - IMPORTANT
 
@@ -134,12 +145,15 @@ battery_power_entity: sensor.lux_battery_flow_live
 
 
 At the end of this, you should be able to add the following sensors to HA Energy and it will start tracking:
+
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
-# Changing the refresh interval
-The LUX dongle updates the website every 5/6 minutes, this is useless!
-In order to help you refresh the dataq more often we have included a blueprint which is location at: \blueprints\automation\luxpower\refresh_interval.yaml
-You should be able to manually import this however I will create a button on here to do that soon.
+If you want a totally different view, you can try this:
+
+https://slipx06.github.io/sunsynk-power-flow-card/examples/lux.html
+
+
+
 
 # ACS Inverter (AC ONLY)
 If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!)
@@ -164,6 +178,7 @@ https://opensource.com/article/21/2/home-assistant-custom-sensors
     lux_new_home_consumption_live:
       friendly_name: "Lux Home Consumption (Live)"
       icon_template: mdi:lightning-bolt
+	  unique_id: sensor.lux_home_consumption_live
       unit_of_measurement: 'W'
       value_template: >
         {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float(0) + 
@@ -175,12 +190,10 @@ https://opensource.com/article/21/2/home-assistant-custom-sensors
 ## ##### END OF Custom Lux Sensors   ######
 ```
 
-# Things to note
+# IMPORTANT  - Things to note
 
-We cannot support the ethernet dongle, only WIFI!
+We cannot support the LUX ethernet dongle - only WIFI -  this is due to ports not being open on the ethernet dongle.
 
-Also be aware that you can set the times in HA but they will not pull (new) times from the Lux Server so if you set times in the app / website they will not change in HA.
-There is a blueprint and you need to create a helper (please contact me for a demo on how to do this if required) I don't recommend it as I would use the AC Charge Switch.
 
 # Fix your IP
 Most home routers don't give you a fixed IP so when the dongle gets a new IP (anything from every few hours to every few weeks) Once that happens the IP that is in HA changes. 
@@ -188,22 +201,23 @@ I HIGHLY recommend giving both the inverter a fixed IP AND Home Assistant. I wou
 
 # 2 (or more inverters)
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
-I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_templae.yaml is the file.
+I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_template.yaml is the file.
 
-# Advanced stuff
-Do you want to refresh more often than 6 minutes or do you want to change times in HA? Want to set the times in HA easily? Have a read of this file but be warned it's a bit more complex! Many thanks for the work from @maegibbons for the setup of the times for this.
-https://github.com/guybw/LuxPython_DEV/blob/master/README_ADVANCED.md
 
-# Fix your IP
-Most home routers don't give you a fixed IP so when the dongle gets a new IP (anything from every few hours to every few weeks) Once that happens the IP that is in HA changes. 
-I HIGHLY recommend giving both the inverter a fixed IP AND Home Assistant. I would suggest doing this by doing a dhcp reservation, this is beyond what this project covers but MOST routers will be able to do this. Google is going to be your friend on this. If it absolutely doesn't then you can assign an IP manually for both the dongle and HA.
 # BACKUPS
 The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail! I HIGHLY recommend this https://github.com/sabeechen/hassio-google-drive-backup
 
 # Upgrades
 This is an intresting thread. Most people seem to set this up and then never change it. Personally, as people like Mark have spent a lot of time fixing the code and making it more streamlined and added more features, I would personally recomend doing it as often as you can.
 We never remove funionality (if something doesn't work, I have kept a very good history of copies of the intergration on here) so we can always roll back if required but remember this intergration was orginally for ME. If it's not absolutely 100% stable, I wouldn't run it! I have a dev box this is tested on for a few hours / days but after that it's running 24/7/365 on my production box!
-To upgrade, simple find the luxpower folder in the custom intergrations and back it up, then select all the files in the folder and delete them, now just paste the latest files so it looks like it did before you deleted the files. It should take around 20 seconds to do this and then just reboot Home Assistant. It's so quick it's just not an issue. 
+
+To upgrade the LuxPower integration, follow these steps:
+1. Backup the current "luxpower" folder in the custom integrations directory.
+2. Delete all files in the "luxpower" folder (including the cache folder which might be hidden!)
+3. Paste the latest files from the update.
+4. Reboot Home Assistant.
+This process should take around 20 seconds and ensures a smooth upgrade.
+
 
 # Breaking Changes
 @maegibbons has spent a huge amount of time sorting out the time settings. In the lastest release of LUXPython with HA 2023.06 we now have native time settings so any custom helpers / automations can now be deleted. We will not remove the old way of doing this yet but it will go in the next few releases. Going forward you can just add "time.lux_ac_charge_start1" for example.
@@ -218,7 +232,7 @@ Using the great work from here: https://github.com/celsworth/lxp-packet/blob/mas
 To everyone else who has helped fixed issue, spotted bugs and contributed to the project!
 
 # WHY PRIVATE
-I took the decision a long while ago to make this private as it's really hard to stop people using and abusing the system. Everyone on here has answered my canned email of setup and has a basic understanding of HA (at a minimum) or I've worked though a remote season to set them up.
+I took the decision a long while ago to make this private as it's really hard to stop people using and abusing the system (and selling it!). Everyone on here has answered my canned email of setup and has a basic understanding of HA (at a minimum) or I've worked though a remote season to set them up.
 
 If HACS could support private repo's I would absolutely put it in HACS but it doesn't so I can't.
 
