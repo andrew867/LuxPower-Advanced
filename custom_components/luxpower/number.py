@@ -120,6 +120,10 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     numberEntities: List[LuxNormalNumberEntity] = []
 
     numbers = [
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Grid Volt Connect Low", "register_address": 25, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "icon": "mdi:car-turbocharger", "disabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Grid Volt Connect High", "register_address": 26, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": DEVICE_CLASS_VOLTAGE, "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT, "icon": "mdi:car-turbocharger", "disabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Grid Freq Connect Low", "register_address": 27, "divisor": 100, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "icon": "mdi:car-turbocharger", "disabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Grid Freq Connect High", "register_address": 28, "divisor": 100, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "icon": "mdi:car-turbocharger", "disabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Charge Power Rate(%)", "register_address": 64, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Discharge Power Rate(%)", "register_address": 65, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Power Rate(%)", "register_address": 66, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},

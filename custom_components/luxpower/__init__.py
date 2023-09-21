@@ -20,6 +20,7 @@ from .const import (
     ATTR_LUX_PORT,
     ATTR_LUX_SERIAL_NUMBER,
     DOMAIN,
+    VERSION,
 )
 from .helpers import Event
 
@@ -171,7 +172,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     This is where we will describe what this function does
 
     """
-    _LOGGER.info("async_setup_entry: LuxPower integration platform load")
+    _LOGGER.info(f"async_setup_entry: LuxPower integration Version {VERSION} platform load")
     _LOGGER.debug("platform config: ", entry.data)
     _LOGGER.debug("platform entry_id: ", entry.entry_id)
     """Your controller/hub specific code."""

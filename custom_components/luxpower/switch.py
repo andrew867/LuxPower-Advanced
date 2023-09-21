@@ -282,6 +282,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                     f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}"
                 )
 
+        self._attr_available = True
         _LOGGER.debug("set_register_bit done")
 
     def convert_to_time(self, value: int):
