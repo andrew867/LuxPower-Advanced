@@ -99,7 +99,7 @@ This will then give you a button to refresh your data as often as you like.
 # Changing the refresh interval
 The LUX dongle updates the website every 5/6 minutes, this is useless!
 In order to help you refresh the data more often we have included a blueprint which is location at: \blueprints\automation\luxpower\refresh_interval.yaml
-You should NEVER refresh more than every 20 second, this is becuase the dongle takes time to request and respond and 20 seconds is the safest I have found. Other people say they do it every few seconds, this just isn't true!
+You should NEVER refresh more than every 20 second, this is because the dongle takes time to request and respond and 20 seconds is the safest I have found. Other people say they do it every few seconds, this just isn't true!
 You can also click below to add it automatically to HA.
 
 [![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/refresh_interval.yaml)
