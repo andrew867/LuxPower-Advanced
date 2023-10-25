@@ -3,6 +3,10 @@ LuxPython is a custom integration into Home Assistant (HA) to allow local access
 
 # IMPORTANT PLEASE READ!
 
+
+I'm aware of reports in the UK of the Europe server having issues with "API" calls.
+Mark has done a huge amount of work to make sure this doesn't spam the servers (I've spoken about this many, many times) so please don't lower it less than 2/3 minutes until I've got confirmation from LUX unless you block it from accessing the internet.
+
 Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
 
 IF YOU ARE READING THIS AND YOU ARE SELLING MY PROJECT - YOU SUCK! I DON'T MAKE MONEY ON THIS AND NOR SHOULD ANYONE ELSE!
@@ -97,11 +101,14 @@ show_state: false
 This will then give you a button to refresh your data as often as you like.
 
 # Changing the refresh interval
-The LUX dongle updates the website every 5/6 minutes, this is useless!
+The LUX dongle updates the website every 5/6 minutes, this is often just too short for people.
 In order to help you refresh the data more often we have included a blueprint which is location at: \blueprints\automation\luxpower\refresh_interval.yaml
 You should NEVER refresh more than every 20 second, this is because the dongle takes time to request and respond and 20 seconds is the safest I have found. Other people say they do it every few seconds, this just isn't true!
+
+ALSO NOTE, it seems LUX's servers in Europe are having issues and although I don't think we are causing the issue I would suggest if you go less than 2 minute updates then you should block your dongle from accessing the LUX servers via your firwewall.
 You can also click below to add it automatically to HA.
 
+If you are using this blueprint and you are using it while connected to the LUX servers for the time being please don't go less than say 2/3 minutes. If you are blocking internet access you can go as low as 20 seconds.
 [![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/refresh_interval.yaml)
 
 
