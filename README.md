@@ -4,8 +4,7 @@ LuxPython is a custom integration into Home Assistant (HA) to allow local access
 # IMPORTANT PLEASE READ!
 
 
-I'm aware of reports in the UK of the Europe server having issues with "API" calls.
-Mark has done a huge amount of work to make sure this doesn't spam the servers (I've spoken about this many, many times) so please don't lower it less than 2/3 minutes until I've got confirmation from LUX unless you block it from accessing the internet.
+I'm aware of reports in the UK of the Europe server having issues with "API" calls, I had confirmation that this was not us and that LUX support up to 20 second refresh rate so please do not go lower than 20 seconds.
 
 Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
 
