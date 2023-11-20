@@ -12,8 +12,7 @@ from typing import Any, Dict, List, Optional
 import voluptuous as vol
 from homeassistant.components.time import TimeEntity
 from homeassistant.config_entries import ConfigEntry
-
-# from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import slugify
 
 from .const import (
@@ -23,6 +22,7 @@ from .const import (
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
+    VERSION,
 )
 from .helpers import Event
 from .LXPPacket import LXPPacket
@@ -246,6 +246,17 @@ class LuxTimeTimeEntity(TimeEntity):
         _LOGGER.warning(f"Register: gone_unavailable event received Name: {self._attr_name} - Register Address: {self.register_address}")  # fmt: skip
         self._attr_available = False
         self.schedule_update_ha_state()
+
+    @property
+    def device_info(self):
+        """Return device info."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.dongle)},
+            manufacturer="LuxPower",
+            model="LUXPower Inverter",
+            name=self.dongle,
+            sw_version=VERSION,
+        )
 
     def set_value(self, value):
         """Update the current Time value."""
