@@ -696,5 +696,5 @@ class LuxStateSensorEntity(SensorEntity):
             manufacturer="LuxPower",
             model="LUXPower Inverter",
             name=self.dongle,
-            sw_version="1.1",
+            sw_version=VERSION,
         )
