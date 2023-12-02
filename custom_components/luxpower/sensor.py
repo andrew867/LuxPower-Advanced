@@ -186,7 +186,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         },
         # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
 
-        # 10. Test Sensor
+        # 10. Home Consumption Total
+        {
+            "etype": "LPHC", "name": "Lux {replaceID_midfix}{hyphen} Home Consumption (Total)", "unique": "lux_home_consumption_total", "bank": 1,
+            "attribute": LXPPacket.e_to_user_all, "attribute1": LXPPacket.e_to_user_all, "attribute2": LXPPacket.e_rec_all, "attribute3": LXPPacket.e_inv_all, "attribute4": LXPPacket.e_to_grid_all,
+            "device_class": DEVICE_CLASS_ENERGY, "unit_of_measurement": ENERGY_KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING,
+        },
+        # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
+
+        # 11. Test Sensor
         # {"etype": "LPTS", "name": "Lux {replaceID_midfix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5},
 
     ]
