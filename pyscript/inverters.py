@@ -56,8 +56,18 @@ def auto_set_ac_battery_charge_level():
     set_percentage_if_changed_by_x("number.lux_1212016010_ac_battery_charge_level", int(float(charge_level)), 1)
     set_percentage_if_changed_by_x("number.lux_1212016024_ac_battery_charge_level", int(float(charge_level)), 1)
 
+    # Todays end_of_charge Calc
+    current_time = datetime.datetime.now().timestamp()
     end_of_charge = datetime.datetime.now().replace(hour=0, minute=00, second=0, microsecond=0).timestamp() + input_datetime.system_off_peak_finish_time.timestamp  # fmt: skip
-    secs_until_eoc = end_of_charge - datetime.datetime.now().timestamp()
+    # Do we Cross Midnight
+    if input_datetime.system_off_peak_start_time.timestamp > input_datetime.system_off_peak_finish_time.timestamp:
+        #  Yes - Over Midnight - Is Current time before midnight?
+        start_of_charge = datetime.datetime.now().replace(hour=0, minute=00, second=0, microsecond=0).timestamp() + input_datetime.system_off_peak_start_time.timestamp  # fmt: skip
+        nearly_midnight = datetime.datetime.now().replace(hour=23, minute=59, second=59, microsecond=9999).timestamp()
+        if current_time > start_of_charge and current_time <= nearly_midnight:
+            end_of_charge = end_of_charge + 24 * 60 * 60
+
+    secs_until_eoc = end_of_charge - current_time
 
     mins_until_eoc = secs_until_eoc / 60
 
@@ -78,13 +88,17 @@ def auto_set_ac_battery_charge_level():
         # Calculate Power Rate When Charging Required
         mins_at_full = charge_perc_reqd * 60 / 18  # mins_in_hour / percent_charge_gain
 
-        rate_perc = int(mins_at_full / mins_until_eoc * 100)
-
-        if rate_perc > 100:
+        # Check If SOC is > 87% - If so charge at full power to top balance
+        if float(sensor.lux_battery) > 87:
             rate_perc = 100
+        else:
+            rate_perc = int(mins_at_full / mins_until_eoc * 100)
 
-        if rate_perc < 20:
-            rate_perc = 20
+            if rate_perc > 100:
+                rate_perc = 100
+
+            if rate_perc < 20:
+                rate_perc = 20
 
         log.info(f"Mins To EOC: {mins_until_eoc:6.2f} - Chrg SOC Reqd: {charge_perc_reqd:4.1f}% - Mins At 100%: {mins_at_full:6.2f} - Rate Reqd: {rate_perc}%")  # fmt: skip
 
@@ -123,6 +137,143 @@ def set_switch(entity_to_set, action_to_set):
 
 MInvSN = "1212016010"  # Master Inverter Serial Number
 SInvSN = "1212016024"  # Slave  Inverter Serial Number
+
+
+@task_unique("auto_charge_batteries_when_ohme_is_charging", kill_me=False)
+@state_trigger(
+    "1 == 1",
+    watch={
+        "binary_sensor.ohme_pro_is_charging",
+        "input_boolean.system_heat_underfloor_during_off_peak",
+        "binary_sensor.octopus_energy_electricity_21p9000917_1100025345638_off_peak",
+    },
+)
+def auto_charge_batteries_when_ohme_is_charging():
+    log.debug(f"auto_charge_batteries_when_ohme_is_charging has fired")
+
+    if (
+        binary_sensor.ohme_pro_is_charging == "on"
+        and binary_sensor.octopus_energy_electricity_21p9000917_1100025345638_off_peak == "off"
+    ):
+        log.info("Ohme Charge Has STARTED Slot Charging")
+
+        end_time = "23:30"
+        start_time = "05:30"
+
+        service.call("time", "set_value", entity_id="time.lux_1212016010_ac_charge_end3", time=end_time, blocking=True)
+        service.call(
+            "time", "set_value", entity_id="time.lux_1212016010_ac_charge_start3", time=start_time, blocking=True
+        )
+
+        service.call("time", "set_value", entity_id="time.lux_1212016024_ac_charge_end3", time=end_time, blocking=True)
+        service.call(
+            "time", "set_value", entity_id="time.lux_1212016024_ac_charge_start3", time=start_time, blocking=True
+        )
+
+        # Make sure AC Charging Is Enabled
+        set_ac_charge_enable_inverters_switch("on")
+
+        charge_level = float(sensor.target_ac_battery_charge_level)
+
+        # Make sure Target Level Is Set
+        set_percentage_if_changed_by_x("number.lux_1212016010_ac_battery_charge_level", int(float(charge_level)), 1)
+        set_percentage_if_changed_by_x("number.lux_1212016024_ac_battery_charge_level", int(float(charge_level)), 1)
+
+        rate_perc = 100
+
+        # Make sure Power Rate for AC Charging Is 100%
+        set_percentage_if_changed_by_x("number.lux_1212016010_ac_charge_power_rate", int(float(rate_perc)), 1)
+        set_percentage_if_changed_by_x("number.lux_1212016024_ac_charge_power_rate", int(float(rate_perc)), 1)
+
+        # automation.1_1_hot_tub_heat_to_max_at_off_peak_start
+
+        service.call(
+            "climate",
+            "set_temperature",
+            entity_id="climate.walcote_hot_tub_heater",
+            temperature=float(input_number.system_hot_tub_max_temperature),
+            blocking=True,
+        )
+        service.call(
+            "climate",
+            "set_preset_mode",
+            entity_id="climate.walcote_hot_tub_heater",
+            preset_mode="Standard",
+            blocking=True,
+        )
+
+        task.sleep(5)
+
+        service.call(
+            "climate",
+            "set_temperature",
+            entity_id="climate.walcote_hot_tub_heater",
+            temperature=float(input_number.system_hot_tub_max_temperature),
+            blocking=True,
+        )
+        service.call(
+            "climate",
+            "set_preset_mode",
+            entity_id="climate.walcote_hot_tub_heater",
+            preset_mode="Standard",
+            blocking=True,
+        )
+
+    else:
+        end_time = "00:00"
+        start_time = "00:00"
+
+        service.call("time", "set_value", entity_id="time.lux_1212016010_ac_charge_end3", time=end_time, blocking=True)
+        service.call(
+            "time", "set_value", entity_id="time.lux_1212016010_ac_charge_start3", time=start_time, blocking=True
+        )
+
+        service.call("time", "set_value", entity_id="time.lux_1212016024_ac_charge_end3", time=end_time, blocking=True)
+        service.call(
+            "time", "set_value", entity_id="time.lux_1212016024_ac_charge_start3", time=start_time, blocking=True
+        )
+
+        # Are we in Peak Period and not within 5 minutes of Off Peak? - If so Switch Off Hot tub
+        if (
+            binary_sensor.octopus_energy_electricity_21p9000917_1100025345638_off_peak == "off"
+            and datetime.datetime.now().replace(hour=0, minute=00, second=0, microsecond=0).timestamp()
+            + input_datetime.system_off_peak_start_time.timestamp
+            - datetime.datetime.now().timestamp()
+            > 300
+        ):
+            log.info("Ohme Charge Has STOPPED Slot Charging")
+
+            service.call(
+                "climate",
+                "set_temperature",
+                entity_id="climate.walcote_hot_tub_heater",
+                temperature=float(input_number.system_hot_tub_min_temperature),
+                blocking=True,
+            )
+            service.call(
+                "climate",
+                "set_preset_mode",
+                entity_id="climate.walcote_hot_tub_heater",
+                preset_mode="Away From Home",
+                blocking=True,
+            )
+
+            task.sleep(5)
+
+            service.call(
+                "climate",
+                "set_temperature",
+                entity_id="climate.walcote_hot_tub_heater",
+                temperature=float(input_number.system_hot_tub_min_temperature),
+                blocking=True,
+            )
+            service.call(
+                "climate",
+                "set_preset_mode",
+                entity_id="climate.walcote_hot_tub_heater",
+                preset_mode="Away From Home",
+                blocking=True,
+            )
 
 
 # @time_trigger("period(now, 2min)")
