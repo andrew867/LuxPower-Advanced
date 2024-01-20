@@ -8,6 +8,9 @@ I'm aware of reports in the UK of the Europe server having issues with "API" cal
 
 Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
 
+Please ensure you are running HA higher than 2024.1.1 to support this integration.
+
+
 IF YOU ARE READING THIS AND YOU ARE SELLING MY PROJECT - YOU SUCK! I DON'T MAKE MONEY ON THIS AND NOR SHOULD ANYONE ELSE!
 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
