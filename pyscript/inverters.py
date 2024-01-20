@@ -160,15 +160,19 @@ def auto_charge_batteries_when_ohme_is_charging():
         end_time = "23:30"
         start_time = "05:30"
 
-        service.call("time", "set_value", entity_id="time.lux_1212016010_ac_charge_end3", time=end_time, blocking=True)
+        service.call(
+            "time", "set_value", entity_id="time.lux_1212016010_ac_charge_end3", time=end_time, blocking=True
+        )  # fmt:
         service.call(
             "time", "set_value", entity_id="time.lux_1212016010_ac_charge_start3", time=start_time, blocking=True
-        )
+        )  # fmt:
 
-        service.call("time", "set_value", entity_id="time.lux_1212016024_ac_charge_end3", time=end_time, blocking=True)
+        service.call(
+            "time", "set_value", entity_id="time.lux_1212016024_ac_charge_end3", time=end_time, blocking=True
+        )  # fmt:
         service.call(
             "time", "set_value", entity_id="time.lux_1212016024_ac_charge_start3", time=start_time, blocking=True
-        )
+        )  # fmt:
 
         # Make sure AC Charging Is Enabled
         set_ac_charge_enable_inverters_switch("on")
@@ -226,12 +230,12 @@ def auto_charge_batteries_when_ohme_is_charging():
         service.call("time", "set_value", entity_id="time.lux_1212016010_ac_charge_end3", time=end_time, blocking=True)
         service.call(
             "time", "set_value", entity_id="time.lux_1212016010_ac_charge_start3", time=start_time, blocking=True
-        )
+        )  # fmt:
 
         service.call("time", "set_value", entity_id="time.lux_1212016024_ac_charge_end3", time=end_time, blocking=True)
         service.call(
             "time", "set_value", entity_id="time.lux_1212016024_ac_charge_start3", time=start_time, blocking=True
-        )
+        )  # fmt:
 
         # Are we in Peak Period and not within 5 minutes of Off Peak? - If so Switch Off Hot tub
         if (
