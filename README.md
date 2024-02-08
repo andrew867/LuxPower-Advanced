@@ -4,14 +4,11 @@ LuxPython is a custom integration into Home Assistant (HA) to allow local access
 # IMPORTANT PLEASE READ!
 
 
-I'm aware of reports in the UK of the Europe server having issues with "API" calls, I had confirmation that this was not us and that LUX support up to 20 second refresh rate so please do not go lower than 20 seconds.
-
 Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
 
 Please ensure you are running HA higher than 2024.1.1 to support this integration.
 
-
-IF YOU ARE READING THIS AND YOU ARE SELLING MY PROJECT - YOU SUCK! I DON'T MAKE MONEY ON THIS AND NOR SHOULD ANYONE ELSE!
+If you dongle start BA.... you will be absolutely fine, if it start BG or BH then you will likely have problems.
 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com - I would like to know how you get on and if this works for you!
@@ -261,7 +258,7 @@ The error logs starting with "REGISTERS:" is helpful if we are debugging certain
 
 # Legal 
 
-Copyright (c) 2023, Guy Wells
+Copyright (c) 2024, Guy Wells
 All rights reserved.
 
 This software may not be sold, resold, redistributed or otherwise conveyed to a third party. 
