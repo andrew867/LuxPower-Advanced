@@ -8,7 +8,7 @@ Please don't rush to install HA updates, we have issues from time to time when H
 
 Please ensure you are running HA higher than 2024.1.1 to support this integration.
 
-If you dongle start BA.... you will be absolutely fine, if it start BG or BH then you will likely have problems.
+If your dongle starts BA.... you will be absolutely fine, if it starts BG or BH then you will likely have problems.
 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com - I would like to know how you get on and if this works for you!
@@ -53,7 +53,7 @@ I would strongly suggest you install the Samba share in HA. Watch this video: ht
 
 IF you get stuck with this, please look at this link: https://smartme.pl/en/adding-custom-component-to-home-assistant/ but just change the example to this integration.
 
-The files SHOULD look like this (note that the IP should the be your IP address of the HA Raspberry Pi or device, for our example below 172.16.255.30
+The files SHOULD look like this (note that the IP should be your IP address of the HA Raspberry Pi or device, for our example below 172.16.255.30
 
 
 Type into Windows File Explorer: "\\\172.16.255.30\config\custom_components\luxpower" - Don't copy the entire folder over. It will not work, only copy from the ZIP file the "luxpower" folder's contents in "custom_components" it should look like this.
@@ -102,9 +102,9 @@ This will then give you a button to refresh your data as often as you like.
 # Changing the refresh interval
 The LUX dongle updates the website every 5/6 minutes, this is often just too short for people.
 In order to help you refresh the data more often we have included a blueprint which is location at: \blueprints\automation\luxpower\refresh_interval.yaml
-You should NEVER refresh more than every 20 second, this is because the dongle takes time to request and respond and 20 seconds is the safest I have found. Other people say they do it every few seconds, this just isn't true!
+You should NEVER refresh more than every 20 seconds, this is because the dongle takes time to request and respond; 20 seconds is the safest I have found. Other people say they do it every few seconds, this just isn't true!
 
-ALSO NOTE, it seems LUX's servers in Europe are having issues and although I don't think we are causing the issue I would suggest if you go less than 2 minute updates then you should block your dongle from accessing the LUX servers via your firwewall.
+ALSO NOTE, it seems LUX's servers in Europe are having issues and although I don't think we are causing the issue I would suggest if you go less than 2-minute updates then you should block your dongle from accessing the LUX servers via your firwewall.
 You can also click below to add it automatically to HA.
 
 If you are using this blueprint and you are using it while connected to the LUX servers for the time being please don't go less than say 2/3 minutes. If you are blocking internet access you can go as low as 20 seconds.
@@ -131,13 +131,13 @@ To install,
 
 #  GUI SETUP
 
-I've changing my advise here:
+I've changed my advice here:
 I would highly suggest you install this:
 https://github.com/DanteWinters/lux-power-distribution-card
 ![image](https://github.com/guybw/LuxPython_DEV/assets/64648444/572761b3-3ba3-45aa-8cfc-25c038cf243b)
 
 
-I sugges you install this as well as it's a simple power card:
+I suggest you install this as well as it's a simple power card:
 https://github.com/gurbyz/power-wheel-card#readme
 Import that and then use the below yaml for the card.
 ```
@@ -168,7 +168,7 @@ https://opensource.com/article/21/2/home-assistant-custom-sensors
 
 :
 ```
-## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor code. However, there's a new name to prevent conflict. 
+## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor codes. However, there's a new name to prevent conflict. 
 - platform: template
   sensors:
     lux_new_home_consumption:
@@ -203,7 +203,7 @@ We cannot support the LUX ethernet dongle - only WIFI -  this is due to ports no
 
 # Fix your IP
 Most home routers don't give you a fixed IP so when the dongle gets a new IP (anything from every few hours to every few weeks) Once that happens the IP that is in HA changes. 
-I HIGHLY recommend giving both the inverter a fixed IP AND Home Assistant. I would suggest doing this by doing a dhcp reservation, this is beyond what this project covers but MOST routers will be able to do this. Google is going to be your friend on this. If it absolutely doesn't then you can assign an IP manually for both the dongle and HA.
+I HIGHLY recommend giving both the inverter a fixed IP AND Home Assistant. I would suggest doing this by doing a DHCP reservation, this is beyond what this project covers but MOST routers will be able to do this. Google is going to be your friend on this. If it absolutely doesn't then you can assign an IP manually for both the dongle and HA.
 
 # 2 (or more inverters)
 Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
@@ -214,8 +214,8 @@ I can't test this as I don't have 2 inverters but if you do try it out and let m
 The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail! I HIGHLY recommend this https://github.com/sabeechen/hassio-google-drive-backup
 
 # Upgrades
-This is an intresting thread. Most people seem to set this up and then never change it. Personally, as people like Mark have spent a lot of time fixing the code and making it more streamlined and added more features, I would personally recomend doing it as often as you can.
-We never remove funionality (if something doesn't work, I have kept a very good history of copies of the intergration on here) so we can always roll back if required but remember this intergration was orginally for ME. If it's not absolutely 100% stable, I wouldn't run it! I have a dev box this is tested on for a few hours / days but after that it's running 24/7/365 on my production box!
+This is an interesting thread. Most people seem to set this up and then never change it. Personally, as people like Mark have spent a lot of time fixing the code, making it more streamlined and added more features, I would personally recommend doing it as often as you can.
+We never remove functionality (if something doesn't work, I have kept a very good history of copies of the integration on here) so we can always roll back if required but remember this integration was originally for ME. If it's not absolutely 100% stable, I wouldn't run it! I have a dev box that is tested on for a few hours / days but after that it's running 24/7/365 on my production box!
 
 To upgrade the LuxPower integration, follow these steps:
 1. Backup the current "luxpower" folder in the custom integrations directory.
@@ -226,7 +226,7 @@ This process should take around 20 seconds and ensures a smooth upgrade.
 
 
 # Breaking Changes
-@maegibbons has spent a huge amount of time sorting out the time settings. In the lastest release of LUXPython with HA 2023.06 we now have native time settings so any custom helpers / automations can now be deleted. We will not remove the old way of doing this yet but it will go in the next few releases. Going forward you can just add "time.lux_ac_charge_start1" for example.
+@maegibbons has spent a huge amount of time sorting out the time settings. In the latest release of LUXPython with HA 2023.06 we now have native time settings so any custom helpers / automations can now be deleted. We will not remove the old way of doing this yet but it will go in the next few releases. Going forward you can just add "time.lux_ac_charge_start1" for example.
 
 # Thanks!
 
@@ -235,10 +235,10 @@ Using the great work from here: https://github.com/celsworth/lxp-packet/blob/mas
 @elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he is incredible! 
 
 @maegibbons who has helped fix many of the bugs for people and expanded this to support more inverters / setups. It's really appreciated!
-To everyone else who has helped fixed issue, spotted bugs and contributed to the project!
+To everyone else who has helped fix issues, spotted bugs and contributed to the project!
 
 # WHY PRIVATE
-I took the decision a long while ago to make this private as it's really hard to stop people using and abusing the system (and selling it!). Everyone on here has answered my canned email of setup and has a basic understanding of HA (at a minimum) or I've worked though a remote season to set them up.
+I took the decision a long while ago to make this private as it's really hard to stop people from using and abusing the system (and selling it!). Everyone on here has answered my canned email of setup and has a basic understanding of HA (at a minimum) or I've worked through a remote season to set them up.
 
 If HACS could support private repo's I would absolutely put it in HACS but it doesn't so I can't.
 
