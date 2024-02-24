@@ -177,6 +177,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery Voltage", "register_address": 163, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning SOC(%)", "register_address": 164, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery SOC(%)", "register_address": 165, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
+        {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Battery Current", "register_address": 168, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "device_class": NumberDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE, "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} On Grid EOD Voltage", "register_address": 169, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Input Power", "register_address": 177, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "enabled": False},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Fan 1 Max Speed(%)", "register_address": 178, "bitmask": 0x00FF, "bitshift": 0, "divisor": 2, "def_val": 42.0, "min_val": 0.0, "max_val": maxbyte, "step": 0.5, "icon": "mdi:fan", "enabled": False},
@@ -267,7 +268,7 @@ class LuxNormalNumberEntity(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        _LOGGER.debug(f"async_added_to_hass {self._attr_name},  {self.entity_id},  {self.unique_id}")
+        _LOGGER.debug(f"async_added_to_hass {self._attr_name}, {self.entity_id}, {self.unique_id}")
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
             if self.register_address == 21:
