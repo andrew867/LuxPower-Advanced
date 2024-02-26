@@ -145,6 +145,8 @@ SInvSN = "1212016024"  # Slave  Inverter Serial Number
     watch={
         "binary_sensor.ohme_pro_is_charging",
         "input_boolean.system_heat_underfloor_during_off_peak",
+        "input_boolean.system_allow_hot_tub_heating_during_on_peak",
+        "binary_sensor.ohme_charger_online",
         "binary_sensor.octopus_energy_electricity_21p9000917_1100025345638_off_peak",
     },
 )
@@ -153,8 +155,10 @@ def auto_charge_batteries_when_ohme_is_charging():
 
     if (
         binary_sensor.ohme_pro_is_charging == "on"
+        and binary_sensor.ohme_charger_online == "on"
         and binary_sensor.octopus_energy_electricity_21p9000917_1100025345638_off_peak == "off"
     ):
+        # We regard this as CHEAP Rate
         log.info("Ohme Charge Has STARTED Slot Charging")
 
         end_time = "23:30"
@@ -183,39 +187,17 @@ def auto_charge_batteries_when_ohme_is_charging():
 
         # automation.1_1_hot_tub_heat_to_max_at_off_peak_start
 
-        service.call(
-            "climate",
-            "set_temperature",
-            entity_id="climate.walcote_hot_tub_heater",
-            temperature=float(input_number.system_hot_tub_max_temperature),
-            blocking=True,
-        )
-        service.call(
-            "climate",
-            "set_preset_mode",
-            entity_id="climate.walcote_hot_tub_heater",
-            preset_mode="Standard",
-            blocking=True,
-        )
+        service.call("climate", "set_temperature", entity_id="climate.walcote_hot_tub_heater", temperature=float(input_number.system_hot_tub_max_temperature), blocking=True)  # fmt: skip
+        service.call("climate", "set_preset_mode", entity_id="climate.walcote_hot_tub_heater", preset_mode="Standard", blocking=True)  # fmt: skip
 
         task.sleep(5)
 
-        service.call(
-            "climate",
-            "set_temperature",
-            entity_id="climate.walcote_hot_tub_heater",
-            temperature=float(input_number.system_hot_tub_max_temperature),
-            blocking=True,
-        )
-        service.call(
-            "climate",
-            "set_preset_mode",
-            entity_id="climate.walcote_hot_tub_heater",
-            preset_mode="Standard",
-            blocking=True,
-        )
+        service.call("climate", "set_temperature", entity_id="climate.walcote_hot_tub_heater", temperature=float(input_number.system_hot_tub_max_temperature), blocking=True)  # fmt: skip
+        service.call("climate", "set_preset_mode", entity_id="climate.walcote_hot_tub_heater", preset_mode="Standard", blocking=True)  # fmt: skip
 
     else:
+        # We regard this as EXPENSIVE rate - Switch off AC Charging
+
         end_time = "00:00"
         start_time = "00:00"
 
@@ -225,47 +207,24 @@ def auto_charge_batteries_when_ohme_is_charging():
         service.call("time", "set_value", entity_id="time.lux_1212016024_ac_charge_end3", time=end_time, blocking=True)
         service.call("time", "set_value", entity_id="time.lux_1212016024_ac_charge_start3", time=start_time, blocking=True)  # fmt: skip
 
-        # Are we in Peak Period and not within 5 minutes of Off Peak? - If so Switch Off Hot tub
+        # Are we in Peak Period and not within 5 minutes of Off Peak and Hot Tub Heating not forced on? - If so Switch Off Hot tub
         if (
             binary_sensor.octopus_energy_electricity_21p9000917_1100025345638_off_peak == "off"
             and datetime.datetime.now().replace(hour=0, minute=00, second=0, microsecond=0).timestamp()
             + input_datetime.system_off_peak_start_time.timestamp
             - datetime.datetime.now().timestamp()
             > 300
+            and input_boolean.system_allow_hot_tub_heating_during_on_peak == "off"
         ):
             log.info("Ohme Charge Has STOPPED Slot Charging")
 
-            service.call(
-                "climate",
-                "set_temperature",
-                entity_id="climate.walcote_hot_tub_heater",
-                temperature=float(input_number.system_hot_tub_min_temperature),
-                blocking=True,
-            )
-            service.call(
-                "climate",
-                "set_preset_mode",
-                entity_id="climate.walcote_hot_tub_heater",
-                preset_mode="Away From Home",
-                blocking=True,
-            )
+            service.call("climate", "set_temperature", entity_id="climate.walcote_hot_tub_heater", temperature=float(input_number.system_hot_tub_min_temperature), blocking=True)  # fmt: skip
+            service.call("climate", "set_preset_mode", entity_id="climate.walcote_hot_tub_heater", preset_mode="Away From Home", blocking=True)  # fmt: skip
 
             task.sleep(5)
 
-            service.call(
-                "climate",
-                "set_temperature",
-                entity_id="climate.walcote_hot_tub_heater",
-                temperature=float(input_number.system_hot_tub_min_temperature),
-                blocking=True,
-            )
-            service.call(
-                "climate",
-                "set_preset_mode",
-                entity_id="climate.walcote_hot_tub_heater",
-                preset_mode="Away From Home",
-                blocking=True,
-            )
+            service.call("climate", "set_temperature", entity_id="climate.walcote_hot_tub_heater", temperature=float(input_number.system_hot_tub_min_temperature), blocking=True)  # fmt: skip
+            service.call("climate", "set_preset_mode", entity_id="climate.walcote_hot_tub_heater", preset_mode="Away From Home", blocking=True)  # fmt: skip
 
 
 # @time_trigger("period(now, 2min)")
@@ -317,9 +276,11 @@ def auto_balance():
         dis1 = int(state.get(f"sensor.lux_{MInvSN}_battery_discharge_live"))
         dis2 = int(state.get(f"sensor.lux_{SInvSN}_battery_discharge_live"))
 
+    # chksoc = input_boolean.system_allow_autobalance_to_check_soc_range == "on"
+
     if (
-        10 < soc1 < 90
-        and 10 < soc2 < 90
+        (10 < soc1 < 90 or input_boolean.system_allow_autobalance_to_check_soc_range == "off")
+        and (10 < soc2 < 90 or input_boolean.system_allow_autobalance_to_check_soc_range == "off")
         and chg1 < 2500
         and chg2 < 2500
         and dis1 < 2500
