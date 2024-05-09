@@ -112,6 +112,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power From Inverter (Live)", "unique": "lux_power_from_inverter_live", "bank": 0, "attribute": LXPPacket.p_inv, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power To Inverter (Live)", "unique": "lux_power_to_inverter_live", "bank": 0, "attribute": LXPPacket.p_rec, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power From Grid to HOUSE (Live)", "unique": "lux_power_to_home", "bank": 0, "attribute": LXPPacket.p_load, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
+        
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} CT Clamp (Live)", "unique": "lux_power_current_clamp", "bank": 0, "attribute": LXPPacket.rms_current, "device_class": SensorDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE},
+
+        
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power To EPS (Live)", "unique": "lux_power_to_eps", "bank": 0, "attribute": LXPPacket.p_to_eps, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power To EPS (Daily)", "unique": "lux_power_to_eps_daily", "bank": 0, "attribute": LXPPacket.e_eps_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power To EPS (Total)", "unique": "lux_power_to_eps_total", "bank": 1, "attribute": LXPPacket.e_eps_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
@@ -610,6 +614,7 @@ class LuxStateSensorEntity(SensorEntity):
         state_attributes[LXPPacket.f_ac] = f"{self.totaldata.get(LXPPacket.f_ac, UA)}"
         state_attributes[LXPPacket.p_inv] = f"{self.totaldata.get(LXPPacket.p_inv, UA)}"
         state_attributes[LXPPacket.p_rec] = f"{self.totaldata.get(LXPPacket.p_rec, UA)}"
+        state_attributes[LXPPacket.rms_current] = f"{self.totaldata.get(LXPPacket.rms_current, UA)}"
         state_attributes[LXPPacket.pf] = f"{self.totaldata.get(LXPPacket.pf, UA)}"
         state_attributes[LXPPacket.v_eps_r] = f"{self.totaldata.get(LXPPacket.v_eps_r, UA)}"
         state_attributes[LXPPacket.v_eps_s] = f"{self.totaldata.get(LXPPacket.v_eps_s, UA)}"

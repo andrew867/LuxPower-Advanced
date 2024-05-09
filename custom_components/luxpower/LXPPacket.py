@@ -214,6 +214,7 @@ class LXPPacket:
     v_ac_t = "v_ac_t"
     f_ac = "f_ac"
     p_inv = "p_inv"
+    rms_current = "rms_current"
     p_rec = "p_rec"
     pf = "pf"
     v_eps_r = "v_eps_r"
@@ -823,8 +824,14 @@ class LXPPacket:
                 _LOGGER.debug("p_inv(Watts) %s", p_inv)
                 _LOGGER.debug("p_rec(Watts) %s", p_rec)
             self.readValuesThis[LXPPacket.p_inv] = p_inv
-            self.readValuesThis[LXPPacket.p_rec] = p_rec
-
+            self.readValuesThis[LXPPacket.p_rec] = p_rec   
+            
+            # Adding rms_current from register 18
+            rms_current = self.readValuesInt.get(18, 0) / 100
+            if self.debug:
+                _LOGGER.debug("rms_current(Amps) %s", rms_current)
+            self.readValuesThis[LXPPacket.rms_current] = rms_current
+            
             pf = self.readValuesInt.get(19, 0) / 1000
             if self.debug:
                 _LOGGER.debug("pf %s", pf)
