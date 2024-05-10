@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Addition of additional Sensor CT Clamp.
-
+- Addition generator sensors Thanks @DanAustinGH !
 ## [4.2.12] - 2024-02-26
 
 ### Added
