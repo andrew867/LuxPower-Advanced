@@ -224,6 +224,7 @@ class LXPPacket:
     p_to_grid = "p_to_grid"
     p_to_user = "p_to_user"
     p_load = "p_load"
+    p_load2 = "p_load2"
     p_to_eps = "p_to_eps"
     e_pv_1_day = "e_pv_1_day"
     e_pv_2_day = "e_pv_2_day"
@@ -264,6 +265,13 @@ class LXPPacket:
     dischg_cut_volt = "dischg_cut_volt"
     bat_count = "bat_count"
     bat_capacity = "bat_capacity"
+    gen_input_volt ="gen_input_volt"
+    gen_input_freq = "gen_input_freq"
+    gen_power_watt = "gen_power_watt"
+    gen_power_day = "gen_power_day"
+    gen_power_all = "gen_power_all"
+    eps_L1_volt = "eps_L1_volt"
+    eps_L2_volt = "eps_L2_volt"
 
     def __init__(self, packet=b"", dongle_serial=b"", serial_number=b"", debug=True):
         """
@@ -1020,6 +1028,26 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.min_cell_volt] = min_cell_volt
             self.readValuesThis[LXPPacket.max_cell_temp] = max_cell_temp
             self.readValuesThis[LXPPacket.min_cell_temp] = min_cell_temp
+
+            p_load2 = self.readValuesInt.get(114, 0)
+            self.readValuesThis[LXPPacket.p_load2] = p_load2
+            gen_input_volt = self.readValuesInt.get(121, 0) / 10
+            gen_input_freq = self.readValuesInt.get(122, 0) / 100
+            gen_power_watt = self.readValuesInt.get(123, 0)
+            gen_power_day  = self.readValuesInt.get(124, 0) / 10
+            gen_power_all  = self.readValuesInt.get(125, 0) / 10
+            self.readValuesThis[LXPPacket.gen_input_volt] = gen_input_volt
+            self.readValuesThis[LXPPacket.gen_input_freq] = gen_input_freq
+            if gen_power_watt < 125:
+                gen_power_watt = 0
+            self.readValuesThis[LXPPacket.gen_power_watt] = gen_power_watt
+            self.readValuesThis[LXPPacket.gen_power_day] = gen_power_day
+            self.readValuesThis[LXPPacket.gen_power_all] = gen_power_all
+
+            eps_L1_volt = self.readValuesInt.get(127, 0) / 10
+            eps_L2_volt = self.readValuesInt.get(128, 0) / 10
+            self.readValuesThis[LXPPacket.eps_L1_volt] = eps_L1_volt
+            self.readValuesThis[LXPPacket.eps_L2_volt] = eps_L2_volt
 
     def update_value(self, oldvalue, mask, enable=True):
         return oldvalue | mask if enable else oldvalue & (65535 - mask)
