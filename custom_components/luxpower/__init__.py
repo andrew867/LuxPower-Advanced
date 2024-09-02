@@ -205,9 +205,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "DONGLE": DONGLE_SERIAL,
         "client": luxpower_client,
     }  # Used for avoiding duplication of config entries
+##    for component in PLATFORMS:
+##        hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
+##        _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     for component in PLATFORMS:
-        hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
     # wait to make sure all entities have been initialised
