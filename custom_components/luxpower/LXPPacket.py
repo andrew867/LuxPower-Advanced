@@ -439,13 +439,10 @@ class LXPPacket:
         if self.debug:
             _LOGGER.debug("*********************** PARSING PACKET *************************************")
         self.packet_length = len(packet)
+        is_heartbeat = self.packet_length == 19 or self.packet_length == 21
 
-        # Check if packet contains only serial number
-        if self.packet_length == 19 or self.packet_length == 21:
-            _LOGGER.debug(f"Packet received. Serial number number: {packet}. No other data.")
-            return
         # Check if packet contains data
-        elif self.packet_length < 37:
+        if not is_heartbeat and self.packet_length < 37:
             _LOGGER.error(f"Received packet is TOO SMALL with length {self.packet_length}")
             return
 
@@ -474,8 +471,8 @@ class LXPPacket:
         # unknown_byte = packet[6]
         self.tcp_function = packet[7]
         self.dongle_serial = packet[8:18]
-        self.data_length = struct.unpack("H", packet[18:20])[0]
-
+        raw_data_length = packet[18:20]
+        self.data_length = struct.unpack("H", raw_data_length)[0] if raw_data_length != b"\x00" else 0
         self.data_frame = packet[20:self.packet_length_calced - 2]  # fmt: skip
 
         if self.debug:
@@ -496,7 +493,10 @@ class LXPPacket:
 
         if self.tcp_function == self.HEARTBEAT:
             _LOGGER.debug("HEARTBEAT ")
-            return
+            self.packet_error = False
+            return {
+                "tcp_function": self.TCP_FUNCTION[self.tcp_function],
+            }
 
         if self.data_length != len(self.data_frame) + 2:
             _LOGGER.error("Invalid packet - Bad data length %s", len(self.data_frame))

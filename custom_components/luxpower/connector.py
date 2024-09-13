@@ -144,7 +144,12 @@ class LuxPowerClient(asyncio.Protocol):
             result = self.lxpPacket.parse_packet(this_frame)
             if not self.lxpPacket.packet_error:
                 _LOGGER.debug(result)
-                if self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
+
+                if self.lxpPacket.tcp_function == self.lxpPacket.HEARTBEAT:
+                    # response back with the packet we got from inverter
+                    self._transport.write(data)
+
+                elif self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
                     register = self.lxpPacket.register
                     _LOGGER.debug("register: %s ", register)
                     number_of_registers = int(len(result.get("value", "")) / 2)
