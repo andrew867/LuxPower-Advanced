@@ -291,22 +291,22 @@ class LuxPowerClient(asyncio.Protocol):
             else:
                 _LOGGER.debug(f"{log_marker} aborted - Count: {bank_count}")
                 return
-
-        self._already_processing = True
-        await self.inverter_is_reachable()
-        if self._reachable:
-            for address_bank in range(0, bank_count):
-                _LOGGER.info(f"{log_marker} call request_data - Bank: {address_bank}")
-                await self.request_data_bank(address_bank)
-                # await asyncio.sleep(1)
-        else:
-            _LOGGER.info(f"{log_marker} Inv Not Reachable - Attempting Reconnect")
-            self._connect_after_failure = True
-            await self.reconnect()
-            await asyncio.sleep(1)
-
-        self._already_processing = False
-        _LOGGER.debug(f"{log_marker} finish - Count: {bank_count}")
+        try:
+            self._already_processing = True
+            await self.inverter_is_reachable()
+            if self._reachable:
+                for address_bank in range(0, bank_count):
+                    _LOGGER.info(f"{log_marker} call request_data - Bank: {address_bank}")
+                    await self.request_data_bank(address_bank)
+                    # await asyncio.sleep(1)
+            else:
+                _LOGGER.info(f"{log_marker} Inv Not Reachable - Attempting Reconnect")
+                self._connect_after_failure = True
+                await self.reconnect()
+                await asyncio.sleep(1)
+            _LOGGER.debug(f"{log_marker} finish - Count: {bank_count}")
+        finally:
+            self._already_processing = False
 
     async def request_hold_bank(self, address_bank):
         serial = self.lxpPacket.serial_number
@@ -337,30 +337,31 @@ class LuxPowerClient(asyncio.Protocol):
                 _LOGGER.debug(f"{log_marker} aborted")
                 return
 
-        self._already_processing = True
-        self._warn_registers = True
-        await asyncio.sleep(1)
-        for address_bank in range(0, 5):
-            _LOGGER.info(f"{log_marker} call request_hold - Bank: {address_bank}")
-            await self.request_hold_bank(address_bank)
-            # await asyncio.sleep(1)
-        if 1 == 1:
-            # Request registers 200-239
-            _LOGGER.info(f"{log_marker} call request_hold - EXTENDED Bank: 5")
+        try:
+            self._already_processing = True
             self._warn_registers = True
-            await self.request_hold_bank(5)
-            # await asyncio.sleep(1)
-        if 1 == 0:
-            # Request registers 560-599
-            _LOGGER.info(f"{log_marker} call request_hold - HIGH EXTENDED Bank: 6")
-            self._warn_registers = True
-            await self.request_hold_bank(6)
-            # await asyncio.sleep(1)
+            await asyncio.sleep(1)
+            for address_bank in range(0, 5):
+                _LOGGER.info(f"{log_marker} call request_hold - Bank: {address_bank}")
+                await self.request_hold_bank(address_bank)
+                # await asyncio.sleep(1)
+            if 1 == 1:
+                # Request registers 200-239
+                _LOGGER.info(f"{log_marker} call request_hold - EXTENDED Bank: 5")
+                self._warn_registers = True
+                await self.request_hold_bank(5)
+                # await asyncio.sleep(1)
+            if 1 == 0:
+                # Request registers 560-599
+                _LOGGER.info(f"{log_marker} call request_hold - HIGH EXTENDED Bank: 6")
+                self._warn_registers = True
+                await self.request_hold_bank(6)
+                # await asyncio.sleep(1)
 
-        self._warn_registers = False
-        self._already_processing = False
-
-        _LOGGER.debug(f"{log_marker} finish")
+            _LOGGER.debug(f"{log_marker} finish")
+        finally:
+            self._warn_registers = False
+            self._already_processing = False
 
     def stop_client(self):
         _LOGGER.info("stop_client called")
