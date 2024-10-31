@@ -1,0 +1,35 @@
+{
+  "config": {
+    "error": {
+      "host_error": "Ang IP address ay hindi wasto",
+      "dongle_error": "Ang dongle ng inverter ay dapat eksaktong 10 karakter",
+      "serial_error": "Ang serial number ng inverter ay dapat eksaktong 10 karakter",
+      "exist_error": "Nagdagdag na ang integrasyon!"
+    },
+    "abort": {
+        "already_configured": "Nakakonfigura na ang device"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Konfigurasyon ng integrasyon para sa mga LuxPower Inverter",
+        "data": {
+          "lux_host": "IP address ng Lux Inverter",
+          "lux_port": "TCP Port ng Inverter",
+          "lux_dongle_serial": "Dongle Number",
+          "lux_serial_number": "Serial Number ng Inverter",
+          "lux_use_serial": "Gamitin ang serial bilang bahagi ng entity"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Konfigurasyon ng integrasyon para sa mga LuxPower Inverter",
+        "data": {
+          "lux_host": "IP address ng Lux Inverter",
+          "lux_port": "TCP Port ng Inverter",
+          "lux_dongle_serial": "Dongle Number ng Inverter",
+          "lux_serial_number": "
