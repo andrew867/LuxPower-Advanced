@@ -265,6 +265,7 @@ class LXPPacket:
     dischg_cut_volt = "dischg_cut_volt"
     bat_count = "bat_count"
     bat_capacity = "bat_capacity"
+    bat_current = "bat_current"
     gen_input_volt ="gen_input_volt"
     gen_input_freq = "gen_input_freq"
     gen_power_watt = "gen_power_watt"
@@ -1014,6 +1015,14 @@ class LXPPacket:
             if self.debug:
                 _LOGGER.debug("bat_capacity %s", bat_capacity)
             self.readValuesThis[LXPPacket.bat_capacity] = bat_capacity
+
+            bat_current = self.readValuesInt.get(98,0)
+            if self.debug:
+                _LOGGER.debug("bat_current %s", bat_current)
+
+            if bat_current&0x8000:
+                bat_current=bat_current-0x10000
+            self.readValuesThis[LXPPacket.bat_current] = bat_current / 10
 
             max_cell_volt = self.readValuesInt.get(101, 0) / 1000
             min_cell_volt = self.readValuesInt.get(102, 0) / 1000
