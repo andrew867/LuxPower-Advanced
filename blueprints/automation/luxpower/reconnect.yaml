@@ -9,6 +9,12 @@ blueprint:
       selector:
         entity:
           domain: sensor
+    luxpower_ac_charge_switch:
+      name: LuxPower AC charge switch
+      description: We need at least one switch to validate that the input entities have refreshed as these can be seperate to the last_received_time
+      selector:
+        entity:
+          domain: switch
     reconnect_check_interval:
       name: Interval for the reconnection checking
       description: Input the interval in minutes for triggering reconnection if data is not received in the specified time interval
@@ -26,11 +32,18 @@ trigger:
 
 variables:
   luxpowerTimeEntity: !input luxpower_time_entity
+  luxpowerSwitchEntity: !input luxpower_ac_charge_switch
   timeInterval: !input reconnect_check_interval
 
 condition:
-  - condition: template
-    value_template: "{{ now().timestamp() - state_attr(luxpowerTimeEntity, 'timestamp') > 60 * timeInterval }}"
+  - condition: or
+    conditions:
+      - condition: template
+        value_template: >-
+          {% set last_timestamp = state_attr(luxpowerTimeEntity, 'timestamp') %}
+          {{ last_timestamp is not none and (now().timestamp() - last_timestamp > 60 * timeInterval) }}
+      - condition: template
+        value_template: "{{ states(luxpowerSwitchEntity) == 'unavailable' }}"
 
 action:
   - service: luxpower.luxpower_reconnect
