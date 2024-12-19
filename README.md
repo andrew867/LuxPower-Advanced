@@ -8,7 +8,7 @@ Please don't rush to install HA updates, we have issues from time to time when H
 
 Please ensure you are running HA higher than 2024.1.1 to support this integration.
 
-If your dongle starts BA.... you will be absolutely fine, if it starts BG or BH then you will likely have problems.
+If your dongle starts BA.... you will be absolutely fine, if your dongle doesn't start BA, it might not work.
 
 If you do any fixes, improvements etc, please let me know so I can bring them into this.
 Please keep in touch at guybw@hotmail.com - I would like to know how you get on and if this works for you!
@@ -34,13 +34,15 @@ I've created some quick tutorial videos that might assist you (you may notice so
 
 
 # SETUP THE DONGLE
-You need to set up your inverter by following these instructions first:
+If you have a BA dongle, you need to set up your inverter by following these instructions first:
 https://github.com/guybw/LuxPython_DEV/blob/master/DongleSetup.md
 (make sure you do not change the port from 8000) I only support WIFI dongles, not ethernet dongles right now.
-
+If you a different dongle then the webpage will likely not show and if the version is lower than 2.02 then port 8000 will not work and you will have to ask your installer to update the dongle firmware.
 
 
 # INSTALL THE INTEGRATION
+** THIS INTEGRATION WILL NOT WORK WITH HACS**
+
 Copy the "luxpower" integration to your Home Assistant instance into the "/config/" folder (where your configuration.yaml lives)
 
 You should see a "custom_components" folder, then simply copy ./custom_components/luxpower/ - this is explained in more detail below.
@@ -50,8 +52,6 @@ Next REBOOT, this is mandatory otherwise the next bit will not work.
 
 I would strongly suggest you install the Samba share in HA. Watch this video: https://www.youtube.com/watch?v=udqY2CYzYGk
 
-
-IF you get stuck with this, please look at this link: https://smartme.pl/en/adding-custom-component-to-home-assistant/ but just change the example to this integration.
 
 The files SHOULD look like this (note that the IP should be your IP address of the HA Raspberry Pi or device, for our example below 172.16.255.30
 
