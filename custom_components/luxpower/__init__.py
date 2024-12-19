@@ -13,7 +13,8 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .connector import LuxPowerClient, ServiceHelper
+from .connector import ServiceHelper
+from .lxp.client import LuxPowerClient
 from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_HOST,
@@ -87,8 +88,10 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
 
     """
     await asyncio.sleep(20)
-    await hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True)  # fmt: skip
-    await hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True)  # fmt: skip
+    # fmt: skip
+    await hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True)
+    # fmt: skip
+    await hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True)
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -101,7 +104,8 @@ async def async_setup(hass: HomeAssistant, config: dict):
         """Handle the service call."""
         dongle = call.data.get("dongle")
         address_bank = call.data.get("address_bank")
-        _LOGGER.debug("handle_refresh_data_register_bank service: %s %s %s", DOMAIN, dongle, address_bank)
+        _LOGGER.debug("handle_refresh_data_register_bank service: %s %s %s",
+                      DOMAIN, dongle, address_bank)
         await service_helper.service_refresh_data_register_bank(dongle=dongle, address_bank=int(address_bank))
 
     async def handle_refresh_data_registers(call):
@@ -110,13 +114,15 @@ async def async_setup(hass: HomeAssistant, config: dict):
         bank_count = call.data.get("bank_count")
         if int(bank_count) == 0:
             bank_count = 2
-        _LOGGER.debug("handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
+        _LOGGER.debug(
+            "handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
         await service_helper.service_refresh_data_registers(dongle=dongle, bank_count=int(bank_count))
 
     async def handle_refresh_hold_registers(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_refresh_hold_registers service: %s %s", DOMAIN, dongle)
+        _LOGGER.debug(
+            "handle_refresh_hold_registers service: %s %s", DOMAIN, dongle)
         await service_helper.service_refresh_hold_registers(dongle=dongle)
 
     async def handle_reconnect(call):
@@ -134,7 +140,8 @@ async def async_setup(hass: HomeAssistant, config: dict):
     async def handle_synctime(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
-        do_set_time = call.data.get("do_set_time", "False").lower() in ("yes", "true", "t", "1")
+        do_set_time = call.data.get(
+            "do_set_time", "False").lower() in ("yes", "true", "t", "1")
         _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
         await service_helper.service_synctime(dongle=dongle, do_set_time=do_set_time)
 
@@ -172,7 +179,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     This is where we will describe what this function does
 
     """
-    _LOGGER.info(f"async_setup_entry: LuxPower integration Version {VERSION} platform load")
+    _LOGGER.info(
+        f"async_setup_entry: LuxPower integration Version {VERSION} platform load")
     _LOGGER.debug("platform config: ", entry.data)
     _LOGGER.debug("platform entry_id: ", entry.entry_id)
     """Your controller/hub specific code."""
@@ -189,7 +197,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
     events = Event(dongle=DONGLE_SERIAL)
-    luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(str(DONGLE_SERIAL)), serial_number=str.encode(str(SERIAL_NUMBER)), events=events,)  # fmt: skip
+    luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(
+        str(DONGLE_SERIAL)), serial_number=str.encode(str(SERIAL_NUMBER)), events=events,)  # fmt: skip
 
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
 
@@ -205,9 +214,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "DONGLE": DONGLE_SERIAL,
         "client": luxpower_client,
     }  # Used for avoiding duplication of config entries
-##    for component in PLATFORMS:
-##        hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
-##        _LOGGER.debug(f"async_setup_entry: loading: {component}")
+# for component in PLATFORMS:
+# hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
+# _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     for component in PLATFORMS:

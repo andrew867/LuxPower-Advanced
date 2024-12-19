@@ -36,3 +36,15 @@ luxpower_reconnect:
       default: ''
 
       example: '<DONGLE SERIAL>'
+
+luxpower_synctime:
+  description: Synchronizes inverter time with local time
+  fields:
+    dongle:
+      description: Dongle Serial Number
+      default: ''
+      example: '<DONGLE SERIAL>'
+    do_set_time:
+      description: Determines whether inverter time must be synced with HA local time
+      default: False
+      example: 'True'
