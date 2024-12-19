@@ -7,7 +7,7 @@
       "exist_error": "Integration already added!"
     },
     "abort": {
-        "already_configured": "Device is already configured"
+      "already_configured": "Device is already configured"
     },
     "step": {
       "user": {
@@ -18,7 +18,8 @@
           "lux_port": "TCP Port of Inverter",
           "lux_dongle_serial": "Dongle Number",
           "lux_serial_number": "Inverter Serial Number",
-          "lux_use_serial": "Use serial to be part of entity"
+          "lux_use_serial": "Use serial to be part of entity",
+          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter"
         }
       }
     }
@@ -33,7 +34,8 @@
           "lux_port": "TCP Port of Inverter",
           "lux_dongle_serial": "Inverter Dongle Number",
           "lux_serial_number": "Inverter Serial Number",
-          "lux_use_serial": "Use serial to be part of entity"
+          "lux_use_serial": "Use serial to be part of entity",
+          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter"
         }
       }
     }

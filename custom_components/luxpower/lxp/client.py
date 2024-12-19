@@ -36,7 +36,7 @@ class LuxPowerClient(asyncio.Protocol):
     _transport: asyncio.WriteTransport | None
     _lxp_single_register_result: asyncio.Future | None
 
-    def __init__(self, hass: home_assistant_bluetooth, server: str, port: str, dongle_serial: str, serial_number: str, events: Event):
+    def __init__(self, hass: home_assistant_bluetooth, server: str, port: str, dongle_serial: str, serial_number: str, events: Event, respond_to_heartbeat: bool):
         self.hass = hass
         self.server = server
         self.port = port
@@ -50,6 +50,7 @@ class LuxPowerClient(asyncio.Protocol):
         self._connect_twice = False
         self._connect_after_failure = False
         self._already_processing = False
+        self._respond_to_heartbeat = respond_to_heartbeat
         self._LOGGER = logging.getLogger(__name__)
         self._lxp_request_lock = asyncio.Lock()
         self._lxp_single_register_result = None
@@ -129,8 +130,9 @@ class LuxPowerClient(asyncio.Protocol):
                 self._LOGGER.debug(result)
 
                 if self.lxpPacket.tcp_function == self.lxpPacket.HEARTBEAT:
-                    # response back with the packet we got from inverter
-                    self._transport.write(data)
+                    if self._respond_to_heartbeat:
+                        # response back with the packet we got from inverter
+                        self._transport.write(data)
                 elif self.lxpPacket.device_function == self.lxpPacket.READ_INPUT:
                     register = self.lxpPacket.register
                     self._LOGGER.debug("register: %s ", register)

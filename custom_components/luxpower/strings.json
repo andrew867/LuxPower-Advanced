@@ -18,7 +18,8 @@
           "lux_port": "[%key:common::config_flow::data::lux_port%]",
           "lux_dongle_serial": "[%key:common::config_flow::data::lux_dongle_serial%]",
           "lux_serial_number": "[%key:common::config_flow::data::lux_serial_number%]",
-          "lux_use_serial": "[%key:common::config_flow::data::lux_use_serial%]"
+          "lux_use_serial": "[%key:common::config_flow::data::lux_use_serial%]",
+          "lux_respond_to_heartbeat": "[%key:common::config_flow::data::lux_respond_to_heartbeat%]"
         }
       }
     }
@@ -31,10 +32,10 @@
           "lux_port": "TCP Port of the inverter",
           "lux_dongle_serial": "Inverter dongle number",
           "lux_serial_number": "Inverter serial number",
-          "lux_use_serial": "Use serial to be part of entityID"
+          "lux_use_serial": "Use serial to be part of entityID",
+          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter"
         }
       }
     }
   }
 }
-

@@ -18,12 +18,14 @@ from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_HOST,
     ATTR_LUX_PORT,
+    ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
     PLACEHOLDER_LUX_DONGLE_SERIAL,
     PLACEHOLDER_LUX_HOST,
     PLACEHOLDER_LUX_PORT,
+    PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
     PLACEHOLDER_LUX_SERIAL_NUMBER,
     PLACEHOLDER_LUX_USE_SERIAL,
 )
@@ -64,6 +66,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=PLACEHOLDER_LUX_DONGLE_SERIAL): str,
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=PLACEHOLDER_LUX_SERIAL_NUMBER): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=PLACEHOLDER_LUX_USE_SERIAL): bool,
+                vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT): bool,
             }
         )  # fmt: skip
 
@@ -118,7 +121,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
-        return await self.async_step_user(user_input=None)
+        return await self.async_step_user(user_input)
 
     async def async_step_user(self, user_input):
         if user_input is not None:
@@ -135,6 +138,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, "")): str,
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, "")): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
+                vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
             }
         )  # fmt: skip
         return self.async_show_form(

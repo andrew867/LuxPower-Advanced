@@ -19,8 +19,10 @@ from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_HOST,
     ATTR_LUX_PORT,
+    ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_SERIAL_NUMBER,
     DOMAIN,
+    PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
     VERSION,
 )
 from .helpers import Event
@@ -197,8 +199,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
     events = Event(dongle=DONGLE_SERIAL)
-    luxpower_client = LuxPowerClient(hass, server=HOST, port=PORT, dongle_serial=str.encode(
-        str(DONGLE_SERIAL)), serial_number=str.encode(str(SERIAL_NUMBER)), events=events,)  # fmt: skip
+    luxpower_client = LuxPowerClient(hass,
+                                     server=HOST,
+                                     port=PORT,
+                                     dongle_serial=str.encode(str(DONGLE_SERIAL)),
+                                     serial_number=str.encode(str(SERIAL_NUMBER)),
+                                     events=events,
+                                     respond_to_heartbeat=config.get(
+                                        ATTR_LUX_RESPOND_TO_HEARTBEAT,
+                                        PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)
+                                    )  # fmt: skip
 
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
 
@@ -226,7 +236,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await asyncio.sleep(20)
 
     # start the main Inverter Polling asycnio loop
-    hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
+    connect_to_inverter = hass.loop.create_task(luxpower_client.start_luxpower_client_daemon())
 
     # Refresh ALL Platforms By Issuing Service Call, After Suitable Delay To Give The Platforms Time To Initialise
 
@@ -234,6 +244,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # hass.async_create_task(refreshALLPlatforms(hass, dongle=DONGLE_SERIAL))
 
     _LOGGER.info("LuxPower init async_setup done")
+
+    async def reload_config_entry(hass: HomeAssistant, entry: ConfigEntry):
+        if not connect_to_inverter.done():
+            connect_to_inverter.cancel()
+        await hass.config_entries.async_reload(entry.entry_id)
+
+    entry.async_on_unload(
+        entry.add_update_listener(reload_config_entry)
+    )
+
     return True
 
 
