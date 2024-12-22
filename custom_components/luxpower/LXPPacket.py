@@ -26,6 +26,8 @@ import struct
 
 _LOGGER = logging.getLogger(__name__)
 
+def prepare_binary_value(oldvalue, mask, enable=True):
+    return oldvalue | mask if enable else oldvalue & (65535 - mask)
 
 class LXPPacket:
     """
@@ -320,120 +322,6 @@ class LXPPacket:
 
     def parse(self):
         self.parse_packet(self.packet)
-
-    def register_io_no_retry(self, host, port, register, value=1, iotype=READ_HOLD):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            sock.connect((host, port))
-            _LOGGER.warning(f"register_io_no_retry: Connected to server {host}, {port}, {register}")
-
-            read_value = None
-
-            if iotype == self.READ_HOLD:
-                packet = self.prepare_packet_for_read(register, 1, type=self.READ_HOLD)
-            elif iotype == self.WRITE_SINGLE:
-                packet = self.prepare_packet_for_write(register, value)
-            else:
-                return
-
-            sock.send(packet)
-
-            sock.close()
-            _LOGGER.debug("Closing socket...")
-        except Exception as e:
-            _LOGGER.error("Exception ", e)
-        _LOGGER.warning("register_io_no_retry done")
-        return read_value
-
-    def register_io_with_retry(self, host, port, register, value=1, iotype=READ_HOLD):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            sock.connect((host, port))
-            _LOGGER.debug(f"register_io_with_retry: Connected to server {host}, {port}, {register}")
-
-            read_value = None
-            retry_count = 0
-            io_confirmed = False
-
-            while retry_count < 3 and not io_confirmed:
-                retry_count = retry_count + 1
-
-                if iotype == self.READ_HOLD:
-                    packet = self.prepare_packet_for_read(register, 1, type=self.READ_HOLD)
-                elif iotype == self.WRITE_SINGLE:
-                    packet = self.prepare_packet_for_write(register, value)
-                else:
-                    return
-
-                sock.send(packet)
-
-                data = sock.recv(1000)
-                read_value = self.process_socket_received_single(data, register)
-                if read_value is not None:
-                    # i/o has been successful - exit loop
-                    io_confirmed = True
-                else:
-                    _LOGGER.info(f"Cannot read/write Register {register} - Current retry count is {retry_count}")
-
-            sock.close()
-            _LOGGER.debug("Closing socket...")
-        except Exception as e:
-            _LOGGER.error("Exception ", e)
-        _LOGGER.debug("register_io_with_retry done")
-        return read_value
-
-    def process_socket_received_single(self, data, register_reqd):
-        _LOGGER.debug("Inverter: %s", self.serial_number)
-        _LOGGER.debug(data)
-        # packet = data
-        packet_remains = data
-        packet_remains_length = len(packet_remains)
-        _LOGGER.debug("TCP OVERALL Packet Remains Length : %s", packet_remains_length)
-
-        frame_number = 0
-
-        while packet_remains_length > 0:
-            frame_number = frame_number + 1
-            if frame_number > 1:
-                _LOGGER.debug("*** Multi-Frame *** : %s", frame_number)
-
-            prefix = packet_remains[0:2]
-            if prefix != self.prefix:
-                _LOGGER.debug("Invalid Start Of Packet Prefix %s", prefix)
-                return
-
-            # protocol_number = struct.unpack("H", packet_remains[2:4])[0]
-            frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
-            frame_length_calced = frame_length_remaining + 6
-            _LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
-
-            this_frame = packet_remains[0:frame_length_calced]
-
-            _LOGGER.debug("THIS Packet Remains Length : %s", packet_remains_length)
-            packet_remains = packet_remains[frame_length_calced:packet_remains_length]
-            packet_remains_length = len(packet_remains)
-            _LOGGER.debug("NEXT Packet Remains Length : %s", packet_remains_length)
-
-            _LOGGER.debug("Received: %s", this_frame)
-            result = self.parse_packet(this_frame)
-            if not self.packet_error:
-                _LOGGER.debug(result)
-                if self.register == register_reqd:
-                    if len(self.value) == 2:
-                        num_value = self.convert_to_int(self.value)
-                        return_value = float(num_value)
-                        if self.device_function == self.WRITE_SINGLE:
-                            _LOGGER.info(
-                                f"WRITE_SINGLE register successful - Inverter: {self.serial_number.decode()} - Register: {self.register} - Value: {return_value}"
-                            )
-                            return return_value
-                        elif self.device_function == self.READ_HOLD:
-                            _LOGGER.info(
-                                f"READ_SINGLE  register successful - Inverter: {self.serial_number.decode()} - Register: {self.register} - Value: {return_value}"
-                            )
-                            return return_value
-            else:
-                _LOGGER.error(result)
 
     def parse_packet(self, packet):
         self.packet_error = True
@@ -791,7 +679,7 @@ class LXPPacket:
 
             soc = self.readValues.get(5)[0] or 0 if self.readValues.get(5) is not None else 0
             if self.debug:
-                _LOGGER.debug("soc(%) %s", soc)
+                _LOGGER.debug("soc(%%) %s", soc)
             self.readValuesThis[LXPPacket.soc] = soc
 
             p_pv_1 = self.readValuesInt.get(7, 0)
@@ -833,14 +721,14 @@ class LXPPacket:
                 _LOGGER.debug("p_inv(Watts) %s", p_inv)
                 _LOGGER.debug("p_rec(Watts) %s", p_rec)
             self.readValuesThis[LXPPacket.p_inv] = p_inv
-            self.readValuesThis[LXPPacket.p_rec] = p_rec   
-            
+            self.readValuesThis[LXPPacket.p_rec] = p_rec
+
             # Adding rms_current from register 18
             rms_current = self.readValuesInt.get(18, 0) / 100
             if self.debug:
                 _LOGGER.debug("rms_current(Amps) %s", rms_current)
             self.readValuesThis[LXPPacket.rms_current] = rms_current
-            
+
             pf = self.readValuesInt.get(19, 0) / 1000
             if self.debug:
                 _LOGGER.debug("pf %s", pf)
@@ -1057,9 +945,6 @@ class LXPPacket:
             eps_L2_volt = self.readValuesInt.get(128, 0) / 10
             self.readValuesThis[LXPPacket.eps_L1_volt] = eps_L1_volt
             self.readValuesThis[LXPPacket.eps_L2_volt] = eps_L2_volt
-
-    def update_value(self, oldvalue, mask, enable=True):
-        return oldvalue | mask if enable else oldvalue & (65535 - mask)
 
 
 if __name__ == "__main__":

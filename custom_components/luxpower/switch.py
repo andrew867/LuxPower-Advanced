@@ -14,17 +14,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import slugify
 
+from .lxp.client import LuxPowerClient
+
 from .const import (
     ATTR_LUX_DONGLE_SERIAL,
-    ATTR_LUX_HOST,
-    ATTR_LUX_PORT,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
     VERSION,
 )
 from .helpers import Event
-from .LXPPacket import LXPPacket
+from .LXPPacket import LXPPacket, prepare_binary_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,11 +48,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
-    HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
-    PORT = platform_config.get(ATTR_LUX_PORT, 8000)
     DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
+    luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]['client']
 
     # Options For Name Midfix Based Upon Serial Number - Suggest Last Two Digits
     # nameID_midfix = SERIAL if USE_SERIAL else ""
@@ -100,7 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     for entity_definition in switches:
         etype = entity_definition["etype"]
         if etype == "LVSE":
-            switchEntities.append(LuxPowerRegisterValueSwitchEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            switchEntities.append(LuxPowerRegisterValueSwitchEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
 
     # fmt: on
 
@@ -112,13 +111,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
     """Represent a LUX binary switch sensor."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    _client: LuxPowerClient
+
+    def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
         # Visible Instance Attributes Outside Class
         self.entity_id = (f"switch.{slugify(entity_definition['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}")  # fmt: skip
         self.hass = hass
-        self.luxpower_client = hass.data[event.CLIENT_DAEMON]
         self.dongle = dongle
         self.serial = serial
         self.event = event
@@ -127,8 +127,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
 
         # Hidden Class Extended Instance Attributes
-        self._host = host
-        self._port = port
+        self._client = luxpower_client
         self._register_address = entity_definition["register_address"]
         self._register_value = None
         self._bitmask = entity_definition["bitmask"]
@@ -175,7 +174,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             _LOGGER.debug(
                 "switch: register event received - register: %s bitmask: %s", self._register_address, self._bitmask
             )
-            self.totalregs = self.luxpower_client.lxpPacket.regValuesInt
+            self.totalregs = self._client.lxpPacket.regValuesInt
             # _LOGGER.debug("totalregs: %s" , self.totalregs)
             oldstate = self._state
             self._state = register_val & self._bitmask == self._bitmask
@@ -214,13 +213,13 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         """Return true if the binary sensor is on."""
         return self._state
 
-    def turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self) -> None:
         _LOGGER.debug("turn on called ")
-        self.set_register_bit(True)
+        await self.set_register_bit(True)
 
-    def turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self) -> None:
         _LOGGER.debug("turn off called ")
-        self.set_register_bit(False)
+        await self.set_register_bit(False)
 
     @property
     def device_info(self):
@@ -233,14 +232,8 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             sw_version=VERSION,
         )
 
-    def set_register_bit(self, bit_polarity=False):
-        lxpPacket = LXPPacket(
-            debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
-        )
-
-        self._read_value = lxpPacket.register_io_with_retry(
-            self._host, self._port, self._register_address, value=1, iotype=lxpPacket.READ_HOLD
-        )
+    async def set_register_bit(self, bit_polarity=False):
+        self._read_value = await self._client.read(self._register_address)
 
         if self._read_value is not None:
             # Read has been successful - use read value
@@ -255,17 +248,17 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             )
             old_value = int(self._register_value)
 
-        new_value = lxpPacket.update_value(old_value, self._bitmask, bit_polarity)
+        new_value = prepare_binary_value(old_value, self._bitmask, bit_polarity)
 
         if new_value != old_value:
             _LOGGER.info(
                 f"Writing: OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask} NEW {new_value}"
             )
-            self._read_value = lxpPacket.register_io_with_retry(
-                self._host, self._port, self._register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE
-            )
+            self._read_value = await self._client.write(self._register_address, new_value)
 
             if self._read_value is not None:
+                self._state = self._read_value & self._bitmask == self._bitmask
+                self.async_write_ha_state()
                 _LOGGER.info(
                     f"CAN confirm successful WRITE of SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
                 )

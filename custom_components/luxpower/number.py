@@ -20,10 +20,10 @@ from homeassistant.const import (
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import slugify
 
+from .lxp.client import LuxPowerClient
+
 from .const import (
     ATTR_LUX_DONGLE_SERIAL,
-    ATTR_LUX_HOST,
-    ATTR_LUX_PORT,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
@@ -81,8 +81,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
-    HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
-    PORT = platform_config.get(ATTR_LUX_PORT, 8000)
+    luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]['client']
+
     DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
@@ -99,7 +99,6 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     hyphen = ""
 
     event = Event(dongle=DONGLE)
-    # luxpower_client = hass.data[event.CLIENT_DAEMON]
 
     _LOGGER.info(f"Lux number platform_config: {platform_config}")
 
@@ -206,15 +205,15 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     for entity_definition in numbers:
         etype = entity_definition["etype"]
         if etype == "LNNE":
-            numberEntities.append(LuxNormalNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            numberEntities.append(LuxNormalNumberEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LPNE":
-            numberEntities.append(LuxPercentageNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            numberEntities.append(LuxPercentageNumberEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LTNE":
-            numberEntities.append(LuxTimeNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            numberEntities.append(LuxTimeNumberEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LDTE":
-            numberEntities.append(LuxVoltageDivideByTenEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            numberEntities.append(LuxVoltageDivideByTenEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LBNE":
-            numberEntities.append(LuxBitmaskNumberEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            numberEntities.append(LuxBitmaskNumberEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
 
     async_add_devices(numberEntities, True)
 
@@ -226,7 +225,9 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 class LuxNormalNumberEntity(NumberEntity):
     """Representation of a Normal Number entity."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    _client: LuxPowerClient
+
+    def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
         # Visible Instance Attributes Outside Class
@@ -236,6 +237,7 @@ class LuxNormalNumberEntity(NumberEntity):
         self.serial = serial
         self.register_address = entity_definition["register_address"]
         self.event = event
+        self._client = luxpower_client
 
         # Hidden Inherited Instance Attributes
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numbernormal_{self.register_address}"
@@ -255,8 +257,6 @@ class LuxNormalNumberEntity(NumberEntity):
         self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
 
         # Hidden Class Extended Instance Attributes
-        self._host = host
-        self._port = port
         self._register_value = 0
         self._bitmask = entity_definition.get("bitmask", 0xFFFF)
         self._bitshift = entity_definition.get("bitshift", 0)
@@ -269,7 +269,7 @@ class LuxNormalNumberEntity(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        _LOGGER.debug(f"async_added_to_hass {self._attr_name}, {self.entity_id}, {self.unique_id}")
+        _LOGGER.debug("async_added_to_hass %s, %s, %s", self._attr_name, self.entity_id, self.unique_id)
         if self.hass is not None:
             self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
             if self.register_address == 21:
@@ -338,7 +338,7 @@ class LuxNormalNumberEntity(NumberEntity):
             sw_version=VERSION,
         )
 
-    def set_native_value(self, value):
+    async def async_set_native_value(self, value):
         """Update the current value."""
         _LOGGER.debug("set_value called")
         if value != self._attr_native_value:
@@ -347,18 +347,11 @@ class LuxNormalNumberEntity(NumberEntity):
                 raise vol.Invalid(
                     f"Invalid value for {self.entity_id}: {value} (range {self.min_value} - {self.max_value})"
                 )
-                return
-
-            lxpPacket = LXPPacket(
-                debug=True, dongle_serial=str.encode(str(self.dongle)), serial_number=str.encode(str(self.serial))
-            )
 
             if self._bitmask != 0xFFFF:
                 # Not A Full Bitmask 16 bit Integer - Partial Bitmask So READ Register 1st if Possible
 
-                self._read_value = lxpPacket.register_io_with_retry(
-                    self._host, self._port, self.register_address, value=1, iotype=lxpPacket.READ_HOLD
-                )
+                self._read_value = await self._client.read(self.register_address)
 
                 if self._read_value is not None:
                     # Read has been successful - use read value
@@ -388,9 +381,7 @@ class LuxNormalNumberEntity(NumberEntity):
                 _LOGGER.info(
                     f"Writing: OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask} NEW {new_value}"
                 )
-                self._read_value = lxpPacket.register_io_with_retry(
-                    self._host, self._port, self.register_address, value=new_value, iotype=lxpPacket.WRITE_SINGLE
-                )
+                self._read_value = await self._client.write(self.register_address, new_value)
 
                 if self._read_value is not None:
                     _LOGGER.info(
@@ -404,7 +395,7 @@ class LuxNormalNumberEntity(NumberEntity):
                         if self._is_time_entity:
                             self._hour_value, self._minute_value = self.convert_to_time(int(self._attr_native_value))
                             _LOGGER.debug(f"Translating To Time {self._hour_value}:{self._minute_value}")
-                        self.schedule_update_ha_state()
+                        self.async_write_ha_state()
                     else:
                         _LOGGER.warning(
                             f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self.register_address} ValueSENT: {new_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
@@ -420,10 +411,10 @@ class LuxNormalNumberEntity(NumberEntity):
 class LuxPercentageNumberEntity(LuxNormalNumberEntity):
     """Representation of a Percentage Number entity."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, luxpower_client, dongle, serial, entity_definition, event)
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberpercent_{self.register_address}"
         self._attr_native_unit_of_measurement = PERCENTAGE
 
@@ -431,10 +422,10 @@ class LuxPercentageNumberEntity(LuxNormalNumberEntity):
 class LuxTimeNumberEntity(LuxNormalNumberEntity):
     """Representation of a Time Number entity."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, luxpower_client, dongle, serial, entity_definition, event)
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_hour_{self.register_address}"
         self._is_time_entity = True
 
@@ -449,10 +440,10 @@ class LuxTimeNumberEntity(LuxNormalNumberEntity):
 class LuxVoltageDivideByTenEntity(LuxNormalNumberEntity):
     """Representation of a Divide By Ten Number entity."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, luxpower_client, dongle, serial, entity_definition, event)
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberdivbyten_{self.register_address}"
         self._divisor = 10
 
@@ -460,8 +451,8 @@ class LuxVoltageDivideByTenEntity(LuxNormalNumberEntity):
 class LuxBitmaskNumberEntity(LuxNormalNumberEntity):
     """Representation of a Percentage Number entity."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, luxpower_client, dongle, serial, entity_definition, event)
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberbitmask_{self.register_address}_{self._bitmask}"

@@ -85,10 +85,14 @@ class LuxPowerClient(asyncio.Protocol):
         self._LOGGER.error(
             "connection_lost: Disconnected from Luxpower server")
 
-    def data_received(self, data):
-        if self._lxp_request_lock.locked():
+    async def _acquire_lock(self):
+        try:
+            async with asyncio.timeout(10):
+                await self._lxp_request_lock.acquire()
+        except TimeoutError:
             self._lxp_request_lock.release()
 
+    def data_received(self, data):
         self._LOGGER.debug("Inverter: %s", self.lxpPacket.serial_number)
         self._LOGGER.debug(data)
 
@@ -126,6 +130,12 @@ class LuxPowerClient(asyncio.Protocol):
 
             self._LOGGER.debug("Received: %s", this_frame)
             result = self.lxpPacket.parse_packet(this_frame)
+
+            if self._lxp_request_lock.locked() and self.lxpPacket.tcp_function != self.lxpPacket.HEARTBEAT:
+                # do not unlock on heartbeat because it's request from inverter
+                # all requests from this integration are sequential and locked
+                self._lxp_request_lock.release()
+
             if not self.lxpPacket.packet_error:
                 self._LOGGER.debug(result)
 
@@ -280,7 +290,7 @@ class LuxPowerClient(asyncio.Protocol):
         number_of_registers = 40
         start_register = address_bank * 40
 
-        await self._lxp_request_lock.acquire()
+        await self._acquire_lock()
         try:
             self._LOGGER.debug(
                 "request_data_bank for address_bank: %s", address_bank)
@@ -316,7 +326,7 @@ class LuxPowerClient(asyncio.Protocol):
         if address_bank == 6:
             start_register = 560
 
-        await self._lxp_request_lock.acquire()
+        await self._acquire_lock()
         try:
             self._LOGGER.debug(
                 f"request_hold_bank for {serial} address_bank: {address_bank} , {number_of_registers}")
@@ -382,10 +392,14 @@ class LuxPowerClient(asyncio.Protocol):
         self._LOGGER.info("reconnect client finished")
 
     async def _wait_for_value(self, register):
-        async with asyncio.timeout(10):
-            value = await self._lxp_single_register_result
+        try:
+            async with asyncio.timeout(10):
+                value = await self._lxp_single_register_result
+                return value.get(register)
+        except TimeoutError:
+            return None
+        finally:
             self._lxp_single_register_result = None
-            return value.get(register)
 
     async def restart(self):
         self._LOGGER.warning("Restarting Luxpower Inverter")
@@ -401,7 +415,7 @@ class LuxPowerClient(asyncio.Protocol):
         self._LOGGER.warning("restart inverter finished")
 
     async def write(self, register, value):
-        await self._lxp_request_lock.acquire()
+        await self._acquire_lock()
         try:
             self._lxp_single_register_result = asyncio.Future()
             packet = self.lxpPacket.prepare_packet_for_write(register, value)
@@ -415,7 +429,7 @@ class LuxPowerClient(asyncio.Protocol):
                 "Exception during writing register {register} with value {value}", e)
 
     async def read(self, register, type=LXPPacket.READ_HOLD):
-        await self._lxp_request_lock.acquire()
+        await self._acquire_lock()
         try:
             self._lxp_single_register_result = asyncio.Future()
             packet = self.lxpPacket.prepare_packet_for_read(register, 1, type)
