@@ -268,6 +268,7 @@ class LXPPacket:
     bat_count = "bat_count"
     bat_capacity = "bat_capacity"
     bat_current = "bat_current"
+    bat_cycle_count = "bat_cycle_count"
     gen_input_volt ="gen_input_volt"
     gen_input_freq = "gen_input_freq"
     gen_power_watt = "gen_power_watt"
@@ -914,8 +915,16 @@ class LXPPacket:
 
             max_cell_volt = self.readValuesInt.get(101, 0) / 1000
             min_cell_volt = self.readValuesInt.get(102, 0) / 1000
-            max_cell_temp = self.readValuesInt.get(103, 0) / 10
-            min_cell_temp = self.readValuesInt.get(104, 0) / 10
+            max_cell_temp = self.readValuesInt.get(103, 0)
+            min_cell_temp = self.readValuesInt.get(104, 0)
+
+            if min_cell_temp&0x8000:
+                min_cell_temp=min_cell_temp-0x10000
+            min_cell_temp=min_cell_temp/10
+            if max_cell_temp&0x8000:
+                max_cell_temp=max_cell_temp-0x10000
+            max_cell_temp=max_cell_temp/10
+            
             if self.debug:
                 _LOGGER.debug("max_cell_volt %s", max_cell_volt)
                 _LOGGER.debug("min_cell_volt %s", min_cell_volt)
@@ -925,6 +934,9 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.min_cell_volt] = min_cell_volt
             self.readValuesThis[LXPPacket.max_cell_temp] = max_cell_temp
             self.readValuesThis[LXPPacket.min_cell_temp] = min_cell_temp
+
+            bat_cycle_count = self.readValuesInt.get(106,0)
+            self.readValuesThis[LXPPacket.bat_cycle_count] = bat_cycle_count
 
             p_load2 = self.readValuesInt.get(114, 0)
             self.readValuesThis[LXPPacket.p_load2] = p_load2
