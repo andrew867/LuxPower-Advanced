@@ -1,9 +1,0 @@
-{
-  "domain": "luxpython_dev",
-  "name": "LuxPython_DEV",
-  "version": "4.2.21",
-  "documentation": "https://github.com/guybw/LuxPython_DEV",
-  "requirements": [],
-  "codeowners": ["@guybw"],
-  "iot_class": "local_polling",
-}
