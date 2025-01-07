@@ -6,7 +6,7 @@ LuxPython is a custom integration into Home Assistant (HA) to allow local access
 
 Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
 
-Please ensure you are running HA higher than 2024.1.1 to support this integration.
+Please ensure you are running HA higher than 2024.1.1 to support this integration. If you are running 2025.01 and higher and you have issue, you must upgrade to the latest version.
 
 If your dongle starts BA.... you will be absolutely fine, if your dongle doesn't start BA, it might not work.
 
@@ -258,7 +258,7 @@ The error logs starting with "REGISTERS:" is helpful if we are debugging certain
 
 # Legal 
 
-Copyright (c) 2024, Guy Wells
+Copyright (c) 2025, Guy Wells
 All rights reserved.
 
 This software may not be sold, resold, redistributed or otherwise conveyed to a third party. 
