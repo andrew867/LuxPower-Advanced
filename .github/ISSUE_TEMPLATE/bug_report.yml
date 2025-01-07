@@ -1,26 +1,19 @@
-name: Bug Report
-description: Report an issue with the dongle, Home Assistant, or web monitoring.
+---
+name: "Bug Report"
+description: "Report an issue or bug."
 title: "[BUG] Brief description of the issue"
-labels: ["bug"]
+labels:
+  - bug
+assignees: []
+# Required for new GitHub Issue Forms
+version: 2
 
 body:
-  - type: dropdown
-    id: component
-    attributes:
-      label: "Affected Component"
-      description: "Select the component related to your issue."
-      options:
-        - Dongle
-        - Home Assistant
-        - Web Monitoring
-    validations:
-      required: true
-
   - type: input
     id: version
     attributes:
       label: "Version Information"
-      description: "Enter the version of the integration or dongle firmware. Type N/A if related to Web Monitoring."
+      description: "Enter the version of the integration.."
       placeholder: "Enter version here"
     validations:
       required: true
@@ -29,42 +22,36 @@ body:
     id: images_videos
     attributes:
       label: "Media Attachments"
-      description: "Provide links to any images or videos showing the issue, if applicable."
+      description: "Provide links to any images or videos showing the issue."
       placeholder: "Paste links to images or videos here"
     validations:
       required: true
 
   - type: textarea
-    id: mqtt_output
+    id: log_output
     attributes:
-      label: "MQTT Output"
-      description: "If the issue relates to the Dongle, Home Assistant, or Web Monitoring, provide the MQTT output from `dongleID/status`."
-      placeholder: "Paste MQTT output here"
+      label: "Log File Output"
+      description: "Please add the log file output here:"
+      placeholder: "Paste log output here"
       render: shell
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: detailed_description
     attributes:
       label: "Detailed Description"
-      description: "Provide a detailed description of the issue, including steps to reproduce and the expected behavior."
+      description: "Provide a detailed description of the issue, steps to reproduce, and expected behavior."
       placeholder: "Describe the issue in detail"
     validations:
       required: true
+
   - type: checkboxes
     id: issue_check
     attributes:
-      label: Issues
-      description: By Submitting this Issue you confirm you have checked to see if the issue already exists and your not duplicating the bug, if this is found to be the case this will be deleted 
+      label: "Issue Confirmation"
+      description: "Check the box to confirm you have verified this bug isn't already reported."
       options:
-        - label: I agree i have checked the Issues Tab to see if this already Exists
+        - label: "I have searched the Issues tab and confirmed this issue does not already exist."
           required: true
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/zakery292/monitormysolar/blob/main/.github/CODE_OF_CONDUCT.md). 
-      options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true
+---
