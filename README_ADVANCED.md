@@ -51,6 +51,20 @@ cards:
       - entity: input_datetime.lux_force_discharge_end1
     title: Discharge Settings
 
+
+We used to have an issue with disconnecting, so below is the notes for this although it's no longer an issue so it's just kept for history:
+
+To solve the issue of data not flowing please import the reconnection blueprint in this folder (or read below). It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20 minutes but absolutely no lower than 10)
+
+The Blueprint import should help below but please report back if it doesn't work for you.
+[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
+
+This is a blueprint that you can add that will automatically try to reconnect if the connection drops for a set time, as the dongles can be a bit flakey.
+To install, 
+- add a new automation and select the "Luxpower reconnect"
+- Select "Lux - data receive time" as a trigger
+- Select the interval to check on.
+![image](https://user-images.githubusercontent.com/435874/188263388-8814be9b-6075-4e66-98a0-8818cdb2b321.png)
 ```
 then click Save.
 If any sensors are wrong, just remove the "_2" off the sensor name. Tip: If you click on the view "Default", you will get an automatically generated list of all the sensors that are known by HA, you can usually find what you are looking for here, especially after clicking on it and inspecting its naming.
