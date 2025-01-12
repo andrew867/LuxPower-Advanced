@@ -115,19 +115,10 @@ If you are using this blueprint and you are using it while connected to the LUX 
 
 # LUX INVERTER DISCONNECTS OFTEN - IMPORTANT
 
-The inverter dongle is fairly poor and often disconnects, this is not a fault of this code but the dongle (wifi dongle) the ethernet dongle I'm told still isn't stable and this will NOT work as I can't query the inverter via it.
+The inverter dongle is fairly poor and often disconnects, this is not a fault of this code but the dongle (wifi dongle) the ethernet dongle doesn't have port 8000 open so it will NEVER work!
+Code has been added to deal with this so it's not required if you do have any issues then I've added the blueprint to the advanced readme but you shouldn't need it.
 
-To solve the issue of data not flowing please import the reconnection blueprint in this folder (or read below). It will allow you to reconnect if the inverter doesn't report for X minutes (I would set it to 20 minutes but absolutely no lower than 10)
 
-The Blueprint import should help below but please report back if it doesn't work for you.
-[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
-
-This is a blueprint that you can add that will automatically try to reconnect if the connection drops for a set time, as the dongles can be a bit flakey.
-To install, 
-- add a new automation and select the "Luxpower reconnect"
-- Select "Lux - data receive time" as a trigger
-- Select the interval to check on.
-![image](https://user-images.githubusercontent.com/435874/188263388-8814be9b-6075-4e66-98a0-8818cdb2b321.png)
 
 #  GUI SETUP
 
