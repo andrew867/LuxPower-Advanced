@@ -22,7 +22,7 @@ If you implement any fixes or improvements, please open an **Issue** or start a 
 
 This project has cost me a significant amount of time and money to develop, and the first few versions were a paid project for a developer, coming directly out of my pocket. As we move forward, **Mark** has done a massive amount of work to improve this code and add new features/fixes. Mark runs on beer, and I run on coffee—so if this integration works for you, once you have it installed, please consider donating to the development fund.
 
-A suggested donation of **£20** would be greatly appreciated, as it all goes toward keeping this project running. **Solar Assistant** costs more and doesn't provide as many sensors as this project, and **LXP-Bridge** has closed down—your support will help ensure this project continues to run and remains available to everyone!
+A suggested donation of **£20** would be greatly appreciated, as it all goes toward keeping this project running. **Solar Assistant** costs more and doesn't provide as many sensors as this project, and **LXP-Bridge** has closed down—your support will help ensure this project continues to run and remains available and supported.
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
 
