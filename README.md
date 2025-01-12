@@ -48,7 +48,7 @@ If you have a **BA** dongle, you need to set up your inverter by following these
 
 Make sure you **do not** change the port from 8000. Currently, only **Wi-Fi dongles** are supported—**Ethernet dongles are not**.
 
-If you have a different dongle, the webpage will likely not display. If the version is lower than **2.02**, port 8000 will not work, and you’ll need to ask your installer to update the dongle firmware.
+**If you have a different dongle**, the webpage will likely not display. If the version is lower than **2.02**, port 8000 will not work, and you’ll need to ask your installer to update the dongle firmware.
 
 ---
 
