@@ -6,7 +6,7 @@ LuxPython is a custom integration for Home Assistant (HA) that enables local acc
 ---
 
 ## IMPORTANT PLEASE READ!
-I really mean it, read this entire README to the very end and then you can start, 99% of all emails I get (apart from requests are in this README.
+Before you begin, please read this **entire** README from start to finish. Nearly 99% of the questions I receive by email are already answered below, so taking the time to read everything now will save you a lot of troubleshooting later. Once you've read it in full, **then** you can begin the setup process!
 
 Please **do not** rush to install new Home Assistant updates. We occasionally encounter issues when HA changes something that breaks this integration. Give it a few days after a new release; while I keep my dev platform on the cutting edge, I want my production system to remain stable 24/7. Remember, I originally wrote this for my own system.
 
