@@ -6,6 +6,7 @@ LuxPython is a custom integration for Home Assistant (HA) that enables local acc
 ---
 
 ## IMPORTANT PLEASE READ!
+I really mean it, read this entire README to the very end and then you can start, 99% of all emails I get (apart from requests are in this README.
 
 Please **do not** rush to install new Home Assistant updates. We occasionally encounter issues when HA changes something that breaks this integration. Give it a few days after a new release; while I keep my dev platform on the cutting edge, I want my production system to remain stable 24/7. Remember, I originally wrote this for my own system.
 
@@ -237,7 +238,7 @@ I **highly** recommend assigning static IPs (DHCP reservations) to both the inve
 
 ## BACKUPS
 
-Home Assistant can fail or become corrupted—this happens more often than you'd think. If you’re on a Raspberry Pi, **do not** install this integration first. Instead, set up a backup solution (like backups to Google Drive). That way, if your Pi fails, you can restore easily.
+Home Assistant can fail or become corrupted—this happens more often than you'd think. If you’re on a Raspberry Pi, **do not** install this integration first. Instead, set up a backup solution (like backups to Google Drive). That way, if your Pi fails, you can restore easily. You have been warned.
 
 Even on a VM, corruption can occur. I **highly** recommend:
 [https://github.com/sabeechen/hassio-google-drive-backup](https://github.com/sabeechen/hassio-google-drive-backup)
@@ -246,7 +247,7 @@ Even on a VM, corruption can occur. I **highly** recommend:
 
 ## Upgrades
 
-Many people set this up and never update it. However, **Mark** and others have spent a lot of time fixing bugs and adding new features, so I recommend upgrading periodically.
+Many people set this up and never update it. However, Mark and others have spent a lot of time fixing bugs and adding new features, so I recommend upgrading periodically.
 
 We never remove functionality. If something breaks, we maintain a comprehensive version history so you can roll back. Remember, this integration was originally made for **my** use—if it’s not stable, I won’t run it! I test new releases on a dev box for a few hours/days, then run them 24/7 on my production system.
 
@@ -319,5 +320,7 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
+
+Congratuations - you read the entire document ;)
 ```
 ```
