@@ -1,74 +1,80 @@
-# LuxPython (Full Home Assistant UI Integration)
-LuxPython is a custom integration into Home Assistant (HA) to allow local access to the Lux Powertek Inverter. This has also been confirmed to work with EG4 Electronics inverters which are rebranded LUX units.
+# LuxPython (A custom Home Assistant Integration for LuxPowerTek and EG4)
+LuxPython is a custom integration for Home Assistant (HA) that enables local access to LuxpowerTek and EG4 Inverters.
 
 # IMPORTANT PLEASE READ!
+Please do not rush to install new HA updates. We occasionally encounter issues when Home Assistant changes something that breaks this integration. Give it a few days after an update is released; I try to keep my development platform on the cutting edge, but like you, I want my production system to remain stable 24/7 remember, I wrote this for my own system.
+
+Please ensure you are running Home Assistant version 2025.01 or higher to use this integration. If you are on an older version and encounter issues, you must upgrade to the latest Home Assistant release and the latest #LuxPython
+
+If your dongle’s model number begins with BA…, you should be fine. If you have a different model, it might cause issues. (See #SETUP THE DONGLE / Important information about dongles for details.)
+
+If you implement any fixes or improvements, please open an Issue or start a Discussion on GitHub.
 
 
-Please don't rush to install HA updates, we have issues from time to time when HA changes an item and it breaks this! Give it a few days as I try and keep my dev platform on the bleeding edge but like you my production system I want working 24/7
-
-Please ensure you are running HA higher than 2024.1.1 to support this integration. If you are running 2025.01 and higher and you have issue, you must upgrade to the latest version.
-
-If your dongle starts BA.... you will be absolutely fine, if your dongle doesn't start BA, it might not work.
-
-If you do any fixes, improvements etc, please let me know so I can bring them into this.
-Please keep in touch at guybw@hotmail.com - I would like to know how you get on and if this works for you!
-
-This has cost me a lot of time and money to develop and the first few versions of this were a paid project to a developer so it came directly out of my pocket!
-As we move forward Mark has done a massive amount of work to make this code better and add features / fixes. Mark runs on beer and I run on coffee so if it works, once you have installed this and have it working, please click below to donate to the development fund.  A suggested donation of £20  to the development fund would be great as it all goes to keeping this project running!
+# Cost
+This project has cost me a significant amount of time and money to develop, and the first few versions were a paid project for a developer, which came directly out of my pocket!
+As we move forward, Mark has done a massive amount of work to improve this code and add new features and fixes. Mark runs on beer, and I run on coffee—so if this integration works for you, once you have it installed, please consider donating to the development fund. A suggested donation of **£20** would be greatly appreciated as it all goes toward keeping this project running.
+Solar Assistant costs more and doesn't provide as many sensors as this project does, and LXP-Bridge has closed down. Your support will help ensure this project continues to run and remains available to everyone!
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
-
 
 If that link doesn't work then my paypal is guybw@hotmail.com please use friends and family as Paypal take a good % otherwise. Thank you!
 
 
-## Videos
+```markdown
+# Videos
 
-I've created some quick tutorial videos that might assist you (you may notice some audio / video issues but if you get stuck let me know and I will re-upload for you):
+I've created some quick tutorial videos that might help you. You may notice some audio/video issues, but if you get stuck, let me know and I will re-upload a clearer version:
 
 - [How to Install Samba Share on Home Assistant](https://youtu.be/Pld5siYLNL8)
 - [How to Install an Integration into Home Assistant (NO AUDIO)](https://youtu.be/wk_9kCNjLRE)
-- [How to Setup a Basic Refresh and Reconnect in Home Assistant](https://youtu.be/iCmv_w5aAJE)
-- [How to Setup Energy Monitoring in Home Assistant](https://youtu.be/pnp1y5CQRPY)
+- [How to Set Up a Basic Refresh and Reconnect in Home Assistant](https://youtu.be/iCmv_w5aAJE)
+- [How to Set Up Energy Monitoring in Home Assistant](https://youtu.be/pnp1y5CQRPY)
 - [How to Install Power Card in Home Assistant](https://youtu.be/2petWQXWue0)
 
+---
 
-# SETUP THE DONGLE
-If you have a BA dongle, you need to set up your inverter by following these instructions first:
-https://github.com/guybw/LuxPython_DEV/blob/master/DongleSetup.md
-(make sure you do not change the port from 8000) I only support WIFI dongles, not ethernet dongles right now.
-If you a different dongle then the webpage will likely not show and if the version is lower than 2.02 then port 8000 will not work and you will have to ask your installer to update the dongle firmware.
+# SETUP THE DONGLE / Important Information About Dongles
 
+If you have a **BA** dongle, you need to set up your inverter by following these instructions first:  
+[Dongle Setup Instructions](https://github.com/guybw/LuxPython_DEV/blob/master/DongleSetup.md)
+
+Make sure you **do not** change the port from 8000. Currently, only **Wi-Fi dongles** are supported—Ethernet dongles are not.
+
+If you have a different dongle, then the webpage will likely not display, and if the version is lower than 2.02, port 8000 will not work. You will need to ask your installer to update the dongle firmware.
+
+---
 
 # INSTALL THE INTEGRATION
-** THIS INTEGRATION WILL NOT WORK WITH HACS**
 
-Copy the "luxpower" integration to your Home Assistant instance into the "/config/" folder (where your configuration.yaml lives)
+**THIS INTEGRATION WILL NOT WORK WITH HACS**
 
-You should see a "custom_components" folder, then simply copy ./custom_components/luxpower/ - this is explained in more detail below.
+1. Copy the **luxpower** integration to your Home Assistant instance in the `/config/` folder (the same folder where your `configuration.yaml` is located).  
+2. You should see a `custom_components` folder. Simply copy `./custom_components/luxpower/` there. (Details are explained below.)  
+3. If you are new to HA, you may need to create a `custom_components` folder. If you use HACS, this folder should already exist.  
+4. **Reboot** Home Assistant. This is mandatory; otherwise, the next steps will not work.
 
-Otherwise, if you are new to HA you will likely have to create this folder but if you use HACS it should already be created.
-Next REBOOT, this is mandatory otherwise the next bit will not work.
+I strongly suggest you install the **Samba share** in HA. Watch this video for guidance: [How to Install Samba Share on Home Assistant](https://www.youtube.com/watch?v=udqY2CYzYGk)
 
-I would strongly suggest you install the Samba share in HA. Watch this video: https://www.youtube.com/watch?v=udqY2CYzYGk
+The files **should** look like this (note that the IP should be replaced with the actual IP address of your HA device—in the example below, it's `172.16.255.30`):
 
-
-The files SHOULD look like this (note that the IP should be your IP address of the HA Raspberry Pi or device, for our example below 172.16.255.30
-
-
-Type into Windows File Explorer: "\\\172.16.255.30\config\custom_components\luxpower" - Don't copy the entire folder over. It will not work, only copy from the ZIP file the "luxpower" folder's contents in "custom_components" it should look like this.
+Type into Windows File Explorer:  
+```
+\\172.16.255.30\config\custom_components\luxpower
+```
+**Do not** copy the entire folder over. It will not work. Only copy the `luxpower` folder contents from the ZIP file into the `custom_components` folder. It should look like this:
 
 ![image](https://user-images.githubusercontent.com/64648444/204362676-f96ca53a-8713-45a8-a0ee-38edea1c132a.png)
 
 ## Setting Up the Integration
 
-1. Open Settings > Devices and Services > Add Integration in Home Assistant.
-2. Search for "LuxPower Inverter".
-   - **Note:** If it doesn't appear, try clearing your browser cache as it may be the issue.
+1. Open **Settings > Devices and Services > Add Integration** in Home Assistant.  
+2. Search for **LuxPower Inverter**.  
+   - **Note:** If it doesn't appear, try clearing your browser cache; that often resolves the issue.
 
 ![Integration Setup](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
-3. Fill in your IP, Port (8000), dongle serial, and inverter serial (available on the Lux website at server.luxpowertek.com).
+3. Fill in your IP, Port (8000), dongle serial, and inverter serial (found on the Lux website at [server.luxpowertek.com](http://server.luxpowertek.com)).
 
 ![Integration Details](https://user-images.githubusercontent.com/64648444/169526428-a508e905-19ef-45e5-ab2c-185b454489e3.png)
 
@@ -76,12 +82,15 @@ Type into Windows File Explorer: "\\\172.16.255.30\config\custom_components\luxp
 
 ![HA Sensors](https://user-images.githubusercontent.com/64648444/169526605-0f667815-87dc-4ab7-86f5-dbffe85ff765.png)
 
-5. Use Developer Tools to view `sensor.luxpower`. Initially, the state will be "Waiting," but after a few minutes, when the inverter updates, the state will change to "ONLINE," and data will populate in the attributes.
+5. Under **Developer Tools**, look for `sensor.luxpower`. Initially, its state will be `Waiting`. After a few minutes—once the inverter updates—the state will change to `ONLINE`, and data will populate in the attributes.
+
+---
 
 # HOW TO REFRESH THE DATA
-On a dashboard create a new card and type this (CHANGE THE DONGLE TO YOUR DONGLE SERIAL)
 
-```
+On a dashboard, create a new card and enter the following YAML (replace the dongle serial with **your** dongle’s serial):
+
+```yaml
 show_name: true
 show_icon: true
 type: button
@@ -97,69 +106,79 @@ icon: mdi:cloud-refresh
 name: Refresh LUX Data
 show_state: false
 ```
-This will then give you a button to refresh your data as often as you like.
 
-# Changing the refresh interval
-The LUX dongle updates the website every 5/6 minutes, this is often just too short for people.
-In order to help you refresh the data more often we have included a blueprint which is location at: \blueprints\automation\luxpower\refresh_interval.yaml
-You should NEVER refresh more than every 20 seconds, this is because the dongle takes time to request and respond; 20 seconds is the safest I have found. Other people say they do it every few seconds, this just isn't true!
+This will give you a button to refresh your data at any time.
 
-ALSO NOTE, it seems LUX's servers in Europe are having issues and although I don't think we are causing the issue I would suggest if you go less than 2-minute updates then you should block your dongle from accessing the LUX servers via your firwewall.
-You can also click below to add it automatically to HA.
+---
 
-If you are using this blueprint and you are using it while connected to the LUX servers for the time being please don't go less than say 2/3 minutes. If you are blocking internet access you can go as low as 20 seconds.
+# Changing the Refresh Interval
+
+The LUX dongle updates the website every 5–6 minutes, which is often too short or too long for some users. To help you refresh data more frequently (or at a different interval), we’ve included a blueprint located at:  
+```
+/blueprints/automation/luxpower/refresh_interval.yaml
+```
+
+You should **never** refresh more frequently than every 20 seconds. The dongle needs time to request and respond; 20 seconds is the safest setting I’ve found. Some claim they refresh every few seconds, but that is not recommended.
+
+**Also note**: It appears LUX’s servers in Europe are currently experiencing issues. Although I don't believe we're causing the problem, if you set a refresh interval shorter than 2 minutes, you should consider blocking your dongle from accessing the LUX servers via your firewall.
+
+If you are using this blueprint **while still connected** to the LUX servers, please avoid going below a 2–3 minute interval. If you are blocking internet access to the dongle, 20 seconds is possible. You can also click below to add it automatically to HA:
+
 [![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/refresh_interval.yaml)
 
+---
 
+# LUX INVERTER DISCONNECTS OFTEN – IMPORTANT
 
+The inverter dongle (Wi-Fi) is fairly unreliable and often disconnects; this is **not** a fault of the code but rather a limitation of the dongle itself. The Ethernet dongle doesn’t have port 8000 open, so it will **never** work with this integration.
 
-# LUX INVERTER DISCONNECTS OFTEN - IMPORTANT
+Code has been added to handle common disconnect issues. If you’re still having problems, there’s a blueprint in the advanced readme, though most people shouldn’t need it.
 
-The inverter dongle is fairly poor and often disconnects, this is not a fault of this code but the dongle (wifi dongle) the ethernet dongle doesn't have port 8000 open so it will NEVER work!
-Code has been added to deal with this so it's not required if you do have any issues then I've added the blueprint to the advanced readme but you shouldn't need it.
+---
 
+# GUI SETUP
 
+I've updated my recommendations here:
 
-#  GUI SETUP
+1. Install this Lux Power Distribution Card:  
+   [https://github.com/DanteWinters/lux-power-distribution-card](https://github.com/DanteWinters/lux-power-distribution-card)
 
-I've changed my advice here:
-I would highly suggest you install this:
-https://github.com/DanteWinters/lux-power-distribution-card
-![image](https://github.com/guybw/LuxPython_DEV/assets/64648444/572761b3-3ba3-45aa-8cfc-25c038cf243b)
+   ![image](https://github.com/guybw/LuxPython_DEV/assets/64648444/572761b3-3ba3-45aa-8cfc-25c038cf243b)
 
+2. I also recommend installing the **Power Wheel Card**:  
+   [https://github.com/gurbyz/power-wheel-card#readme](https://github.com/gurbyz/power-wheel-card#readme)  
+   Once imported, you can use the following YAML for your card:
 
-I suggest you install this as well as it's a simple power card:
-https://github.com/gurbyz/power-wheel-card#readme
-Import that and then use the below yaml for the card.
-```
-type: custom:power-wheel-card
-title: Solar Status
-solar_power_entity: sensor.lux_solar_output_live
-grid_power_entity: sensor.lux_grid_flow_live
-battery_soc_entity: sensor.lux_battery
-battery_power_entity: sensor.lux_battery_flow_live
-```
+   ```yaml
+   type: custom:power-wheel-card
+   title: Solar Status
+   solar_power_entity: sensor.lux_solar_output_live
+   grid_power_entity: sensor.lux_grid_flow_live
+   battery_soc_entity: sensor.lux_battery
+   battery_power_entity: sensor.lux_battery_flow_live
+   ```
 
-
-At the end of this, you should be able to add the following sensors to HA Energy and it will start tracking:
+At this point, you should be able to add the relevant sensors to **HA Energy**, and it will start tracking:
 
 ![image](https://user-images.githubusercontent.com/64648444/149421208-c1e57277-a076-4727-8d23-74715d4d5541.png)
 
-If you want a totally different view, you can try this:
+For a completely different view, you can try this card as well:  
+[https://slipx06.github.io/sunsynk-power-flow-card/examples/lux.html](https://slipx06.github.io/sunsynk-power-flow-card/examples/lux.html)
 
-https://slipx06.github.io/sunsynk-power-flow-card/examples/lux.html
-
-
-
+---
 
 # ACS Inverter (AC ONLY)
-If you have an ACS Inverter you should modify the sensors.yaml with the following (This has NOT been tested but It should work!)
-You can add sensor: !include sensors.yaml line into your configuration and then create a sensors.yaml file with the below. Have a look at the link below for more help on this.
-https://opensource.com/article/21/2/home-assistant-custom-sensors
 
-:
-```
-## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor codes. However, there's a new name to prevent conflict. 
+If you have an **ACS Inverter**, you should modify your `sensors.yaml` as follows (this has **not** been tested, but it *should* work):
+
+1. Add the line `sensor: !include sensors.yaml` into your `configuration.yaml`.  
+2. Create a `sensors.yaml` file with the following content.  
+3. For more guidance, see [https://opensource.com/article/21/2/home-assistant-custom-sensors](https://opensource.com/article/21/2/home-assistant-custom-sensors)
+
+```yaml
+## Custom LUX Sensors for ACS Systems. Intended to replace the two existing sensor codes.
+## However, there's a new name to prevent conflict.
+
 - platform: template
   sensors:
     lux_new_home_consumption:
@@ -167,100 +186,137 @@ https://opensource.com/article/21/2/home-assistant-custom-sensors
       icon_template: mdi:lightning-bolt
       unit_of_measurement: 'kWh'
       value_template: >
-        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_daily') | float(0) + 
-                            states('sensor.lux_power_from_inverter_to_home_daily') | float(0) +
-                            states('sensor.lux_solar_output_daily') | float(0) - 
-                            states('sensor.lux_power_to_inverter_daily') | float(0) - 
-                            states('sensor.lux_power_to_grid_daily') | float(0)) }}
+        {{ '%0.1f' | format(
+          states('sensor.lux_power_from_grid_daily') | float(0) +
+          states('sensor.lux_power_from_inverter_to_home_daily') | float(0) +
+          states('sensor.lux_solar_output_daily') | float(0) -
+          states('sensor.lux_power_to_inverter_daily') | float(0) -
+          states('sensor.lux_power_to_grid_daily') | float(0)
+        ) }}
     lux_new_home_consumption_live:
       friendly_name: "Lux Home Consumption (Live)"
       icon_template: mdi:lightning-bolt
-	  unique_id: sensor.lux_home_consumption_live
+      unique_id: sensor.lux_home_consumption_live
       unit_of_measurement: 'W'
       value_template: >
-        {{ '%0.1f' | format(states('sensor.lux_power_from_grid_live') | float(0) + 
-                            states('sensor.lux_power_from_inverter_live') | float(0) +
-                            states('sensor.lux_solar_output_live') | float(0) - 
-                            states('sensor.lux_power_to_inverter_live') | float(0) - 
-                            states('sensor.lux_power_to_grid_live') | float(0)) }}
-                            
-## ##### END OF Custom Lux Sensors   ######
+        {{ '%0.1f' | format(
+          states('sensor.lux_power_from_grid_live') | float(0) +
+          states('sensor.lux_power_from_inverter_live') | float(0) +
+          states('sensor.lux_solar_output_live') | float(0) -
+          states('sensor.lux_power_to_inverter_live') | float(0) -
+          states('sensor.lux_power_to_grid_live') | float(0)
+        ) }}
+
+## ##### END OF Custom Lux Sensors ######
 ```
 
-# IMPORTANT  - Things to note
+---
 
-We cannot support the LUX ethernet dongle - only WIFI -  this is due to ports not being open on the ethernet dongle.
+# IMPORTANT – Things to Note
 
+- We cannot support the LUX Ethernet dongle—only Wi-Fi—because required ports are not open on the Ethernet dongle.
 
-# Fix your IP
-Most home routers don't give you a fixed IP so when the dongle gets a new IP (anything from every few hours to every few weeks) Once that happens the IP that is in HA changes. 
-I HIGHLY recommend giving both the inverter a fixed IP AND Home Assistant. I would suggest doing this by doing a DHCP reservation, this is beyond what this project covers but MOST routers will be able to do this. Google is going to be your friend on this. If it absolutely doesn't then you can assign an IP manually for both the dongle and HA.
+---
 
-# 2 (or more inverters)
-Mark has helped write template sensors that will allow you to add 2 inverters together and make a single sensor which should help with 2 inverters.
-I can't test this as I don't have 2 inverters but if you do try it out and let me know how you get on! dualinverters_template.yaml is the file.
+# Fix Your IP
 
+Most home routers do not automatically assign a fixed IP address, so your dongle might get a new IP (anything from every few hours to every few weeks). When that happens, the IP in HA will no longer be valid.
+
+I **highly** recommend assigning both the inverter and your Home Assistant device a fixed IP. Typically, this is done via a DHCP reservation in your router. This step is beyond the scope of this project, but most routers have this feature—Google is your friend here. If your router absolutely cannot do this, you can manually assign a static IP to both the dongle and your HA instance.
+
+---
+
+# 2 (or More) Inverters
+
+Mark has written template sensors that let you add two inverters together and produce a single sensor, which should help with multiple inverters. I can’t test this since I only have one inverter, but if you do try it, let me know how it goes! The file is **dualinverters_template.yaml**.
+
+---
 
 # BACKUPS
-The amount of times people (and me included) that HA has failed or corrupted is a concern. PLEASE - if you are running HA on a PI don't install this first, go and install a backup solution (you can backup to Google Drive or many other products) and when your HA dies, it's easy to replace. YOU HAVE BEEN WARNED! Even on a VM it can corrupt / fail! I HIGHLY recommend this https://github.com/sabeechen/hassio-google-drive-backup
+
+There have been numerous reports of Home Assistant failing or corrupting data—this can happen to anyone, including me! If you’re running HA on a Raspberry Pi, do **not** install this integration first. Instead, install a backup solution (e.g., backing up to Google Drive or another product) so if your HA instance fails, it’s easy to restore. **You have been warned!** Even on a virtual machine, corruption/failure is still possible.
+
+I **highly** recommend this backup solution:  
+[https://github.com/sabeechen/hassio-google-drive-backup](https://github.com/sabeechen/hassio-google-drive-backup)
+
+---
 
 # Upgrades
-This is an interesting thread. Most people seem to set this up and then never change it. Personally, as people like Mark have spent a lot of time fixing the code, making it more streamlined and added more features, I would personally recommend doing it as often as you can.
-We never remove functionality (if something doesn't work, I have kept a very good history of copies of the integration on here) so we can always roll back if required but remember this integration was originally for ME. If it's not absolutely 100% stable, I wouldn't run it! I have a dev box that is tested on for a few hours / days but after that it's running 24/7/365 on my production box!
 
-To upgrade the LuxPower integration, follow these steps:
-1. Backup the current "luxpower" folder in the custom integrations directory.
-2. Delete all files in the "luxpower" folder (including the cache folder which might be hidden!)
-3. Paste the latest files from the update.
+Many users set this up and then never change it. However, people like Mark have spent a lot of time fixing bugs and adding new features, so I personally recommend upgrading periodically.
+
+We never remove functionality. If something isn’t working, I keep a comprehensive history of integration versions so we can always roll back. Remember, this integration was originally created for **my** use—if it’s not stable, I won’t run it! I do test new versions on a dev box for a few hours/days, and then it runs 24/7/365 on my production system.
+
+### How to Upgrade the LuxPower Integration
+
+1. Back up your current `luxpower` folder in `custom_components`.  
+2. Delete all files in the `luxpower` folder (including any hidden cache folders).  
+3. Paste the latest files from the update.  
 4. Reboot Home Assistant.
-This process should take around 20 seconds and ensures a smooth upgrade.
 
+This process takes around 20 seconds and generally ensures a smooth upgrade.
+
+---
 
 # Breaking Changes
-@maegibbons has spent a huge amount of time sorting out the time settings. In the latest release of LUXPython with HA 2023.06 we now have native time settings so any custom helpers / automations can now be deleted. We will not remove the old way of doing this yet but it will go in the next few releases. Going forward you can just add "time.lux_ac_charge_start1" for example.
+
+@maegibbons has spent a great deal of time refining the time settings. In the latest release of **LUXPython for HA 2023.06**, we now have native time settings, so any custom helpers/automations can be removed. We won’t remove the old method immediately, but it will be phased out in future releases. Moving forward, you can simply add `time.lux_ac_charge_start1` (for example).
+
+---
 
 # Thanks!
 
-Using the great work from here: https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt
+- **celsworth**: for the great work at [lxp-packet documentation](https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt)  
+- **@elementzonline**: who did the amazing Python coding to link HA with the Lux inverter (it was a paid gig, but he’s fantastic!).  
+- **@maegibbons**: for helping fix countless bugs for people and expanding support to more inverters/setups.  
 
-@elementzonline Did the amazing work of writing the Python code to link from HA to the Lux inverter, it was a paid gig but he is incredible! 
+And thanks to everyone else who has helped identify bugs and contributed to this project!
 
-@maegibbons who has helped fix many of the bugs for people and expanded this to support more inverters / setups. It's really appreciated!
-To everyone else who has helped fix issues, spotted bugs and contributed to the project!
+---
 
 # WHY PRIVATE
-I took the decision a long while ago to make this private as it's really hard to stop people from using and abusing the system (and selling it!). Everyone on here has answered my canned email of setup and has a basic understanding of HA (at a minimum) or I've worked through a remote season to set them up.
 
-If HACS could support private repo's I would absolutely put it in HACS but it doesn't so I can't.
+I decided a while ago to keep this project private because it’s challenging to prevent people from using, abusing, or selling it. Everyone here has responded to my setup email and has at least a basic understanding of HA, or I’ve walked them through a remote session to get them set up.
 
+If HACS supported private repositories, I would absolutely put it there, but since it doesn’t, I can’t.
+
+---
 
 # BUGS
-If you find a bug, please open up an issue on Github with as much information as you can.
 
-To help with this please edit your configuration.yaml and add the following
-```
+If you find a bug, please open an **issue** on GitHub with as much detail as possible.
+
+To assist with debugging, edit your `configuration.yaml`:
+
+```yaml
 logger:
   default: warning
   logs:
     custom_components.luxpower: debug
 ```
-restart Home Assistant and then go to Settings>System>Logs and copy any errors that show up.
-The error logs starting with "REGISTERS:" is helpful if we are debugging certain settings / values.
 
-# Legal 
+Restart Home Assistant, then go to **Settings > System > Logs** and copy any errors that appear. Logs beginning with `REGISTERS:` are especially useful if we need to troubleshoot specific settings/values.
 
+---
+
+# Legal
+
+```
 Copyright (c) 2025, Guy Wells
 All rights reserved.
 
-This software may not be sold, resold, redistributed or otherwise conveyed to a third party. 
+This software may not be sold, resold, redistributed, or otherwise conveyed
+to a third party.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+```
