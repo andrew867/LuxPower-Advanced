@@ -56,7 +56,7 @@ Make sure you **do not** change the port from 8000. Currently, only **Wi-Fi dong
 ## INSTALL THE INTEGRATION
 
 **THIS INTEGRATION WILL NOT WORK WITH HACS**
-
+0. Get the ZIP file from here: https://github.com/guybw/LuxPython_DEV/releases you want to latest stable release. 
 1. Copy the **luxpower** integration to your Home Assistant instance in the `/config/` folder (the same folder where your `configuration.yaml` is located).  
 2. You should see a `custom_components` folder. Simply copy `./custom_components/luxpower/` there. (Details are explained below.)  
 3. If you are new to HA, you may need to create a `custom_components` folder. If you use HACS, this folder should already exist.  
