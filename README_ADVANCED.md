@@ -73,7 +73,7 @@ If any sensors are wrong, just remove the "_2" off the sensor name. Tip: If you 
 
 
 
-Guide for Setting Up the Helpers and Automation in Home Assistant
+## Guide for Setting Up the Helpers and Automation in Home Assistant
 This guide walks you through creating the necessary helpers and automating the process of setting charge times using input and time helpers in Home Assistant. If you’re new to automations or helpers, follow the steps closely, and by the end, you’ll have a working setup.
 
 Step 1: Create the Helpers
@@ -88,6 +88,7 @@ Helper 1: Select Input Datetime and set it up as follows:
 Name: lux_helper_start
 Enable Time: Yes
 Enable Date: No
+
 Helper 2: Create another Input Datetime helper:
 
 Name: lux_helper_end
@@ -100,20 +101,18 @@ Go to Automations
 
 Navigate to Settings > Automations & Scenes > + Create Automation.
 Select Start with an Empty Automation.
-Add the YAML Code
 
-Switch to the YAML editor (at the top of the automation editor) and paste the provided automation code.
+
+Switch to the YAML editor (at the top of the automation editor) and paste the provided automation code at the bottom of the page.
 Ensure you replace or adjust the entities if needed, but if you followed the setup exactly, they should match.
 Step 3: Customizing the Duration
 For testing purposes, instead of waiting 30 minutes, reduce the delay to 20 seconds:
-
-yaml
-Copy
-Edit
+``
 - delay:
     hours: 0
     minutes: 0
     seconds: 20
+``
 Once testing is successful, you can restore this to a longer duration (like 30 minutes).
 
 Step 4: Testing the Automation
@@ -128,7 +127,9 @@ Go to Settings > Developer Tools > States, and check the states of:
 time.lux_ac_charge_start1
 time.lux_ac_charge_end1
 switch.lux_ac_charge_enable
+
 Step 5: Troubleshooting
+
 If you encounter issues, ensure:
 Helpers are correctly configured with time enabled.
 No typos in entity names within the automation YAML.
