@@ -232,7 +232,7 @@ I **highly** recommend assigning static IPs (DHCP reservations) to both the inve
 
 ## 2 (or More) Inverters
 
-**Mark** has written template sensors to combine data from two inverters into a single sensor, which should help if you have multiple inverters. I can’t test this (I have only one inverter), but if you do try it, let me know. The file is **dualinverters_template.yaml**.
+**Mark** has written template sensors to combine data from two inverters into a single sensor, which should help if you have multiple inverters. I can’t test this (I have only one inverter), but if you do try it, let me know. The file is [**dualinverters_template.yaml**.](https://github.com/guybw/LuxPython_DEV/blob/master/dual_inverter_setup.md)
 
 ---
 
