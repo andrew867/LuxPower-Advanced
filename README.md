@@ -56,13 +56,16 @@ Make sure you **do not** change the port from 8000. Currently, only **Wi-Fi dong
 ## INSTALL THE INTEGRATION
 
 **THIS INTEGRATION WILL NOT WORK WITH HACS**
-0. Get the ZIP file from here: https://github.com/guybw/LuxPython_DEV/releases you want to latest stable release. 
-1. Copy the **luxpower** integration to your Home Assistant instance in the `/config/` folder (the same folder where your `configuration.yaml` is located).  
-2. You should see a `custom_components` folder. Simply copy `./custom_components/luxpower/` there. (Details are explained below.)  
-3. If you are new to HA, you may need to create a `custom_components` folder. If you use HACS, this folder should already exist.  
-4. **Reboot** Home Assistant. This step is mandatory; otherwise, the next steps will not work.
 
-I strongly suggest installing the **Samba share** in HA. Watch this video for guidance: [How to Install Samba Share on Home Assistant](https://www.youtube.com/watch?v=udqY2CYzYGk)
+1. Get the ZIP file from here: https://github.com/guybw/LuxPython_DEV/releases you want to latest stable release. 
+2. Copy the **luxpower** integration to your Home Assistant instance in the `/config/` folder (the same folder where your `configuration.yaml` is located).  
+3. You should see a `custom_components` folder. Simply copy `./custom_components/luxpower/` there. (Details are explained below.)  
+4. If you are new to HA, you may need to create a `custom_components` folder. If you use HACS, this folder should already exist.  
+5. **Reboot** Home Assistant. This step is mandatory; otherwise, the next steps will not work.
+
+I strongly suggest installing the **Samba share** in HA (if you know how to transfer via SSH go ahead, if you don't just use the samba share.
+
+Watch this video for guidance: [How to Install Samba Share on Home Assistant](https://www.youtube.com/watch?v=udqY2CYzYGk)
 
 **The files should look like this** (replace the IP with your HA device’s IP—in the example, it’s `172.16.255.30`):
 
