@@ -124,27 +124,387 @@ Here’s an expanded example showing multiple sensor configurations:
 ```yaml
 template:
   - sensor:
+
+### Aggregate Lux Sensors Across All Inverters
+
+### Aggregate Sensor for 'Lux - Battery %'
     - name: 'Lux - Battery %'
       unique_id: sensor.lux_battery
       unit_of_measurement: '%'
       device_class: battery
       state: >
-        {% if states('sensor.lux_1234567890_battery').lower() in ['unknown', 'unavailable'] or states('sensor.lux_0987654321_battery').lower() in ['unknown', 'unavailable'] %}
+        {% if states('sensor.lux_1212016010_battery').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery').lower() in ['unknown', 'unavailable'] %}
           unavailable
         {% else %}
-          {{ (states('sensor.lux_1234567890_battery')|float(0) + states('sensor.lux_0987654321_battery')|float(0)) / 2 | round(0) }}
+          {{ (states('sensor.lux_1212016010_battery')|float(0) + states('sensor.lux_1212016024_battery')|float(0))/2|float(0)|round(0) }}
         {% endif %}
 
+### Aggregate Sensor for 'Lux - Battery Charge (Daily)'
     - name: 'Lux - Battery Charge (Daily)'
       unique_id: sensor.lux_battery_charge_daily
       unit_of_measurement: 'kWh'
       device_class: energy
       state: >
-        {% if states('sensor.lux_1234567890_battery_charge_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_0987654321_battery_charge_daily').lower() in ['unknown', 'unavailable'] %}
+        {% if states('sensor.lux_1212016010_battery_charge_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery_charge_daily').lower() in ['unknown', 'unavailable'] %}
           unavailable
         {% else %}
-          {{ states('sensor.lux_1234567890_battery_charge_daily')|float(0) + states('sensor.lux_0987654321_battery_charge_daily')|float(0) }}
+          {{ states('sensor.lux_1212016010_battery_charge_daily')|float(0) + states('sensor.lux_1212016024_battery_charge_daily')|float(0) }}
         {% endif %}
+
+### Aggregate Sensor for 'Lux - Battery Charge (Live)'
+    - name: 'Lux - Battery Charge (Live)'
+      unique_id: sensor.lux_battery_charge_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_battery_charge_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery_charge_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_battery_charge_live')|float(0) + states('sensor.lux_1212016024_battery_charge_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Battery Charge (Total)'
+    - name: 'Lux - Battery Charge (Total)'
+      unique_id: sensor.lux_battery_charge_total
+      state_class: total_increasing
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_battery_charge_total').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery_charge_total').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_battery_charge_total')|float(0) + states('sensor.lux_1212016024_battery_charge_total')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Battery Discharge (Daily)'
+    - name: 'Lux - Battery Discharge (Daily)'
+      unique_id: sensor.lux_battery_discharge_daily
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_battery_discharge_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery_discharge_daily').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_battery_discharge_daily')|float(0) + states('sensor.lux_1212016024_battery_discharge_daily')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Battery Discharge (Live)'
+    - name: 'Lux - Battery Discharge (Live)'
+      unique_id: sensor.lux_battery_discharge_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_battery_discharge_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery_discharge_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_battery_discharge_live')|float(0) + states('sensor.lux_1212016024_battery_discharge_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Battery Discharge (Total)'
+    - name: 'Lux - Battery Discharge (Total)'
+      unique_id: sensor.lux_battery_discharge_total
+      state_class: total_increasing
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_battery_discharge_total').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery_discharge_total').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_battery_discharge_total')|float(0) + states('sensor.lux_1212016024_battery_discharge_total')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Battery Flow (Live)'
+    - name: 'Lux - Battery Flow (Live)'
+      unique_id: sensor.lux_battery_flow_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_battery_flow_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery_flow_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_battery_flow_live')|float(0) + states('sensor.lux_1212016024_battery_flow_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Battery Voltage (Live)'
+    - name: 'Lux - Battery Voltage (Live)'
+      unique_id: sensor.lux_battery_voltage_live
+      unit_of_measurement: 'V'
+      device_class: voltage
+      state: >
+        {% if states('sensor.lux_1212016010_battery_voltage_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_battery_voltage_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ (states('sensor.lux_1212016010_battery_voltage_live')|float(0) + states('sensor.lux_1212016024_battery_voltage_live')|float(0))/2|float(0)|round(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - BMS Limit Charge (Live)'
+    - name: 'Lux - BMS Limit Charge (Live)'
+      unique_id: sensor.lux_bms_limit_charge_live
+      unit_of_measurement: 'A'
+      device_class: current
+      state: >
+        {% if states('sensor.lux_1212016010_bms_limit_charge_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_bms_limit_charge_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_bms_limit_charge_live')|float(0) + states('sensor.lux_1212016024_bms_limit_charge_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - BMS Limit Discharge (Live)'
+    - name: 'Lux - BMS Limit Discharge (Live)'
+      unique_id: sensor.lux_bms_limit_discharge_live
+      unit_of_measurement: 'A'
+      device_class: current
+      state: >
+        {% if states('sensor.lux_1212016010_bms_limit_discharge_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_bms_limit_discharge_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_bms_limit_discharge_live')|float(0) + states('sensor.lux_1212016024_bms_limit_discharge_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Grid Flow (Live)'
+    - name: 'Lux - Grid Flow (Live)'
+      unique_id: sensor.lux_grid_flow_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_grid_flow_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_grid_flow_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_grid_flow_live')|float(0) + states('sensor.lux_1212016024_grid_flow_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Grid Voltage (Live) '
+    - name: 'Lux - Grid Voltage (Live) '
+      unique_id: sensor.lux_grid_voltage_live
+      unit_of_measurement: 'V'
+      device_class: voltage
+      state: >
+        {% if states('sensor.lux_1212016010_grid_voltage_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_grid_voltage_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ (states('sensor.lux_1212016010_grid_voltage_live')|float(0) + states('sensor.lux_1212016024_grid_voltage_live')|float(0))/2|float(0)|round(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Home Consumption (Daily)'
+    - name: 'Lux - Home Consumption (Daily)'
+      unique_id: sensor.lux_home_consumption_daily
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_home_consumption_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_home_consumption_daily').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_home_consumption_daily')|float(0) + states('sensor.lux_1212016024_home_consumption_daily')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Home Consumption (Live)'
+    - name: 'Lux - Home Consumption (Live)'
+      unique_id: sensor.lux_home_consumption_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_home_consumption_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_home_consumption_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_home_consumption_live')|float(0) + states('sensor.lux_1212016024_home_consumption_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power from Grid (Daily)'
+    - name: 'Lux - Power from Grid (Daily)'
+      unique_id: sensor.lux_power_from_grid_daily
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_power_from_grid_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_from_grid_daily').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_from_grid_daily')|float(0) + states('sensor.lux_1212016024_power_from_grid_daily')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power from Grid (Live)'
+    - name: 'Lux - Power from Grid (Live)'
+      unique_id: sensor.lux_power_from_grid_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_power_from_grid_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_from_grid_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_from_grid_live')|float(0) + states('sensor.lux_1212016024_power_from_grid_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power from grid to HOUSE (Live)'
+    - name: 'Lux - Power from grid to HOUSE (Live)'
+      unique_id: sensor.lux_power_from_grid_to_house_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_power_from_grid_to_house_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_from_grid_to_house_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_from_grid_to_house_live')|float(0) + states('sensor.lux_1212016024_power_from_grid_to_house_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power from Grid (Total)'
+    - name: 'Lux - Power from Grid (Total)'
+      unique_id: sensor.lux_power_from_grid_total
+      state_class: total_increasing
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_power_from_grid_total').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_from_grid_total').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_from_grid_total')|float(0) + states('sensor.lux_1212016024_power_from_grid_total')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power from Inverter (Live)'
+    - name: 'Lux - Power from Inverter (Live)'
+      unique_id: sensor.lux_power_from_inverter_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_power_from_inverter_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_from_inverter_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_from_inverter_live')|float(0) + states('sensor.lux_1212016024_power_from_inverter_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power from Inverter to Home (Daily)'
+    - name: 'Lux - Power from Inverter to Home (Daily)'
+      unique_id: sensor.lux_power_from_inverter_to_home_daily
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_power_from_inverter_to_home_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_from_inverter_to_home_daily').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_from_inverter_to_home_daily')|float(0) + states('sensor.lux_1212016024_power_from_inverter_to_home_daily')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power To Grid (Daily)'
+    - name: 'Lux - Power To Grid (Daily)'
+      unique_id: sensor.lux_power_to_grid_daily
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_power_to_grid_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_to_grid_daily').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_to_grid_daily')|float(0) + states('sensor.lux_1212016024_power_to_grid_daily')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power To Grid (Live)'
+    - name: 'Lux - Power To Grid (Live)'
+      unique_id: sensor.lux_power_to_grid_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_power_to_grid_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_to_grid_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_to_grid_live')|float(0) + states('sensor.lux_1212016024_power_to_grid_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power To Grid (Total)'
+    - name: 'Lux - Power To Grid (Total)'
+      unique_id: sensor.lux_power_to_grid_total
+      state_class: total_increasing
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_power_to_grid_total').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_to_grid_total').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_to_grid_total')|float(0) + states('sensor.lux_1212016024_power_to_grid_total')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power to Inverter (Daily)'
+    - name: 'Lux - Power to Inverter (Daily)'
+      unique_id: sensor.lux_power_to_inverter_daily
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_power_to_inverter_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_to_inverter_daily').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_to_inverter_daily')|float(0) + states('sensor.lux_1212016024_power_to_inverter_daily')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Power to Inverter (Live)'
+    - name: 'Lux - Power to Inverter (Live)'
+      unique_id: sensor.lux_power_to_inverter_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_power_to_inverter_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_power_to_inverter_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_power_to_inverter_live')|float(0) + states('sensor.lux_1212016024_power_to_inverter_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Solar Output Array 1 (Live)'
+    - name: 'Lux - Solar Output Array 1 (Live)'
+      unique_id: sensor.lux_solar_output_array_1_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_solar_output_array_1_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_solar_output_array_1_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_solar_output_array_1_live')|float(0) + states('sensor.lux_1212016024_solar_output_array_1_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Solar Output Array 2 (Live)'
+    - name: 'Lux - Solar Output Array 2 (Live)'
+      unique_id: sensor.lux_solar_output_array_2_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_solar_output_array_2_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_solar_output_array_2_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_solar_output_array_2_live')|float(0) + states('sensor.lux_1212016024_solar_output_array_2_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Solar Output (Daily)'
+    - name: 'Lux - Solar Output (Daily)'
+      unique_id: sensor.lux_solar_output_daily
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_solar_output_daily').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_solar_output_daily').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_solar_output_daily')|float(0) + states('sensor.lux_1212016024_solar_output_daily')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Solar Output (Live)'
+    - name: 'Lux - Solar Output (Live)'
+      unique_id: sensor.lux_solar_output_live
+      unit_of_measurement: 'W'
+      device_class: power
+      state: >
+        {% if states('sensor.lux_1212016010_solar_output_live').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_solar_output_live').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_solar_output_live')|float(0) + states('sensor.lux_1212016024_solar_output_live')|float(0) }}
+        {% endif %}
+
+### Aggregate Sensor for 'Lux - Solar Output (Total)'
+    - name: 'Lux - Solar Output (Total)'
+      unique_id: sensor.lux_solar_output_total
+      state_class: total_increasing
+      unit_of_measurement: 'kWh'
+      device_class: energy
+      state: >
+        {% if states('sensor.lux_1212016010_solar_output_total').lower() in ['unknown', 'unavailable'] or states('sensor.lux_1212016024_solar_output_total').lower() in ['unknown', 'unavailable'] %}
+          unavailable
+        {% else %}
+          {{ states('sensor.lux_1212016010_solar_output_total')|float(0) + states('sensor.lux_1212016024_solar_output_total')|float(0) }}
+        {% endif %}
+
+
 ```
 
 ---
