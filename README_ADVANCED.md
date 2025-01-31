@@ -2,6 +2,36 @@
 
 This section guides you through setting up a 30-minute boost charge automation using input and time helpers. Follow the instructions to create an easy-to-manage charge control in Home Assistant.
 
+# Helper and Automation Setup Guide
+
+## Step 1: Create the Helpers
+
+1. **Go to Settings:**
+   - Open **Home Assistant > Settings > Devices & Services > Helpers**.
+
+2. **Create Two Helpers:**
+   - **Helper 1:** Input Datetime
+     - **Name:** `lux_helper_start`
+     - **Enable Time:** Yes
+     - **Enable Date:** No
+
+   - **Helper 2:** Input Datetime
+     - **Name:** `lux_helper_end`
+     - **Enable Time:** Yes
+     - **Enable Date:** No
+
+These helpers store the start and end charge times dynamically.
+
+## Step 2: Setting Up the Automation
+
+1. **Go to Automations:**
+   - Navigate to **Settings > Automations & Scenes**.
+   - Click **+ Create Automation** and select **Start with an Empty Automation**.
+
+2. **Switch to YAML Editor:**
+   - Paste the automation code provided below.
+   - Ensure all entities are correctly referenced.
+
 ```yaml
 alias: Lux boost charge for 30 minutes
 description: Automate charging sequence based on lux sensor
@@ -55,6 +85,44 @@ actions:
       value: "{{ states('input_datetime.lux_helper_end') }}"
     action: time.set_value
 ```
+
+## Step 3: Customizing the Duration
+
+- For testing purposes, change the delay to 20 seconds:
+
+```yaml
+- delay:
+    hours: 0
+    minutes: 0
+    seconds: 20
+```
+
+- Once testing is successful, restore the delay to 30 minutes.
+
+## Step 4: Testing the Automation
+
+1. **Manually Trigger the Automation:**
+   - Go to **Settings > Automations** and find the automation.
+   - Click **Run Actions** to test it.
+
+2. **Monitor Updates:**
+   - Open **Settings > Developer Tools > States** and check:
+     - `time.lux_ac_charge_start1`
+     - `time.lux_ac_charge_end1`
+     - `switch.lux_ac_charge_enable`
+
+## Step 5: Troubleshooting
+
+- Ensure the helpers are correctly configured.
+- Double-check the YAML entity names.
+- Ensure `input_datetime.set_datetime` actions receive proper time formats.
+
+## Conclusion
+
+Congratulations! You’ve set up dynamic charge automation and can test or modify it easily using the helpers and automations. 
+
+
+
 
 ---
 
@@ -149,67 +217,3 @@ We used to have an issue with disconnecting. Below are the legacy notes for refe
 
 ---
 
-# Helper and Automation Setup Guide
-
-## Step 1: Create the Helpers
-
-1. **Go to Settings:**
-   - Open **Home Assistant > Settings > Devices & Services > Helpers**.
-
-2. **Create Two Helpers:**
-   - **Helper 1:** Input Datetime
-     - **Name:** `lux_helper_start`
-     - **Enable Time:** Yes
-     - **Enable Date:** No
-
-   - **Helper 2:** Input Datetime
-     - **Name:** `lux_helper_end`
-     - **Enable Time:** Yes
-     - **Enable Date:** No
-
-These helpers store the start and end charge times dynamically.
-
-## Step 2: Setting Up the Automation
-
-1. **Go to Automations:**
-   - Navigate to **Settings > Automations & Scenes**.
-   - Click **+ Create Automation** and select **Start with an Empty Automation**.
-
-2. **Switch to YAML Editor:**
-   - Paste the automation code provided above.
-   - Ensure all entities are correctly referenced.
-
-## Step 3: Customizing the Duration
-
-- For testing purposes, change the delay to 20 seconds:
-
-```yaml
-- delay:
-    hours: 0
-    minutes: 0
-    seconds: 20
-```
-
-- Once testing is successful, restore the delay to 30 minutes.
-
-## Step 4: Testing the Automation
-
-1. **Manually Trigger the Automation:**
-   - Go to **Settings > Automations** and find the automation.
-   - Click **Run Actions** to test it.
-
-2. **Monitor Updates:**
-   - Open **Settings > Developer Tools > States** and check:
-     - `time.lux_ac_charge_start1`
-     - `time.lux_ac_charge_end1`
-     - `switch.lux_ac_charge_enable`
-
-## Step 5: Troubleshooting
-
-- Ensure the helpers are correctly configured.
-- Double-check the YAML entity names.
-- Ensure `input_datetime.set_datetime` actions receive proper time formats.
-
-## Conclusion
-
-Congratulations! You’ve set up dynamic charge automation and can test or modify it easily using the helpers and automations. 
