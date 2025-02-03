@@ -1,7 +1,7 @@
 
 # LuxPython (A custom Home Assistant Integration for LuxPowerTek and EG4)
 
-LuxPython is a custom integration for Home Assistant (HA) that enables local access to LuxpowerTek and EG4 Inverters.
+LuxPython is a custom integration for Home Assistant (HA) that enables local access to Luxpower Tek and EG4 Inverters.
 
 ---
 
