@@ -272,6 +272,11 @@ It takes about 20 seconds and is usually painless.
 
 ---
 
+## LUX Installer Code / Installer Account
+I have been given an installer account which allows me to have a few more options / allows me to test extra items (most are on here anyway) but if you don't have an installer or are a DIY installer I'm happy to help with updates / simple setup issues. Just let me know your station name and your Dongle ID and inverter serial and I can get it moved onto my account (with your permission). If you are struggling to register let me know and I will send you my installer code. Hopefully it's not needed but it's helped in the past.
+
+---
+
 ## Thanks!
 
 - **celsworth** for [lxp-packet documentation](https://github.com/celsworth/lxp-packet/blob/master/doc/LXP_REGISTERS.txt)  
