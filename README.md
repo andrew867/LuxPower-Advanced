@@ -24,7 +24,7 @@ This project has cost me a significant amount of time and money to develop, and 
 
 A suggested donation of **£20** would be greatly appreciated, as it all goes toward keeping this project running. **Solar Assistant** costs more and doesn't provide as many sensors as this project, and **LXP-Bridge** has closed down—your support will help ensure this project continues to run and remains available and supported.
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?business=UAUYJ83UYRHSG&no_recurring=1&item_name=Home+Assistant+Development+costs&currency_code=GBP)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/guybw)
 
 If that link doesn't work, my PayPal is **guybw@hotmail.com**. Please use friends and family, as PayPal takes a significant percentage otherwise. Thank you!
 
