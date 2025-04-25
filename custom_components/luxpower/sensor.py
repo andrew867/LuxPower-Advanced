@@ -101,7 +101,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         # 3. Create Attribute Sensors Based On LuxPowerSensorEntity Class
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Discharge (Live)", "unique": "lux_battery_discharge", "bank": 0, "attribute": LXPPacket.p_discharge, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Charge (Live)", "unique": "lux_battery_charge", "bank": 0, "attribute": LXPPacket.p_charge, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery %", "unique": "lux_battery_percent", "bank": 0, "attribute": LXPPacket.soc, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery %", "unique": "lux_battery_percent", "bank": 0, "attribute": LXPPacket.soc, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Discharge (Daily)", "unique": "lux_daily_battery_discharge", "bank": 0, "attribute": LXPPacket.e_dischg_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Discharge (Total)", "unique": "lux_total_battery_discharge", "bank": 1, "attribute": LXPPacket.e_dischg_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Charge (Daily)", "unique": "lux_daily_battery_charge", "bank": 0, "attribute": LXPPacket.e_chg_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
@@ -144,6 +144,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Power (Total)", "unique": "lux_current_generator_power_all", "bank": 2, "attribute": LXPPacket.gen_power_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Voltage (Live)", "unique": "lux_current_eps_L1_voltage", "bank": 2, "attribute": LXPPacket.eps_L1_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L2 Voltage (Live)", "unique": "lux_current_eps_L2_voltage", "bank": 2, "attribute": LXPPacket.eps_L2_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Watts (Live)", "unique": "lux_current_eps_L1_watt", "bank": 2, "attribute": LXPPacket.eps_L1_watt, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L2 Watts (Live)", "unique": "lux_current_eps_L2_watt", "bank": 2, "attribute": LXPPacket.eps_L2_watt, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output (Daily)", "unique": "lux_daily_solar", "bank": 0, "attribute": LXPPacket.e_pv_total, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 1 (Daily)", "unique": "lux_daily_solar_array_1", "bank": 0, "attribute": LXPPacket.e_pv_1_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 2 (Daily)", "unique": "lux_daily_solar_array_2", "bank": 0, "attribute": LXPPacket.e_pv_2_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
@@ -686,6 +688,8 @@ class LuxStateSensorEntity(SensorEntity):
         state_attributes[LXPPacket.gen_power_all] = f"{self.totaldata.get(LXPPacket.gen_power_all, UA)}"
         state_attributes[LXPPacket.eps_L1_volt] = f"{self.totaldata.get(LXPPacket.eps_L1_volt, UA)}"
         state_attributes[LXPPacket.eps_L2_volt] = f"{self.totaldata.get(LXPPacket.eps_L2_volt, UA)}"
+        state_attributes[LXPPacket.eps_L1_watt] = f"{self.totaldata.get(LXPPacket.eps_L1_watt, UA)}"
+        state_attributes[LXPPacket.eps_L2_watt] = f"{self.totaldata.get(LXPPacket.eps_L2_watt, UA)}"
 
         return state_attributes
 

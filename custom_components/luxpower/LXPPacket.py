@@ -276,6 +276,8 @@ class LXPPacket:
     gen_power_all = "gen_power_all"
     eps_L1_volt = "eps_L1_volt"
     eps_L2_volt = "eps_L2_volt"
+    eps_L1_watt = "eps_L1_watt"
+    eps_L2_watt = "eps_L2_watt"
 
     def __init__(self, packet=b"", dongle_serial=b"", serial_number=b"", debug=True):
         """
@@ -955,8 +957,12 @@ class LXPPacket:
 
             eps_L1_volt = self.readValuesInt.get(127, 0) / 10
             eps_L2_volt = self.readValuesInt.get(128, 0) / 10
+            eps_L1_watt = self.readValuesInt.get(129, 0)
+            eps_L2_watt = self.readValuesInt.get(130, 0)
             self.readValuesThis[LXPPacket.eps_L1_volt] = eps_L1_volt
             self.readValuesThis[LXPPacket.eps_L2_volt] = eps_L2_volt
+            self.readValuesThis[LXPPacket.eps_L1_watt] = eps_L1_watt
+            self.readValuesThis[LXPPacket.eps_L2_watt] = eps_L2_watt
 
 
 if __name__ == "__main__":
