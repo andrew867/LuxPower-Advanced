@@ -1,8 +1,9 @@
 """
 
-This is a docstring placeholder.
+This is written by Guy Wells (C) 2025 with the help and support of contributors on the Github page.
+This code is from https://github.com/guybw/LuxPython_DEV
 
-This is where we will describe what this module does
+This switch.py enables switches in Home Assistant.
 
 """
 import logging
@@ -92,7 +93,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Priority", "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "enabled": True},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Enable", "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Take Load Together", "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Last", "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Last", "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": True},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid Peak-Shaving", "register_address": 179, "bitmask": LXPPacket.ENABLE_PEAK_SHAVING, "enabled": False},
     ]
 

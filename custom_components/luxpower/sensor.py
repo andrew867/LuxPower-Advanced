@@ -1,8 +1,9 @@
 """
 
-This is a docstring placeholder.
+This is written by Guy Wells (C) 2025.
+This code is from https://github.com/guybw/LuxPython_DEV
 
-This is where we will describe what this module does
+This sensor.py is the sensors file for LUXPython
 """
 import logging
 import time
