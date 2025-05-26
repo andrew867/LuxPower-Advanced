@@ -333,12 +333,19 @@ class LuxPowerSensorEntity(SensorEntity):
     @property
     def device_info(self):
         """Return device info."""
+        entry_id = None
+        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+            if data.get("DONGLE") == self.dongle:
+                entry_id = e_id
+                break
+        model = self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
+        sw_version = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version", VERSION)
         return DeviceInfo(
             identifiers={(DOMAIN, self.dongle)},
             manufacturer="LuxPower",
-            model="LUXPower Inverter",
+            model=model,
             name=self.dongle,
-            sw_version=VERSION,
+            sw_version=sw_version,
         )
 
 
@@ -482,7 +489,17 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
             reg10_str = int(reg10_val).to_bytes(2, byteorder="little").hex()[0:2]
 
             oldstate = self._attr_native_value
-            self._attr_native_value = reg07_str + reg08_str + "-" + reg09_str + reg10_str
+            firmware = reg07_str + reg08_str + "-" + reg09_str + reg10_str
+            self._attr_native_value = firmware
+
+            # Save firmware into hass.data for device_info usage
+            entry_id = None
+            for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    entry_id = e_id
+                    break
+            if entry_id is not None:
+                self.hass.data[DOMAIN].setdefault(entry_id, {})["lux_firmware_version"] = firmware
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
                 _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._attr_native_value}")
@@ -512,6 +529,15 @@ class LuxPowerModelSensor(LuxPowerRegisterSensor):
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
             code = reg07_str + reg08_str
             model = MODEL_MAP.get(code, "Unknown")
+
+            # Save model into hass.data for device_info usage
+            entry_id = None
+            for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    entry_id = e_id
+                    break
+            if entry_id is not None:
+                self.hass.data[DOMAIN].setdefault(entry_id, {})["model"] = model
 
             oldstate = self._attr_native_value
             self._attr_native_value = model
@@ -780,10 +806,17 @@ class LuxStateSensorEntity(SensorEntity):
     @property
     def device_info(self):
         """Return device info."""
+        entry_id = None
+        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+            if data.get("DONGLE") == self.dongle:
+                entry_id = e_id
+                break
+        model = self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
+        sw_version = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version", VERSION)
         return DeviceInfo(
             identifiers={(DOMAIN, self.dongle)},
             manufacturer="LuxPower",
-            model="LUXPower Inverter",
+            model=model,
             name=self.dongle,
-            sw_version=VERSION,
+            sw_version=sw_version,
         )

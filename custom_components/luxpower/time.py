@@ -249,12 +249,19 @@ class LuxTimeTimeEntity(TimeEntity):
     @property
     def device_info(self):
         """Return device info."""
+        entry_id = None
+        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+            if data.get("DONGLE") == self.dongle:
+                entry_id = e_id
+                break
+        model = self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
+        sw_version = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version", VERSION)
         return DeviceInfo(
             identifiers={(DOMAIN, self.dongle)},
             manufacturer="LuxPower",
-            model="LUXPower Inverter",
+            model=model,
             name=self.dongle,
-            sw_version=VERSION,
+            sw_version=sw_version,
         )
 
     async def async_set_value(self, value):

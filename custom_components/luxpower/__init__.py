@@ -239,6 +239,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass_data[entry.entry_id] = {
         "DONGLE": DONGLE_SERIAL,
         "client": luxpower_client,
+        "model": "LUXPower Inverter",
     }  # Used for avoiding duplication of config entries
 # for component in PLATFORMS:
 # hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
