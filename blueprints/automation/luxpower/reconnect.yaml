@@ -5,7 +5,7 @@ blueprint:
   input:
     luxpower_time_entity:
       name: LuxPower last data received entity
-      description: The last reveived entity.
+      description: The last received entity.
       selector:
         entity:
           domain: sensor
