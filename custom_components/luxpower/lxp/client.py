@@ -3,7 +3,7 @@ import datetime
 import logging
 import struct
 from typing import Optional
-import home_assistant_bluetooth
+from homeassistant.core import HomeAssistant
 
 from ..LXPPacket import LXPPacket
 from ..helpers import Event
@@ -36,7 +36,7 @@ class LuxPowerClient(asyncio.Protocol):
     _transport: asyncio.WriteTransport | None
     _lxp_single_register_result: asyncio.Future | None
 
-    def __init__(self, hass: home_assistant_bluetooth, server: str, port: str, dongle_serial: str, serial_number: str, events: Event, respond_to_heartbeat: bool):
+    def __init__(self, hass: HomeAssistant, server: str, port: str, dongle_serial: str, serial_number: str, events: Event, respond_to_heartbeat: bool):
         self.hass = hass
         self.server = server
         self.port = port
