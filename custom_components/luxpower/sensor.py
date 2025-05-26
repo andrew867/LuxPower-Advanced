@@ -43,6 +43,19 @@ from .const import (
 from .helpers import Event
 from .LXPPacket import LXPPacket
 
+# Mapping of firmware model codes to inverter models
+MODEL_MAP = {
+    "AAAA": "LXP 3-6K Hybrid (Standard)",
+    "AAAB": "LXP 3-6K Hybrid (Parallel)",
+    "BAAA": "LXP-3600 ACS (Standard)",
+    "BAAB": "LXP-3600 ACS (Parallel)",
+    "CBAA": "SNA 3000-6000",
+    "CCAA": "SNA-US 6000",
+    "FAAB": "LXP-LB-8-12K",
+    "ACAB": "GEN-LB-EU 3-6K",
+    "HAAA": "GEB-LB-EU 7-10K",
+}
+
 _LOGGER = logging.getLogger(__name__)
 
 hyphen = ""
@@ -98,6 +111,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
         # 2. Create HOLDING Register Based Sensors 1st - As they Are Only Populated By Default At Integration Load - Slow RPi Timing
         {"etype": "LPFW", "name": "Lux {replaceID_midfix}{hyphen} Firmware Version", "unique": "lux_firmware_version", "bank": 0, "register": 7},
+        {"etype": "LPMD", "name": "Lux {replaceID_midfix}{hyphen} Inverter Model", "unique": "lux_inverter_model", "bank": 0, "register": 7},
 
         # 3. Create Attribute Sensors Based On LuxPowerSensorEntity Class
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Discharge (Live)", "unique": "lux_battery_discharge", "bank": 0, "attribute": LXPPacket.p_discharge, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
@@ -227,6 +241,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
             sensorEntities.append(LuxPowerRegisterSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LPFW":
             sensorEntities.append(LuxPowerFirmwareSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+        elif etype == "LPMD":
+            sensorEntities.append(LuxPowerModelSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LPDR":
             sensorEntities.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LPST":
@@ -470,6 +486,40 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
                 _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._attr_native_value}")
+                self.schedule_update_ha_state()
+        return self._attr_native_value
+
+
+class LuxPowerModelSensor(LuxPowerRegisterSensor):
+    """Sensor that exposes the inverter model based on firmware code."""
+
+    def push_update(self, event):
+        _LOGGER.debug(
+            f"Sensor: register event received Bank: {self._bank} MODEL Register: {self._register_address} Name: {self._attr_name}"
+        )
+        registers = event.data.get("registers", {})
+        self._data = registers
+
+        if self._register_address in registers.keys():
+            reg07_val = registers.get(7, None)
+            reg08_val = registers.get(8, None)
+            if reg07_val is None or reg08_val is None:
+                _LOGGER.debug(
+                    f"ABORTING: reg07_val: {reg07_val} - reg08_val: {reg08_val}"
+                )
+                return
+            reg07_str = int(reg07_val).to_bytes(2, "little").decode()
+            reg08_str = int(reg08_val).to_bytes(2, "little").decode()
+            code = reg07_str + reg08_str
+            model = MODEL_MAP.get(code, "Unknown")
+
+            oldstate = self._attr_native_value
+            self._attr_native_value = model
+            if oldstate != self._attr_native_value or not self._attr_available:
+                self._attr_available = True
+                _LOGGER.debug(
+                    f"Register sensor has changed from {oldstate} to {self._attr_native_value}"
+                )
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
