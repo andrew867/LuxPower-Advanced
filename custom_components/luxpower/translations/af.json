@@ -18,7 +18,8 @@
           "lux_port": "TCP-poort van inverter",
           "lux_dongle_serial": "Donglenommer",
           "lux_serial_number": "Reeksnommer van inverter",
-          "lux_use_serial": "Gebruik reeksnommer as deel van entiteit"
+          "lux_use_serial": "Gebruik reeksnommer as deel van entiteit",
+          "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter"
         }
       }
     }
@@ -33,7 +34,8 @@
           "lux_port": "TCP-poort van inverter",
           "lux_dongle_serial": "Inverter-donglenommer",
           "lux_serial_number": "Inverter se reeksnommer",
-          "lux_use_serial": "Gebruik reeksnommer as deel van entiteit"
+          "lux_use_serial": "Gebruik reeksnommer as deel van entiteit",
+          "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter"
         }
       }
     }

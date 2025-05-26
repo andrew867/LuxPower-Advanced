@@ -18,7 +18,8 @@
           "lux_port": "TCP Port ng Inverter",
           "lux_dongle_serial": "Dongle Number",
           "lux_serial_number": "Serial Number ng Inverter",
-          "lux_use_serial": "Gamitin ang serial bilang bahagi ng entity"
+          "lux_use_serial": "Gamitin ang serial bilang bahagi ng entity",
+          "lux_respond_to_heartbeat": "Tugunan ang mga heartbeat request mula sa inverter"
         }
       }
     }
@@ -32,4 +33,11 @@
           "lux_host": "IP address ng Lux Inverter",
           "lux_port": "TCP Port ng Inverter",
           "lux_dongle_serial": "Dongle Number ng Inverter",
-          "lux_serial_number": "
+          "lux_serial_number": "Serial Number ng Inverter",
+          "lux_use_serial": "Gamitin ang serial bilang bahagi ng entity",
+          "lux_respond_to_heartbeat": "Tugunan ang mga heartbeat request mula sa inverter"
+        }
+      }
+    }
+  }
+}
