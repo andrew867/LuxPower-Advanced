@@ -414,6 +414,21 @@ class LuxPowerClient(asyncio.Protocol):
         self._connected = False
         self._LOGGER.warning("restart inverter finished")
 
+    async def reset_all_settings(self):
+        self._LOGGER.warning("Resetting Luxpower Inverter settings to defaults")
+
+        lxpPacket = LXPPacket(
+            debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number
+        )
+
+        self._LOGGER.warning("Register to be written 11 with value 2")
+        lxpPacket.register_io_no_retry(
+            self.server, self.port, 11, value=2, iotype=lxpPacket.WRITE_SINGLE
+        )
+        self._close_connection()
+        self._connected = False
+        self._LOGGER.warning("reset inverter settings finished")
+
     async def write(self, register, value):
         await self._acquire_lock()
         try:

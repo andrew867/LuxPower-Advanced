@@ -48,3 +48,18 @@ luxpower_synctime:
       description: Determines whether inverter time must be synced with HA local time
       default: False
       example: 'True'
+luxpower_restart:
+  description: Restart the inverter for the specified DONGLE
+  fields:
+    dongle:
+      description: Dongle Serial Number
+      default: ''
+      example: '<DONGLE SERIAL>'
+
+luxpower_reset_settings:
+  description: Reset inverter settings to defaults for the specified DONGLE
+  fields:
+    dongle:
+      description: Dongle Serial Number
+      default: ''
+      example: '<DONGLE SERIAL>'

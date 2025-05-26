@@ -57,6 +57,12 @@ class ServiceHelper:
         await asyncio.sleep(1)
         _LOGGER.warning("service_restart done")
 
+    async def service_reset_settings(self, dongle):
+        luxpower_client = self._lux_client(dongle)
+        await luxpower_client.reset_all_settings()
+        await asyncio.sleep(1)
+        _LOGGER.warning("service_reset_settings done")
+
     async def service_synctime(self, dongle, do_set_time: bool):
         luxpower_client = self._lux_client(dongle)
         await luxpower_client.synctime(do_set_time)

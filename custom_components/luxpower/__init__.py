@@ -39,7 +39,7 @@ from .helpers import Event
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "switch", "number", "time"]
+PLATFORMS = ["sensor", "switch", "number", "time", "button"]
 
 SCHEME_REGISTER_BANK = vol.Schema(
     {
@@ -68,6 +68,12 @@ SCHEME_RECONNECT = vol.Schema(
 )
 
 SCHEME_RESTART = vol.Schema(
+    {
+        vol.Required("dongle"): vol.Coerce(str),
+    }
+)
+
+SCHEME_RESET_SETTINGS = vol.Schema(
     {
         vol.Required("dongle"): vol.Coerce(str),
     }
@@ -139,6 +145,12 @@ async def async_setup(hass: HomeAssistant, config: dict):
         _LOGGER.debug("handle_restart service: %s %s", DOMAIN, dongle)
         await service_helper.service_restart(dongle=dongle)
 
+    async def handle_reset_settings(call):
+        """Handle the service call."""
+        dongle = call.data.get("dongle")
+        _LOGGER.debug("handle_reset_settings service: %s %s", DOMAIN, dongle)
+        await service_helper.service_reset_settings(dongle=dongle)
+
     async def handle_synctime(call):
         """Handle the service call."""
         dongle = call.data.get("dongle")
@@ -165,6 +177,10 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
     hass.services.async_register(
         DOMAIN, "luxpower_restart", handle_restart, schema=SCHEME_RESTART
+    )  # fmt: skip
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_reset_settings", handle_reset_settings, schema=SCHEME_RESET_SETTINGS
     )  # fmt: skip
 
     hass.services.async_register(
