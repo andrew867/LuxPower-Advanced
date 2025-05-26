@@ -403,13 +403,8 @@ class LuxPowerClient(asyncio.Protocol):
 
     async def restart(self):
         self._LOGGER.warning("Restarting Luxpower Inverter")
-
-        lxpPacket = LXPPacket(
-            debug=True, dongle_serial=self.dongle_serial, serial_number=self.serial_number)
-
         self._LOGGER.warning("Register to be written 11 with value 128")
-        lxpPacket.register_io_no_retry(
-            self.server, self.port, 11, value=128, iotype=lxpPacket.WRITE_SINGLE)
+        await self.write(11, 128)   # WRITE_SINGLE to register 11
         self._close_connection()
         self._connected = False
         self._LOGGER.warning("restart inverter finished")
