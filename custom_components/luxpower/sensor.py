@@ -750,6 +750,7 @@ class LuxStateSensorEntity(SensorEntity):
         state_attributes[LXPPacket.max_dischg_curr] = f"{self.totaldata.get(LXPPacket.max_dischg_curr, UA)}"
         state_attributes[LXPPacket.charge_volt_ref] = f"{self.totaldata.get(LXPPacket.charge_volt_ref, UA)}"
         state_attributes[LXPPacket.dischg_cut_volt] = f"{self.totaldata.get(LXPPacket.dischg_cut_volt, UA)}"
+        state_attributes[LXPPacket.bat_status_inv] = f"{self.totaldata.get(LXPPacket.bat_status_inv, UA)}"
         state_attributes[LXPPacket.bat_count] = f"{self.totaldata.get(LXPPacket.bat_count, UA)}"
         state_attributes[LXPPacket.bat_capacity] = f"{self.totaldata.get(LXPPacket.bat_capacity, UA)}"
         state_attributes[LXPPacket.bat_current] = f"{self.totaldata.get(LXPPacket.bat_current, UA)}"

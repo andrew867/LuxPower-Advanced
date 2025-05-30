@@ -253,6 +253,7 @@ class LXPPacket:
     min_cell_volt = "min_cell_volt"
     charge_volt_ref = "charge_volt_ref"
     dischg_cut_volt = "dischg_cut_volt"
+    bat_status_inv = "bat_status_inv"
     bat_count = "bat_count"
     bat_capacity = "bat_capacity"
     bat_current = "bat_current"
@@ -884,6 +885,11 @@ class LXPPacket:
                 _LOGGER.debug("dischg_cut_volt(Volts) %s", dischg_cut_volt)
             self.readValuesThis[LXPPacket.charge_volt_ref] = charge_volt_ref
             self.readValuesThis[LXPPacket.dischg_cut_volt] = dischg_cut_volt
+
+            bat_status_inv = self.readValuesInt.get(95, 0)
+            if self.debug:
+                _LOGGER.debug("bat_status_inv %s", bat_status_inv)
+            self.readValuesThis[LXPPacket.bat_status_inv] = bat_status_inv
 
             bat_count = self.readValuesInt.get(96, 0)
             if self.debug:
