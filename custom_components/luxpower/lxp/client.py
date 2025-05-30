@@ -266,7 +266,7 @@ class LuxPowerClient(asyncio.Protocol):
                 if self._connected:
                     if not self._connect_twice:
                         self._connect_twice = False
-                        self._LOGGER.warning(
+                        self._LOGGER.info(
                             "Refreshing Lux Platforms With Data")
                         # await self.hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": self.dongle_serial.decode(), "bank_count": 3}, blocking=False)  # fmt: skip
                         # await self.hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": self.dongle_serial.decode()}, blocking=False)  # fmt: skip

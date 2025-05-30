@@ -50,10 +50,12 @@ MODEL_MAP = {
     "BAAA": "LXP-3600 ACS (Standard)",
     "BAAB": "LXP-3600 ACS (Parallel)",
     "CBAA": "SNA 3000-6000",
+    "EAAB": "LXP-LB-EU 7K",
     "CCAA": "SNA-US 6000",
     "FAAB": "LXP-LB-8-12K",
     "ACAB": "GEN-LB-EU 3-6K",
     "HAAA": "GEB-LB-EU 7-10K",
+    "CFAA": "SNA 12K",
 }
 
 _LOGGER = logging.getLogger(__name__)

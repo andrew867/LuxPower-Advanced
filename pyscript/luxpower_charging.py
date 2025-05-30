@@ -7,13 +7,7 @@ dodebug = False
 #@time_trigger("period(now, 2min)")
 
 @task_unique("auto_set_ac_battery_charge_level", kill_me=True)
-
-@state_trigger("(int(float(sensor.target_ac_battery_charge_level)) + int(float(sensor.lux_battery)) + 1 > 0 \
-
-                 and binary_sensor.allow_processing_of_solar_forecast_changes == 'on') or dodebug")
-
- 
-
+@state_trigger("(int(float(sensor.target_ac_battery_charge_level)) + int(float(sensor.lux_battery)) + 1 > 0 and binary_sensor.allow_processing_of_solar_forecast_changes == 'on') or dodebug")
 def auto_set_ac_battery_charge_level():
 
     log.info(f"auto_set_ac_battery_charge_level has fired")

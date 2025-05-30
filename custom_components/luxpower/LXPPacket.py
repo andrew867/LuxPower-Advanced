@@ -870,8 +870,20 @@ class LXPPacket:
             if self.debug:
                 _LOGGER.debug("***********INPUT 3 registers************")
 
-            max_chg_curr = self.readValuesInt.get(81, 0) / 100
-            max_dischg_curr = self.readValuesInt.get(82, 0) / 100
+            model_code = None
+            try:
+                reg07_val = self.regValuesInt.get(7)
+                reg08_val = self.regValuesInt.get(8)
+                if reg07_val is not None and reg08_val is not None:
+                    reg07_str = int(reg07_val).to_bytes(2, "little").decode()
+                    reg08_str = int(reg08_val).to_bytes(2, "little").decode()
+                    model_code = reg07_str + reg08_str
+            except Exception:
+                model_code = None
+
+            scale = 10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA") else 100
+            max_chg_curr = self.readValuesInt.get(81, 0) / scale
+            max_dischg_curr = self.readValuesInt.get(82, 0) / scale
             if self.debug:
                 _LOGGER.debug("max_chg_curr(Ampere) %s", max_chg_curr)
                 _LOGGER.debug("max_dischg_curr(Ampere) %s", max_dischg_curr)
