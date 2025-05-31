@@ -154,11 +154,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 1 (Live)", "unique": "lux_current_solar_voltage_1", "bank": 0, "attribute": LXPPacket.v_pv_1, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 2 (Live)", "unique": "lux_current_solar_voltage_2", "bank": 0, "attribute": LXPPacket.v_pv_2, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 3 (Live)", "unique": "lux_current_solar_voltage_3", "bank": 0, "attribute": LXPPacket.v_pv_3, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Voltage (Live)", "unique": "lux_current_generator_voltage", "bank": 2, "attribute": LXPPacket.gen_input_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Frequency (Live)", "unique": "lux_current_generator_frequency", "bank": 2, "attribute": LXPPacket.gen_input_freq, "device_class": SensorDeviceClass.FREQUENCY, "unit_of_measurement": UnitOfFrequency.HERTZ},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Power (Live)", "unique": "lux_current_generator_power", "bank": 2, "attribute": LXPPacket.gen_power_watt, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Power (Daily)", "unique": "lux_current_generator_power_daily", "bank": 2, "attribute": LXPPacket.gen_power_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Power (Total)", "unique": "lux_current_generator_power_all", "bank": 2, "attribute": LXPPacket.gen_power_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Voltage (Live)", "unique": "lux_current_generator_voltage", "bank": 2, "attribute": LXPPacket.gen_input_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Frequency (Live)", "unique": "lux_current_generator_frequency", "bank": 2, "attribute": LXPPacket.gen_input_freq, "device_class": SensorDeviceClass.FREQUENCY, "unit_of_measurement": UnitOfFrequency.HERTZ, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Power (Live)", "unique": "lux_current_generator_power", "bank": 2, "attribute": LXPPacket.gen_power_watt, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Power (Daily)", "unique": "lux_current_generator_power_daily", "bank": 2, "attribute": LXPPacket.gen_power_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Power (Total)", "unique": "lux_current_generator_power_all", "bank": 2, "attribute": LXPPacket.gen_power_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Voltage (Live)", "unique": "lux_current_eps_L1_voltage", "bank": 2, "attribute": LXPPacket.eps_L1_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L2 Voltage (Live)", "unique": "lux_current_eps_L2_voltage", "bank": 2, "attribute": LXPPacket.eps_L2_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Watts (Live)", "unique": "lux_current_eps_L1_watt", "bank": 2, "attribute": LXPPacket.eps_L1_watt, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
@@ -183,6 +183,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Capacity Ah", "unique": "lux_battery_capacity_ah", "bank": 2, "attribute": LXPPacket.bat_capacity, "device_class": None, "unit_of_measurement": None},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Current", "unique": "lux_battery_current", "bank": 2, "attribute": LXPPacket.bat_current, "device_class": SensorDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Cycle Count", "unique": "lux_battery_cycle_count", "bank": 2, "attribute": LXPPacket.bat_cycle_count, "device_class": None, "unit_of_measurement": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Internal Fault", "unique": "lux_internal_fault", "bank": 0, "attribute": LXPPacket.internal_fault, "device_class": None, "unit_of_measurement": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 1, "attribute": LXPPacket.fault_code, "device_class": None, "unit_of_measurement": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 1, "attribute": LXPPacket.warning_code, "device_class": None, "unit_of_measurement": None},
+
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Status", "unique": "lux_battery_status", "bank": 2, "attribute": LXPPacket.bat_status_inv},
 
 
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Status", "unique": "lux_status", "bank": 0, "attribute": LXPPacket.status},
@@ -253,6 +258,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
             sensorEntities.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LPHC":
             sensorEntities.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+        elif etype == "LPBS":
+            sensorEntities.append(LuxPowerBatteryStatusSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LPTS":
             sensorEntities.append(LuxPowerTestSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
 
@@ -287,6 +294,7 @@ class LuxPowerSensorEntity(SensorEntity):
         self._attr_state_class = entity_definition.get("state_class", None)
         self._attr_native_unit_of_measurement = entity_definition.get("unit_of_measurement", None)
         self._attr_should_poll = False
+        self._attr_entity_registry_enabled_default = entity_definition.get("enabled", True)
 
         # Hidden Class Extended Instance Attributes
         self._host = host
@@ -627,6 +635,37 @@ class LuxPowerStatusTextSensor(LuxPowerSensorEntity):
         return self._attr_native_value
 
 
+class LuxPowerBatteryStatusSensor(LuxPowerSensorEntity):
+    """Representation of the inverter battery status."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+
+    def push_update(self, event):
+        _LOGGER.debug(
+            f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}"
+        )  # fmt: skip
+        self._data = event.data.get("data", {})
+        status = int(self._data.get(self._device_attribute, 0))
+
+        if status == 0:
+            state_text = "Charge Forbidden & Discharge Forbidden"
+        elif status == 2:
+            state_text = "Charge Forbidden & Discharge Allowed"
+        elif status == 3:
+            state_text = "Charge Allowed & Discharge Allowed"
+        elif status == 17:
+            state_text = "Charge Allowed & Discharge Forbidden"
+        else:
+            state_text = "Unknown"
+
+        self._attr_native_value = state_text
+        self._attr_available = True
+        self.schedule_update_ha_state()
+        return self._attr_native_value
+
+
 class LuxPowerDataReceivedTimestampSensor(LuxPowerSensorEntity):
     """Representation of an Date & Time updated sensor for a LUXPower Inverter."""
 
@@ -770,6 +809,12 @@ class LuxStateSensorEntity(SensorEntity):
         state_attributes[LXPPacket.eps_L2_volt] = f"{self.totaldata.get(LXPPacket.eps_L2_volt, UA)}"
         state_attributes[LXPPacket.eps_L1_watt] = f"{self.totaldata.get(LXPPacket.eps_L1_watt, UA)}"
         state_attributes[LXPPacket.eps_L2_watt] = f"{self.totaldata.get(LXPPacket.eps_L2_watt, UA)}"
+        state_attributes[LXPPacket.p_load_ongrid] = f"{self.totaldata.get(LXPPacket.p_load_ongrid, UA)}"
+        state_attributes[LXPPacket.e_load_day] = f"{self.totaldata.get(LXPPacket.e_load_day, UA)}"
+        state_attributes[LXPPacket.e_load_all_l] = f"{self.totaldata.get(LXPPacket.e_load_all_l, UA)}"
+        state_attributes[LXPPacket.internal_fault] = f"{self.totaldata.get(LXPPacket.internal_fault, UA)}"
+        state_attributes[LXPPacket.fault_code] = f"{self.totaldata.get(LXPPacket.fault_code, UA)}"
+        state_attributes[LXPPacket.warning_code] = f"{self.totaldata.get(LXPPacket.warning_code, UA)}"
 
         return state_attributes
 

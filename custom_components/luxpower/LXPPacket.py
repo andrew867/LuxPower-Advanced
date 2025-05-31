@@ -240,6 +240,9 @@ class LXPPacket:
     e_eps_all = "e_eps_all"
     e_to_grid_all = "e_to_grid_all"
     e_to_user_all = "e_to_user_all"
+    internal_fault = "internal_fault"
+    fault_code = "fault_code"
+    warning_code = "warning_code"
     t_inner = "t_inner"
     t_rad_1 = "t_rad_1"
     t_rad_2 = "t_rad_2"
@@ -267,6 +270,9 @@ class LXPPacket:
     eps_L2_volt = "eps_L2_volt"
     eps_L1_watt = "eps_L1_watt"
     eps_L2_watt = "eps_L2_watt"
+    p_load_ongrid = "p_load_ongrid"
+    e_load_day = "e_load_day"
+    e_load_all_l = "e_load_all_l"
 
     def __init__(self, packet=b"", dongle_serial=b"", serial_number=b"", debug=True):
         """
@@ -674,6 +680,11 @@ class LXPPacket:
                 _LOGGER.debug("soc(%%) %s", soc)
             self.readValuesThis[LXPPacket.soc] = soc
 
+            internal_fault = self.readValuesInt.get(6, 0)
+            if self.debug:
+                _LOGGER.debug("internal_fault %s", internal_fault)
+            self.readValuesThis[LXPPacket.internal_fault] = internal_fault
+
             p_pv_1 = self.readValuesInt.get(7, 0)
             p_pv_2 = self.readValuesInt.get(8, 0)
             p_pv_3 = self.readValuesInt.get(9, 0)
@@ -846,6 +857,14 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.e_to_grid_all] = e_to_grid_all
             self.readValuesThis[LXPPacket.e_to_user_all] = e_to_user_all
 
+            fault_code = self.get_read_value_combined_int(60, 61)
+            warning_code = self.get_read_value_combined_int(62, 63)
+            if self.debug:
+                _LOGGER.debug("fault_code %s", fault_code)
+                _LOGGER.debug("warning_code %s", warning_code)
+            self.readValuesThis[LXPPacket.fault_code] = fault_code
+            self.readValuesThis[LXPPacket.warning_code] = warning_code
+
             t_inner = self.readValuesInt.get(64, 0)
             t_rad_1 = self.readValuesInt.get(65, 0)
             t_rad_2 = self.readValuesInt.get(66, 0)
@@ -969,6 +988,13 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.eps_L2_volt] = eps_L2_volt
             self.readValuesThis[LXPPacket.eps_L1_watt] = eps_L1_watt
             self.readValuesThis[LXPPacket.eps_L2_watt] = eps_L2_watt
+
+            p_load_ongrid = self.readValuesInt.get(170, 0)
+            e_load_day = self.readValuesInt.get(171, 0) / 10
+            e_load_all_l = self.readValuesInt.get(172, 0) / 10
+            self.readValuesThis[LXPPacket.p_load_ongrid] = p_load_ongrid
+            self.readValuesThis[LXPPacket.e_load_day] = e_load_day
+            self.readValuesThis[LXPPacket.e_load_all_l] = e_load_all_l
 
 
 if __name__ == "__main__":
