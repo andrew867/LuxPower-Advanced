@@ -881,7 +881,7 @@ class LXPPacket:
             except Exception:
                 model_code = None
 
-            scale = 10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA") else 100
+            scale = 10 if model_code.upper() in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA") else 100
             max_chg_curr = self.readValuesInt.get(81, 0) / scale
             max_dischg_curr = self.readValuesInt.get(82, 0) / scale
             if self.debug:

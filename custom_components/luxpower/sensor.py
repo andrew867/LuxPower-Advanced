@@ -530,7 +530,7 @@ class LuxPowerModelSensor(LuxPowerRegisterSensor):
             reg07_str = int(reg07_val).to_bytes(2, "little").decode()
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
             code = reg07_str + reg08_str
-            model = MODEL_MAP.get(code, "Unknown")
+            model = MODEL_MAP.get(code.upper(), "Unknown")
 
             # Save model into hass.data for device_info usage
             entry_id = None
