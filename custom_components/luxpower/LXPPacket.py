@@ -311,6 +311,8 @@ class LXPPacket:
         self.inputRead1 = False
         self.inputRead2 = False
         self.inputRead3 = False
+        self.inputRead4 = False
+        self.inputRead5 = False
 
         self.data = {}
         self.debug = True
@@ -510,6 +512,12 @@ class LXPPacket:
             elif self.register == 80 and number_of_registers == 40:
                 self.inputRead3 = True
                 self.get_device_values_bank2()
+            elif self.register == 120 and number_of_registers == 40:
+                self.inputRead4 = True
+                self.get_device_values_bank3()
+            elif self.register == 160 and number_of_registers == 40:
+                self.inputRead5 = True
+                self.get_device_values_bank4()
             elif self.register == 0 and number_of_registers == 127:
                 self.inputRead1 = True
                 self.inputRead2 = True
@@ -519,6 +527,9 @@ class LXPPacket:
                 self.get_device_values_bank2()
             else:
                 if number_of_registers == 1:
+                    _LOGGER.warning(f"An input packet was received with an unsupported single register: {self.register}")
+                    # The below code is a no-op because the methods immediately return without setting inputRead for that bank.
+                    # Significant refactoring needs to happen to only set values from registers in the packet if this is to be supported
                     # Decode Single Register
                     if 0 <= self.register <= 39:
                         self.get_device_values_bank0()
@@ -526,7 +537,14 @@ class LXPPacket:
                         self.get_device_values_bank1()
                     elif 80 <= self.register <= 119:
                         self.get_device_values_bank2()
+                    elif 120 <= self.register <= 159:
+                        self.get_device_values_bank3()
+                    elif 160 <= self.register <= 199:
+                        self.get_device_values_bank4()
                 else:
+                    _LOGGER.warning(f"An input packet was received with an unsupported register range: {self.register} - {self.register + number_of_registers - 1}")
+                    # The below code is a no-op because the methods immediately return without setting inputRead for that bank.
+                    # Significant refactoring needs to happen to only set values from registers in the packet if this is to be supported
                     # Decode Series of Registers - Possibly Over Block Boundaries
                     if 0 <= self.register <= 119:
                         self.get_device_values_bank0()
@@ -967,6 +985,12 @@ class LXPPacket:
 
             p_load2 = self.readValuesInt.get(114, 0)
             self.readValuesThis[LXPPacket.p_load2] = p_load2
+
+    def get_device_values_bank3(self):
+        if self.inputRead4:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 4 registers************")
+
             gen_input_volt = self.readValuesInt.get(121, 0) / 10
             gen_input_freq = self.readValuesInt.get(122, 0) / 100
             gen_power_watt = self.readValuesInt.get(123, 0)
@@ -989,12 +1013,19 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.eps_L1_watt] = eps_L1_watt
             self.readValuesThis[LXPPacket.eps_L2_watt] = eps_L2_watt
 
+    def get_device_values_bank4(self):
+        if self.inputRead5:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 5 registers************")
+
             p_load_ongrid = self.readValuesInt.get(170, 0)
             e_load_day = self.readValuesInt.get(171, 0) / 10
             e_load_all_l = self.readValuesInt.get(172, 0) / 10
             self.readValuesThis[LXPPacket.p_load_ongrid] = p_load_ongrid
             self.readValuesThis[LXPPacket.e_load_day] = e_load_day
             self.readValuesThis[LXPPacket.e_load_all_l] = e_load_all_l
+
+            # IMPORTANT!! Registers above 199 must go into a new bank (create a new method for bank 5/bank 6 etc.)
 
 
 if __name__ == "__main__":

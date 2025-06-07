@@ -169,6 +169,16 @@ class LuxPowerClient(asyncio.Protocol):
                             self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                    elif register == 120 and number_of_registers == 40:
+                        self.hass.bus.fire(
+                            self.events.EVENT_DATA_BANK3_RECEIVED, event_data)
+                        self.hass.bus.fire(
+                            self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                    elif register == 160 and number_of_registers == 40:
+                        self.hass.bus.fire(
+                            self.events.EVENT_DATA_BANK4_RECEIVED, event_data)
+                        self.hass.bus.fire(
+                            self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
                     elif register == 0 and number_of_registers == 127:
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANK0_RECEIVED, event_data)
@@ -194,6 +204,16 @@ class LuxPowerClient(asyncio.Protocol):
                             elif 80 <= register <= 119:
                                 self.hass.bus.fire(
                                     self.events.EVENT_DATA_BANK2_RECEIVED, event_data)
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                            elif 120 <= register <= 159:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANK3_RECEIVED, event_data)
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
+                            elif 160 <= register <= 199:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANK4_RECEIVED, event_data)
                                 self.hass.bus.fire(
                                     self.events.EVENT_DATA_BANKX_RECEIVED, event_data)
                         else:
