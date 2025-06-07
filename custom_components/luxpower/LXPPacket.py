@@ -914,11 +914,11 @@ class LXPPacket:
                 if reg07_val is not None and reg08_val is not None:
                     reg07_str = int(reg07_val).to_bytes(2, "little").decode()
                     reg08_str = int(reg08_val).to_bytes(2, "little").decode()
-                    model_code = reg07_str + reg08_str
+                    model_code = (reg07_str + reg08_str).upper()
             except Exception:
                 model_code = None
 
-            scale = 10 if model_code.upper() in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA") else 100
+            scale = 10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA") else 100
             max_chg_curr = self.readValuesInt.get(81, 0) / scale
             max_dischg_curr = self.readValuesInt.get(82, 0) / scale
             if self.debug:
