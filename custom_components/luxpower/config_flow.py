@@ -63,9 +63,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
         data_schema = vol.Schema(
             {
                 vol.Required(ATTR_LUX_HOST, default=PLACEHOLDER_LUX_HOST): str,
-                vol.Required(ATTR_LUX_PORT, default=PLACEHOLDER_LUX_PORT): vol.All(int, vol.Range(min=1001, max=60001)),
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=PLACEHOLDER_LUX_DONGLE_SERIAL): str,
-                vol.Required(ATTR_LUX_SERIAL_NUMBER, default=PLACEHOLDER_LUX_SERIAL_NUMBER): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=PLACEHOLDER_LUX_USE_SERIAL): bool,
                 vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT): bool,
                 vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=PLACEHOLDER_LUX_REFRESH_INTERVAL): vol.In([0, 30, 45, 60, 120]),
@@ -77,6 +75,10 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
 
         self.data = user_input
 
+        # Set fixed values for port and inverter serial
+        self.data[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
+        self.data[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
+
         is_valid = host_valid(self.data[ATTR_LUX_HOST])
         if not is_valid:
             errors["base"] = "host_error"
@@ -84,10 +86,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
         is_valid = len(self.data[ATTR_LUX_DONGLE_SERIAL]) == 10
         if not is_valid:
             errors["base"] = "dongle_error"
-            return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
-        is_valid = len(self.data[ATTR_LUX_SERIAL_NUMBER]) == 10
-        if not is_valid:
-            errors["base"] = "serial_error"
             return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
         if self.hass.data.get(DOMAIN, None) is not None and self.hass.data[DOMAIN].__len__() > 0:
             dongle_check = self.data[ATTR_LUX_DONGLE_SERIAL]
@@ -128,6 +126,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_user(self, user_input):
         if user_input is not None:
             _LOGGER.info("OptionsFlowHandler: saving options ")
+            user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
+            user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
             return self.async_create_entry(title="LuxPower ()", data=user_input)
 
         config_entry = self.config_entry.data
@@ -136,9 +136,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         data_schema = vol.Schema(
             {
                 vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, "")): str,
-                vol.Required(ATTR_LUX_PORT, default=config_entry.get(ATTR_LUX_PORT, "")): vol.All(int, vol.Range(min=1001, max=60001)),
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, "")): str,
-                vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, "")): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
                 vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
                 vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.In([0, 30, 45, 60, 120]),

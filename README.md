@@ -85,7 +85,7 @@ In Windows File Explorer:
 
 ![Integration Setup](https://user-images.githubusercontent.com/64648444/169526481-d261df8b-ecaa-48c4-a6df-f7abae382316.png)
 
-3. Fill in your IP, Port (8000), dongle serial, and inverter serial (found on the Lux website at [server.luxpowertek.com](http://server.luxpowertek.com)).  
+3. Fill in your IP and dongle serial. The port is preset to `8000` and the inverter serial defaults to `0000000000`.
 
 ![Integration Details](https://user-images.githubusercontent.com/64648444/169526428-a508e905-19ef-45e5-ab2c-185b454489e3.png)
 

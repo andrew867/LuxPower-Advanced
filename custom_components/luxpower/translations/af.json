@@ -3,7 +3,6 @@
     "error": {
       "host_error": "IP-adres is ongeldig",
       "dongle_error": "Inverter-dongle moet presies 10 karakters bevat",
-      "serial_error": "Inverter se reeksnommer moet presies 10 karakters bevat",
       "exist_error": "Integrasie is reeds bygevoeg!"
     },
     "abort": {
@@ -15,9 +14,7 @@
         "description": "Integrasiekonfigurasie vir LuxPower-inverters",
         "data": {
           "lux_host": "IP-adres van Lux-inverter",
-          "lux_port": "TCP-poort van inverter",
           "lux_dongle_serial": "Donglenommer",
-          "lux_serial_number": "Reeksnommer van inverter",
           "lux_use_serial": "Gebruik reeksnommer as deel van entiteit",
           "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter",
           "lux_refresh_interval": "Vernuwingsinterval in sekondes (0 deaktiveer)"
@@ -32,9 +29,7 @@
         "description": "Integrasiekonfigurasie vir LuxPower-inverters",
         "data": {
           "lux_host": "IP-adres van Lux-inverter",
-          "lux_port": "TCP-poort van inverter",
           "lux_dongle_serial": "Inverter-donglenommer",
-          "lux_serial_number": "Inverter se reeksnommer",
           "lux_use_serial": "Gebruik reeksnommer as deel van entiteit",
           "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter",
           "lux_refresh_interval": "Vernuwingsinterval in sekondes (0 deaktiveer)"
