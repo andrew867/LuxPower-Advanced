@@ -1013,19 +1013,19 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.eps_L1_watt] = eps_L1_watt
             self.readValuesThis[LXPPacket.eps_L2_watt] = eps_L2_watt
 
-    def get_device_values_bank4(self):
-        if self.inputRead5:
-            if self.debug:
-                _LOGGER.debug("***********INPUT 5 registers************")
+def get_device_values_bank4(self):
+    if self.inputRead5:
+        if self.debug:
+            _LOGGER.debug("***********INPUT 5 registers************")
 
-            p_load_ongrid = self.readValuesInt.get(170, 0)
-            e_load_day = self.readValuesInt.get(171, 0) / 10
-            e_load_all_l = self.readValuesInt.get(172, 0) / 10
-            self.readValuesThis[LXPPacket.p_load_ongrid] = p_load_ongrid
-            self.readValuesThis[LXPPacket.e_load_day] = e_load_day
-            self.readValuesThis[LXPPacket.e_load_all_l] = e_load_all_l
+        p_load_ongrid = self.readValuesInt.get(170, 0)
+        e_load_day = self.readValuesInt.get(171, 0) / 10
+        e_load_all_l = self.readValuesInt.get(172, 0) / 10
+        self.readValuesThis[LXPPacket.p_load_ongrid] = p_load_ongrid
+        self.readValuesThis[LXPPacket.e_load_day] = e_load_day
+        self.readValuesThis[LXPPacket.e_load_all_l] = e_load_all_l
 
-            # IMPORTANT!! Registers above 199 must go into a new bank (create a new method for bank 5/bank 6 etc.)
+        # IMPORTANT!! Registers above 199 must go into a new bank (create a new method for bank 5/bank 6 etc.)
 
 
 if __name__ == "__main__":
