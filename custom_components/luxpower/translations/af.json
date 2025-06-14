@@ -19,7 +19,8 @@
           "lux_dongle_serial": "Donglenommer",
           "lux_serial_number": "Reeksnommer van inverter",
           "lux_use_serial": "Gebruik reeksnommer as deel van entiteit",
-          "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter"
+          "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter",
+          "lux_refresh_interval": "Vernuwingsinterval in sekondes (0 deaktiveer)"
         }
       }
     }
@@ -35,7 +36,8 @@
           "lux_dongle_serial": "Inverter-donglenommer",
           "lux_serial_number": "Inverter se reeksnommer",
           "lux_use_serial": "Gebruik reeksnommer as deel van entiteit",
-          "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter"
+          "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter",
+          "lux_refresh_interval": "Vernuwingsinterval in sekondes (0 deaktiveer)"
         }
       }
     }

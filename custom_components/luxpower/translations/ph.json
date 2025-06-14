@@ -19,7 +19,8 @@
           "lux_dongle_serial": "Dongle Number",
           "lux_serial_number": "Serial Number ng Inverter",
           "lux_use_serial": "Gamitin ang serial bilang bahagi ng entity",
-          "lux_respond_to_heartbeat": "Tugunan ang mga heartbeat request mula sa inverter"
+          "lux_respond_to_heartbeat": "Tugunan ang mga heartbeat request mula sa inverter",
+          "lux_refresh_interval": "Pagitan ng pag-refresh sa segundo (0 para ihinto)"
         }
       }
     }
@@ -35,7 +36,8 @@
           "lux_dongle_serial": "Dongle Number ng Inverter",
           "lux_serial_number": "Serial Number ng Inverter",
           "lux_use_serial": "Gamitin ang serial bilang bahagi ng entity",
-          "lux_respond_to_heartbeat": "Tugunan ang mga heartbeat request mula sa inverter"
+          "lux_respond_to_heartbeat": "Tugunan ang mga heartbeat request mula sa inverter",
+          "lux_refresh_interval": "Pagitan ng pag-refresh sa segundo (0 para ihinto)"
         }
       }
     }

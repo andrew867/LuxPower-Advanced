@@ -212,6 +212,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     PORT = config.get(ATTR_LUX_PORT, 8000)
     DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    REFRESH_INTERVAL = int(config.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL))
     # USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
     events = Event(dongle=DONGLE_SERIAL)
@@ -248,6 +249,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     for component in PLATFORMS:
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
+
+    refresh_remove = None
+    if REFRESH_INTERVAL > 0:
+        from datetime import timedelta
+        from homeassistant.helpers.event import async_track_time_interval
+
+        async def _scheduled_refresh(_now):
+            await hass.services.async_call(
+                DOMAIN,
+                "luxpower_refresh_registers",
+                {"dongle": DONGLE_SERIAL, "bank_count": 2},
+                blocking=True,
+            )
+
+        refresh_remove = async_track_time_interval(
+            hass, _scheduled_refresh, timedelta(seconds=REFRESH_INTERVAL)
+        )
+        hass_data[entry.entry_id]["refresh_remove"] = refresh_remove
 
     # wait to make sure all entities have been initialised
     await asyncio.sleep(20)
@@ -290,6 +309,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         if entry_data.get("client") is not None:
             luxpower_client = entry_data.get("client")
             luxpower_client.stop_client()
+        if entry_data.get("refresh_remove"):
+            entry_data.get("refresh_remove")()
         hass.data.setdefault(DOMAIN, {})
         _LOGGER.info("async_unload_entry: unloaded...")
 

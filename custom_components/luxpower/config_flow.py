@@ -19,6 +19,7 @@ from .const import (
     ATTR_LUX_HOST,
     ATTR_LUX_PORT,
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
+    ATTR_LUX_REFRESH_INTERVAL,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
@@ -26,6 +27,7 @@ from .const import (
     PLACEHOLDER_LUX_HOST,
     PLACEHOLDER_LUX_PORT,
     PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
+    PLACEHOLDER_LUX_REFRESH_INTERVAL,
     PLACEHOLDER_LUX_SERIAL_NUMBER,
     PLACEHOLDER_LUX_USE_SERIAL,
 )
@@ -66,6 +68,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=PLACEHOLDER_LUX_SERIAL_NUMBER): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=PLACEHOLDER_LUX_USE_SERIAL): bool,
                 vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT): bool,
+                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=PLACEHOLDER_LUX_REFRESH_INTERVAL): vol.In([0, 30, 45, 60, 120]),
             }
         )  # fmt: skip
 
@@ -138,6 +141,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Required(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, "")): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
                 vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
+                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.In([0, 30, 45, 60, 120]),
             }
         )  # fmt: skip
         return self.async_show_form(

@@ -19,7 +19,8 @@
           "lux_dongle_serial": "Số dongle",
           "lux_serial_number": "Số seri của inverter",
           "lux_use_serial": "Sử dụng số seri làm một phần của thực thể",
-          "lux_respond_to_heartbeat": "Phản hồi các yêu cầu heartbeat từ inverter"
+          "lux_respond_to_heartbeat": "Phản hồi các yêu cầu heartbeat từ inverter",
+          "lux_refresh_interval": "Khoảng thời gian làm mới tính bằng giây (0 để tắt)"
         }
       }
     }
@@ -35,7 +36,8 @@
           "lux_dongle_serial": "Số dongle của inverter",
           "lux_serial_number": "Số seri của inverter",
           "lux_use_serial": "Sử dụng số seri làm một phần của thực thể",
-          "lux_respond_to_heartbeat": "Phản hồi các yêu cầu heartbeat từ inverter"
+          "lux_respond_to_heartbeat": "Phản hồi các yêu cầu heartbeat từ inverter",
+          "lux_refresh_interval": "Khoảng thời gian làm mới tính bằng giây (0 để tắt)"
         }
       }
     }

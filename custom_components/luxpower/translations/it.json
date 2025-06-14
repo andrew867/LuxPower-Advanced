@@ -19,7 +19,8 @@
           "lux_dongle_serial": "Numero di chiave",
           "lux_serial_number": "Numero di serie dell'inverter",
           "lux_use_serial": "Usa serial per far parte dell'entità",
-          "lux_respond_to_heartbeat": "Rispondere alle richieste di heartbeat dall'inverter"
+          "lux_respond_to_heartbeat": "Rispondere alle richieste di heartbeat dall'inverter",
+          "lux_refresh_interval": "Intervallo di aggiornamento in secondi (0 disabilita)"
         }
       }
     }
@@ -35,7 +36,8 @@
           "lux_dongle_serial": "Numero dongle inverter",
           "lux_serial_number": "Numero di serie dell'inverter",
           "lux_use_serial": "Usa il seriale per far parte dell'entità",
-          "lux_respond_to_heartbeat": "Rispondere alle richieste di heartbeat dall'inverter"
+          "lux_respond_to_heartbeat": "Rispondere alle richieste di heartbeat dall'inverter",
+          "lux_refresh_interval": "Intervallo di aggiornamento in secondi (0 disabilita)"
         }
       }
     }

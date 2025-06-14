@@ -19,7 +19,8 @@
           "lux_dongle_serial": "Numéro de dongle de l'onduleur",
           "lux_serial_number": "Numéro de série de l'onduleur",
           "lux_use_serial": "Utiliser le numéro de série pour faire partie de l'entité",
-          "lux_respond_to_heartbeat": "Répondre aux requêtes heartbeat de l'onduleur"
+          "lux_respond_to_heartbeat": "Répondre aux requêtes heartbeat de l'onduleur",
+          "lux_refresh_interval": "Intervalle de rafraîchissement en secondes (0 pour désactiver)"
         }
       }
     }
@@ -35,7 +36,8 @@
           "lux_dongle_serial": "Numéro de dongle de l'onduleur",
           "lux_serial_number": "Numéro de série de l'onduleur",
           "lux_use_serial": "Utiliser le numéro de série pour faire partie de l'entité",
-          "lux_respond_to_heartbeat": "Répondre aux requêtes heartbeat de l'onduleur"
+          "lux_respond_to_heartbeat": "Répondre aux requêtes heartbeat de l'onduleur",
+          "lux_refresh_interval": "Intervalle de rafraîchissement en secondes (0 pour désactiver)"
         }
       }
     }
