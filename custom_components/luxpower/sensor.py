@@ -183,9 +183,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Capacity Ah", "unique": "lux_battery_capacity_ah", "bank": 2, "attribute": LXPPacket.bat_capacity, "device_class": None, "unit_of_measurement": None},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Current", "unique": "lux_battery_current", "bank": 2, "attribute": LXPPacket.bat_current, "device_class": SensorDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Cycle Count", "unique": "lux_battery_cycle_count", "bank": 2, "attribute": LXPPacket.bat_cycle_count, "device_class": None, "unit_of_measurement": None},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Internal Fault", "unique": "lux_internal_fault", "bank": 0, "attribute": LXPPacket.internal_fault, "device_class": None, "unit_of_measurement": None},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 1, "attribute": LXPPacket.fault_code, "device_class": None, "unit_of_measurement": None},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 1, "attribute": LXPPacket.warning_code, "device_class": None, "unit_of_measurement": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Internal Fault", "unique": "lux_internal_fault", "bank": 0, "attribute": LXPPacket.internal_fault, "device_class": None, "unit_of_measurement": None, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 1, "attribute": LXPPacket.fault_code, "device_class": None, "unit_of_measurement": None, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 1, "attribute": LXPPacket.warning_code, "device_class": None, "unit_of_measurement": None, "enabled": False},
 
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Status", "unique": "lux_battery_status", "bank": 2, "attribute": LXPPacket.bat_status_inv},
 
