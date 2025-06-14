@@ -8,7 +8,7 @@ Defines constants used throughout the Luxpower integration.
 UA = "unavailable"
 
 DOMAIN = "luxpower"
-VERSION = "2025.1.1-stable"
+VERSION = "2025.6.0-beta"
 
 # Config UI Attributes
 ATTR_LUX_HOST = "lux_host"
