@@ -11,6 +11,6 @@
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "version": "2025.1.1-stable",
+  "version": "2025.6.0-beta",
   "codeowners": ["@guybw"]
 }

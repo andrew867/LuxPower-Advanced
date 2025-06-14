@@ -2,7 +2,6 @@
 
 Defines constants used throughout the Luxpower integration.
 
-This is where we will describe what this module does
 
 """
 
