@@ -19,7 +19,9 @@ from .const import (
     ATTR_LUX_HOST,
     ATTR_LUX_PORT,
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
+    ATTR_LUX_AUTO_REFRESH,
     ATTR_LUX_REFRESH_INTERVAL,
+    ATTR_LUX_REFRESH_BANK_COUNT,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
@@ -27,7 +29,9 @@ from .const import (
     PLACEHOLDER_LUX_HOST,
     PLACEHOLDER_LUX_PORT,
     PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
+    PLACEHOLDER_LUX_AUTO_REFRESH,
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
+    PLACEHOLDER_LUX_REFRESH_BANK_COUNT,
     PLACEHOLDER_LUX_SERIAL_NUMBER,
     PLACEHOLDER_LUX_USE_SERIAL,
 )
@@ -57,8 +61,21 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
 
     async def async_step_user(self, user_input=None):
-        _LOGGER.info("LuxConfigFlow: saving options ")
         errors = {}
+
+        if user_input is not None:
+            user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
+            user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
+            # Omitting bank count from initial setup:
+            user_input[ATTR_LUX_REFRESH_BANK_COUNT] = PLACEHOLDER_LUX_REFRESH_BANK_COUNT
+            errors = self._validate_user_input(user_input)
+            if not errors:
+                _LOGGER.info("LuxConfigFlow: saving options ")
+                return self.async_create_entry(
+                    title=f"LuxPower - ({user_input[ATTR_LUX_DONGLE_SERIAL]})",
+                    data=user_input,
+                )
+        
         # Specify items in the order they are to be displayed in the UI
         data_schema = vol.Schema(
             {
@@ -66,39 +83,33 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=PLACEHOLDER_LUX_DONGLE_SERIAL): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=PLACEHOLDER_LUX_USE_SERIAL): bool,
                 vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT): bool,
-                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=PLACEHOLDER_LUX_REFRESH_INTERVAL): vol.In([0, 30, 45, 60, 120]),
+                vol.Optional(ATTR_LUX_AUTO_REFRESH, default=PLACEHOLDER_LUX_AUTO_REFRESH): bool,
+                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=PLACEHOLDER_LUX_REFRESH_INTERVAL): vol.All(int, vol.Range(min=30, max=120)),
             }
         )  # fmt: skip
-
-        if user_input is None:
-            return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
-
-        self.data = user_input
-
-        # Set fixed values for port and inverter serial
-        self.data[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
-        self.data[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
-
-        is_valid = host_valid(self.data[ATTR_LUX_HOST])
-        if not is_valid:
-            errors["base"] = "host_error"
-            return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
-        is_valid = len(self.data[ATTR_LUX_DONGLE_SERIAL]) == 10
-        if not is_valid:
-            errors["base"] = "dongle_error"
-            return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
+        return self.async_show_form(
+            step_id="user",
+            data_schema=data_schema,
+            errors=errors,
+        )
+    
+    def _validate_user_input(self, user_input):
+        errors = {}
+        if not host_valid(user_input[ATTR_LUX_HOST]):
+            errors[ATTR_LUX_HOST] = "host_error"
+        if len(user_input[ATTR_LUX_DONGLE_SERIAL]) != 10:
+            errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
+        ri = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
+        if type(ri) is not int or ri < 30 or ri > 120:
+            errors[ATTR_LUX_REFRESH_INTERVAL] = "refresh_interval_error"
+        # Check if the dongle serial already exists in the configuration
         if self.hass.data.get(DOMAIN, None) is not None and self.hass.data[DOMAIN].__len__() > 0:
-            dongle_check = self.data[ATTR_LUX_DONGLE_SERIAL]
             for entry in self.hass.data[DOMAIN]:
                 entry_data = self.hass.data[DOMAIN][entry]
-                if entry_data["DONGLE"] == dongle_check:
-                    errors["base"] = "exist_error"
-                    return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
+                if entry_data["DONGLE"] == user_input[ATTR_LUX_DONGLE_SERIAL]:
+                    errors[ATTR_LUX_DONGLE_SERIAL] = "exist_error"
 
-        return self.async_create_entry(
-            title=f"LuxPower - ({self.data[ATTR_LUX_DONGLE_SERIAL]})",
-            data=self.data,
-        )
+        return errors
 
     @staticmethod
     @callback
@@ -124,11 +135,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return await self.async_step_user(user_input)
 
     async def async_step_user(self, user_input):
+        errors = {}
+
         if user_input is not None:
-            _LOGGER.info("OptionsFlowHandler: saving options ")
-            user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
-            user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
-            return self.async_create_entry(title="LuxPower ()", data=user_input)
+            errors = self._validate_user_input(user_input)
+            if not errors:
+                _LOGGER.info("OptionsFlowHandler: saving options ")
+                user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
+                user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
+                return self.async_create_entry(title="LuxPower ()", data=user_input)
 
         config_entry = self.config_entry.data
         if len(self.config_entry.options) > 0:
@@ -139,10 +154,28 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, "")): str,
                 vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
                 vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
-                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.In([0, 30, 45, 60, 120]),
+                vol.Optional(ATTR_LUX_AUTO_REFRESH, default=config_entry.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
+                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
+                vol.Optional(ATTR_LUX_REFRESH_BANK_COUNT, default=config_entry.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)): vol.All(int, vol.Range(min=1, max=6)),
             }
         )  # fmt: skip
         return self.async_show_form(
             step_id="user",
             data_schema=data_schema,
+            errors=errors,
         )
+    
+    def _validate_user_input(self, user_input):
+        errors = {}
+        if not host_valid(user_input[ATTR_LUX_HOST]):
+            errors[ATTR_LUX_HOST] = "host_error"
+        if len(user_input[ATTR_LUX_DONGLE_SERIAL]) != 10:
+            errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
+        ri = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
+        if type(ri) is not int or ri < 30 or ri > 120:
+            errors[ATTR_LUX_REFRESH_INTERVAL] = "refresh_interval_error"
+        bc = user_input.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
+        if type(bc) is not int or bc < 1 or bc > 6:
+            errors[ATTR_LUX_REFRESH_BANK_COUNT] = "refresh_bank_count_error"
+
+        return errors

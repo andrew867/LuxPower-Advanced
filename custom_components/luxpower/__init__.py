@@ -19,11 +19,15 @@ from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_HOST,
     ATTR_LUX_PORT,
+    ATTR_LUX_AUTO_REFRESH,
     ATTR_LUX_REFRESH_INTERVAL,
+    ATTR_LUX_REFRESH_BANK_COUNT,
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_SERIAL_NUMBER,
     DOMAIN,
+    PLACEHOLDER_LUX_AUTO_REFRESH,
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
+    PLACEHOLDER_LUX_REFRESH_BANK_COUNT,
     PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
     VERSION,
 )
@@ -214,7 +218,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     PORT = config.get(ATTR_LUX_PORT, 8000)
     DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    AUTO_REFRESH = config.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)
     REFRESH_INTERVAL = int(config.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL))
+    BANK_COUNT = int(config.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT))
     # USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
     events = Event(dongle=DONGLE_SERIAL)
@@ -253,7 +259,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
     refresh_remove = None
-    if REFRESH_INTERVAL > 0:
+    if AUTO_REFRESH:
         from datetime import timedelta
         from homeassistant.helpers.event import async_track_time_interval
 
@@ -261,7 +267,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await hass.services.async_call(
                 DOMAIN,
                 "luxpower_refresh_registers",
-                {"dongle": DONGLE_SERIAL, "bank_count": 2},
+                {"dongle": DONGLE_SERIAL, "bank_count": BANK_COUNT},
                 blocking=True,
             )
 
