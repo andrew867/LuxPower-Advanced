@@ -65,7 +65,8 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
 
         if user_input is not None:
             user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
-            user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
+            if not user_input[ATTR_LUX_USE_SERIAL]:
+                user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
             # Omitting bank count from initial setup:
             user_input[ATTR_LUX_REFRESH_BANK_COUNT] = PLACEHOLDER_LUX_REFRESH_BANK_COUNT
             errors = self._validate_user_input(user_input)
@@ -75,18 +76,31 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                     title=f"LuxPower - ({user_input[ATTR_LUX_DONGLE_SERIAL]})",
                     data=user_input,
                 )
-        
+
+        config_entry = user_input if user_input else {}
+
+        # Check if luxpower device already exists to use sn in entities
+        if self.hass.data.get(DOMAIN, None) is not None and self.hass.data[DOMAIN].__len__() > 0:
+            placeholder_use_serial = True
+        else:
+            placeholder_use_serial = PLACEHOLDER_LUX_USE_SERIAL
+
         # Specify items in the order they are to be displayed in the UI
-        data_schema = vol.Schema(
-            {
-                vol.Required(ATTR_LUX_HOST, default=PLACEHOLDER_LUX_HOST): str,
-                vol.Required(ATTR_LUX_DONGLE_SERIAL, default=PLACEHOLDER_LUX_DONGLE_SERIAL): str,
-                vol.Optional(ATTR_LUX_USE_SERIAL, default=PLACEHOLDER_LUX_USE_SERIAL): bool,
-                vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT): bool,
-                vol.Optional(ATTR_LUX_AUTO_REFRESH, default=PLACEHOLDER_LUX_AUTO_REFRESH): bool,
-                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=PLACEHOLDER_LUX_REFRESH_INTERVAL): vol.All(int, vol.Range(min=30, max=120)),
-            }
-        )  # fmt: skip
+        schema = {
+            vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, PLACEHOLDER_LUX_HOST)): str,
+            vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
+        }  # fmt: skip
+
+        if config_entry.get(ATTR_LUX_USE_SERIAL, placeholder_use_serial):
+            schema[vol.Optional(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, ""))] = str  # fmt: skip
+
+        schema.update({
+            vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, placeholder_use_serial)): bool,
+            vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
+            vol.Optional(ATTR_LUX_AUTO_REFRESH, default=config_entry.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
+            vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
+        })  # fmt: skip
+        data_schema = vol.Schema(schema)
         return self.async_show_form(
             step_id="user",
             data_schema=data_schema,
@@ -108,6 +122,12 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 entry_data = self.hass.data[DOMAIN][entry]
                 if entry_data["DONGLE"] == user_input[ATTR_LUX_DONGLE_SERIAL]:
                     errors[ATTR_LUX_DONGLE_SERIAL] = "exist_error"
+        use_sn = user_input.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)
+        if use_sn:
+            sn = user_input.get(ATTR_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_SERIAL_NUMBER)
+            if len(sn) != 10 or sn == PLACEHOLDER_LUX_SERIAL_NUMBER:
+                errors[ATTR_LUX_SERIAL_NUMBER] = "serial_error"
+                errors[ATTR_LUX_USE_SERIAL] = "use_serial_error"
 
         return errors
 
@@ -138,27 +158,37 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         errors = {}
 
         if user_input is not None:
+            user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
+            if not user_input[ATTR_LUX_USE_SERIAL]:
+                user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
             errors = self._validate_user_input(user_input)
             if not errors:
                 _LOGGER.info("OptionsFlowHandler: saving options ")
-                user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
-                user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
                 return self.async_create_entry(title="LuxPower ()", data=user_input)
 
         config_entry = self.config_entry.data
         if len(self.config_entry.options) > 0:
             config_entry = self.config_entry.options
-        data_schema = vol.Schema(
-            {
-                vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, "")): str,
-                vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, "")): str,
-                vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, False)): bool,
-                vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
-                vol.Optional(ATTR_LUX_AUTO_REFRESH, default=config_entry.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
-                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
-                vol.Optional(ATTR_LUX_REFRESH_BANK_COUNT, default=config_entry.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)): vol.All(int, vol.Range(min=1, max=6)),
-            }
-        )  # fmt: skip
+        if user_input:
+            config_entry = user_input
+
+        schema = {
+            vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, PLACEHOLDER_LUX_HOST)): str,
+            vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
+        }  # fmt: skip
+
+        if config_entry.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL):
+            schema[vol.Optional(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, ""))] = str  # fmt: skip
+
+        schema.update({
+            vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)): bool,
+            vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
+            vol.Optional(ATTR_LUX_AUTO_REFRESH, default=config_entry.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
+            vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
+            vol.Optional(ATTR_LUX_REFRESH_BANK_COUNT, default=config_entry.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)): vol.All(int, vol.Range(min=1, max=6)),
+        })  # fmt: skip
+
+        data_schema = vol.Schema(schema)
         return self.async_show_form(
             step_id="user",
             data_schema=data_schema,
@@ -177,5 +207,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         bc = user_input.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
         if type(bc) is not int or bc < 1 or bc > 6:
             errors[ATTR_LUX_REFRESH_BANK_COUNT] = "refresh_bank_count_error"
+        sn = user_input.get(ATTR_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_SERIAL_NUMBER)
+        use_sn = user_input.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)
+        if use_sn:
+            if len(sn) != 10 or sn == PLACEHOLDER_LUX_SERIAL_NUMBER:
+                errors[ATTR_LUX_SERIAL_NUMBER] = "serial_error"
+                errors[ATTR_LUX_USE_SERIAL] = "use_serial_error"
 
         return errors
