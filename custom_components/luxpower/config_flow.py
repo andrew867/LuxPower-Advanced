@@ -22,7 +22,6 @@ from .const import (
     ATTR_LUX_AUTO_REFRESH,
     ATTR_LUX_REFRESH_INTERVAL,
     ATTR_LUX_REFRESH_BANK_COUNT,
-    ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     DOMAIN,
     PLACEHOLDER_LUX_DONGLE_SERIAL,
@@ -32,7 +31,6 @@ from .const import (
     PLACEHOLDER_LUX_AUTO_REFRESH,
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
     PLACEHOLDER_LUX_REFRESH_BANK_COUNT,
-    PLACEHOLDER_LUX_SERIAL_NUMBER,
     PLACEHOLDER_LUX_USE_SERIAL,
 )
 
@@ -65,8 +63,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
 
         if user_input is not None:
             user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
-            if not user_input[ATTR_LUX_USE_SERIAL]:
-                user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
             # Omitting bank count from initial setup:
             user_input[ATTR_LUX_REFRESH_BANK_COUNT] = PLACEHOLDER_LUX_REFRESH_BANK_COUNT
             errors = self._validate_user_input(user_input)
@@ -90,9 +86,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, PLACEHOLDER_LUX_HOST)): str,
             vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
         }  # fmt: skip
-
-        if config_entry.get(ATTR_LUX_USE_SERIAL, placeholder_use_serial):
-            schema[vol.Optional(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, ""))] = str  # fmt: skip
 
         schema.update({
             vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, placeholder_use_serial)): bool,
@@ -122,13 +115,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 entry_data = self.hass.data[DOMAIN][entry]
                 if entry_data["DONGLE"] == user_input[ATTR_LUX_DONGLE_SERIAL]:
                     errors[ATTR_LUX_DONGLE_SERIAL] = "exist_error"
-        use_sn = user_input.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)
-        if use_sn:
-            sn = user_input.get(ATTR_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_SERIAL_NUMBER)
-            if len(sn) != 10 or sn == PLACEHOLDER_LUX_SERIAL_NUMBER:
-                errors[ATTR_LUX_SERIAL_NUMBER] = "serial_error"
-                errors[ATTR_LUX_USE_SERIAL] = "use_serial_error"
-
         return errors
 
     @staticmethod
@@ -159,8 +145,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         if user_input is not None:
             user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
-            if not user_input[ATTR_LUX_USE_SERIAL]:
-                user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
             errors = self._validate_user_input(user_input)
             if not errors:
                 _LOGGER.info("OptionsFlowHandler: saving options ")
@@ -176,9 +160,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(ATTR_LUX_HOST, default=config_entry.get(ATTR_LUX_HOST, PLACEHOLDER_LUX_HOST)): str,
             vol.Required(ATTR_LUX_DONGLE_SERIAL, default=config_entry.get(ATTR_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
         }  # fmt: skip
-
-        if config_entry.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL):
-            schema[vol.Optional(ATTR_LUX_SERIAL_NUMBER, default=config_entry.get(ATTR_LUX_SERIAL_NUMBER, ""))] = str  # fmt: skip
 
         schema.update({
             vol.Optional(ATTR_LUX_USE_SERIAL, default=config_entry.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)): bool,
@@ -207,11 +188,5 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         bc = user_input.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
         if type(bc) is not int or bc < 1 or bc > 6:
             errors[ATTR_LUX_REFRESH_BANK_COUNT] = "refresh_bank_count_error"
-        sn = user_input.get(ATTR_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_SERIAL_NUMBER)
-        use_sn = user_input.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)
-        if use_sn:
-            if len(sn) != 10 or sn == PLACEHOLDER_LUX_SERIAL_NUMBER:
-                errors[ATTR_LUX_SERIAL_NUMBER] = "serial_error"
-                errors[ATTR_LUX_USE_SERIAL] = "use_serial_error"
 
         return errors

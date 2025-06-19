@@ -24,14 +24,16 @@ from .const import (
     ATTR_LUX_REFRESH_BANK_COUNT,
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_SERIAL_NUMBER,
+    ATTR_LUX_USE_SERIAL,
     DOMAIN,
     PLACEHOLDER_LUX_AUTO_REFRESH,
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
     PLACEHOLDER_LUX_REFRESH_BANK_COUNT,
+    PLACEHOLDER_LUX_SERIAL_NUMBER,
     PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
     VERSION,
 )
-from .helpers import Event
+from .helpers import Event, read_serial_number
 
 # from datetime import timedelta
 # from distutils.log import info
@@ -217,11 +219,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     HOST = config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = config.get(ATTR_LUX_PORT, 8000)
     DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "")
+    USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
     AUTO_REFRESH = config.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)
     REFRESH_INTERVAL = int(config.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL))
     BANK_COUNT = int(config.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT))
-    # USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
+
+    if USE_SERIAL and (not SERIAL_NUMBER or SERIAL_NUMBER == "" or SERIAL_NUMBER == PLACEHOLDER_LUX_SERIAL_NUMBER):
+        SERIAL_NUMBER = await read_serial_number(HOST, PORT)
+        if SERIAL_NUMBER:
+            _LOGGER.info("Retrieved inverter serial number %s", SERIAL_NUMBER)
+            new_data = dict(entry.data)
+            new_data[ATTR_LUX_SERIAL_NUMBER] = SERIAL_NUMBER
+            hass.config_entries.async_update_entry(entry, data=new_data)
 
     events = Event(dongle=DONGLE_SERIAL)
     luxpower_client = LuxPowerClient(hass,

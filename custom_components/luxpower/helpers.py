@@ -6,6 +6,10 @@ This is where we will describe what this module does
 
 """
 
+import asyncio
+import logging
+import re
+
 from .const import (
     CLIENT_DAEMON_FORMAT,
     DOMAIN,
@@ -13,6 +17,8 @@ from .const import (
     EVENT_REGISTER_FORMAT,
     EVENT_UNAVAILABLE_FORMAT,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 # fmt: off
 
@@ -54,3 +60,50 @@ class Event:
         self.CLIENT_DAEMON = CLIENT_DAEMON_FORMAT.format(DOMAIN=DOMAIN, DONGLE=self.INVERTER_ID)
 
 # fmt: on
+
+
+def _crc16_modbus(data: bytes) -> int:
+    """Compute MODBUS CRC16."""
+    crc = 0xFFFF
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            if crc & 1:
+                crc >>= 1
+                crc ^= 0xA001
+            else:
+                crc >>= 1
+    return crc
+
+
+async def read_serial_number(host: str, port: int) -> str:
+    """Retrieve inverter serial number using a raw Modbus request."""
+    command = bytearray(18)
+    command[0] = 0x01  # address
+    command[1] = 0x04  # function code
+    # bytes 2-11 are all zeros as in the C example
+    command[12] = 0x00  # initial register low byte
+    command[13] = 0x00  # initial register high byte
+    command[14] = 0x01  # number of registers low byte
+    command[15] = 0x00  # number of registers high byte
+
+    crc = _crc16_modbus(command[:16])
+    command[16] = crc & 0xFF
+    command[17] = (crc >> 8) & 0xFF
+
+    try:
+        reader, writer = await asyncio.open_connection(host, port)
+        writer.write(command)
+        await writer.drain()
+        data = await reader.read(64)
+        writer.close()
+        await writer.wait_closed()
+    except Exception as exc:  # pragma: no cover - network dependent
+        _LOGGER.error("Failed to read serial number: %s", exc)
+        return ""
+
+    match = re.search(rb"(\d{10})", data)
+    if match:
+        return match.group(1).decode()
+    return ""
+
