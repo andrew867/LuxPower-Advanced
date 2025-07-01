@@ -44,6 +44,10 @@ MIN_BANK_COUNT = 1
 MAX_BANK_COUNT = 6
 DONGLE_SERIAL_LENGTH = 10
 
+# New attribute for offline mode
+ATTR_LUX_OFFLINE_MODE = "lux_offline_mode"
+PLACEHOLDER_LUX_OFFLINE_MODE = False
+
 
 def validate_ip_address(host):
     """Validate IP address or hostname with security checks."""
@@ -139,13 +143,17 @@ def validate_refresh_interval(interval):
         return False
 
 
-def validate_bank_count(count):
-    """Validate bank count."""
-    try:
-        count = int(count)
-        return MIN_BANK_COUNT <= count <= MAX_BANK_COUNT
-    except (ValueError, TypeError):
-        return False
+def calculate_smart_bank_count(offline_mode, refresh_interval):
+    """Calculate optimal bank count based on user settings."""
+    if offline_mode:
+        # If inverter has no internet access, we can poll more aggressively
+        if refresh_interval <= 60:
+            return 5  # More banks for frequent polling
+        else:
+            return 3  # Standard enhanced polling
+    else:
+        # If inverter has internet access, use conservative polling
+        return 2  # Standard polling to avoid conflicts with Lux servers
 
 
 def sanitize_input(value, max_length=100):
@@ -163,20 +171,14 @@ def sanitize_input(value, max_length=100):
     return value
 
 
-class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
-    """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this class does
-
-    """
+class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Simplified config flow with smart bank count calculation."""
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
 
     async def async_step_user(self, user_input=None):
-        """Handle user input with comprehensive validation."""
+        """Handle user input with simplified UI."""
         errors = {}
 
         if user_input is not None:
@@ -187,13 +189,20 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 
                 # Set secure defaults
                 user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
-                user_input[ATTR_LUX_REFRESH_BANK_COUNT] = PLACEHOLDER_LUX_REFRESH_BANK_COUNT
+                
+                # Calculate smart bank count based on offline mode
+                offline_mode = user_input.get(ATTR_LUX_OFFLINE_MODE, PLACEHOLDER_LUX_OFFLINE_MODE)
+                refresh_interval = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
+                
+                smart_bank_count = calculate_smart_bank_count(offline_mode, refresh_interval)
+                user_input[ATTR_LUX_REFRESH_BANK_COUNT] = smart_bank_count
                 
                 # Validate inputs
                 errors = self._validate_user_input(user_input)
                 
                 if not errors:
                     _LOGGER.info("LuxConfigFlow: saving options with validation passed")
+                    _LOGGER.info(f"Smart bank count set to {smart_bank_count} (offline_mode={offline_mode})")
                     return self.async_create_entry(
                         title=f"LuxPower - ({user_input[ATTR_LUX_DONGLE_SERIAL]})",
                         data=user_input,
@@ -210,7 +219,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
         else:
             placeholder_use_serial = PLACEHOLDER_LUX_USE_SERIAL
 
-        # Specify items in the order they are to be displayed in the UI
+        # Simplified schema - hide bank count from users
         try:
             schema = {
                 vol.Required(
@@ -223,14 +232,11 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 ): vol.All(str, vol.Length(min=DONGLE_SERIAL_LENGTH, max=DONGLE_SERIAL_LENGTH)),
             }
 
+            # Add optional settings in logical order
             schema.update({
                 vol.Optional(
                     ATTR_LUX_USE_SERIAL, 
                     default=config_entry.get(ATTR_LUX_USE_SERIAL, placeholder_use_serial)
-                ): bool,
-                vol.Optional(
-                    ATTR_LUX_RESPOND_TO_HEARTBEAT, 
-                    default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)
                 ): bool,
                 vol.Optional(
                     ATTR_LUX_AUTO_REFRESH, 
@@ -240,6 +246,14 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                     ATTR_LUX_REFRESH_INTERVAL, 
                     default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
                 ): vol.All(int, vol.Range(min=MIN_REFRESH_INTERVAL, max=MAX_REFRESH_INTERVAL)),
+                vol.Optional(
+                    ATTR_LUX_OFFLINE_MODE, 
+                    default=config_entry.get(ATTR_LUX_OFFLINE_MODE, PLACEHOLDER_LUX_OFFLINE_MODE)
+                ): bool,
+                vol.Optional(
+                    ATTR_LUX_RESPOND_TO_HEARTBEAT, 
+                    default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)
+                ): bool,
             })
             
             data_schema = vol.Schema(schema)
@@ -253,6 +267,9 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             step_id="user",
             data_schema=data_schema,
             errors=errors,
+            description_placeholders={
+                "offline_mode_description": "Enable if your inverter cannot access the internet (allows more frequent polling)"
+            }
         )
     
     def _validate_user_input(self, user_input):
@@ -313,7 +330,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
             
             # Validate boolean inputs are actually booleans
-            bool_fields = [ATTR_LUX_USE_SERIAL, ATTR_LUX_RESPOND_TO_HEARTBEAT, ATTR_LUX_AUTO_REFRESH]
+            bool_fields = [ATTR_LUX_USE_SERIAL, ATTR_LUX_RESPOND_TO_HEARTBEAT, ATTR_LUX_AUTO_REFRESH, ATTR_LUX_OFFLINE_MODE]
             for field in bool_fields:
                 if field in user_input and not isinstance(user_input[field], bool):
                     errors[field] = "invalid_type"
@@ -330,13 +347,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this class does
-
-    """
+    """Options flow with advanced settings for power users."""
 
     def __init__(self, config_entry):
         """Initialize options flow."""
@@ -347,7 +358,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return await self.async_step_user(user_input)
 
     async def async_step_user(self, user_input):
-        """Handle options with validation."""
+        """Handle options with all settings visible for advanced users."""
         errors = {}
 
         if user_input is not None:
@@ -388,14 +399,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ): vol.All(str, vol.Length(min=DONGLE_SERIAL_LENGTH, max=DONGLE_SERIAL_LENGTH)),
             }
 
+            # Show all settings in options (for advanced users)
             schema.update({
                 vol.Optional(
                     ATTR_LUX_USE_SERIAL, 
                     default=config_entry.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)
-                ): bool,
-                vol.Optional(
-                    ATTR_LUX_RESPOND_TO_HEARTBEAT, 
-                    default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)
                 ): bool,
                 vol.Optional(
                     ATTR_LUX_AUTO_REFRESH, 
@@ -406,9 +414,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
                 ): vol.All(int, vol.Range(min=MIN_REFRESH_INTERVAL, max=MAX_REFRESH_INTERVAL)),
                 vol.Optional(
+                    ATTR_LUX_OFFLINE_MODE, 
+                    default=config_entry.get(ATTR_LUX_OFFLINE_MODE, PLACEHOLDER_LUX_OFFLINE_MODE)
+                ): bool,
+                vol.Optional(
                     ATTR_LUX_REFRESH_BANK_COUNT, 
                     default=config_entry.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
                 ): vol.All(int, vol.Range(min=MIN_BANK_COUNT, max=MAX_BANK_COUNT)),
+                vol.Optional(
+                    ATTR_LUX_RESPOND_TO_HEARTBEAT, 
+                    default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)
+                ): bool,
             })
 
             data_schema = vol.Schema(schema)
@@ -422,6 +438,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             step_id="user",
             data_schema=data_schema,
             errors=errors,
+            description_placeholders={
+                "advanced_notice": "Advanced settings - only change if you understand the implications",
+                "bank_count_info": "Bank count: 2=standard, 3-5=enhanced (only use if inverter has no internet)"
+            }
         )
     
     def _validate_user_input(self, user_input):
@@ -444,10 +464,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if not validate_refresh_interval(ri):
                 errors[ATTR_LUX_REFRESH_INTERVAL] = "refresh_interval_error"
             
-            # Validate bank count
+            # Validate bank count (only in options)
             bc = user_input.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
-            if not validate_bank_count(bc):
-                errors[ATTR_LUX_REFRESH_BANK_COUNT] = "refresh_bank_count_error"
+            if bc is not None:
+                try:
+                    bc_int = int(bc)
+                    if not (MIN_BANK_COUNT <= bc_int <= MAX_BANK_COUNT):
+                        errors[ATTR_LUX_REFRESH_BANK_COUNT] = "refresh_bank_count_error"
+                except (ValueError, TypeError):
+                    errors[ATTR_LUX_REFRESH_BANK_COUNT] = "refresh_bank_count_error"
             
             # Additional security validations
             self._validate_security_constraints(user_input, errors)
@@ -479,7 +504,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
             
             # Validate boolean inputs
-            bool_fields = [ATTR_LUX_USE_SERIAL, ATTR_LUX_RESPOND_TO_HEARTBEAT, ATTR_LUX_AUTO_REFRESH]
+            bool_fields = [ATTR_LUX_USE_SERIAL, ATTR_LUX_RESPOND_TO_HEARTBEAT, ATTR_LUX_AUTO_REFRESH, ATTR_LUX_OFFLINE_MODE]
             for field in bool_fields:
                 if field in user_input and not isinstance(user_input[field], bool):
                     errors[field] = "invalid_type"
@@ -487,7 +512,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             # Validate integer inputs
             int_fields = [ATTR_LUX_REFRESH_INTERVAL, ATTR_LUX_REFRESH_BANK_COUNT]
             for field in int_fields:
-                if field in user_input:
+                if field in user_input and user_input[field] is not None:
                     try:
                         int(user_input[field])
                     except (ValueError, TypeError):

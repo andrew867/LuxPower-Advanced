@@ -12,14 +12,18 @@
     "step": {
       "user": {
         "title": "LuxPower",
-        "description": "Integration configuration for LuxPower Inverters",
+        "description": "Configure your LuxPower Inverter connection. The system will automatically optimize polling settings based on your configuration.",
         "data": {
           "lux_host": "IP address of Lux Inverter",
-          "lux_dongle_serial": "Dongle Number",
+          "lux_dongle_serial": "Dongle Number (10 characters)",
           "lux_use_serial": "Use serial number in entity names",
-          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter",
-          "lux_auto_refresh": "Enable automatic refresh (disable for refresh automations)",
-          "lux_refresh_interval": "Refresh interval in seconds"
+          "lux_auto_refresh": "Enable automatic refresh",
+          "lux_refresh_interval": "Refresh interval (seconds)",
+          "lux_offline_mode": "Inverter has no internet access",
+          "lux_respond_to_heartbeat": "Respond to heartbeat requests"
+        },
+        "data_description": {
+          "lux_offline_mode": "Enable if your inverter cannot access the internet or you have blocked its internet connection. This allows more frequent polling without conflicts."
         }
       }
     }
@@ -34,16 +38,21 @@
     },
     "step": {
       "user": {
-        "title": "LuxPower",
-        "description": "Integration configuration for LuxPower Inverters",
+        "title": "LuxPower Advanced Settings",
+        "description": "⚠️ Advanced settings - only change these if you understand the implications. Most users should use the simplified setup.",
         "data": {
           "lux_host": "IP address of Lux Inverter",
-          "lux_dongle_serial": "Dongle Number",
+          "lux_dongle_serial": "Dongle Number (10 characters)",
           "lux_use_serial": "Use serial number in entity names",
-          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter",
-          "lux_auto_refresh": "Enable automatic refresh (disable for refresh automations)",
-          "lux_refresh_interval": "Refresh interval in seconds",
-          "lux_refresh_bank_count": "Number of banks to refresh (increase only if you blocked Lux servers!)"
+          "lux_auto_refresh": "Enable automatic refresh",
+          "lux_refresh_interval": "Refresh interval (seconds)",
+          "lux_offline_mode": "Inverter has no internet access",
+          "lux_refresh_bank_count": "Number of data banks to refresh",
+          "lux_respond_to_heartbeat": "Respond to heartbeat requests"
+        },
+        "data_description": {
+          "lux_offline_mode": "Enable if your inverter cannot access the internet or you have blocked its internet connection.",
+          "lux_refresh_bank_count": "Bank count: 2=standard polling, 3-5=enhanced polling (only use 3+ if inverter has no internet access to avoid conflicts with Lux servers)"
         }
       }
     }
