@@ -20,7 +20,7 @@ ATTR_LUX_RESPOND_TO_HEARTBEAT = "lux_respond_to_heartbeat"
 ATTR_LUX_AUTO_REFRESH = "lux_auto_refresh"
 ATTR_LUX_REFRESH_INTERVAL = "lux_refresh_interval"
 ATTR_LUX_REFRESH_BANK_COUNT = "lux_refresh_bank_count"
-
+ATTR_LUX_OFFLINE_MODE = "lux_offline_mode"
 # Placeholder values
 PLACEHOLDER_LUX_HOST = ""
 PLACEHOLDER_LUX_PORT = 8000
