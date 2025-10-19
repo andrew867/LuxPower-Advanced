@@ -5,6 +5,7 @@ This code is from https://github.com/guybw/LuxPython_DEV
 
 This sensor.py is the sensors file for LUXPython
 """
+
 import logging
 import time
 from datetime import datetime
@@ -65,7 +66,9 @@ nameID_midfix = ""
 entityID_midfix = ""
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
+async def async_setup_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
+):
     """Set up the sensor platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux sensor platform")
@@ -286,15 +289,23 @@ class LuxPowerSensorEntity(SensorEntity):
         self.lastupdated_time = 0
 
         # Hidden Inherited Instance Attributes
-        self._attr_unique_id = "{}_{}_{}".format(DOMAIN, dongle, entity_definition["unique"])
-        self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        self._attr_unique_id = "{}_{}_{}".format(
+            DOMAIN, dongle, entity_definition["unique"]
+        )
+        self._attr_name = entity_definition["name"].format(
+            replaceID_midfix=nameID_midfix, hyphen=hyphen
+        )
         self._attr_native_value = "Unavailable"
         self._attr_available = False
         self._attr_device_class = entity_definition.get("device_class", None)
         self._attr_state_class = entity_definition.get("state_class", None)
-        self._attr_native_unit_of_measurement = entity_definition.get("unit_of_measurement", None)
+        self._attr_native_unit_of_measurement = entity_definition.get(
+            "unit_of_measurement", None
+        )
         self._attr_should_poll = False
-        self._attr_entity_registry_enabled_default = entity_definition.get("enabled", True)
+        self._attr_entity_registry_enabled_default = entity_definition.get(
+            "enabled", True
+        )
 
         # Hidden Class Extended Instance Attributes
         self._host = host
@@ -311,19 +322,33 @@ class LuxPowerSensorEntity(SensorEntity):
         _LOGGER.debug("async_added_to_hasss %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
-            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
             if self._bank == 0:
-                self.hass.bus.async_listen(self.event.EVENT_DATA_BANK0_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_DATA_BANK0_RECEIVED, self.push_update
+                )
             elif self._bank == 1:
-                self.hass.bus.async_listen(self.event.EVENT_DATA_BANK1_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_DATA_BANK1_RECEIVED, self.push_update
+                )
             elif self._bank == 2:
-                self.hass.bus.async_listen(self.event.EVENT_DATA_BANK2_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_DATA_BANK2_RECEIVED, self.push_update
+                )
             elif self._bank == 3:
-                self.hass.bus.async_listen(self.event.EVENT_DATA_BANK3_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_DATA_BANK3_RECEIVED, self.push_update
+                )
             elif self._bank == 4:
-                self.hass.bus.async_listen(self.event.EVENT_DATA_BANK4_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_DATA_BANK4_RECEIVED, self.push_update
+                )
             else:
-                self.hass.bus.async_listen(self.event.EVENT_DATA_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_DATA_RECEIVED, self.push_update
+                )
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
@@ -352,8 +377,14 @@ class LuxPowerSensorEntity(SensorEntity):
             if data.get("DONGLE") == self.dongle:
                 entry_id = e_id
                 break
-        model = self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        sw_version = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version", VERSION)
+        model = (
+            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
+        )
+        sw_version = (
+            self.hass.data[DOMAIN]
+            .get(entry_id, {})
+            .get("lux_firmware_version", VERSION)
+        )
         return DeviceInfo(
             identifiers={(DOMAIN, self.dongle)},
             manufacturer="LuxPower",
@@ -370,7 +401,9 @@ class LuxPowerFlowSensor(LuxPowerSensorEntity):
     Template equation state = -1*attribute1 if attribute1 > 0 else attribute2
     """
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):
+    def __init__(
+        self, hass, host, port, dongle, serial, entity_definition, event: Event
+    ):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event)
         self._device_attribute1 = entity_definition["attribute1"]
@@ -400,13 +433,23 @@ class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
     Template equation state = attribute1 - attribute2 + attribute3 - attribute4
     """
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):
+    def __init__(
+        self, hass, host, port, dongle, serial, entity_definition, event: Event
+    ):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event)
-        self._device_attribute1 = entity_definition["attribute1"]  # Power from grid to consumer unit
-        self._device_attribute2 = entity_definition["attribute2"]  # Power from consumer unit to inverter
-        self._device_attribute3 = entity_definition["attribute3"]  # Power from inverter to consumer unit
-        self._device_attribute4 = entity_definition["attribute4"]  # Power from consumer unit to grid
+        self._device_attribute1 = entity_definition[
+            "attribute1"
+        ]  # Power from grid to consumer unit
+        self._device_attribute2 = entity_definition[
+            "attribute2"
+        ]  # Power from consumer unit to inverter
+        self._device_attribute3 = entity_definition[
+            "attribute3"
+        ]  # Power from inverter to consumer unit
+        self._device_attribute4 = entity_definition[
+            "attribute4"
+        ]  # Power from consumer unit to grid
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
@@ -431,7 +474,9 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
     Template equation state = attribute1 - attribute2 + attribute3 - attribute4
     """
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):
+    def __init__(
+        self, hass, host, port, dongle, serial, entity_definition, event: Event
+    ):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event)
         self._register_address = entity_definition["register"]
@@ -441,21 +486,37 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
         _LOGGER.debug("async_added_to_hasss %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
-            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
             if self._register_address == 21:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_21_RECEIVED, self.push_update
+                )
             elif 0 <= self._register_address <= 39:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update
+                )
             elif 40 <= self._register_address <= 79:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update
+                )
             elif 80 <= self._register_address <= 119:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update
+                )
             elif 120 <= self._register_address <= 159:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update
+                )
             elif 160 <= self._register_address <= 199:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update
+                )
             elif 200 <= self._register_address <= 239:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update
+                )
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Register: {self._register_address} Name: {self._attr_name}")  # fmt: skip
@@ -463,7 +524,9 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
         self._data = registers
 
         if self._register_address in registers.keys():
-            _LOGGER.debug(f"Register Address: {self._register_address} is in register.keys")
+            _LOGGER.debug(
+                f"Register Address: {self._register_address} is in register.keys"
+            )
             register_val = registers.get(self._register_address, None)
             if register_val is None:
                 return
@@ -471,7 +534,9 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
             self._attr_native_value = float(register_val)
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
-                _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._attr_native_value}")
+                _LOGGER.debug(
+                    f"Register sensor has changed from {oldstate} to {self._attr_native_value}"
+                )
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
@@ -489,13 +554,17 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
         self._data = registers
 
         if self._register_address in registers.keys():
-            _LOGGER.debug(f"Register Address For FIRMWARE: {self._register_address} is in register.keys")
+            _LOGGER.debug(
+                f"Register Address For FIRMWARE: {self._register_address} is in register.keys"
+            )
             reg07_val = registers.get(7, None)
             reg08_val = registers.get(8, None)
             reg09_val = registers.get(9, None)
             reg10_val = registers.get(10, None)
             if reg07_val is None or reg08_val is None:
-                _LOGGER.debug(f"ABORTING: reg07_val: {reg07_val} - reg08_val: {reg08_val}")
+                _LOGGER.debug(
+                    f"ABORTING: reg07_val: {reg07_val} - reg08_val: {reg08_val}"
+                )
                 return
             reg07_str = int(reg07_val).to_bytes(2, "little").decode()
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
@@ -513,10 +582,14 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
                     entry_id = e_id
                     break
             if entry_id is not None:
-                self.hass.data[DOMAIN].setdefault(entry_id, {})["lux_firmware_version"] = firmware
+                self.hass.data[DOMAIN].setdefault(entry_id, {})[
+                    "lux_firmware_version"
+                ] = firmware
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
-                _LOGGER.debug(f"Register sensor has changed from {oldstate} to {self._attr_native_value}")
+                _LOGGER.debug(
+                    f"Register sensor has changed from {oldstate} to {self._attr_native_value}"
+                )
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
@@ -571,11 +644,15 @@ class LuxPowerTestSensor(LuxPowerRegisterSensor):
     Template equation state = attribute1 - attribute2 + attribute3 - attribute4
     """
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):
+    def __init__(
+        self, hass, host, port, dongle, serial, entity_definition, event: Event
+    ):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event)
         self._register_address = entity_definition["register"]
-        self.entity_id = "sensor.{}_{}_{}".format("lux", serial, entity_definition["unique"])
+        self.entity_id = "sensor.{}_{}_{}".format(
+            "lux", serial, entity_definition["unique"]
+        )
 
 
 class LuxPowerStatusTextSensor(LuxPowerSensorEntity):
@@ -682,7 +759,9 @@ class LuxPowerDataReceivedTimestampSensor(LuxPowerSensorEntity):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
         self.datetime_last_received = datetime.now()
-        self._attr_native_value = "{}".format(datetime.now().strftime("%A %B %-d, %I:%M %p"))
+        self._attr_native_value = "{}".format(
+            datetime.now().strftime("%A %B %-d, %I:%M %p")
+        )
 
         self._attr_available = True
         self.schedule_update_ha_state()
@@ -717,7 +796,9 @@ class LuxStateSensorEntity(SensorEntity):
 
         # Hidden Inherited Instance Attributes
         self._attr_unique_id = "{}_{}_{}".format(DOMAIN, self.dongle, "states")
-        self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        self._attr_name = entity_definition["name"].format(
+            replaceID_midfix=nameID_midfix, hyphen=hyphen
+        )
         self._attr_native_value = "Waiting"
         self._attr_available = False
         self._attr_should_poll = False
@@ -829,8 +910,12 @@ class LuxStateSensorEntity(SensorEntity):
         _LOGGER.debug("async_added_to_hasss %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
-            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
-            self.hass.bus.async_listen(self.event.EVENT_DATA_BANKX_RECEIVED, self.push_update)
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
+            self.hass.bus.async_listen(
+                self.event.EVENT_DATA_BANKX_RECEIVED, self.push_update
+            )
 
     def checkonline(self, *args, **kwargs):
         _LOGGER.debug("check online")
@@ -863,8 +948,14 @@ class LuxStateSensorEntity(SensorEntity):
             if data.get("DONGLE") == self.dongle:
                 entry_id = e_id
                 break
-        model = self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        sw_version = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version", VERSION)
+        model = (
+            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
+        )
+        sw_version = (
+            self.hass.data[DOMAIN]
+            .get(entry_id, {})
+            .get("lux_firmware_version", VERSION)
+        )
         return DeviceInfo(
             identifiers={(DOMAIN, self.dongle)},
             manufacturer="LuxPower",

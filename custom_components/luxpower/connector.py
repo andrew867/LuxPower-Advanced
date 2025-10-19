@@ -27,10 +27,17 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     """
     await asyncio.sleep(20)
     # fmt: skip
-    await hass.services.async_call(DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True)
+    await hass.services.async_call(
+        DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True
+    )
     await asyncio.sleep(10)
     # fmt: skip
-    await hass.services.async_call(DOMAIN, "luxpower_refresh_registers", {"dongle": dongle, "bank_count": 3}, blocking=True)
+    await hass.services.async_call(
+        DOMAIN,
+        "luxpower_refresh_registers",
+        {"dongle": dongle, "bank_count": 3},
+        blocking=True,
+    )
 
 
 class ServiceHelper:
@@ -68,9 +75,143 @@ class ServiceHelper:
         await luxpower_client.synctime(do_set_time)
         _LOGGER.info("service_synctime done")
 
-    async def service_refresh_data_registers(self, dongle, bank_count):
+    async def service_start_charging(
+        self, dongle, duration_minutes: int = 180, charge_slot: int = 1
+    ):
+        """Start the battery charging process using specified time slot.
+
+        Args:
+            dongle: The dongle serial
+            duration_minutes: The charging duration in minutes
+            charge_slot: Which charging slot to use (1, 2, or 3)
+        """
+        import datetime
+        from homeassistant.util import dt as dt_util
+
+        # Validate charge_slot parameter
+        if charge_slot not in [1, 2, 3]:
+            _LOGGER.error(f"Invalid charge_slot: {charge_slot}. Must be 1, 2, or 3.")
+            return False
+
+        # Validate duration_minutes parameter
+        if duration_minutes < 1 or duration_minutes > 1440:  # 1 minute to 24 hours
+            _LOGGER.error(f"Invalid duration_minutes: {duration_minutes}. Must be between 1 and 1440 minutes.")
+            return False
+
+        luxpower_client = self._lux_client(dongle)
+
+        # Get current time and calculate end time
+        now = dt_util.now()
+        end_time = now + datetime.timedelta(minutes=duration_minutes)
+
         _LOGGER.info(
-            f"service_refresh_data_registers start - Count: {bank_count}")
+            f"Starting charging in slot {charge_slot} for {duration_minutes} minutes ({duration_minutes/60:.1f} hours) until {end_time}"
+        )
+
+        try:
+            # Enable AC charging first
+            current_reg21 = await luxpower_client.read(21)
+            if current_reg21 is not None:
+                from .LXPPacket import LXPPacket, prepare_binary_value
+
+                new_value = prepare_binary_value(
+                    current_reg21, LXPPacket.AC_CHARGE_ENABLE, True
+                )
+                await luxpower_client.write(21, new_value)
+                await asyncio.sleep(1)
+
+                # Calculate register addresses for the selected slot
+                # Slot 1: registers 68-69, Slot 2: registers 70-71, Slot 3: registers 72-73
+                start_register = 68 + ((charge_slot - 1) * 2)
+                end_register = start_register + 1
+
+                # Encode times (hour + minute * 256)
+                start_hour = now.hour
+                start_minute = now.minute
+                start_value = start_hour + (start_minute << 8)
+
+                end_hour = end_time.hour
+                end_minute = end_time.minute
+                end_value = end_hour + (end_minute << 8)
+
+                # Set charging times for the selected slot
+                await luxpower_client.write(start_register, start_value)
+                await asyncio.sleep(1)
+                await luxpower_client.write(end_register, end_value)
+                await asyncio.sleep(1)
+
+                # Refresh registers to ensure changes are applied
+                await self.service_refresh_data_registers(dongle=dongle, bank_count=3)
+
+                _LOGGER.info(
+                    f"Charging slot {charge_slot} started successfully. Will run from {start_hour:02d}:{start_minute:02d} to {end_hour:02d}:{end_minute:02d}"
+                )
+                return True
+            else:
+                _LOGGER.error("Could not read current register 21 value")
+                return False
+        except Exception as e:
+            _LOGGER.error(f"Error starting charging: {e}")
+            return False
+
+    async def service_stop_charging(self, dongle, charge_slot: int = 1):
+        """Stop the battery charging process for specified time slot.
+
+        Args:
+            dongle: The dongle serial
+            charge_slot: Which charging slot to stop (1, 2, or 3)
+        """
+        # Validate charge_slot parameter
+        if charge_slot not in [1, 2, 3]:
+            _LOGGER.error(f"Invalid charge_slot: {charge_slot}. Must be 1, 2, or 3.")
+            return False
+
+        luxpower_client = self._lux_client(dongle)
+
+        try:
+            # Calculate register addresses for the selected slot
+            # Slot 1: registers 68-69, Slot 2: registers 70-71, Slot 3: registers 72-73
+            start_register = 68 + ((charge_slot - 1) * 2)
+            end_register = start_register + 1
+
+            # Set the selected slot times to 0 (effectively disabling the schedule)
+            await luxpower_client.write(start_register, 0)  # Start time
+            await asyncio.sleep(1)
+            await luxpower_client.write(end_register, 0)  # End time
+            await asyncio.sleep(1)
+
+            # Check if all charging slots are now disabled
+            slot1_start = await luxpower_client.read(68)
+            slot2_start = await luxpower_client.read(70)
+            slot3_start = await luxpower_client.read(72)
+
+            await asyncio.sleep(1)
+
+            # If all slots are disabled (all start times are 0), disable AC charging
+            if slot1_start == 0 and slot2_start == 0 and slot3_start == 0:
+                current_reg21 = await luxpower_client.read(21)
+                if current_reg21 is not None:
+                    from .LXPPacket import LXPPacket, prepare_binary_value
+
+                    new_value = prepare_binary_value(
+                        current_reg21, LXPPacket.AC_CHARGE_ENABLE, False
+                    )
+                    await luxpower_client.write(21, new_value)
+                    await asyncio.sleep(1)
+                    _LOGGER.info("All charging slots disabled - AC charging turned off")
+
+            # Refresh registers to ensure changes are applied
+            await self.service_refresh_data_registers(dongle=dongle, bank_count=3)
+
+            _LOGGER.info(f"Charging slot {charge_slot} stopped successfully")
+            return True
+
+        except Exception as e:
+            _LOGGER.error(f"Error stopping charging: {e}")
+            return False
+
+    async def service_refresh_data_registers(self, dongle, bank_count):
+        _LOGGER.info(f"service_refresh_data_registers start - Count: {bank_count}")
         luxpower_client = self._lux_client(dongle)
         await luxpower_client.do_refresh_data_registers(bank_count)
 
@@ -116,7 +257,6 @@ class ServiceHelper:
 
     async def service_refresh_data_register_bank(self, dongle, address_bank):
         luxpower_client = self._lux_client(dongle)
-        _LOGGER.debug(
-            "service_refresh_register for address_bank: %s", address_bank)
+        _LOGGER.debug("service_refresh_register for address_bank: %s", address_bank)
         await luxpower_client.request_data_bank(address_bank)
         _LOGGER.debug("service_refresh_data_register_bank done")

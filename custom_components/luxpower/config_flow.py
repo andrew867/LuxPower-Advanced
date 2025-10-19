@@ -80,7 +80,10 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
         config_entry = user_input if user_input else {}
 
         # Check if luxpower device already exists to use sn in entities
-        if self.hass.data.get(DOMAIN, None) is not None and self.hass.data[DOMAIN].__len__() > 0:
+        if (
+            self.hass.data.get(DOMAIN, None) is not None
+            and self.hass.data[DOMAIN].__len__() > 0
+        ):
             placeholder_use_serial = True
         else:
             placeholder_use_serial = PLACEHOLDER_LUX_USE_SERIAL
@@ -106,7 +109,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             data_schema=data_schema,
             errors=errors,
         )
-    
+
     def _validate_user_input(self, user_input):
         errors = {}
         if not host_valid(user_input[ATTR_LUX_HOST]):
@@ -117,7 +120,10 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
         if type(ri) is not int or ri < 30 or ri > 120:
             errors[ATTR_LUX_REFRESH_INTERVAL] = "refresh_interval_error"
         # Check if the dongle serial already exists in the configuration
-        if self.hass.data.get(DOMAIN, None) is not None and self.hass.data[DOMAIN].__len__() > 0:
+        if (
+            self.hass.data.get(DOMAIN, None) is not None
+            and self.hass.data[DOMAIN].__len__() > 0
+        ):
             for entry in self.hass.data[DOMAIN]:
                 entry_data = self.hass.data[DOMAIN][entry]
                 if entry_data["DONGLE"] == user_input[ATTR_LUX_DONGLE_SERIAL]:
@@ -194,7 +200,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=data_schema,
             errors=errors,
         )
-    
+
     def _validate_user_input(self, user_input):
         errors = {}
         if not host_valid(user_input[ATTR_LUX_HOST]):
@@ -204,7 +210,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         ri = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
         if type(ri) is not int or ri < 30 or ri > 120:
             errors[ATTR_LUX_REFRESH_INTERVAL] = "refresh_interval_error"
-        bc = user_input.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
+        bc = user_input.get(
+            ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT
+        )
         if type(bc) is not int or bc < 1 or bc > 6:
             errors[ATTR_LUX_REFRESH_BANK_COUNT] = "refresh_bank_count_error"
         sn = user_input.get(ATTR_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_SERIAL_NUMBER)

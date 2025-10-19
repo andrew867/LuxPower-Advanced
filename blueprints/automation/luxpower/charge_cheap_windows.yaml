@@ -1,0 +1,111 @@
+blueprint:
+  name: Luxpower Timed Charging during Cheap Windows (Minutes)
+  description:
+    "Starts charging a Luxpower inverter battery when specified cheap-rate  sensors
+    turn on, but only if the battery is below a certain percentage.  It automatically
+    stops charging when the cheap-rate sensors turn off.
+
+    Designed for integrations like Octopus Energy that provide binary sensors  for
+    cheap electricity slots. This version uses minutes for duration."
+  domain: automation
+  homeassistant:
+    min_version: 2025.10.0
+  input:
+    charge_window_sensors:
+      name: Cheap Rate Sensors
+      description:
+        Select the binary sensor(s) that indicate when cheap electricity
+        is  available (e.g., Octopus Energy target rate sensors).
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+          multiple: true
+          reorder: false
+    battery_soc_sensor:
+      name: Battery SoC Sensor
+      description: The sensor that reports your battery's state of charge (SoC) percentage.
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+            - device_class: battery
+            - integration: luxpower
+          multiple: false
+          reorder: false
+    soc_threshold:
+      name: SoC Threshold
+      description:
+        The automation will only start charging if the battery's SoC is
+        below  this percentage.
+      default: 70
+      selector:
+        number:
+          min: 0.0
+          max: 100.0
+          unit_of_measurement: "%"
+          step: 1.0
+          mode: slider
+    charge_duration:
+      name: Charge Duration (Minutes)
+      description: The duration for the charging session when it starts.
+      default: 30
+      selector:
+        number:
+          min: 0.0
+          max: 1440.0
+          step: 1.0
+          mode: box
+    charge_slot:
+      name: Charge Slot
+      description: The charge slot to use for starting and stopping the charge command.
+      default: "3"
+      selector:
+        select:
+          options:
+            - "1"
+            - "2"
+            - "3"
+          custom_value: false
+          multiple: false
+          sort: false
+  source_url: https://gist.githubusercontent.com/marksie1988/d06471410922c05f25bae1f4c74f0ecc/raw/78bd6433edc1d97f8693b72c4758fa704aec690d/timed_charging.yaml
+mode: single
+variables:
+  luxpower_device_var: !input battery_soc_sensor
+triggers:
+  - trigger: state
+    entity_id: !input charge_window_sensors
+    id: start_charging
+    to: "on"
+  - trigger: state
+    entity_id: !input charge_window_sensors
+    id: stop_charging
+    to: "off"
+conditions:
+  - condition: numeric_state
+    entity_id: !input battery_soc_sensor
+    below: !input soc_threshold
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - start_charging
+        sequence:
+          - action: luxpower.luxpower_start_charging
+            metadata: {}
+            data:
+              dongle: '{{ device_attr(luxpower_device_var, "name") }}'
+              duration_minutes: !input charge_duration
+              charge_slot: !input charge_slot
+      - conditions:
+          - condition: trigger
+            id:
+              - stop_charging
+        sequence:
+          - action: luxpower.luxpower_stop_charging
+            metadata: {}
+            data:
+              dongle: '{{ device_attr(luxpower_device_var, "name") }}'
+              charge_slot: !input charge_slot

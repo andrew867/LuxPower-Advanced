@@ -1,6 +1,7 @@
 """
 Button entities for LuxPower integration.
 """
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -27,7 +28,9 @@ nameID_midfix = ""
 entityID_midfix = ""
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
+async def async_setup_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
+):
     """Set up the button platform."""
     _LOGGER.info("Loading the Lux button platform")
 
@@ -65,6 +68,20 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
             "action": "reset_all",
             "enabled": False,
         },
+        {
+            "name": "Lux {replaceID_midfix}{hyphen} Start Charging Slot 1 (180min)",
+            "unique": "lux_start_charging_slot1",
+            "action": "start_charging",
+            "slot": 1,
+            "enabled": True,
+        },
+        {
+            "name": "Lux {replaceID_midfix}{hyphen} Stop Charging Slot 1",
+            "unique": "lux_stop_charging_slot1",
+            "action": "stop_charging",
+            "slot": 1,
+            "enabled": True,
+        },
     ]
 
     for entity_definition in buttons:
@@ -88,7 +105,9 @@ class LuxPowerButtonEntity(ButtonEntity):
 
     _client: LuxPowerClient
 
-    def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):
+    def __init__(
+        self, hass, luxpower_client, dongle, serial, entity_definition, event: Event
+    ):
         self.entity_id = f"button.{slugify(entity_definition['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}"
         self.hass = hass
         self.dongle = dongle
@@ -96,17 +115,38 @@ class LuxPowerButtonEntity(ButtonEntity):
         self.event = event
         self._client = luxpower_client
         self._action = entity_definition["action"]
+        self._slot = entity_definition.get("slot", 1)
 
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_{entity_definition['unique']}"
-        self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        self._attr_name = entity_definition["name"].format(
+            replaceID_midfix=nameID_midfix, hyphen=hyphen
+        )
         self._attr_should_poll = False
-        self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
+        self._attr_entity_registry_enabled_default = entity_definition.get(
+            "enabled", False
+        )
 
     async def async_press(self) -> None:
         if self._action == "restart":
             await self._client.restart()
         elif self._action == "reset_all":
             await self._client.reset_all_settings()
+        elif self._action == "start_charging":
+            # Start charging with default 180 minutes (3 hours) duration in specified slot
+            await self.hass.services.async_call(
+                DOMAIN, 
+                "luxpower_start_charging",
+                {"dongle": self.dongle, "duration_minutes": 180, "charge_slot": self._slot},
+                blocking=True
+            )
+        elif self._action == "stop_charging":
+            # Stop charging in specified slot
+            await self.hass.services.async_call(
+                DOMAIN,
+                "luxpower_stop_charging",
+                {"dongle": self.dongle, "charge_slot": self._slot},
+                blocking=True,
+            )
 
     @property
     def device_info(self) -> DeviceInfo:

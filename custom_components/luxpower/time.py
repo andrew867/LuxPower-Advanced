@@ -5,6 +5,7 @@ This is a docstring placeholder.
 This is where we will describe what this module does
 
 """
+
 import datetime
 import logging
 from typing import Any, Dict, List, Optional
@@ -78,7 +79,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
     DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
-    luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]['client']
+    luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]["client"]
 
     # Options For Name Midfix Based Upon Serial Number - Suggest Last Two Digits
     # nameID_midfix = SERIAL if USE_SERIAL else ""
@@ -169,7 +170,9 @@ class LuxTimeTimeEntity(TimeEntity):
 
         # Hidden Inherited Instance Attributes
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_time_{self.register_address}"
-        self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        self._attr_name = entity_definition["name"].format(
+            replaceID_midfix=nameID_midfix, hyphen=hyphen
+        )
         # self._attr_entity_category = entity_definition.get("ent_cat", None)
         # self._attr_native_value = entity_definition.get("def_val", None)
         self._attr_native_value = None
@@ -183,7 +186,9 @@ class LuxTimeTimeEntity(TimeEntity):
         self._reg_max_value = entity_definition.get("max_val", None)
         # self._attr_native_step = entity_definition.get("step", 1.0)
         self._attr_should_poll = False
-        self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
+        self._attr_entity_registry_enabled_default = entity_definition.get(
+            "enabled", False
+        )
 
         # Hidden Class Extended Instance Attributes
         self._client = luxpower_client
@@ -195,27 +200,47 @@ class LuxTimeTimeEntity(TimeEntity):
         self._is_time_entity = True
         self._hour_value = -1
         self._minute_value = -1
-        _LOGGER.debug(f"Time Finished Init {self._attr_name},  {self.entity_id},  {self.unique_id}")
+        _LOGGER.debug(
+            f"Time Finished Init {self._attr_name},  {self.entity_id},  {self.unique_id}"
+        )
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        _LOGGER.debug(f"async_added_to_hass {self._attr_name},  {self.entity_id},  {self.unique_id}")
+        _LOGGER.debug(
+            f"async_added_to_hass {self._attr_name},  {self.entity_id},  {self.unique_id}"
+        )
         if self.hass is not None:
-            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
             if self.register_address == 21:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_21_RECEIVED, self.push_update
+                )
             elif 0 <= self.register_address <= 39:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update
+                )
             elif 40 <= self.register_address <= 79:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update
+                )
             elif 80 <= self.register_address <= 119:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update
+                )
             elif 120 <= self.register_address <= 159:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update
+                )
             elif 160 <= self.register_address <= 199:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update
+                )
             elif 200 <= self.register_address <= 239:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update
+                )
 
     def convert_to_time(self, value):
         # Has To Be Integer Type value Coming In - NOT BYTE ARRAY
@@ -226,7 +251,9 @@ class LuxTimeTimeEntity(TimeEntity):
 
         registers = event.data.get("registers", {})
         if self.register_address in registers.keys():
-            _LOGGER.debug(f"Register Address: {self.register_address} is in register.keys")
+            _LOGGER.debug(
+                f"Register Address: {self.register_address} is in register.keys"
+            )
             register_val = registers.get(self.register_address, None)
             if register_val is None:
                 return
@@ -234,10 +261,14 @@ class LuxTimeTimeEntity(TimeEntity):
             self._register_value = register_val
             oldstate = self._attr_native_value
             self._hour_value, self._minute_value = self.convert_to_time(register_val)
-            self._attr_native_value = datetime.time(self._hour_value, self._minute_value)
+            self._attr_native_value = datetime.time(
+                self._hour_value, self._minute_value
+            )
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
-                _LOGGER.debug(f"Changing the Time from {oldstate} to {self._attr_native_value}")
+                _LOGGER.debug(
+                    f"Changing the Time from {oldstate} to {self._attr_native_value}"
+                )
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
@@ -254,8 +285,14 @@ class LuxTimeTimeEntity(TimeEntity):
             if data.get("DONGLE") == self.dongle:
                 entry_id = e_id
                 break
-        model = self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        sw_version = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version", VERSION)
+        model = (
+            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
+        )
+        sw_version = (
+            self.hass.data[DOMAIN]
+            .get(entry_id, {})
+            .get("lux_firmware_version", VERSION)
+        )
         return DeviceInfo(
             identifiers={(DOMAIN, self.dongle)},
             manufacturer="LuxPower",
@@ -272,7 +309,10 @@ class LuxTimeTimeEntity(TimeEntity):
             _LOGGER.debug(f"Started set_value {value}")
             new_reg_value = value.minute * 256 + value.hour
 
-            if new_reg_value < self._reg_min_value or new_reg_value > self._reg_max_value:
+            if (
+                new_reg_value < self._reg_min_value
+                or new_reg_value > self._reg_max_value
+            ):
                 raise vol.Invalid(
                     f"Invalid value for {self.entity_id}: {new_reg_value} (range {self._reg_min_value} - {self._reg_max_value})"
                 )
@@ -308,7 +348,9 @@ class LuxTimeTimeEntity(TimeEntity):
                 _LOGGER.debug(
                     f"Writing: OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask} NEW {new_value}"
                 )
-                self._read_value = await self._client.write(self.register_address, new_value)
+                self._read_value = await self._client.write(
+                    self.register_address, new_value
+                )
 
                 if self._read_value is not None:
                     _LOGGER.debug(
@@ -322,7 +364,9 @@ class LuxTimeTimeEntity(TimeEntity):
                         if self._is_time_entity:
                             self._hour_value = self._attr_native_value.hour
                             self._minute_value = self._attr_native_value.minute
-                            _LOGGER.debug(f"Translating To Time {self._hour_value}:{self._minute_value}")
+                            _LOGGER.debug(
+                                f"Translating To Time {self._hour_value}:{self._minute_value}"
+                            )
                         self.async_write_ha_state()
                     else:
                         _LOGGER.warning(

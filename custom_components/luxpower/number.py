@@ -5,6 +5,7 @@ This is a docstring placeholder.
 This is where we will describe what this module does
 
 """
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -81,7 +82,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
-    luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]['client']
+    luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]["client"]
 
     DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
@@ -210,8 +211,12 @@ class LuxNormalNumberEntity(NumberEntity):
         self._client = luxpower_client
 
         # Hidden Inherited Instance Attributes
-        self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numbernormal_{self.register_address}"
-        self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        self._attr_unique_id = (
+            f"{DOMAIN}_{self.dongle}_numbernormal_{self.register_address}"
+        )
+        self._attr_name = entity_definition["name"].format(
+            replaceID_midfix=nameID_midfix, hyphen=hyphen
+        )
         # self._attr_entity_category = entity_definition.get("ent_cat", None)
         self._attr_native_value = entity_definition.get("def_val", None)
         self._attr_assumed_state = entity_definition.get("assumed", False)
@@ -219,12 +224,16 @@ class LuxNormalNumberEntity(NumberEntity):
         self._attr_device_class = entity_definition.get("device_class", None)
         self._attr_icon = entity_definition.get("icon", None)
         self._attr_mode = entity_definition.get("mode", NumberMode.AUTO)
-        self._attr_native_unit_of_measurement = entity_definition.get("unit_of_measurement", None)
+        self._attr_native_unit_of_measurement = entity_definition.get(
+            "unit_of_measurement", None
+        )
         self._attr_native_min_value = entity_definition.get("min_val", None)
         self._attr_native_max_value = entity_definition.get("max_val", None)
         self._attr_native_step = entity_definition.get("step", 1.0)
         self._attr_should_poll = False
-        self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
+        self._attr_entity_registry_enabled_default = entity_definition.get(
+            "enabled", False
+        )
 
         # Hidden Class Extended Instance Attributes
         self._register_value = 0
@@ -239,23 +248,44 @@ class LuxNormalNumberEntity(NumberEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        _LOGGER.debug("async_added_to_hass %s, %s, %s", self._attr_name, self.entity_id, self.unique_id)
+        _LOGGER.debug(
+            "async_added_to_hass %s, %s, %s",
+            self._attr_name,
+            self.entity_id,
+            self.unique_id,
+        )
         if self.hass is not None:
-            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
             if self.register_address == 21:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_21_RECEIVED, self.push_update
+                )
             elif 0 <= self.register_address <= 39:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update
+                )
             elif 40 <= self.register_address <= 79:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update
+                )
             elif 80 <= self.register_address <= 119:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update
+                )
             elif 120 <= self.register_address <= 159:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update
+                )
             elif 160 <= self.register_address <= 199:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update
+                )
             elif 200 <= self.register_address <= 239:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update
+                )
 
     def convert_to_time(self, value):
         # Has To Be Integer Type value Coming In - NOT BYTE ARRAY
@@ -272,7 +302,9 @@ class LuxNormalNumberEntity(NumberEntity):
 
         registers = event.data.get("registers", {})
         if self.register_address in registers.keys():
-            _LOGGER.debug(f"Register Address: {self.register_address} is in register.keys")
+            _LOGGER.debug(
+                f"Register Address: {self.register_address} is in register.keys"
+            )
             register_val = registers.get(self.register_address, None)
             if register_val is None:
                 return
@@ -282,13 +314,21 @@ class LuxNormalNumberEntity(NumberEntity):
             if self._is_signed:
                 self._attr_native_value = self.unsigned_short_to_signed_short(register_val) / self._divisor  # fmt: skip
             else:
-                self._attr_native_value = ((register_val & self._bitmask) >> self._bitshift) / self._divisor
+                self._attr_native_value = (
+                    (register_val & self._bitmask) >> self._bitshift
+                ) / self._divisor
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
-                _LOGGER.debug(f"Changing the number from {oldstate} to {self._attr_native_value}")
+                _LOGGER.debug(
+                    f"Changing the number from {oldstate} to {self._attr_native_value}"
+                )
                 if self._is_time_entity:
-                    self._hour_value, self._minute_value = self.convert_to_time(register_val)
-                    _LOGGER.debug(f"Translating To Time {self._hour_value}:{self._minute_value}")
+                    self._hour_value, self._minute_value = self.convert_to_time(
+                        register_val
+                    )
+                    _LOGGER.debug(
+                        f"Translating To Time {self._hour_value}:{self._minute_value}"
+                    )
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
@@ -305,8 +345,14 @@ class LuxNormalNumberEntity(NumberEntity):
             if data.get("DONGLE") == self.dongle:
                 entry_id = e_id
                 break
-        model = self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        sw_version = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version", VERSION)
+        model = (
+            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
+        )
+        sw_version = (
+            self.hass.data[DOMAIN]
+            .get(entry_id, {})
+            .get("lux_firmware_version", VERSION)
+        )
         return DeviceInfo(
             identifiers={(DOMAIN, self.dongle)},
             manufacturer="LuxPower",
@@ -358,7 +404,9 @@ class LuxNormalNumberEntity(NumberEntity):
                 _LOGGER.info(
                     f"Writing: OLD: {old_value} REGISTER: {self.register_address} MASK: {self._bitmask} NEW {new_value}"
                 )
-                self._read_value = await self._client.write(self.register_address, new_value)
+                self._read_value = await self._client.write(
+                    self.register_address, new_value
+                )
 
                 if self._read_value is not None:
                     _LOGGER.info(
@@ -370,8 +418,12 @@ class LuxNormalNumberEntity(NumberEntity):
                         )
                         self._attr_native_value = value
                         if self._is_time_entity:
-                            self._hour_value, self._minute_value = self.convert_to_time(int(self._attr_native_value))
-                            _LOGGER.debug(f"Translating To Time {self._hour_value}:{self._minute_value}")
+                            self._hour_value, self._minute_value = self.convert_to_time(
+                                int(self._attr_native_value)
+                            )
+                            _LOGGER.debug(
+                                f"Translating To Time {self._hour_value}:{self._minute_value}"
+                            )
                         self.async_write_ha_state()
                     else:
                         _LOGGER.warning(
@@ -391,10 +443,13 @@ class LuxPercentageNumberEntity(LuxNormalNumberEntity):
     def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
-        super().__init__(hass, luxpower_client, dongle, serial, entity_definition, event)
-        self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberpercent_{self.register_address}"
+        super().__init__(
+            hass, luxpower_client, dongle, serial, entity_definition, event
+        )
+        self._attr_unique_id = (
+            f"{DOMAIN}_{self.dongle}_numberpercent_{self.register_address}"
+        )
         self._attr_native_unit_of_measurement = PERCENTAGE
-
 
 
 class LuxVoltageDivideByTenEntity(LuxNormalNumberEntity):
@@ -403,8 +458,12 @@ class LuxVoltageDivideByTenEntity(LuxNormalNumberEntity):
     def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
-        super().__init__(hass, luxpower_client, dongle, serial, entity_definition, event)
-        self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberdivbyten_{self.register_address}"
+        super().__init__(
+            hass, luxpower_client, dongle, serial, entity_definition, event
+        )
+        self._attr_unique_id = (
+            f"{DOMAIN}_{self.dongle}_numberdivbyten_{self.register_address}"
+        )
         self._divisor = 10
 
 
@@ -414,5 +473,7 @@ class LuxBitmaskNumberEntity(LuxNormalNumberEntity):
     def __init__(self, hass, luxpower_client, dongle, serial, entity_definition, event: Event):  # fmt: skip
         """Initialize the Lux****Number entity."""
         #
-        super().__init__(hass, luxpower_client, dongle, serial, entity_definition, event)
+        super().__init__(
+            hass, luxpower_client, dongle, serial, entity_definition, event
+        )
         self._attr_unique_id = f"{DOMAIN}_{self.dongle}_numberbitmask_{self.register_address}_{self._bitmask}"

@@ -6,6 +6,7 @@ This code is from https://github.com/guybw/LuxPython_DEV
 This switch.py enables switches in Home Assistant.
 
 """
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -34,7 +35,9 @@ nameID_midfix = ""
 entityID_midfix = ""
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
+async def async_setup_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
+):
     """Set up the switch platform."""
     # We only want this platform to be set up via discovery.
     _LOGGER.info("Loading the Lux switch platform")
@@ -52,7 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
     SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
-    luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]['client']
+    luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]["client"]
 
     # Options For Name Midfix Based Upon Serial Number - Suggest Last Two Digits
     # nameID_midfix = SERIAL if USE_SERIAL else ""
@@ -125,14 +128,18 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self.event = event
 
         # Hidden Inherited Instance Attributes
-        self._attr_entity_registry_enabled_default = entity_definition.get("enabled", False)
+        self._attr_entity_registry_enabled_default = entity_definition.get(
+            "enabled", False
+        )
 
         # Hidden Class Extended Instance Attributes
         self._client = luxpower_client
         self._register_address = entity_definition["register_address"]
         self._register_value = None
         self._bitmask = entity_definition["bitmask"]
-        self._attr_name = entity_definition["name"].format(replaceID_midfix=nameID_midfix, hyphen=hyphen)
+        self._attr_name = entity_definition["name"].format(
+            replaceID_midfix=nameID_midfix, hyphen=hyphen
+        )
         self._attr_available = False
         # self._attr_device_class = DEVICE_CLASS_OPENING
         self._attr_should_poll = False
@@ -147,21 +154,37 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         _LOGGER.debug("async_added_to_hass %s", self._attr_name)
         self.is_added_to_hass = True
         if self.hass is not None:
-            self.hass.bus.async_listen(self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable)
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
             if self._register_address == 21:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_21_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_21_RECEIVED, self.push_update
+                )
             elif 0 <= self._register_address <= 39:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update
+                )
             elif 40 <= self._register_address <= 79:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK1_RECEIVED, self.push_update
+                )
             elif 80 <= self._register_address <= 119:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK2_RECEIVED, self.push_update
+                )
             elif 120 <= self._register_address <= 159:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK3_RECEIVED, self.push_update
+                )
             elif 160 <= self._register_address <= 199:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK4_RECEIVED, self.push_update
+                )
             elif 200 <= self._register_address <= 239:
-                self.hass.bus.async_listen(self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update)
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update
+                )
 
     def push_update(self, event):
         registers = event.data.get("registers", {})
@@ -173,7 +196,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             # Save current register int value
             self._register_value = register_val
             _LOGGER.debug(
-                "switch: register event received - register: %s bitmask: %s", self._register_address, self._bitmask
+                "switch: register event received - register: %s bitmask: %s",
+                self._register_address,
+                self._bitmask,
             )
             self.totalregs = self._client.lxpPacket.regValuesInt
             # _LOGGER.debug("totalregs: %s" , self.totalregs)
@@ -185,13 +210,22 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                     f"Reading: {self._register_address} {self._bitmask} Old State {oldstate} Updating state to {self._state} - {self._attr_name}"
                 )
                 self.schedule_update_ha_state()
-            if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
+            if (
+                self._register_address == 21
+                and self._bitmask == LXPPacket.AC_CHARGE_ENABLE
+            ):
                 if 68 in self.totalregs.keys():
                     self.schedule_update_ha_state()
-            if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
+            if (
+                self._register_address == 21
+                and self._bitmask == LXPPacket.CHARGE_PRIORITY
+            ):
                 if 76 in self.totalregs.keys():
                     self.schedule_update_ha_state()
-            if self._register_address == 21 and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE:
+            if (
+                self._register_address == 21
+                and self._bitmask == LXPPacket.FORCED_DISCHARGE_ENABLE
+            ):
                 if 84 in self.totalregs.keys():
                     self.schedule_update_ha_state()
         return self._state
@@ -202,7 +236,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         self.schedule_update_ha_state()
 
     def update(self):
-        _LOGGER.debug(f"{self._register_address} {self._bitmask} updating state to {self._state}")
+        _LOGGER.debug(
+            f"{self._register_address} {self._bitmask} updating state to {self._state}"
+        )
         return self._state
 
     @property
@@ -230,8 +266,14 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             if data.get("DONGLE") == self.dongle:
                 entry_id = e_id
                 break
-        model = self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        sw_version = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version", VERSION)
+        model = (
+            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
+        )
+        sw_version = (
+            self.hass.data[DOMAIN]
+            .get(entry_id, {})
+            .get("lux_firmware_version", VERSION)
+        )
         return DeviceInfo(
             identifiers={(DOMAIN, self.dongle)},
             manufacturer="LuxPower",
@@ -262,7 +304,9 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             _LOGGER.info(
                 f"Writing: OLD: {old_value} REGISTER: {self._register_address} MASK: {self._bitmask} NEW {new_value}"
             )
-            self._read_value = await self._client.write(self._register_address, new_value)
+            self._read_value = await self._client.write(
+                self._register_address, new_value
+            )
 
             if self._read_value is not None:
                 self._state = self._read_value & self._bitmask == self._bitmask

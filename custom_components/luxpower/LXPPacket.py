@@ -7,15 +7,16 @@ This LXPPacket.py takes the packet and decodes it to variables.
 
 """
 
-
 import logging
 import socket
 import struct
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def prepare_binary_value(oldvalue, mask, enable=True):
     return oldvalue | mask if enable else oldvalue & (65535 - mask)
+
 
 class LXPPacket:
     """
@@ -261,7 +262,7 @@ class LXPPacket:
     bat_capacity = "bat_capacity"
     bat_current = "bat_current"
     bat_cycle_count = "bat_cycle_count"
-    gen_input_volt ="gen_input_volt"
+    gen_input_volt = "gen_input_volt"
     gen_input_freq = "gen_input_freq"
     gen_power_watt = "gen_power_watt"
     gen_power_day = "gen_power_day"
@@ -326,13 +327,17 @@ class LXPPacket:
     def parse_packet(self, packet):
         self.packet_error = True
         if self.debug:
-            _LOGGER.debug("*********************** PARSING PACKET *************************************")
+            _LOGGER.debug(
+                "*********************** PARSING PACKET *************************************"
+            )
         self.packet_length = len(packet)
         is_heartbeat = self.packet_length == 19 or self.packet_length == 21
 
         # Check if packet contains data
         if not is_heartbeat and self.packet_length < 37:
-            _LOGGER.error(f"Received packet is TOO SMALL with length {self.packet_length}")
+            _LOGGER.error(
+                f"Received packet is TOO SMALL with length {self.packet_length}"
+            )
             return
 
         prefix = packet[0:2]
@@ -353,7 +358,9 @@ class LXPPacket:
                 _LOGGER.warning("Probably An Unhandled MultiFrame - Report To Devs")
             else:
                 _LOGGER.error(
-                    "Bad Packet -  Too Short - (real/calced) %s %s", self.packet_length, self.packet_length_calced
+                    "Bad Packet -  Too Short - (real/calced) %s %s",
+                    self.packet_length,
+                    self.packet_length_calced,
                 )
                 return
 
@@ -361,7 +368,9 @@ class LXPPacket:
         self.tcp_function = packet[7]
         self.dongle_serial = packet[8:18]
         raw_data_length = packet[18:20]
-        self.data_length = struct.unpack("H", raw_data_length)[0] if raw_data_length != b"\x00" else 0
+        self.data_length = (
+            struct.unpack("H", raw_data_length)[0] if raw_data_length != b"\x00" else 0
+        )
         self.data_frame = packet[20:self.packet_length_calced - 2]  # fmt: skip
 
         if self.debug:
@@ -375,7 +384,9 @@ class LXPPacket:
             _LOGGER.debug("protocol_number: %s", self.protocol_number)
             _LOGGER.debug("frame_length : %s", self.frame_length)
             _LOGGER.debug(
-                "tcp_function : %s %s", self.tcp_function, self.TCP_FUNCTION.get(self.tcp_function, "UNKNOWN")
+                "tcp_function : %s %s",
+                self.tcp_function,
+                self.TCP_FUNCTION.get(self.tcp_function, "UNKNOWN"),
             )
             _LOGGER.debug("dongle_serial : %s", self.dongle_serial)
             _LOGGER.debug("data_length : %s", self.data_length)
@@ -422,10 +433,16 @@ class LXPPacket:
 
         if self.debug:
             # _LOGGER.debug("address_action : %s %s", self.address_action, self.ADDRESS_ACTION[self.address_action])
-            _LOGGER.debug("device_function : %s %s", self.device_function, self.DEVICE_FUNCTION[self.device_function])
+            _LOGGER.debug(
+                "device_function : %s %s",
+                self.device_function,
+                self.DEVICE_FUNCTION[self.device_function],
+            )
             _LOGGER.debug("serial_number : %s", self.serial_number)
             _LOGGER.debug("register : %s", self.register)
-            _LOGGER.debug("value_length_byte_present : %s", self.value_length_byte_present)
+            _LOGGER.debug(
+                "value_length_byte_present : %s", self.value_length_byte_present
+            )
             _LOGGER.debug("value_length : %s", self.value_length)
             _LOGGER.debug("value : %s", self.value)
 
@@ -471,18 +488,29 @@ class LXPPacket:
 
         number_of_registers = int(len(self.value) / 2)
 
-        if self.device_function == self.READ_HOLD or self.device_function == self.WRITE_SINGLE:
+        if (
+            self.device_function == self.READ_HOLD
+            or self.device_function == self.WRITE_SINGLE
+        ):
             self.regValuesThis = {}
             not_found = True
             for i in range(0, number_of_registers):
                 if self.register + i in [68, 69, 70, 71, 72, 73, 76, 77, 78, 79, 80, 81, 84, 85, 86, 87, 88, 89] and not_found:  # fmt: skip
-                    _LOGGER.debug("Trying to Add Register 21 to this List if it already Exists")
+                    _LOGGER.debug(
+                        "Trying to Add Register 21 to this List if it already Exists"
+                    )
                     if 21 in self.regValuesInt:
                         self.regValuesThis[21] = self.regValuesInt[21]
                         not_found = False
-                self.regValuesThis[self.register + i] = self.get_read_value_int(self.register + i)
-                self.regValues[self.register + i] = self.get_read_value(self.register + i)
-                self.regValuesInt[self.register + i] = self.get_read_value_int(self.register + i)
+                self.regValuesThis[self.register + i] = self.get_read_value_int(
+                    self.register + i
+                )
+                self.regValues[self.register + i] = self.get_read_value(
+                    self.register + i
+                )
+                self.regValuesInt[self.register + i] = self.get_read_value_int(
+                    self.register + i
+                )
                 self.regValuesHex[self.register + i] = "".join(
                     format(x, "02X") for x in self.get_read_value(self.register + i)
                 )
@@ -494,8 +522,12 @@ class LXPPacket:
 
         elif self.device_function == self.READ_INPUT:
             for i in range(0, number_of_registers):
-                self.readValues[self.register + i] = self.get_read_value(self.register + i)
-                self.readValuesInt[self.register + i] = self.get_read_value_int(self.register + i)
+                self.readValues[self.register + i] = self.get_read_value(
+                    self.register + i
+                )
+                self.readValuesInt[self.register + i] = self.get_read_value_int(
+                    self.register + i
+                )
                 self.readValuesHex[self.register + i] = "".join(
                     format(x, "02X") for x in self.get_read_value(self.register + i)
                 )
@@ -527,7 +559,9 @@ class LXPPacket:
                 self.get_device_values_bank2()
             else:
                 if number_of_registers == 1:
-                    _LOGGER.warning(f"An input packet was received with an unsupported single register: {self.register}")
+                    _LOGGER.warning(
+                        f"An input packet was received with an unsupported single register: {self.register}"
+                    )
                     # The below code is a no-op because the methods immediately return without setting inputRead for that bank.
                     # Significant refactoring needs to happen to only set values from registers in the packet if this is to be supported
                     # Decode Single Register
@@ -542,7 +576,9 @@ class LXPPacket:
                     elif 160 <= self.register <= 199:
                         self.get_device_values_bank4()
                 else:
-                    _LOGGER.warning(f"An input packet was received with an unsupported register range: {self.register} - {self.register + number_of_registers - 1}")
+                    _LOGGER.warning(
+                        f"An input packet was received with an unsupported register range: {self.register} - {self.register + number_of_registers - 1}"
+                    )
                     # The below code is a no-op because the methods immediately return without setting inputRead for that bank.
                     # Significant refactoring needs to happen to only set values from registers in the packet if this is to be supported
                     # Decode Series of Registers - Possibly Over Block Boundaries
@@ -562,7 +598,9 @@ class LXPPacket:
                 _LOGGER.debug(self.readValuesHex)
 
     def prepare_packet_for_write(self, register, value):
-        _LOGGER.debug(f"Started Creating Packet For Write Register {register} With Value {value} ")
+        _LOGGER.debug(
+            f"Started Creating Packet For Write Register {register} With Value {value} "
+        )
 
         protocol = 2
         frame_length = 32
@@ -651,10 +689,14 @@ class LXPPacket:
         return self.value[offset:2 + offset]  # fmt: skip
 
     def get_read_value_combined(self, reg1, reg2):
-        return self.readValues.get(reg1, b"\x00\x00") + self.readValues.get(reg2, b"\x00\x00")
+        return self.readValues.get(reg1, b"\x00\x00") + self.readValues.get(
+            reg2, b"\x00\x00"
+        )
 
     def get_read_value_combined_int(self, reg1, reg2):
-        raw_value = self.readValues.get(reg1, b"\x00\x00") + self.readValues.get(reg2, b"\x00\x00")
+        raw_value = self.readValues.get(reg1, b"\x00\x00") + self.readValues.get(
+            reg2, b"\x00\x00"
+        )
         return struct.unpack("I", raw_value)[0]
 
     def convert_to_int(self, value):
@@ -683,7 +725,12 @@ class LXPPacket:
             v_pv_3 = self.readValuesInt.get(3, 0) / 10
 
             if self.debug:
-                _LOGGER.debug("v_pv(Volts - v_pv_1, v_pv_2, v_pv_3)  %s,%s,%s", v_pv_1, v_pv_2, v_pv_3)
+                _LOGGER.debug(
+                    "v_pv(Volts - v_pv_1, v_pv_2, v_pv_3)  %s,%s,%s",
+                    v_pv_1,
+                    v_pv_2,
+                    v_pv_3,
+                )
             self.readValuesThis[LXPPacket.v_pv_1] = v_pv_1
             self.readValuesThis[LXPPacket.v_pv_2] = v_pv_2
             self.readValuesThis[LXPPacket.v_pv_3] = v_pv_3
@@ -693,7 +740,11 @@ class LXPPacket:
                 _LOGGER.debug("v_bat(Volts) %s", v_bat)
             self.readValuesThis[LXPPacket.v_bat] = v_bat
 
-            soc = self.readValues.get(5)[0] or 0 if self.readValues.get(5) is not None else 0
+            soc = (
+                self.readValues.get(5)[0] or 0
+                if self.readValues.get(5) is not None
+                else 0
+            )
             if self.debug:
                 _LOGGER.debug("soc(%%) %s", soc)
             self.readValuesThis[LXPPacket.soc] = soc
@@ -707,7 +758,12 @@ class LXPPacket:
             p_pv_2 = self.readValuesInt.get(8, 0)
             p_pv_3 = self.readValuesInt.get(9, 0)
             if self.debug:
-                _LOGGER.debug("p_pv(Watts - p_pv_1, p_pv_2, p_pv_3) %s,%s,%s", p_pv_1, p_pv_2, p_pv_3)
+                _LOGGER.debug(
+                    "p_pv(Watts - p_pv_1, p_pv_2, p_pv_3) %s,%s,%s",
+                    p_pv_1,
+                    p_pv_2,
+                    p_pv_3,
+                )
                 _LOGGER.debug("p_pv_total(Watts) %s", p_pv_1 + p_pv_2 + p_pv_3)
             self.readValuesThis[LXPPacket.p_pv_1] = p_pv_1
             self.readValuesThis[LXPPacket.p_pv_2] = p_pv_2
@@ -726,7 +782,12 @@ class LXPPacket:
             v_ac_s = self.readValuesInt.get(13, 0) / 10
             v_ac_t = self.readValuesInt.get(14, 0) / 10
             if self.debug:
-                _LOGGER.debug("v_ac(Volts - v_ac_r, v_ac_s, v_ac_t) %s,%s,%s", v_ac_r, v_ac_s, v_ac_t)
+                _LOGGER.debug(
+                    "v_ac(Volts - v_ac_r, v_ac_s, v_ac_t) %s,%s,%s",
+                    v_ac_r,
+                    v_ac_s,
+                    v_ac_t,
+                )
             self.readValuesThis[LXPPacket.v_ac_r] = v_ac_r
             self.readValuesThis[LXPPacket.v_ac_s] = v_ac_s
             self.readValuesThis[LXPPacket.v_ac_t] = v_ac_t
@@ -759,7 +820,12 @@ class LXPPacket:
             v_eps_s = self.readValuesInt.get(21, 0) / 10
             v_eps_t = self.readValuesInt.get(22, 0) / 10
             if self.debug:
-                _LOGGER.debug("v_pv(Volts - v_eps_r, v_eps_s, v_eps_t)  %s,%s,%s", v_eps_r, v_eps_s, v_eps_t)
+                _LOGGER.debug(
+                    "v_pv(Volts - v_eps_r, v_eps_s, v_eps_t)  %s,%s,%s",
+                    v_eps_r,
+                    v_eps_s,
+                    v_eps_t,
+                )
             self.readValuesThis[LXPPacket.v_eps_r] = v_eps_r
             self.readValuesThis[LXPPacket.v_eps_s] = v_eps_s
             self.readValuesThis[LXPPacket.v_eps_t] = v_eps_t
@@ -789,15 +855,21 @@ class LXPPacket:
             e_pv_3_day = self.readValuesInt.get(30, 0) / 10
             if self.debug:
                 _LOGGER.debug(
-                    "e_pv_1(kWh) e_pv_1_day, e_pv_2_day, e_pv_3_day %s,%s,%s", e_pv_1_day, e_pv_2_day, e_pv_3_day
+                    "e_pv_1(kWh) e_pv_1_day, e_pv_2_day, e_pv_3_day %s,%s,%s",
+                    e_pv_1_day,
+                    e_pv_2_day,
+                    e_pv_3_day,
                 )
                 _LOGGER.debug(
-                    "e_pv_total(kWh) e_pv_1_day + e_pv_2_day + e_pv_3_day %s", e_pv_1_day + e_pv_2_day + e_pv_3_day
+                    "e_pv_total(kWh) e_pv_1_day + e_pv_2_day + e_pv_3_day %s",
+                    e_pv_1_day + e_pv_2_day + e_pv_3_day,
                 )
             self.readValuesThis[LXPPacket.e_pv_1_day] = e_pv_1_day
             self.readValuesThis[LXPPacket.e_pv_2_day] = e_pv_2_day
             self.readValuesThis[LXPPacket.e_pv_3_day] = e_pv_3_day
-            self.readValuesThis[LXPPacket.e_pv_total] = e_pv_1_day + e_pv_2_day + e_pv_3_day
+            self.readValuesThis[LXPPacket.e_pv_total] = (
+                e_pv_1_day + e_pv_2_day + e_pv_3_day
+            )
 
             e_inv_day = self.readValuesInt.get(31, 0) / 10
             e_rec_day = self.readValuesInt.get(32, 0) / 10
@@ -845,12 +917,15 @@ class LXPPacket:
                 _LOGGER.debug("e_pv_2_all(kWh) %s", e_pv_2_all)
                 _LOGGER.debug("e_pv_3_all(kWh) %s", e_pv_3_all)
                 _LOGGER.debug(
-                    "e_pv_all(kWh) e_pv_1_all + e_pv_2_all + e_pv_3_all %s", e_pv_1_all + e_pv_2_all + e_pv_3_all
+                    "e_pv_all(kWh) e_pv_1_all + e_pv_2_all + e_pv_3_all %s",
+                    e_pv_1_all + e_pv_2_all + e_pv_3_all,
                 )
             self.readValuesThis[LXPPacket.e_pv_1_all] = e_pv_1_all
             self.readValuesThis[LXPPacket.e_pv_2_all] = e_pv_2_all
             self.readValuesThis[LXPPacket.e_pv_3_all] = e_pv_3_all
-            self.readValuesThis[LXPPacket.e_pv_all] = e_pv_1_all + e_pv_2_all + e_pv_3_all
+            self.readValuesThis[LXPPacket.e_pv_all] = (
+                e_pv_1_all + e_pv_2_all + e_pv_3_all
+            )
 
             e_inv_all = self.get_read_value_combined_int(46, 47) / 10
             e_rec_all = self.get_read_value_combined_int(48, 49) / 10
@@ -918,7 +993,9 @@ class LXPPacket:
             except Exception:
                 model_code = None
 
-            scale = 10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA") else 100
+            scale = (
+                10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA") else 100
+            )
             max_chg_curr = self.readValuesInt.get(81, 0) / scale
             max_dischg_curr = self.readValuesInt.get(82, 0) / scale
             if self.debug:
@@ -950,12 +1027,12 @@ class LXPPacket:
                 _LOGGER.debug("bat_capacity %s", bat_capacity)
             self.readValuesThis[LXPPacket.bat_capacity] = bat_capacity
 
-            bat_current = self.readValuesInt.get(98,0)
+            bat_current = self.readValuesInt.get(98, 0)
             if self.debug:
                 _LOGGER.debug("bat_current %s", bat_current)
 
-            if bat_current&0x8000:
-                bat_current=bat_current-0x10000
+            if bat_current & 0x8000:
+                bat_current = bat_current - 0x10000
             self.readValuesThis[LXPPacket.bat_current] = bat_current / 10
 
             max_cell_volt = self.readValuesInt.get(101, 0) / 1000
@@ -963,13 +1040,13 @@ class LXPPacket:
             max_cell_temp = self.readValuesInt.get(103, 0)
             min_cell_temp = self.readValuesInt.get(104, 0)
 
-            if min_cell_temp&0x8000:
-                min_cell_temp=min_cell_temp-0x10000
-            min_cell_temp=min_cell_temp/10
-            if max_cell_temp&0x8000:
-                max_cell_temp=max_cell_temp-0x10000
-            max_cell_temp=max_cell_temp/10
-            
+            if min_cell_temp & 0x8000:
+                min_cell_temp = min_cell_temp - 0x10000
+            min_cell_temp = min_cell_temp / 10
+            if max_cell_temp & 0x8000:
+                max_cell_temp = max_cell_temp - 0x10000
+            max_cell_temp = max_cell_temp / 10
+
             if self.debug:
                 _LOGGER.debug("max_cell_volt %s", max_cell_volt)
                 _LOGGER.debug("min_cell_volt %s", min_cell_volt)
@@ -980,7 +1057,7 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.max_cell_temp] = max_cell_temp
             self.readValuesThis[LXPPacket.min_cell_temp] = min_cell_temp
 
-            bat_cycle_count = self.readValuesInt.get(106,0)
+            bat_cycle_count = self.readValuesInt.get(106, 0)
             self.readValuesThis[LXPPacket.bat_cycle_count] = bat_cycle_count
 
             p_load2 = self.readValuesInt.get(114, 0)
@@ -994,8 +1071,8 @@ class LXPPacket:
             gen_input_volt = self.readValuesInt.get(121, 0) / 10
             gen_input_freq = self.readValuesInt.get(122, 0) / 100
             gen_power_watt = self.readValuesInt.get(123, 0)
-            gen_power_day  = self.readValuesInt.get(124, 0) / 10
-            gen_power_all  = self.readValuesInt.get(125, 0) / 10
+            gen_power_day = self.readValuesInt.get(124, 0) / 10
+            gen_power_all = self.readValuesInt.get(125, 0) / 10
             self.readValuesThis[LXPPacket.gen_input_volt] = gen_input_volt
             self.readValuesThis[LXPPacket.gen_input_freq] = gen_input_freq
             if gen_power_watt < 125:
