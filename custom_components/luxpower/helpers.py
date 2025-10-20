@@ -88,14 +88,14 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
     # Get device information from cached data
     model = device_data.get("model", "LuxPower Inverter")
     model_code = device_data.get("model_code", "Unknown")
-    firmware_version = device_data.get("lux_firmware_version", VERSION)
+    firmware_version = device_data.get("lux_firmware_version", "Unknown")
     inverter_serial = device_data.get("inverter_serial_number", None)
     
     # Debug logging for device info
-    _LOGGER.warning(f"🔍 DEVICE INFO DEBUG - Dongle: {dongle}")
-    _LOGGER.warning(f"🔍 DEVICE INFO DEBUG - Entry ID: {entry_id}")
-    _LOGGER.warning(f"🔍 DEVICE INFO DEBUG - Device Data: {device_data}")
-    _LOGGER.warning(f"🔍 DEVICE INFO DEBUG - Model: {model}, Model Code: {model_code}, Firmware: {firmware_version}, Serial: {inverter_serial}")
+    _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Dongle: {dongle}")
+    _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Entry ID: {entry_id}")
+    _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Device Data: {device_data}")
+    _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Model: {model}, Model Code: {model_code}, Firmware: {firmware_version}, Serial: {inverter_serial}")
     
     # Get model name from model code
     model_name = MODEL_MAP.get(model_code, model)
@@ -110,7 +110,7 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
         manufacturer="LuxPower",
         model=model_name,
         sw_version=firmware_version,
-        hw_version=model_code,
+        hw_version=model_code if model_code != "Unknown" else "Unknown",
         serial_number=serial_number,
         configuration_url=f"https://github.com/guybw/LuxPython_DEV",
     )

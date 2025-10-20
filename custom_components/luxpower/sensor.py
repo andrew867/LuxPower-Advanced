@@ -597,6 +597,7 @@ async def async_setup_entry(
         elif etype == "LPMD":
             sensorEntities.append(LuxPowerModelSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPSN":
+            _LOGGER.warning(f"🔍 CREATING SERIAL SENSOR - Adding LuxPowerSerialNumberSensor for dongle: {DONGLE}")
             sensorEntities.append(LuxPowerSerialNumberSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPDR":
             sensorEntities.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
@@ -613,6 +614,7 @@ async def async_setup_entry(
 
     # fmt: on
 
+    _LOGGER.warning(f"🔍 ADDING SENSORS - Adding {len(sensorEntities)} sensors to platform")
     async_add_devices(sensorEntities, True)
 
     _LOGGER.info("LuxPower sensor async_setup_platform sensor done %s", DONGLE)
@@ -1054,10 +1056,18 @@ class LuxPowerFirmwareSensor(LuxPowerSensorEntity):
                     entry_id = e_id
                     break
             if entry_id is not None:
-                self.hass.data[DOMAIN].setdefault(entry_id, {})[
-                    "lux_firmware_version"
-                ] = firmware
-                _LOGGER.warning(f"🔍 FIRMWARE SENSOR - Saved firmware '{firmware}' to hass.data[{DOMAIN}][{entry_id}]")
+                # Check if firmware version has changed
+                current_firmware = self.hass.data[DOMAIN].get(entry_id, {}).get("lux_firmware_version")
+                if current_firmware != firmware:
+                    self.hass.data[DOMAIN].setdefault(entry_id, {})[
+                        "lux_firmware_version"
+                    ] = firmware
+                    _LOGGER.warning(f"🔍 FIRMWARE SENSOR - Saved firmware '{firmware}' to hass.data[{DOMAIN}][{entry_id}]")
+                    
+                    # Trigger device info update only if firmware changed
+                    self._update_device_info()
+                else:
+                    _LOGGER.debug(f"🔍 FIRMWARE SENSOR - Firmware unchanged: '{firmware}'")
             else:
                 _LOGGER.warning(f"🔍 FIRMWARE SENSOR - No entry_id found for dongle {self.dongle}")
             if oldstate != self._attr_native_value or not self._attr_available:
@@ -1079,6 +1089,47 @@ class LuxPowerFirmwareSensor(LuxPowerSensorEntity):
                 _LOGGER.warning(f"Firmware sensor: No firmware data available, setting fallback value")
                 self.schedule_update_ha_state()
         return self._attr_native_value
+
+    def gone_unavailable(self, event):
+        """Handle unavailable event for firmware sensor."""
+        _LOGGER.warning(f"🔍 FIRMWARE SENSOR - gone_unavailable event received for {self._attr_name}")
+        _LOGGER.warning(f"🔍 FIRMWARE SENSOR - Current value before unavailable: '{self._attr_native_value}'")
+        # Don't set unavailable - keep the last known firmware version
+        # self._attr_available = False
+        # self.schedule_update_ha_state()
+
+    def _update_device_info(self):
+        """Update device info in the device registry."""
+        try:
+            from homeassistant.helpers import device_registry as dr
+            
+            # Get the device registry
+            device_registry = dr.async_get(self.hass)
+            
+            # Find the device by dongle identifier
+            device = device_registry.async_get_device(
+                identifiers={(DOMAIN, self.dongle)}
+            )
+            
+            if device:
+                # Schedule device info update to run in event loop
+                def update_device_info():
+                    try:
+                        device_registry.async_update_device(
+                            device.id,
+                            sw_version=self._attr_native_value
+                        )
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated device firmware to: {self._attr_native_value}")
+                    except Exception as e:
+                        _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
+                
+                # Schedule the update to run in the event loop
+                self.hass.loop.call_soon_threadsafe(update_device_info)
+            else:
+                _LOGGER.warning(f"🔍 DEVICE INFO UPDATE - Device not found for dongle: {self.dongle}")
+                
+        except Exception as e:
+            _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
 
 
 class LuxPowerModelSensor(LuxPowerSensorEntity):
@@ -1159,9 +1210,18 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
                     entry_id = e_id
                     break
             if entry_id is not None:
-                self.hass.data[DOMAIN].setdefault(entry_id, {})["model"] = model
-                self.hass.data[DOMAIN][entry_id]["model_code"] = model_code
-                _LOGGER.warning(f"🔍 MODEL SENSOR - Saved model '{model}' and model_code '{model_code}' to hass.data[{DOMAIN}][{entry_id}]")
+                # Check if model has changed
+                current_model = self.hass.data[DOMAIN].get(entry_id, {}).get("model")
+                current_model_code = self.hass.data[DOMAIN].get(entry_id, {}).get("model_code")
+                if current_model != model or current_model_code != model_code:
+                    self.hass.data[DOMAIN].setdefault(entry_id, {})["model"] = model
+                    self.hass.data[DOMAIN][entry_id]["model_code"] = model_code
+                    _LOGGER.warning(f"🔍 MODEL SENSOR - Saved model '{model}' and model_code '{model_code}' to hass.data[{DOMAIN}][{entry_id}]")
+                    
+                    # Trigger device info update only if model changed
+                    self._update_device_info()
+                else:
+                    _LOGGER.debug(f"🔍 MODEL SENSOR - Model unchanged: '{model}' (code: '{model_code}')")
             else:
                 _LOGGER.warning(f"🔍 MODEL SENSOR - No entry_id found for dongle {self.dongle}")
                 
@@ -1198,6 +1258,48 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
+    def gone_unavailable(self, event):
+        """Handle unavailable event for model sensor."""
+        _LOGGER.warning(f"🔍 MODEL SENSOR - gone_unavailable event received for {self._attr_name}")
+        _LOGGER.warning(f"🔍 MODEL SENSOR - Current value before unavailable: '{self._attr_native_value}'")
+        # Don't set unavailable - keep the last known model
+        # self._attr_available = False
+        # self.schedule_update_ha_state()
+
+    def _update_device_info(self):
+        """Update device info in the device registry."""
+        try:
+            from homeassistant.helpers import device_registry as dr
+            
+            # Get the device registry
+            device_registry = dr.async_get(self.hass)
+            
+            # Find the device by dongle identifier
+            device = device_registry.async_get_device(
+                identifiers={(DOMAIN, self.dongle)}
+            )
+            
+            if device:
+                # Schedule device info update to run in event loop
+                def update_device_info():
+                    try:
+                        device_registry.async_update_device(
+                            device.id,
+                            model=self._attr_native_value,
+                            hw_version=self._attr_native_value
+                        )
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated device model to: {self._attr_native_value}")
+                    except Exception as e:
+                        _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
+                
+                # Schedule the update to run in the event loop
+                self.hass.loop.call_soon_threadsafe(update_device_info)
+            else:
+                _LOGGER.warning(f"🔍 DEVICE INFO UPDATE - Device not found for dongle: {self.dongle}")
+                
+        except Exception as e:
+            _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
+
 
 class LuxPowerSerialNumberSensor(LuxPowerSensorEntity):
     """Sensor that exposes the inverter serial number from communication packets."""
@@ -1211,6 +1313,30 @@ class LuxPowerSerialNumberSensor(LuxPowerSensorEntity):
         # Set initial value to indicate waiting for data
         self._attr_native_value = "Waiting for data..."
         self._attr_available = False
+        
+        # Try to get existing serial number from hass.data on initialization
+        _LOGGER.warning(f"🔍 SERIAL SENSOR - Creating serial number sensor for dongle: {self.dongle}")
+        self._load_existing_serial_number()
+
+    def _load_existing_serial_number(self):
+        """Load existing serial number from hass.data on initialization."""
+        try:
+            entry_id = None
+            for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    entry_id = e_id
+                    break
+            
+            if entry_id is not None:
+                existing_serial = self.hass.data[DOMAIN].get(entry_id, {}).get("inverter_serial_number")
+                if existing_serial and existing_serial != "0000000000":
+                    self._attr_native_value = existing_serial
+                    self._attr_available = True
+                    _LOGGER.warning(f"🔍 SERIAL SENSOR - Loaded existing serial number: '{existing_serial}'")
+                    # Trigger device info update on initialization
+                    self._update_device_info()
+        except Exception as e:
+            _LOGGER.error(f"🔍 SERIAL SENSOR - Failed to load existing serial number: {e}")
 
     @property
     def suggested_display_precision(self) -> Optional[int]:
@@ -1225,13 +1351,14 @@ class LuxPowerSerialNumberSensor(LuxPowerSensorEntity):
     async def async_added_to_hass(self) -> None:
         """Register event listeners for serial number sensor."""
         await super().async_added_to_hass()
-        _LOGGER.debug("async_added_to_hass serial number sensor %s", self._attr_name)
+        _LOGGER.warning(f"🔍 SERIAL SENSOR - async_added_to_hass called for {self._attr_name}")
         self.is_added_to_hass = True
         if self.hass is not None:
+            _LOGGER.warning(f"🔍 SERIAL SENSOR - hass is not None, registering event listeners")
             self.hass.bus.async_listen(
                 self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
             )
-            # Listen to all bank events since serial number comes from communication packets
+            # Listen to data events for serial number (serial number is passed in data events)
             self.hass.bus.async_listen(
                 self.event.EVENT_DATA_BANK0_RECEIVED, self.push_update
             )
@@ -1244,44 +1371,102 @@ class LuxPowerSerialNumberSensor(LuxPowerSensorEntity):
             self.hass.bus.async_listen(
                 self.event.EVENT_DATA_BANK3_RECEIVED, self.push_update
             )
-            _LOGGER.info(f"Serial number sensor {self._attr_name} listening to all bank events")
+            _LOGGER.warning(f"🔍 SERIAL SENSOR - Event listeners registered for {self._attr_name}")
+            _LOGGER.warning(f"🔍 SERIAL SENSOR - Listening to events: {self.event.EVENT_DATA_BANK0_RECEIVED}, {self.event.EVENT_DATA_BANK1_RECEIVED}, {self.event.EVENT_DATA_BANK2_RECEIVED}, {self.event.EVENT_DATA_BANK3_RECEIVED}")
+            _LOGGER.info(f"Serial number sensor {self._attr_name} listening to data events")
+        else:
+            _LOGGER.error(f"🔍 SERIAL SENSOR - hass is None for {self._attr_name}")
 
     def push_update(self, event):
-        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} SERIAL Register: {self._register_address} Name: {self._attr_name}")
+        _LOGGER.warning(f"🔍 SERIAL SENSOR - Event received! Bank: {self._bank} Register: {self._register_address} Name: {self._attr_name}")
         
-        # Get the LXPPacket from the event data
-        lxp_packet = event.data.get("lxp_packet")
-        if lxp_packet and hasattr(lxp_packet, 'serial_number'):
-            serial_number = lxp_packet.serial_number
-            if serial_number and serial_number != b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00":
-                # Convert bytes to string, removing null bytes
-                serial_str = serial_number.decode('utf-8', errors='ignore').rstrip('\x00')
-                if serial_str:
-                    _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Found serial number: '{serial_str}'")
-                    
-                    oldstate = self._attr_native_value
-                    self._attr_native_value = serial_str
-                    
-                    # Save serial number into hass.data for device_info usage
-                    entry_id = None
-                    for e_id, data in self.hass.data.get(DOMAIN, {}).items():
-                        if data.get("DONGLE") == self.dongle:
-                            entry_id = e_id
-                            break
-                    if entry_id is not None:
-                        self.hass.data[DOMAIN].setdefault(entry_id, {})["inverter_serial_number"] = serial_str
-                        _LOGGER.warning(f"🔍 SERIAL SENSOR - Saved serial number '{serial_str}' to hass.data[{DOMAIN}][{entry_id}]")
-                    else:
-                        _LOGGER.warning(f"🔍 SERIAL SENSOR - No entry_id found for dongle {self.dongle}")
-                    
-                    if oldstate != self._attr_native_value or not self._attr_available:
-                        self._attr_available = True
-                        _LOGGER.info(f"Serial number sensor updated: {oldstate} -> {self._attr_native_value}")
-                        self.schedule_update_ha_state()
+        # Get the serial number from the event data
+        serial_str = event.data.get("serial_number", "")
+        _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Received serial_number: '{serial_str}'")
+        _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Event data keys: {list(event.data.keys())}")
+        _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Current sensor value: '{self._attr_native_value}'")
+        _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Event type: {type(event).__name__}")
+        _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Full event data: {event.data}")
+        if serial_str and serial_str.strip() and serial_str != "0000000000":
+            _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Found serial number: '{serial_str}'")
+            
+            oldstate = self._attr_native_value
+            self._attr_native_value = serial_str
+            
+            # Save serial number into hass.data for device_info usage
+            entry_id = None
+            for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    entry_id = e_id
+                    break
+            if entry_id is not None:
+                # Always save serial number to hass.data to ensure persistence
+                current_serial = self.hass.data[DOMAIN].get(entry_id, {}).get("inverter_serial_number")
+                _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Current serial in hass.data: '{current_serial}'")
+                _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - New serial from event: '{serial_str}'")
+                
+                # Save serial number to hass.data (always save to ensure persistence)
+                self.hass.data[DOMAIN].setdefault(entry_id, {})["inverter_serial_number"] = serial_str
+                _LOGGER.warning(f"🔍 SERIAL SENSOR - Saved serial number '{serial_str}' to hass.data[{DOMAIN}][{entry_id}]")
+                
+                # Trigger device info update if serial changed or if not previously set
+                if current_serial != serial_str or not current_serial:
+                    self._update_device_info()
+                else:
+                    _LOGGER.debug(f"🔍 SERIAL SENSOR - Serial number unchanged: '{serial_str}'")
+            else:
+                _LOGGER.warning(f"🔍 SERIAL SENSOR - No entry_id found for dongle {self.dongle}")
+            
+            if oldstate != self._attr_native_value or not self._attr_available:
+                self._attr_available = True
+                _LOGGER.info(f"Serial number sensor updated: {oldstate} -> {self._attr_native_value}")
+                self.schedule_update_ha_state()
         else:
-            _LOGGER.debug(f"Serial number sensor: No LXPPacket or serial_number in event data")
+            _LOGGER.debug(f"Serial number sensor: No valid serial number in event data: '{serial_str}'")
         
         return self._attr_native_value
+
+    def gone_unavailable(self, event):
+        """Handle unavailable event for serial number sensor."""
+        _LOGGER.warning(f"🔍 SERIAL SENSOR - gone_unavailable event received for {self._attr_name}")
+        _LOGGER.warning(f"🔍 SERIAL SENSOR - Current value before unavailable: '{self._attr_native_value}'")
+        # Don't set unavailable - keep the last known serial number
+        # self._attr_available = False
+        # self.schedule_update_ha_state()
+
+    def _update_device_info(self):
+        """Update device info in the device registry."""
+        try:
+            from homeassistant.helpers import device_registry as dr
+            
+            # Get the device registry
+            device_registry = dr.async_get(self.hass)
+            
+            # Find the device by dongle identifier
+            device = device_registry.async_get_device(
+                identifiers={(DOMAIN, self.dongle)}
+            )
+            
+            if device:
+                # Schedule device info update to run in event loop
+                def update_device_info():
+                    try:
+                        device_registry.async_update_device(
+                            device.id,
+                            serial_number=self._attr_native_value
+                        )
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated device serial number to: {self._attr_native_value}")
+                    except Exception as e:
+                        _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
+                
+                # Schedule the update to run in the event loop
+                _LOGGER.warning(f"🔍 SERIAL SENSOR - Scheduling device info update for serial: {self._attr_native_value}")
+                self.hass.loop.call_soon_threadsafe(update_device_info)
+            else:
+                _LOGGER.warning(f"🔍 DEVICE INFO UPDATE - Device not found for dongle: {self.dongle}")
+                    
+        except Exception as e:
+            _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
 
 
 class LuxPowerTestSensor(LuxPowerRegisterSensor):

@@ -273,7 +273,11 @@ class LuxPowerClient(asyncio.Protocol):
                     number_of_registers = int(len(result.get("value", "")) / 2)
                     self._LOGGER.debug("number_of_registers: %s ", number_of_registers)
                     total_data = {"data": result.get("data", {})}
-                    event_data = {"data": result.get("thesedata", {})}
+                    # Extract serial number from LXPPacket for serialization
+                    serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00') if hasattr(self.lxpPacket, 'serial_number') else ""
+                    self._LOGGER.warning(f"🔍 CLIENT DEBUG - Raw serial_number bytes: {getattr(self.lxpPacket, 'serial_number', b'')}")
+                    self._LOGGER.warning(f"🔍 CLIENT DEBUG - Decoded serial_number: '{serial_number}'")
+                    event_data = {"data": result.get("thesedata", {}), "serial_number": serial_number}
                     self._LOGGER.debug("EVENT DATA: %s ", event_data)
 
                     # Decode Standard Block Registers
@@ -408,7 +412,11 @@ class LuxPowerClient(asyncio.Protocol):
                         )
 
                     total_data = {"registers": result.get("registers", {})}
-                    event_data = {"registers": result.get("thesereg", {})}
+                    # Extract serial number from LXPPacket for serialization
+                    serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00') if hasattr(self.lxpPacket, 'serial_number') else ""
+                    self._LOGGER.warning(f"🔍 CLIENT REGISTER DEBUG - Raw serial_number bytes: {getattr(self.lxpPacket, 'serial_number', b'')}")
+                    self._LOGGER.warning(f"🔍 CLIENT REGISTER DEBUG - Decoded serial_number: '{serial_number}'")
+                    event_data = {"registers": result.get("thesereg", {}), "serial_number": serial_number}
                     self._LOGGER.debug("EVENT REGISTER: %s ", event_data)
                     if self.lxpPacket.register >= 160 and self._warn_registers:
                         self._LOGGER.warning("REGISTERS: %s ", total_data)
