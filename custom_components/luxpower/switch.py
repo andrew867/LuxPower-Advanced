@@ -108,6 +108,24 @@ async def async_setup_entry(
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Inverter Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Smart load control enable
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator quick start control
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Backup Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Battery backup mode control
+
+        # Generator Integration Control Switches (Phase 3)
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator auto start enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Priority", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator charge priority
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator dry contact control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Cooldown Timer", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator cooldown timer
+        
+        # Battery Management Control Switches (Phase 6)
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Battery protection enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Equalization enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Temperature Compensation Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Temperature compensation enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Aging Compensation Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Aging compensation enable
+        
+        # Grid Management Control Switches (Phase 7)
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Zero Export Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Zero export mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Reactive power control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Voltage Support Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Voltage support mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Dynamic Export Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Dynamic export control
     ]
 
     for entity_definition in switches:

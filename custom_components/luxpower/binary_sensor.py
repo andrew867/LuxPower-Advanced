@@ -97,6 +97,30 @@ async def async_setup_entry(
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Master", "unique": "lux_parallel_master", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Slave", "unique": "lux_parallel_slave", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Sync", "unique": "lux_parallel_sync", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Active", "unique": "lux_parallel_system_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Communication Error", "unique": "lux_parallel_comm_error", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        
+        # Generator Integration Binary Sensors
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Running", "unique": "lux_generator_running", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start", "unique": "lux_generator_auto_start", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "unique": "lux_generator_quick_start", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact", "unique": "lux_generator_dry_contact", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Fault", "unique": "lux_generator_fault", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Low Fuel", "unique": "lux_generator_low_fuel", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        
+        # Battery Management Binary Sensors
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Over Temperature", "unique": "lux_battery_over_temp", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.HEAT, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Under Temperature", "unique": "lux_battery_under_temp", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.COLD, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Cell Imbalance", "unique": "lux_cell_imbalance", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Equalization Active", "unique": "lux_equalization_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Active", "unique": "lux_battery_protection_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        
+        # Grid Management Binary Sensors
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Export Limited", "unique": "lux_grid_export_limited", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Zero Export Active", "unique": "lux_zero_export_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control Active", "unique": "lux_reactive_power_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Fault Detected", "unique": "lux_grid_fault_detected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Anti Islanding Active", "unique": "lux_anti_islanding_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
     ]
 
     for entity_definition in binary_sensors:
