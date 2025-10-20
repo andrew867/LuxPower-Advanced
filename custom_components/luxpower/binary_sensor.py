@@ -121,6 +121,24 @@ async def async_setup_entry(
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control Active", "unique": "lux_reactive_power_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Fault Detected", "unique": "lux_grid_fault_detected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Anti Islanding Active", "unique": "lux_anti_islanding_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        
+        # Enhanced Peak Shaving Binary Sensors (Phase 5B)
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Active", "unique": "lux_peak_shaving_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Schedule Active", "unique": "lux_peak_schedule_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 15 Active", "unique": "lux_peak_bit_15_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 14 Active", "unique": "lux_peak_bit_14_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 12 Active", "unique": "lux_peak_bit_12_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 8 Active", "unique": "lux_peak_bit_8_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 7 Active", "unique": "lux_peak_bit_7_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 6 Active", "unique": "lux_peak_bit_6_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        
+        # UI Enhancements & Diagnostic Binary Sensors (Phase 8)
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Communication Healthy", "unique": "lux_comm_healthy", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Data Stale", "unique": "lux_data_stale", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} High Packet Loss", "unique": "lux_high_packet_loss", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Low Efficiency", "unique": "lux_low_efficiency", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} High Energy Cost", "unique": "lux_high_energy_cost", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} System Optimized", "unique": "lux_system_optimized", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
     ]
 
     for entity_definition in binary_sensors:

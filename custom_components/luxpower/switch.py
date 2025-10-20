@@ -104,10 +104,36 @@ async def async_setup_entry(
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Alt", "register_address": 110, "bitmask": LXPPacket.FORCED_DISCHG_EN_ALT, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable Alt", "register_address": 110, "bitmask": LXPPacket.DRMS_ENABLE_ALT, "enabled": False},
         
-        # 12K-Specific Control Switches (Based on Cloud UI Analysis)
+        # 12K-Specific Control Switches (Based on Cloud UI Analysis) - UPDATED FROM CLOUD UI
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Inverter Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Smart load control enable
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator quick start control
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Backup Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Battery backup mode control
+
+        # Enhanced Peak Shaving Analysis Control Switches
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 1", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_00, "enabled": False},  # Peak shaving mode 1
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 2", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_01, "enabled": False},  # Peak shaving mode 2
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 3", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_02, "enabled": False},  # Peak shaving mode 3
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 4", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_03, "enabled": False},  # Peak shaving mode 4
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 5", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_04, "enabled": False},  # Peak shaving mode 5
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 6", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_05, "enabled": False},  # Peak shaving mode 6
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 7", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_06, "enabled": False},  # Peak shaving mode 7
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 8", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_07, "enabled": False},  # Peak shaving mode 8
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 9", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "enabled": False},  # Peak shaving mode 9
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 10", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_09, "enabled": False},  # Peak shaving mode 10
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 11", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_10, "enabled": False},  # Peak shaving mode 11
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 12", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_11, "enabled": False},  # Peak shaving mode 12
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 13", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_12, "enabled": False},  # Peak shaving mode 13
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 14", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_13, "enabled": False},  # Peak shaving mode 14
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 15", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_14, "enabled": False},  # Peak shaving mode 15
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 16", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_15, "enabled": False},  # Peak shaving mode 16
+
+        # UI Enhancements Control Switches
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Auto Configuration Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Auto configuration mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Diagnostic Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Diagnostic mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Performance Monitoring", "register_address": 0, "bitmask": 0, "enabled": False},  # Performance monitoring
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Energy Dashboard Integration", "register_address": 0, "bitmask": 0, "enabled": False},  # Energy dashboard integration
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Cost Tracking", "register_address": 0, "bitmask": 0, "enabled": False},  # Cost tracking
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Environmental Impact Tracking", "register_address": 0, "bitmask": 0, "enabled": False},  # Environmental impact tracking
 
         # Generator Integration Control Switches (Phase 3)
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator auto start enable

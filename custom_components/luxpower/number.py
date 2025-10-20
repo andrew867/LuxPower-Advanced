@@ -179,7 +179,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         # Register 176: Max system power in kW (0-90kW range, 0.1kW steps)
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K (kW)", "register_address": 176, "def_val": 24.0, "min_val": 0, "max_val": 90, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},
         
-        # 12K Smart Load Control (Registers 181-186)
+        # 12K Smart Load Control (Registers 181-186) - UPDATED FROM CLOUD UI
         # Advanced load management for 12K models - controls when to start/stop smart loads based on SOC/voltage
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC(%)", "register_address": 181, "def_val": 50.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-up", "enabled": False},  # SOC threshold to start smart load
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC(%)", "register_address": 182, "def_val": 20.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-down", "enabled": False},  # SOC threshold to stop smart load
@@ -188,7 +188,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load SOC Hysteresis(%)", "register_address": 185, "def_val": 5.0, "min_val": 0, "max_val": 20, "icon": "mdi:sine-wave", "enabled": False},  # SOC hysteresis to prevent oscillation
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Volt Hysteresis", "register_address": 186, "def_val": 1.0, "min_val": 0, "max_val": 5.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Voltage hysteresis to prevent oscillation
         
-        # 12K Enhanced AC Coupling (Registers 187-192)
+        # 12K Enhanced AC Coupling (Registers 187-192) - UPDATED FROM CLOUD UI
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC 12K(%)", "register_address": 187, "def_val": 90.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-charging-90", "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC 12K(%)", "register_address": 188, "def_val": 100.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-charging-100", "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage 12K", "register_address": 189, "def_val": 54.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
@@ -219,6 +219,26 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Power Factor Setpoint", "register_address": 0, "def_val": 1.0, "min_val": 0.8, "max_val": 1.0, "step": 0.01, "icon": "mdi:sine-wave", "enabled": False},  # Power factor setpoint
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Anti Islanding Sensitivity", "register_address": 0, "def_val": 5.0, "min_val": 1.0, "max_val": 10.0, "step": 0.1, "icon": "mdi:shield", "enabled": False},  # Anti-islanding sensitivity
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Grid Reconnection Delay (s)", "register_address": 0, "def_val": 60.0, "min_val": 10.0, "max_val": 300.0, "step": 5.0, "icon": "mdi:timer", "enabled": False},  # Grid reconnection delay in seconds
+
+        # Enhanced Peak Shaving Analysis Number Entities (Phase 5B)
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 1 (kW)", "register_address": 0, "def_val": 5.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 1
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 2 (kW)", "register_address": 0, "def_val": 10.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 2
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 3 (kW)", "register_address": 0, "def_val": 15.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 3
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 4 (kW)", "register_address": 0, "def_val": 20.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 4
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 5 (kW)", "register_address": 0, "def_val": 25.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 5
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 6 (kW)", "register_address": 0, "def_val": 30.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 6
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 7 (kW)", "register_address": 0, "def_val": 35.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 7
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 8 (kW)", "register_address": 0, "def_val": 40.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 8
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 9 (kW)", "register_address": 0, "def_val": 45.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 9
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 10 (kW)", "register_address": 0, "def_val": 50.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 10
+
+        # UI Enhancements Number Entities (Phase 8)
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Configuration Template ID", "register_address": 0, "def_val": 1, "min_val": 1, "max_val": 10, "icon": "mdi:format-list-numbered", "enabled": False},  # Configuration template ID
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Diagnostic Test Duration (s)", "register_address": 0, "def_val": 30, "min_val": 5, "max_val": 300, "icon": "mdi:timer", "enabled": False},  # Diagnostic test duration in seconds
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Performance Monitoring Interval (min)", "register_address": 0, "def_val": 5, "min_val": 1, "max_val": 60, "icon": "mdi:clock-outline", "enabled": False},  # Performance monitoring interval in minutes
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Energy Dashboard Refresh Rate (s)", "register_address": 0, "def_val": 30, "min_val": 10, "max_val": 300, "icon": "mdi:refresh", "enabled": False},  # Energy dashboard refresh rate in seconds
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Cost Tracking Rate ($/kWh)", "register_address": 0, "def_val": 0.12, "min_val": 0.0, "max_val": 1.0, "step": 0.01, "device_class": NumberDeviceClass.MONETARY, "unit_of_measurement": "USD/kWh", "enabled": False},  # Cost tracking rate in USD/kWh
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} CO2 Emission Factor (kg/kWh)", "register_address": 0, "def_val": 0.4, "min_val": 0.0, "max_val": 2.0, "step": 0.01, "device_class": NumberDeviceClass.WEIGHT, "unit_of_measurement": "kg/kWh", "enabled": False},  # CO2 emission factor in kg/kWh
     ]
 
     for entity_definition in numbers:

@@ -267,41 +267,61 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Config R179", "unique": "lux_peak_shave_r179", "bank": 4, "register": 179, "enabled": False},  # Peak shaving control flags (53504 = 0xD100 in SNA-12K-US)
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Power Limit R180", "unique": "lux_power_limit_r180", "bank": 4, "register": 180, "enabled": False},  # Power limit setting (150 = 1.5kW in SNA-12K-US)
         
-        # Additional 12K Features from Cloud UI Analysis
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Power", "unique": "lux_smart_load_power", "bank": 0, "register": 0, "enabled": False},  # Smart load power (calculated from cloud UI)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} EPS Load Power", "unique": "lux_eps_load_power", "bank": 0, "register": 0, "enabled": False},  # EPS load power (calculated from cloud UI)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Load Power", "unique": "lux_grid_load_power", "bank": 0, "register": 0, "enabled": False},  # Grid load power (calculated from cloud UI)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact", "unique": "lux_gen_dry_contact", "bank": 0, "register": 0, "enabled": False},  # Generator dry contact status
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start Available", "unique": "lux_gen_quick_start", "bank": 0, "register": 0, "enabled": False},  # Generator quick start availability
+        # Additional 12K Features from Cloud UI Analysis (Updated with actual register mappings)
+        # Smart Load Control (12K-specific registers 181-186)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC", "unique": "lux_smart_load_start_soc", "bank": 4, "register": 181, "enabled": False},  # Smart load start SOC threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC", "unique": "lux_smart_load_end_soc", "bank": 4, "register": 182, "enabled": False},  # Smart load end SOC threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start Voltage", "unique": "lux_smart_load_start_volt", "bank": 4, "register": 183, "enabled": False},  # Smart load start voltage threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End Voltage", "unique": "lux_smart_load_end_volt", "bank": 4, "register": 184, "enabled": False},  # Smart load end voltage threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load SOC Hysteresis", "unique": "lux_smart_load_soc_hysteresis", "bank": 4, "register": 185, "enabled": False},  # Smart load SOC hysteresis
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Voltage Hysteresis", "unique": "lux_smart_load_volt_hysteresis", "bank": 4, "register": 186, "enabled": False},  # Smart load voltage hysteresis
+        
+        # Enhanced Peak Shaving (12K-specific registers 206-208)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit", "unique": "lux_peak_shaving_power", "bank": 4, "register": 206, "enabled": False},  # Peak shaving power limit
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving SOC", "unique": "lux_peak_shaving_soc", "bank": 4, "register": 207, "enabled": False},  # Peak shaving SOC threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Voltage", "unique": "lux_peak_shaving_volt", "bank": 4, "register": 208, "enabled": False},  # Peak shaving voltage threshold
+        
+        # AC Coupling (12K-specific registers 220-223)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC", "unique": "lux_ac_couple_start_soc", "bank": 4, "register": 220, "enabled": False},  # AC couple start SOC
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC", "unique": "lux_ac_couple_end_soc", "bank": 4, "register": 221, "enabled": False},  # AC couple end SOC
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage", "unique": "lux_ac_couple_start_volt", "bank": 4, "register": 222, "enabled": False},  # AC couple start voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage", "unique": "lux_ac_couple_end_volt", "bank": 4, "register": 223, "enabled": False},  # AC couple end voltage
+        
+        # Generator Integration (12K-specific registers 194-198)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Voltage", "unique": "lux_gen_chg_start_volt", "bank": 4, "register": 194, "enabled": False},  # Generator charge start voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Voltage", "unique": "lux_gen_chg_end_volt", "bank": 4, "register": 195, "enabled": False},  # Generator charge end voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start SOC", "unique": "lux_gen_chg_start_soc", "bank": 4, "register": 196, "enabled": False},  # Generator charge start SOC
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End SOC", "unique": "lux_gen_chg_end_soc", "bank": 4, "register": 197, "enabled": False},  # Generator charge end SOC
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Charge Current", "unique": "lux_max_gen_chg_current", "bank": 4, "register": 198, "enabled": False},  # Max generator charge current
 
         # Enhanced Diagnostics & System Status (Phase 1A-B)
         # Fault Code & Warning System
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 0, "register": 0, "enabled": False},  # Current fault code (register TBD)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 0, "register": 0, "enabled": False},  # Current warning code (register TBD)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Status Code", "unique": "lux_system_status", "bank": 0, "register": 0, "enabled": False},  # System status code (register TBD)
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 0, "register": 0, "enabled": False},  # Current fault code (register TBD) - COMMENTED: register 0 invalid
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 0, "register": 0, "enabled": False},  # Current warning code (register TBD) - COMMENTED: register 0 invalid
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Status Code", "unique": "lux_system_status", "bank": 0, "register": 0, "enabled": False},  # System status code (register TBD) - COMMENTED: register 0 invalid
         
-        # Power Flow Sensors (calculated from existing power values)
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Battery Power", "unique": "lux_pv_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV charging battery
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Load Power", "unique": "lux_pv_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV directly powering loads
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Grid Power", "unique": "lux_pv_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV exporting to grid
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Load Power", "unique": "lux_battery_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery discharging to loads
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Grid Power", "unique": "lux_battery_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery exporting to grid
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Battery Power", "unique": "lux_grid_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid charging battery
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Load Power", "unique": "lux_grid_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid powering loads
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Battery Power", "unique": "lux_generator_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator charging
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Load Power", "unique": "lux_generator_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator powering loads
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Battery Power", "unique": "lux_ac_couple_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to battery
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Grid Power", "unique": "lux_ac_couple_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to grid
+        # Power Flow Sensors (calculated from existing power values) - COMMENTED: register 0 invalid
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Battery Power", "unique": "lux_pv_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV charging battery
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Load Power", "unique": "lux_pv_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV directly powering loads
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Grid Power", "unique": "lux_pv_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV exporting to grid
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Load Power", "unique": "lux_battery_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery discharging to loads
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Grid Power", "unique": "lux_battery_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery exporting to grid
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Battery Power", "unique": "lux_grid_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid charging battery
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Load Power", "unique": "lux_grid_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid powering loads
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Battery Power", "unique": "lux_generator_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator charging
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Load Power", "unique": "lux_generator_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator powering loads
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Battery Power", "unique": "lux_ac_couple_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to battery
+        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Grid Power", "unique": "lux_ac_couple_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to grid
         
-        # Battery Management System (BMS) Integration
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Status", "unique": "lux_bms_status", "bank": 0, "register": 0, "enabled": False},  # BMS communication status
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Fault Code", "unique": "lux_bms_fault", "bank": 0, "register": 0, "enabled": False},  # BMS fault code
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Health %", "unique": "lux_battery_health", "bank": 0, "register": 0, "enabled": False},  # Battery health percentage
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Cycle Count", "unique": "lux_battery_cycles", "bank": 0, "register": 0, "enabled": False},  # Battery cycle count
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Max", "unique": "lux_cell_voltage_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell voltage
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Min", "unique": "lux_cell_voltage_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell voltage
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Max", "unique": "lux_cell_temp_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell temperature
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Min", "unique": "lux_cell_temp_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell temperature
+        # Battery Management System (BMS) Integration - COMMENTED: register 0 invalid
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Status", "unique": "lux_bms_status", "bank": 0, "register": 0, "enabled": False},  # BMS communication status
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Fault Code", "unique": "lux_bms_fault", "bank": 0, "register": 0, "enabled": False},  # BMS fault code
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Health %", "unique": "lux_battery_health", "bank": 0, "register": 0, "enabled": False},  # Battery health percentage
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Cycle Count", "unique": "lux_battery_cycles", "bank": 0, "register": 0, "enabled": False},  # Battery cycle count
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Max", "unique": "lux_cell_voltage_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell voltage
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Min", "unique": "lux_cell_voltage_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell voltage
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Max", "unique": "lux_cell_temp_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell temperature
+        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Min", "unique": "lux_cell_temp_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell temperature
         
         # Inverter Health Metrics
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Transformer Temperature", "unique": "lux_transformer_temp", "bank": 0, "register": 0, "enabled": False},  # Transformer temperature
@@ -382,6 +402,104 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Voltage Ride Through", "unique": "lux_voltage_ride_through", "bank": 0, "register": 0, "enabled": False},  # Voltage ride-through settings
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Frequency Ride Through", "unique": "lux_frequency_ride_through", "bank": 0, "register": 0, "enabled": False},  # Frequency ride-through settings
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Fault Detection", "unique": "lux_grid_fault_detection", "bank": 0, "register": 0, "enabled": False},  # Grid fault detection sensitivity
+
+        # Enhanced Peak Shaving Analysis (Phase 5B)
+        # Register 179 Bit Analysis (0xD100 = 53504 in SNA-12K-US)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 15", "unique": "lux_peak_shave_bit_15", "bank": 4, "register": 179, "enabled": False},  # Bit 15 (32768) - ON in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 14", "unique": "lux_peak_shave_bit_14", "bank": 4, "register": 179, "enabled": False},  # Bit 14 (16384) - ON in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 13", "unique": "lux_peak_shave_bit_13", "bank": 4, "register": 179, "enabled": False},  # Bit 13 (8192) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 12", "unique": "lux_peak_shave_bit_12", "bank": 4, "register": 179, "enabled": False},  # Bit 12 (4096) - ON in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 11", "unique": "lux_peak_shave_bit_11", "bank": 4, "register": 179, "enabled": False},  # Bit 11 (2048) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 10", "unique": "lux_peak_shave_bit_10", "bank": 4, "register": 179, "enabled": False},  # Bit 10 (1024) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 9", "unique": "lux_peak_shave_bit_9", "bank": 4, "register": 179, "enabled": False},  # Bit 9 (512) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 8", "unique": "lux_peak_shave_bit_8", "bank": 4, "register": 179, "enabled": False},  # Bit 8 (256) - ON in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 7", "unique": "lux_peak_shave_bit_7", "bank": 4, "register": 179, "enabled": False},  # Bit 7 (128) - ENABLE_PEAK_SHAVING
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 6", "unique": "lux_peak_shave_bit_6", "bank": 4, "register": 179, "enabled": False},  # Bit 6 (64) - ON in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 5", "unique": "lux_peak_shave_bit_5", "bank": 4, "register": 179, "enabled": False},  # Bit 5 (32) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 4", "unique": "lux_peak_shave_bit_4", "bank": 4, "register": 179, "enabled": False},  # Bit 4 (16) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 3", "unique": "lux_peak_shave_bit_3", "bank": 4, "register": 179, "enabled": False},  # Bit 3 (8) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 2", "unique": "lux_peak_shave_bit_2", "bank": 4, "register": 179, "enabled": False},  # Bit 2 (4) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 1", "unique": "lux_peak_shave_bit_1", "bank": 4, "register": 179, "enabled": False},  # Bit 1 (2) - OFF in SNA-12K-US
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 0", "unique": "lux_peak_shave_bit_0", "bank": 4, "register": 179, "enabled": False},  # Bit 0 (1) - OFF in SNA-12K-US
+        
+        # Time-of-Use Peak Shaving Schedule
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Schedule Active", "unique": "lux_peak_schedule_active", "bank": 0, "register": 0, "enabled": False},  # Peak shaving schedule status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Start Time", "unique": "lux_peak_start_time", "bank": 0, "register": 0, "enabled": False},  # Peak shaving start time
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving End Time", "unique": "lux_peak_end_time", "bank": 0, "register": 0, "enabled": False},  # Peak shaving end time
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Days", "unique": "lux_peak_shaving_days", "bank": 0, "register": 0, "enabled": False},  # Days of week for peak shaving
+
+        # UI Enhancements & Diagnostic Tools (Phase 8)
+        # Communication Quality Metrics
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Communication Quality", "unique": "lux_comm_quality", "bank": 0, "register": 0, "enabled": False},  # Communication quality percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Data Refresh Rate", "unique": "lux_data_refresh_rate", "bank": 0, "register": 0, "enabled": False},  # Data refresh rate in Hz
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Packet Loss Rate", "unique": "lux_packet_loss_rate", "bank": 0, "register": 0, "enabled": False},  # Packet loss rate percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Connection Uptime", "unique": "lux_connection_uptime", "bank": 0, "register": 0, "enabled": False},  # Connection uptime in hours
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Last Data Update", "unique": "lux_last_data_update", "bank": 0, "register": 0, "enabled": False},  # Timestamp of last data update
+        
+        # Performance Metrics
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Efficiency", "unique": "lux_system_efficiency", "bank": 0, "register": 0, "enabled": False},  # Overall system efficiency percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} PV Efficiency", "unique": "lux_pv_efficiency", "bank": 0, "register": 0, "enabled": False},  # PV system efficiency percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Efficiency", "unique": "lux_battery_efficiency", "bank": 0, "register": 0, "enabled": False},  # Battery round-trip efficiency percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Inverter Efficiency", "unique": "lux_inverter_efficiency", "bank": 0, "register": 0, "enabled": False},  # Inverter conversion efficiency percentage
+        
+        # Energy Statistics
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Daily Energy Generated", "unique": "lux_daily_energy_generated", "bank": 0, "register": 0, "enabled": False},  # Daily PV energy generation
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Daily Energy Consumed", "unique": "lux_daily_energy_consumed", "bank": 0, "register": 0, "enabled": False},  # Daily energy consumption
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Daily Energy Exported", "unique": "lux_daily_energy_exported", "bank": 0, "register": 0, "enabled": False},  # Daily energy exported to grid
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Daily Energy Imported", "unique": "lux_daily_energy_imported", "bank": 0, "register": 0, "enabled": False},  # Daily energy imported from grid
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Self Consumption Rate", "unique": "lux_self_consumption_rate", "bank": 0, "register": 0, "enabled": False},  # Self-consumption rate percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Autonomy Rate", "unique": "lux_autonomy_rate", "bank": 0, "register": 0, "enabled": False},  # Energy autonomy rate percentage
+        
+        # Cost Tracking
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Daily Grid Cost", "unique": "lux_daily_grid_cost", "bank": 0, "register": 0, "enabled": False},  # Daily cost of grid energy
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Daily Export Revenue", "unique": "lux_daily_export_revenue", "bank": 0, "register": 0, "enabled": False},  # Daily revenue from energy export
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Daily Net Cost", "unique": "lux_daily_net_cost", "bank": 0, "register": 0, "enabled": False},  # Daily net energy cost (import - export)
+        
+        # Environmental Impact
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} CO2 Saved Today", "unique": "lux_co2_saved_today", "bank": 0, "register": 0, "enabled": False},  # CO2 emissions saved today
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} CO2 Saved Total", "unique": "lux_co2_saved_total", "bank": 0, "register": 0, "enabled": False},  # Total CO2 emissions saved
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Environmental Impact", "unique": "lux_environmental_impact", "bank": 0, "register": 0, "enabled": False},  # Environmental impact score
+
+        # Firmware Management Sensors (Direct Modbus Only - No Cloud Dependency)
+        # These sensors read firmware information directly from inverter registers
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Firmware Version PCS", "unique": "lux_firmware_version_pcs", "bank": 0, "register": 0, "enabled": False},  # PCS firmware version (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Firmware Version BMS", "unique": "lux_firmware_version_bms", "bank": 0, "register": 0, "enabled": False},  # BMS firmware version (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Firmware Version EXT4", "unique": "lux_firmware_version_ext4", "bank": 0, "register": 0, "enabled": False},  # EXT4 firmware version (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Firmware Update Status", "unique": "lux_firmware_update_status", "bank": 0, "register": 0, "enabled": False},  # Firmware update status (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Firmware Update Progress", "unique": "lux_firmware_update_progress", "bank": 0, "register": 0, "enabled": False},  # Firmware update progress percentage (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Firmware Update Error", "unique": "lux_firmware_update_error", "bank": 0, "register": 0, "enabled": False},  # Firmware update error message (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Last Firmware Update", "unique": "lux_last_firmware_update", "bank": 0, "register": 0, "enabled": False},  # Last firmware update timestamp (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Available Firmware Updates", "unique": "lux_available_firmware_updates", "bank": 0, "register": 0, "enabled": False},  # Number of available firmware updates (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Firmware Update Mode", "unique": "lux_firmware_update_mode", "bank": 0, "register": 0, "enabled": False},  # Update mode (fast/normal) (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Firmware Update Type", "unique": "lux_firmware_update_type", "bank": 0, "register": 0, "enabled": False},  # Update type (remote/standard) (from inverter register)
+
+        # 12K Parallel System Sensors (Based on Cloud UI Analysis)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Status", "unique": "lux_parallel_system_status", "bank": 0, "register": 0, "enabled": False},  # Parallel system status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Count", "unique": "lux_parallel_system_count", "bank": 0, "register": 0, "enabled": False},  # Number of parallel units
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Role", "unique": "lux_parallel_system_role", "bank": 0, "register": 0, "enabled": False},  # Master/Slave role
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Sync", "unique": "lux_parallel_system_sync", "bank": 0, "register": 0, "enabled": False},  # Parallel system synchronization status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Communication", "unique": "lux_parallel_system_comm", "bank": 0, "register": 0, "enabled": False},  # Parallel system communication status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Load Distribution", "unique": "lux_parallel_system_load_dist", "bank": 0, "register": 0, "enabled": False},  # Load distribution across parallel units
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Phase Sync", "unique": "lux_parallel_system_phase_sync", "bank": 0, "register": 0, "enabled": False},  # Phase synchronization quality
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Fault Code", "unique": "lux_parallel_system_fault_code", "bank": 0, "register": 0, "enabled": False},  # Parallel system fault code
+
+        # Battery Firmware Management Sensors (Direct Modbus Only - No Cloud Dependency)
+        # These sensors read battery firmware information directly from inverter registers
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Type", "unique": "lux_battery_firmware_type", "bank": 0, "register": 0, "enabled": False},  # Current battery firmware type (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Version", "unique": "lux_battery_firmware_version", "bank": 0, "register": 0, "enabled": False},  # Current battery firmware version (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Update Status", "unique": "lux_battery_firmware_update_status", "bank": 0, "register": 0, "enabled": False},  # Battery firmware update status (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Update Progress", "unique": "lux_battery_firmware_update_progress", "bank": 0, "register": 0, "enabled": False},  # Battery firmware update progress percentage (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Update Error", "unique": "lux_battery_firmware_update_error", "bank": 0, "register": 0, "enabled": False},  # Battery firmware update error message (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Last Battery Firmware Update", "unique": "lux_last_battery_firmware_update", "bank": 0, "register": 0, "enabled": False},  # Last battery firmware update timestamp (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Available Battery Firmware Updates", "unique": "lux_available_battery_firmware_updates", "bank": 0, "register": 0, "enabled": False},  # Number of available battery firmware updates (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Compatibility", "unique": "lux_battery_firmware_compatibility", "bank": 0, "register": 0, "enabled": False},  # Battery firmware compatibility status (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Manufacturer", "unique": "lux_battery_manufacturer", "bank": 0, "register": 0, "enabled": False},  # Battery manufacturer (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Chemistry", "unique": "lux_battery_chemistry", "bank": 0, "register": 0, "enabled": False},  # Battery chemistry type (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Regional Variant", "unique": "lux_battery_regional_variant", "bank": 0, "register": 0, "enabled": False},  # Regional battery firmware variant (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Checksum", "unique": "lux_battery_firmware_checksum", "bank": 0, "register": 0, "enabled": False},  # Battery firmware checksum (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Upload Time", "unique": "lux_battery_firmware_upload_time", "bank": 0, "register": 0, "enabled": False},  # Battery firmware upload timestamp (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware File Size", "unique": "lux_battery_firmware_file_size", "bank": 0, "register": 0, "enabled": False},  # Battery firmware file size (from inverter register)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Firmware Validation", "unique": "lux_battery_firmware_validation", "bank": 0, "register": 0, "enabled": False},  # Battery firmware validation status (from inverter register)
 
     ]
 
