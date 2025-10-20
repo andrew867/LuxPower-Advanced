@@ -144,7 +144,6 @@ class ServiceHelper:
                 f"Starting charging in slot {charge_slot} for {duration_minutes} minutes ({duration_minutes/60:.1f} hours) until {end_time}"
             )
 
-            try:
             # Enable AC charging first
             current_reg21 = await luxpower_client.read(21)
             if current_reg21 is not None:

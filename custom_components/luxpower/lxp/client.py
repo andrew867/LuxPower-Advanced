@@ -110,14 +110,15 @@ class LuxPowerClient(asyncio.Protocol):
                     
             except (ConnectionError, OSError, asyncio.TimeoutError) as err:
                 self._LOGGER.warning(f"Connection attempt {attempt + 1} failed: {err}")
-            except Exception as err:
-                self._LOGGER.error(f"Unexpected error during connection attempt {attempt + 1}: {err}")
-                break  # Don't retry on unexpected errors
                 
                 if attempt < max_attempts - 1:  # Don't wait after last attempt
                     wait_time = min(self._retry_delay * (2 ** attempt), self._max_retry_delay)
                     self._LOGGER.info(f"Waiting {wait_time} seconds before retry...")
                     await asyncio.sleep(wait_time)
+                    
+            except Exception as err:
+                self._LOGGER.error(f"Unexpected error during connection attempt {attempt + 1}: {err}")
+                break  # Don't retry on unexpected errors
                     
         self._LOGGER.error(f"All {max_attempts} connection attempts failed")
         return False

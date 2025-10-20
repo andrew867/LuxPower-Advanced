@@ -19,6 +19,7 @@ from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfPower,
+    UnitOfTemperature,
 )
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import slugify
