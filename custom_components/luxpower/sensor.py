@@ -270,37 +270,37 @@ async def async_setup_entry(
         # 12K-Specific Advanced Features (CFAA, CEAA, FAAB)
         # These features are available on 12K models but gracefully handled on other models
         # Smart Load Control (12K-specific registers 181-186)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC", "unique": "lux_smart_load_start_soc", "bank": 4, "register": 181, "enabled": False},  # Smart load start SOC threshold
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC", "unique": "lux_smart_load_end_soc", "bank": 4, "register": 182, "enabled": False},  # Smart load end SOC threshold
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start Voltage", "unique": "lux_smart_load_start_volt", "bank": 4, "register": 183, "enabled": False},  # Smart load start voltage threshold
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End Voltage", "unique": "lux_smart_load_end_volt", "bank": 4, "register": 184, "enabled": False},  # Smart load end voltage threshold
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load SOC Hysteresis", "unique": "lux_smart_load_soc_hysteresis", "bank": 4, "register": 185, "enabled": False},  # Smart load SOC hysteresis
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Voltage Hysteresis", "unique": "lux_smart_load_volt_hysteresis", "bank": 4, "register": 186, "enabled": False},  # Smart load voltage hysteresis
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC", "unique": "lux_smart_load_start_soc", "bank": 4, "register": 181, "attribute": "smart_load_start_soc", "enabled": False},  # Smart load start SOC threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC", "unique": "lux_smart_load_end_soc", "bank": 4, "register": 182, "attribute": "smart_load_end_soc", "enabled": False},  # Smart load end SOC threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start Voltage", "unique": "lux_smart_load_start_volt", "bank": 4, "register": 183, "attribute": "smart_load_start_volt", "enabled": False},  # Smart load start voltage threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End Voltage", "unique": "lux_smart_load_end_volt", "bank": 4, "register": 184, "attribute": "smart_load_end_volt", "enabled": False},  # Smart load end voltage threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load SOC Hysteresis", "unique": "lux_smart_load_soc_hysteresis", "bank": 4, "register": 185, "attribute": "smart_load_soc_hysteresis", "enabled": False},  # Smart load SOC hysteresis
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Voltage Hysteresis", "unique": "lux_smart_load_volt_hysteresis", "bank": 4, "register": 186, "attribute": "smart_load_volt_hysteresis", "enabled": False},  # Smart load voltage hysteresis
         
         # Enhanced Peak Shaving (12K-specific registers 206-208)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit", "unique": "lux_peak_shaving_power", "bank": 4, "register": 206, "enabled": False},  # Peak shaving power limit
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving SOC", "unique": "lux_peak_shaving_soc", "bank": 4, "register": 207, "enabled": False},  # Peak shaving SOC threshold
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Voltage", "unique": "lux_peak_shaving_volt", "bank": 4, "register": 208, "enabled": False},  # Peak shaving voltage threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit", "unique": "lux_peak_shaving_power", "bank": 4, "register": 206, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving power limit
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving SOC", "unique": "lux_peak_shaving_soc", "bank": 4, "register": 207, "attribute": "peak_shaving_soc", "enabled": False},  # Peak shaving SOC threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Voltage", "unique": "lux_peak_shaving_volt", "bank": 4, "register": 208, "attribute": "peak_shaving_volt", "enabled": False},  # Peak shaving voltage threshold
 
         # AC Coupling (12K-specific registers 220-223)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC", "unique": "lux_ac_couple_start_soc", "bank": 4, "register": 220, "enabled": False},  # AC couple start SOC
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC", "unique": "lux_ac_couple_end_soc", "bank": 4, "register": 221, "enabled": False},  # AC couple end SOC
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage", "unique": "lux_ac_couple_start_volt", "bank": 4, "register": 222, "enabled": False},  # AC couple start voltage
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage", "unique": "lux_ac_couple_end_volt", "bank": 4, "register": 223, "enabled": False},  # AC couple end voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC", "unique": "lux_ac_couple_start_soc", "bank": 4, "register": 220, "attribute": "ac_couple_start_soc", "enabled": False},  # AC couple start SOC
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC", "unique": "lux_ac_couple_end_soc", "bank": 4, "register": 221, "attribute": "ac_couple_end_soc", "enabled": False},  # AC couple end SOC
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage", "unique": "lux_ac_couple_start_volt", "bank": 4, "register": 222, "attribute": "ac_couple_start_volt", "enabled": False},  # AC couple start voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage", "unique": "lux_ac_couple_end_volt", "bank": 4, "register": 223, "attribute": "ac_couple_end_volt", "enabled": False},  # AC couple end voltage
 
         # Generator Integration (12K-specific registers 194-198)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Voltage", "unique": "lux_gen_chg_start_volt", "bank": 4, "register": 194, "enabled": False},  # Generator charge start voltage
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Voltage", "unique": "lux_gen_chg_end_volt", "bank": 4, "register": 195, "enabled": False},  # Generator charge end voltage
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start SOC", "unique": "lux_gen_chg_start_soc", "bank": 4, "register": 196, "enabled": False},  # Generator charge start SOC
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End SOC", "unique": "lux_gen_chg_end_soc", "bank": 4, "register": 197, "enabled": False},  # Generator charge end SOC
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Charge Current", "unique": "lux_max_gen_chg_current", "bank": 4, "register": 198, "enabled": False},  # Max generator charge current
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Voltage", "unique": "lux_gen_chg_start_volt", "bank": 4, "register": 194, "attribute": "gen_chg_start_volt", "enabled": False},  # Generator charge start voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Voltage", "unique": "lux_gen_chg_end_volt", "bank": 4, "register": 195, "attribute": "gen_chg_end_volt", "enabled": False},  # Generator charge end voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start SOC", "unique": "lux_gen_chg_start_soc", "bank": 4, "register": 196, "attribute": "gen_chg_start_soc", "enabled": False},  # Generator charge start SOC
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End SOC", "unique": "lux_gen_chg_end_soc", "bank": 4, "register": 197, "attribute": "gen_chg_end_soc", "enabled": False},  # Generator charge end SOC
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Charge Current", "unique": "lux_max_gen_chg_current", "bank": 4, "register": 198, "attribute": "max_gen_chg_current", "enabled": False},  # Max generator charge current
 
         # 12K System Configuration (registers 176-180)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K", "unique": "lux_max_sys_power_12k", "bank": 4, "register": 176, "enabled": False},  # Max system power in watts
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max AC Charge Power 12K", "unique": "lux_max_ac_chg_12k", "bank": 4, "register": 177, "enabled": False},  # Max AC charge power in watts
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Configuration 12K", "unique": "lux_sys_config_12k", "bank": 4, "register": 178, "enabled": False},  # System configuration flags
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Config R179", "unique": "lux_peak_shave_r179", "bank": 4, "register": 179, "enabled": False},  # Peak shaving control flags
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Power Limit R180", "unique": "lux_power_limit_r180", "bank": 4, "register": 180, "enabled": False},  # Power limit setting
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K", "unique": "lux_max_sys_power_12k", "bank": 4, "register": 176, "attribute": "max_sys_power_12k", "enabled": False},  # Max system power in watts
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max AC Charge Power 12K", "unique": "lux_max_ac_chg_12k", "bank": 4, "register": 177, "attribute": "max_ac_chg_12k", "enabled": False},  # Max AC charge power in watts
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Configuration 12K", "unique": "lux_sys_config_12k", "bank": 4, "register": 178, "attribute": "sys_config_12k", "enabled": False},  # System configuration flags
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Config R179", "unique": "lux_peak_shave_r179", "bank": 4, "register": 179, "attribute": "peak_shave_config", "enabled": False},  # Peak shaving control flags
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Power Limit R180", "unique": "lux_power_limit_r180", "bank": 4, "register": 180, "attribute": "power_limit", "enabled": False},  # Power limit setting
 
 
 
