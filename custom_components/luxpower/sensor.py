@@ -316,6 +316,73 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Load Priority Mode", "unique": "lux_load_priority", "bank": 0, "register": 0, "enabled": False},  # Load priority mode
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} EPS Status", "unique": "lux_eps_status", "bank": 0, "register": 0, "enabled": False},  # EPS status and switch state
 
+        # Parallel System Support (Phase 2)
+        # Multi-Inverter Coordination Sensors
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System ID", "unique": "lux_parallel_system_id", "bank": 0, "register": 0, "enabled": False},  # Parallel system identifier
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Unit Count", "unique": "lux_parallel_unit_count", "bank": 0, "register": 0, "enabled": False},  # Number of units in parallel
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Unit Role", "unique": "lux_parallel_unit_role", "bank": 0, "register": 0, "enabled": False},  # Master/Slave role (0=Master, 1=Slave)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Unit Index", "unique": "lux_parallel_unit_index", "bank": 0, "register": 0, "enabled": False},  # Unit index in parallel system
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Total System Power", "unique": "lux_total_system_power", "bank": 0, "register": 0, "enabled": False},  # Combined power of all units
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Communication Status", "unique": "lux_parallel_comm_status", "bank": 0, "register": 0, "enabled": False},  # Communication quality between units
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Phase Sync Quality", "unique": "lux_phase_sync_quality", "bank": 0, "register": 0, "enabled": False},  # Phase synchronization quality
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Load Distribution", "unique": "lux_load_distribution", "bank": 0, "register": 0, "enabled": False},  # Load balancing between units
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Fault Code", "unique": "lux_parallel_fault", "bank": 0, "register": 0, "enabled": False},  # Parallel system fault code
+
+        # Generator Integration (Phase 3)
+        # Generator Monitoring Sensors
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Runtime Hours", "unique": "lux_gen_runtime_hours", "bank": 0, "register": 0, "enabled": False},  # Total generator runtime
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Fuel Level", "unique": "lux_gen_fuel_level", "bank": 0, "register": 0, "enabled": False},  # Generator fuel level percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Frequency", "unique": "lux_gen_frequency", "bank": 0, "register": 0, "enabled": False},  # Generator frequency
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Voltage", "unique": "lux_gen_voltage", "bank": 0, "register": 0, "enabled": False},  # Generator voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Power Output", "unique": "lux_gen_power_output", "bank": 0, "register": 0, "enabled": False},  # Generator power output
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Start Count", "unique": "lux_gen_start_count", "bank": 0, "register": 0, "enabled": False},  # Number of generator starts
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Last Start Time", "unique": "lux_gen_last_start", "bank": 0, "register": 0, "enabled": False},  # Last generator start timestamp
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charging Contribution", "unique": "lux_gen_charging_contribution", "bank": 0, "register": 0, "enabled": False},  # Power contributed to battery charging
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Load Contribution", "unique": "lux_gen_load_contribution", "bank": 0, "register": 0, "enabled": False},  # Power contributed to load
+
+        # Battery Management Enhancements (Phase 6)
+        # Battery Profile & Configuration Sensors
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Type", "unique": "lux_battery_type", "bank": 0, "register": 0, "enabled": False},  # Battery type (Lead-Acid, Lithium, LiFePO4)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Profile", "unique": "lux_battery_profile", "bank": 0, "register": 0, "enabled": False},  # Active battery profile
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Temperature Compensation", "unique": "lux_temp_compensation", "bank": 0, "register": 0, "enabled": False},  # Temperature compensation factor
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Aging Compensation", "unique": "lux_aging_compensation", "bank": 0, "register": 0, "enabled": False},  # Battery aging compensation
+        
+        # Advanced Battery Protection Sensors
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Over Temp Protection Threshold", "unique": "lux_over_temp_threshold", "bank": 0, "register": 0, "enabled": False},  # Over-temperature protection threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Under Temp Lockout Threshold", "unique": "lux_under_temp_threshold", "bank": 0, "register": 0, "enabled": False},  # Under-temperature charging lockout
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Imbalance Threshold", "unique": "lux_cell_imbalance_threshold", "bank": 0, "register": 0, "enabled": False},  # Cell imbalance detection threshold
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Equalization Voltage", "unique": "lux_equalization_voltage", "bank": 0, "register": 0, "enabled": False},  # Equalization voltage for lead-acid
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Equalization Time", "unique": "lux_equalization_time", "bank": 0, "register": 0, "enabled": False},  # Equalization time remaining
+        
+        # Battery Optimization Sensors
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Charge Efficiency", "unique": "lux_charge_efficiency", "bank": 0, "register": 0, "enabled": False},  # Battery charge efficiency percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Depth of Discharge", "unique": "lux_depth_of_discharge", "bank": 0, "register": 0, "enabled": False},  # Current depth of discharge
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max Depth of Discharge", "unique": "lux_max_depth_of_discharge", "bank": 0, "register": 0, "enabled": False},  # Maximum depth of discharge reached
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Wear Level", "unique": "lux_battery_wear_level", "bank": 0, "register": 0, "enabled": False},  # Battery wear leveling status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Calendar Life Remaining", "unique": "lux_calendar_life_remaining", "bank": 0, "register": 0, "enabled": False},  # Calendar life remaining percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cycle Life Remaining", "unique": "lux_cycle_life_remaining", "bank": 0, "register": 0, "enabled": False},  # Cycle life remaining percentage
+
+        # Grid Management & Export Control (Phase 7)
+        # Grid Import/Export Limits
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Import Limit", "unique": "lux_grid_import_limit", "bank": 0, "register": 0, "enabled": False},  # Grid import power limit
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Export Limit", "unique": "lux_grid_export_limit", "bank": 0, "register": 0, "enabled": False},  # Grid export power limit
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Time Based Export Limit", "unique": "lux_time_export_limit", "bank": 0, "register": 0, "enabled": False},  # Time-based export limit
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Dynamic Export Control", "unique": "lux_dynamic_export_control", "bank": 0, "register": 0, "enabled": False},  # Dynamic export based on grid frequency
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Zero Export Mode", "unique": "lux_zero_export_mode", "bank": 0, "register": 0, "enabled": False},  # Zero export mode status
+        
+        # Grid Support Features
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control", "unique": "lux_reactive_power_control", "bank": 0, "register": 0, "enabled": False},  # Q control status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Power Factor Setpoint", "unique": "lux_power_factor_setpoint", "bank": 0, "register": 0, "enabled": False},  # Power factor adjustment
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Voltage Support Mode", "unique": "lux_voltage_support_mode", "bank": 0, "register": 0, "enabled": False},  # Voltage support mode
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Frequency Response", "unique": "lux_frequency_response", "bank": 0, "register": 0, "enabled": False},  # Frequency response settings
+        
+        # Grid Protection Enhancements
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Anti Islanding Sensitivity", "unique": "lux_anti_islanding_sensitivity", "bank": 0, "register": 0, "enabled": False},  # Anti-islanding detection sensitivity
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Reconnection Delay", "unique": "lux_grid_reconnection_delay", "bank": 0, "register": 0, "enabled": False},  # Grid reconnection delay
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Voltage Ride Through", "unique": "lux_voltage_ride_through", "bank": 0, "register": 0, "enabled": False},  # Voltage ride-through settings
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Frequency Ride Through", "unique": "lux_frequency_ride_through", "bank": 0, "register": 0, "enabled": False},  # Frequency ride-through settings
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Fault Detection", "unique": "lux_grid_fault_detection", "bank": 0, "register": 0, "enabled": False},  # Grid fault detection sensitivity
+
     ]
 
     for entity_definition in sensors:
