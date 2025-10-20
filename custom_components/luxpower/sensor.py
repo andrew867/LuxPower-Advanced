@@ -260,14 +260,15 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Min SOC Grid Charge", "unique": "lux_min_soc_grid", "bank": 2, "register": 119, "enabled": False},
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Mode Config R120", "unique": "lux_ac_mode_r120", "bank": 3, "register": 120, "enabled": False},
 
-        # 12K Model Specific Sensors (CFAA, CEAA, CCAA)
-        # These registers are only available on 12K models and provide enhanced power management
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max System Power (12K)", "unique": "lux_max_sys_power_12k", "bank": 4, "register": 176, "enabled": False},  # Max system power in watts (e.g., 24000 = 24kW)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max AC Charge Power (12K)", "unique": "lux_max_ac_chg_12k", "bank": 4, "register": 177, "enabled": False},  # Max AC charge power in watts (e.g., 5000 = 5kW)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Config R179", "unique": "lux_peak_shave_r179", "bank": 4, "register": 179, "enabled": False},  # Peak shaving control flags (53504 = 0xD100 in SNA-12K-US)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Power Limit R180", "unique": "lux_power_limit_r180", "bank": 4, "register": 180, "enabled": False},  # Power limit setting (150 = 1.5kW in SNA-12K-US)
-        
-        # Additional 12K Features from Cloud UI Analysis (Updated with actual register mappings)
+
+        # Bank 4 Energy Sensors (Available to all models)
+        # These are the actual registers implemented in get_device_values_bank4()
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Load On Grid Power", "unique": "lux_load_ongrid_power", "bank": 4, "register": 170, "enabled": False},  # Load on grid power
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Daily Load Energy", "unique": "lux_daily_load_energy", "bank": 4, "register": 171, "enabled": False},  # Daily load energy consumption  
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Total Load Energy", "unique": "lux_total_load_energy", "bank": 4, "register": 172, "enabled": False},  # Total load energy consumption
+
+        # 12K-Specific Advanced Features (CFAA, CEAA, FAAB)
+        # These features are available on 12K models but gracefully handled on other models
         # Smart Load Control (12K-specific registers 181-186)
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC", "unique": "lux_smart_load_start_soc", "bank": 4, "register": 181, "enabled": False},  # Smart load start SOC threshold
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC", "unique": "lux_smart_load_end_soc", "bank": 4, "register": 182, "enabled": False},  # Smart load end SOC threshold
@@ -280,13 +281,13 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit", "unique": "lux_peak_shaving_power", "bank": 4, "register": 206, "enabled": False},  # Peak shaving power limit
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving SOC", "unique": "lux_peak_shaving_soc", "bank": 4, "register": 207, "enabled": False},  # Peak shaving SOC threshold
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Voltage", "unique": "lux_peak_shaving_volt", "bank": 4, "register": 208, "enabled": False},  # Peak shaving voltage threshold
-        
+
         # AC Coupling (12K-specific registers 220-223)
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC", "unique": "lux_ac_couple_start_soc", "bank": 4, "register": 220, "enabled": False},  # AC couple start SOC
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC", "unique": "lux_ac_couple_end_soc", "bank": 4, "register": 221, "enabled": False},  # AC couple end SOC
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage", "unique": "lux_ac_couple_start_volt", "bank": 4, "register": 222, "enabled": False},  # AC couple start voltage
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage", "unique": "lux_ac_couple_end_volt", "bank": 4, "register": 223, "enabled": False},  # AC couple end voltage
-        
+
         # Generator Integration (12K-specific registers 194-198)
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Voltage", "unique": "lux_gen_chg_start_volt", "bank": 4, "register": 194, "enabled": False},  # Generator charge start voltage
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Voltage", "unique": "lux_gen_chg_end_volt", "bank": 4, "register": 195, "enabled": False},  # Generator charge end voltage
@@ -294,11 +295,46 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End SOC", "unique": "lux_gen_chg_end_soc", "bank": 4, "register": 197, "enabled": False},  # Generator charge end SOC
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Charge Current", "unique": "lux_max_gen_chg_current", "bank": 4, "register": 198, "enabled": False},  # Max generator charge current
 
+        # 12K System Configuration (registers 176-180)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K", "unique": "lux_max_sys_power_12k", "bank": 4, "register": 176, "enabled": False},  # Max system power in watts
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max AC Charge Power 12K", "unique": "lux_max_ac_chg_12k", "bank": 4, "register": 177, "enabled": False},  # Max AC charge power in watts
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Configuration 12K", "unique": "lux_sys_config_12k", "bank": 4, "register": 178, "enabled": False},  # System configuration flags
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Config R179", "unique": "lux_peak_shave_r179", "bank": 4, "register": 179, "enabled": False},  # Peak shaving control flags
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Power Limit R180", "unique": "lux_power_limit_r180", "bank": 4, "register": 180, "enabled": False},  # Power limit setting
+
+
+
+
+
+
+        
+
+
+
+
+
+
+        
+
+
+
+        
+
+
+
+
+        
+
+
+
+
+
+
         # Enhanced Diagnostics & System Status (Phase 1A-B)
-        # Fault Code & Warning System
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 0, "register": 0, "enabled": False},  # Current fault code (register TBD) - COMMENTED: register 0 invalid
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 0, "register": 0, "enabled": False},  # Current warning code (register TBD) - COMMENTED: register 0 invalid
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Status Code", "unique": "lux_system_status", "bank": 0, "register": 0, "enabled": False},  # System status code (register TBD) - COMMENTED: register 0 invalid
+        # Fault Code & Warning System - Register 0 is valid for system status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 0, "register": 0, "enabled": False},  # Current fault code
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 0, "register": 0, "enabled": False},  # Current warning code
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Status Code", "unique": "lux_system_status", "bank": 0, "register": 0, "enabled": False},  # System status code
         
         # Power Flow Sensors (calculated from existing power values) - COMMENTED: register 0 invalid
         # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Battery Power", "unique": "lux_pv_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV charging battery
@@ -403,24 +439,23 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Frequency Ride Through", "unique": "lux_frequency_ride_through", "bank": 0, "register": 0, "enabled": False},  # Frequency ride-through settings
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Fault Detection", "unique": "lux_grid_fault_detection", "bank": 0, "register": 0, "enabled": False},  # Grid fault detection sensitivity
 
-        # Enhanced Peak Shaving Analysis (Phase 5B)
         # Register 179 Bit Analysis (0xD100 = 53504 in SNA-12K-US)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 15", "unique": "lux_peak_shave_bit_15", "bank": 4, "register": 179, "enabled": False},  # Bit 15 (32768) - ON in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 14", "unique": "lux_peak_shave_bit_14", "bank": 4, "register": 179, "enabled": False},  # Bit 14 (16384) - ON in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 13", "unique": "lux_peak_shave_bit_13", "bank": 4, "register": 179, "enabled": False},  # Bit 13 (8192) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 12", "unique": "lux_peak_shave_bit_12", "bank": 4, "register": 179, "enabled": False},  # Bit 12 (4096) - ON in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 11", "unique": "lux_peak_shave_bit_11", "bank": 4, "register": 179, "enabled": False},  # Bit 11 (2048) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 10", "unique": "lux_peak_shave_bit_10", "bank": 4, "register": 179, "enabled": False},  # Bit 10 (1024) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 9", "unique": "lux_peak_shave_bit_9", "bank": 4, "register": 179, "enabled": False},  # Bit 9 (512) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 8", "unique": "lux_peak_shave_bit_8", "bank": 4, "register": 179, "enabled": False},  # Bit 8 (256) - ON in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 7", "unique": "lux_peak_shave_bit_7", "bank": 4, "register": 179, "enabled": False},  # Bit 7 (128) - ENABLE_PEAK_SHAVING
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 6", "unique": "lux_peak_shave_bit_6", "bank": 4, "register": 179, "enabled": False},  # Bit 6 (64) - ON in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 5", "unique": "lux_peak_shave_bit_5", "bank": 4, "register": 179, "enabled": False},  # Bit 5 (32) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 4", "unique": "lux_peak_shave_bit_4", "bank": 4, "register": 179, "enabled": False},  # Bit 4 (16) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 3", "unique": "lux_peak_shave_bit_3", "bank": 4, "register": 179, "enabled": False},  # Bit 3 (8) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 2", "unique": "lux_peak_shave_bit_2", "bank": 4, "register": 179, "enabled": False},  # Bit 2 (4) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 1", "unique": "lux_peak_shave_bit_1", "bank": 4, "register": 179, "enabled": False},  # Bit 1 (2) - OFF in SNA-12K-US
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 0", "unique": "lux_peak_shave_bit_0", "bank": 4, "register": 179, "enabled": False},  # Bit 0 (1) - OFF in SNA-12K-US
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
         # Time-of-Use Peak Shaving Schedule
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Schedule Active", "unique": "lux_peak_schedule_active", "bank": 0, "register": 0, "enabled": False},  # Peak shaving schedule status
@@ -625,7 +660,19 @@ class LuxPowerSensorEntity(SensorEntity):
             # For regular sensors, use the standard attribute
             value = self._data.get(self._device_attribute)
             
-        if isinstance(value, (int, float)):
+        # Handle 12K-specific sensors gracefully
+        if value is None and self._device_attribute in [
+            "max_sys_power_12k", "max_ac_chg_12k", "sys_config_12k", "peak_shave_config", "power_limit",
+            "smart_load_start_soc", "smart_load_end_soc", "smart_load_start_volt", "smart_load_end_volt",
+            "smart_load_soc_hysteresis", "smart_load_volt_hysteresis", "gen_chg_start_volt", "gen_chg_end_volt",
+            "gen_chg_start_soc", "gen_chg_end_soc", "max_gen_chg_current", "peak_shaving_power",
+            "peak_shaving_soc", "peak_shaving_volt", "ac_couple_start_soc", "ac_couple_end_soc",
+            "ac_couple_start_volt", "ac_couple_end_volt"
+        ]:
+            # This is a 12K-specific sensor on a non-12K model
+            value = "Not Available (12K Only)"
+            self._attr_available = False
+        elif isinstance(value, (int, float)):
             value = round(value, self._decimal_places)
             self._attr_available = True
         else:

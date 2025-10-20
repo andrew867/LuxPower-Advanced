@@ -1108,12 +1108,120 @@ class LXPPacket:
             if self.debug:
                 _LOGGER.debug("***********INPUT 5 registers************")
 
+            # Basic energy data (available to all models)
             p_load_ongrid = self.readValuesInt.get(170, 0)
             e_load_day = self.readValuesInt.get(171, 0) / 10
             e_load_all_l = self.readValuesInt.get(172, 0) / 10
             self.readValuesThis[LXPPacket.p_load_ongrid] = p_load_ongrid
             self.readValuesThis[LXPPacket.e_load_day] = e_load_day
             self.readValuesThis[LXPPacket.e_load_all_l] = e_load_all_l
+
+            # 12K-Specific Advanced Features (CFAA, CEAA, FAAB)
+            # These registers are available on 12K models but gracefully handled on other models
+            model_code = None
+            try:
+                reg07_val = self.regValuesInt.get(7)
+                reg08_val = self.regValuesInt.get(8)
+                if reg07_val is not None and reg08_val is not None:
+                    reg07_str = int(reg07_val).to_bytes(2, "little").decode()
+                    reg08_str = int(reg08_val).to_bytes(2, "little").decode()
+                    model_code = (reg07_str + reg08_str).upper()
+            except Exception:
+                model_code = None
+
+            # Check if this is a 12K model (CFAA, CEAA, FAAB)
+            is_12k_model = model_code in ("CFAA", "CEAA", "FAAB")
+            
+            if is_12k_model:
+                if self.debug:
+                    _LOGGER.debug("12K model detected - processing advanced features")
+                
+                # 12K System Configuration (registers 176-180)
+                max_sys_power_12k = self.readValuesInt.get(176, 0)
+                max_ac_chg_12k = self.readValuesInt.get(177, 0)
+                sys_config_12k = self.readValuesInt.get(178, 0)
+                peak_shave_config = self.readValuesInt.get(179, 0)
+                power_limit = self.readValuesInt.get(180, 0)
+                
+                # Smart Load Control (registers 181-186)
+                smart_load_start_soc = self.readValuesInt.get(181, 0)
+                smart_load_end_soc = self.readValuesInt.get(182, 0)
+                smart_load_start_volt = self.readValuesInt.get(183, 0) / 10.0
+                smart_load_end_volt = self.readValuesInt.get(184, 0) / 10.0
+                smart_load_soc_hysteresis = self.readValuesInt.get(185, 0)
+                smart_load_volt_hysteresis = self.readValuesInt.get(186, 0) / 10.0
+                
+                # Generator Integration (registers 194-198)
+                gen_chg_start_volt = self.readValuesInt.get(194, 0) / 10.0
+                gen_chg_end_volt = self.readValuesInt.get(195, 0) / 10.0
+                gen_chg_start_soc = self.readValuesInt.get(196, 0)
+                gen_chg_end_soc = self.readValuesInt.get(197, 0)
+                max_gen_chg_current = self.readValuesInt.get(198, 0) / 10.0
+                
+                # Enhanced Peak Shaving (registers 206-208)
+                peak_shaving_power = self.readValuesInt.get(206, 0)
+                peak_shaving_soc = self.readValuesInt.get(207, 0)
+                peak_shaving_volt = self.readValuesInt.get(208, 0) / 10.0
+                
+                # AC Coupling (registers 220-223)
+                ac_couple_start_soc = self.readValuesInt.get(220, 0)
+                ac_couple_end_soc = self.readValuesInt.get(221, 0)
+                ac_couple_start_volt = self.readValuesInt.get(222, 0) / 10.0
+                ac_couple_end_volt = self.readValuesInt.get(223, 0) / 10.0
+                
+                # Store 12K-specific values
+                self.readValuesThis["max_sys_power_12k"] = max_sys_power_12k
+                self.readValuesThis["max_ac_chg_12k"] = max_ac_chg_12k
+                self.readValuesThis["sys_config_12k"] = sys_config_12k
+                self.readValuesThis["peak_shave_config"] = peak_shave_config
+                self.readValuesThis["power_limit"] = power_limit
+                self.readValuesThis["smart_load_start_soc"] = smart_load_start_soc
+                self.readValuesThis["smart_load_end_soc"] = smart_load_end_soc
+                self.readValuesThis["smart_load_start_volt"] = smart_load_start_volt
+                self.readValuesThis["smart_load_end_volt"] = smart_load_end_volt
+                self.readValuesThis["smart_load_soc_hysteresis"] = smart_load_soc_hysteresis
+                self.readValuesThis["smart_load_volt_hysteresis"] = smart_load_volt_hysteresis
+                self.readValuesThis["gen_chg_start_volt"] = gen_chg_start_volt
+                self.readValuesThis["gen_chg_end_volt"] = gen_chg_end_volt
+                self.readValuesThis["gen_chg_start_soc"] = gen_chg_start_soc
+                self.readValuesThis["gen_chg_end_soc"] = gen_chg_end_soc
+                self.readValuesThis["max_gen_chg_current"] = max_gen_chg_current
+                self.readValuesThis["peak_shaving_power"] = peak_shaving_power
+                self.readValuesThis["peak_shaving_soc"] = peak_shaving_soc
+                self.readValuesThis["peak_shaving_volt"] = peak_shaving_volt
+                self.readValuesThis["ac_couple_start_soc"] = ac_couple_start_soc
+                self.readValuesThis["ac_couple_end_soc"] = ac_couple_end_soc
+                self.readValuesThis["ac_couple_start_volt"] = ac_couple_start_volt
+                self.readValuesThis["ac_couple_end_volt"] = ac_couple_end_volt
+                
+            else:
+                if self.debug:
+                    _LOGGER.debug("Non-12K model - 12K features not available")
+                
+                # Set 12K-specific values to None for non-12K models
+                self.readValuesThis["max_sys_power_12k"] = None
+                self.readValuesThis["max_ac_chg_12k"] = None
+                self.readValuesThis["sys_config_12k"] = None
+                self.readValuesThis["peak_shave_config"] = None
+                self.readValuesThis["power_limit"] = None
+                self.readValuesThis["smart_load_start_soc"] = None
+                self.readValuesThis["smart_load_end_soc"] = None
+                self.readValuesThis["smart_load_start_volt"] = None
+                self.readValuesThis["smart_load_end_volt"] = None
+                self.readValuesThis["smart_load_soc_hysteresis"] = None
+                self.readValuesThis["smart_load_volt_hysteresis"] = None
+                self.readValuesThis["gen_chg_start_volt"] = None
+                self.readValuesThis["gen_chg_end_volt"] = None
+                self.readValuesThis["gen_chg_start_soc"] = None
+                self.readValuesThis["gen_chg_end_soc"] = None
+                self.readValuesThis["max_gen_chg_current"] = None
+                self.readValuesThis["peak_shaving_power"] = None
+                self.readValuesThis["peak_shaving_soc"] = None
+                self.readValuesThis["peak_shaving_volt"] = None
+                self.readValuesThis["ac_couple_start_soc"] = None
+                self.readValuesThis["ac_couple_end_soc"] = None
+                self.readValuesThis["ac_couple_start_volt"] = None
+                self.readValuesThis["ac_couple_end_volt"] = None
 
             # IMPORTANT!! Registers above 199 must go into a new bank (create a new method for bank 5/bank 6 etc.)
 
