@@ -118,17 +118,27 @@ class LXPPacket:
     # Register 110, Most Significant Byte
     #
 
-    TAKE_LOAD_TOGETHER = 1 << 10
+    R110_UNKNOWN_BIT_15 = 1 << 15
+    R110_UNKNOWN_BIT_14 = 1 << 14
+    R110_UNKNOWN_BIT_13 = 1 << 13
+    R110_UNKNOWN_BIT_12 = 1 << 12
+    R110_UNKNOWN_BIT_11 = 1 << 11
+    R110_UNKNOWN_BIT_10 = 1 << 10
+    R110_UNKNOWN_BIT_09 = 1 << 9
+    R110_UNKNOWN_BIT_08 = 1 << 8
 
     #
     # Register 110, Least Significant Byte
     #
 
-    CHARGE_LAST = 1 << 4
-    MICRO_GRID_ENABLE = 1 << 2
-    FAST_ZERO_EXPORT_ENABLE = 1 << 1
-    RUN_WITHOUT_GRID = 1 << 1
-    PV_GRID_OFF_ENABLE = 1 << 0
+    TAKE_LOAD_TOGETHER = 1 << 7  # Existing
+    CHARGE_LAST = 1 << 6         # Existing
+    R110_UNKNOWN_BIT_05 = 1 << 5
+    DRMS_ENABLE_ALT = 1 << 4     # Alternative DRMS control
+    EPS_ENABLE = 1 << 3          # EPS mode enable
+    FORCED_DISCHG_EN_ALT = 1 << 2  # Alternative force discharge
+    R110_BIT_01 = 1 << 1
+    R110_BIT_00 = 1 << 0
 
     # fmt: off
 
@@ -164,14 +174,14 @@ class LXPPacket:
     # Register 179, Most Significant Byte
     #
 
-    R179_UNKNOWN_BIT_15 = 1 << 15  # = 32768
-    R179_UNKNOWN_BIT_14 = 1 << 14  # = 16384
+    R179_UNKNOWN_BIT_15 = 1 << 15  # = 32768  # ON in SNA-12K-US (value 53504 = 0xD100)
+    R179_UNKNOWN_BIT_14 = 1 << 14  # = 16384  # ON in SNA-12K-US (value 53504 = 0xD100)
     R179_UNKNOWN_BIT_13 = 1 << 13  # =  8192
-    R179_UNKNOWN_BIT_12 = 1 << 12  # =  4096   True
-    R179_UNKNOWN_BIT_11 = 1 << 11  # =  2048   True
+    R179_UNKNOWN_BIT_12 = 1 << 12  # =  4096   # ON in SNA-12K-US (value 53504 = 0xD100)
+    R179_UNKNOWN_BIT_11 = 1 << 11  # =  2048
     R179_UNKNOWN_BIT_10 = 1 << 10  # =  1024
     R179_UNKNOWN_BIT_09 = 1 << 9   # =   512
-    R179_UNKNOWN_BIT_08 = 1 << 8   # =   256
+    R179_UNKNOWN_BIT_08 = 1 << 8   # =   256   # ON in SNA-12K-US (value 53504 = 0xD100)
 
     #
     # Register 179, Least Significant Byte
@@ -587,6 +597,9 @@ class LXPPacket:
                         self.get_device_values_bank1()
                         self.get_device_values_bank2()
 
+            # Calculate power flow after processing all bank data
+            self.calculate_power_flow()
+            
             self.data.update(self.readValuesThis)
 
             _LOGGER.debug(f"This Packet Data {self.readValuesThis}")
@@ -994,7 +1007,7 @@ class LXPPacket:
                 model_code = None
 
             scale = (
-                10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA") else 100
+                10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA", "CEAA") else 100
             )
             max_chg_curr = self.readValuesInt.get(81, 0) / scale
             max_dischg_curr = self.readValuesInt.get(82, 0) / scale
@@ -1103,6 +1116,75 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.e_load_all_l] = e_load_all_l
 
             # IMPORTANT!! Registers above 199 must go into a new bank (create a new method for bank 5/bank 6 etc.)
+
+    def calculate_power_flow(self):
+        """Calculate power flow between different sources and loads."""
+        try:
+            # Get current power values
+            pv_power = self.readValuesThis.get(LXPPacket.p_pv, 0)
+            battery_power = self.readValuesThis.get(LXPPacket.p_battery, 0)
+            grid_power = self.readValuesThis.get(LXPPacket.p_grid, 0)
+            load_power = self.readValuesThis.get(LXPPacket.p_load, 0)
+            eps_power = self.readValuesThis.get(LXPPacket.p_eps, 0)
+            
+            # Calculate power flow directions
+            # PV to Battery (when PV > 0 and battery < 0)
+            pv_to_battery = max(0, min(pv_power, -battery_power)) if battery_power < 0 else 0
+            
+            # PV to Load (when PV > battery charging)
+            pv_remaining = pv_power - pv_to_battery
+            pv_to_load = max(0, min(pv_remaining, load_power))
+            
+            # PV to Grid (remaining PV after battery and load)
+            pv_to_grid = max(0, pv_remaining - pv_to_load)
+            
+            # Battery to Load (when battery discharging and load > PV)
+            battery_to_load = max(0, min(-battery_power, load_power - pv_to_load)) if battery_power < 0 else 0
+            
+            # Battery to Grid (when battery discharging and grid importing)
+            battery_to_grid = max(0, min(-battery_power - battery_to_load, -grid_power)) if battery_power < 0 and grid_power < 0 else 0
+            
+            # Grid to Battery (when grid charging battery)
+            grid_to_battery = max(0, min(grid_power, -battery_power)) if battery_power < 0 and grid_power > 0 else 0
+            
+            # Grid to Load (when grid powering loads)
+            grid_to_load = max(0, min(grid_power - grid_to_battery, load_power - pv_to_load - battery_to_load)) if grid_power > 0 else 0
+            
+            # Store calculated power flows
+            self.readValuesThis["pv_to_battery"] = pv_to_battery
+            self.readValuesThis["pv_to_load"] = pv_to_load
+            self.readValuesThis["pv_to_grid"] = pv_to_grid
+            self.readValuesThis["battery_to_load"] = battery_to_load
+            self.readValuesThis["battery_to_grid"] = battery_to_grid
+            self.readValuesThis["grid_to_battery"] = grid_to_battery
+            self.readValuesThis["grid_to_load"] = grid_to_load
+            
+            # Generator power flows (if available)
+            generator_power = self.readValuesThis.get("p_generator", 0)
+            if generator_power > 0:
+                self.readValuesThis["generator_to_battery"] = max(0, min(generator_power, -battery_power)) if battery_power < 0 else 0
+                self.readValuesThis["generator_to_load"] = max(0, generator_power - self.readValuesThis["generator_to_battery"])
+            else:
+                self.readValuesThis["generator_to_battery"] = 0
+                self.readValuesThis["generator_to_load"] = 0
+            
+            # AC Couple power flows (if available)
+            ac_couple_power = self.readValuesThis.get("p_ac_couple", 0)
+            if ac_couple_power > 0:
+                self.readValuesThis["ac_couple_to_battery"] = max(0, min(ac_couple_power, -battery_power)) if battery_power < 0 else 0
+                self.readValuesThis["ac_couple_to_grid"] = max(0, ac_couple_power - self.readValuesThis["ac_couple_to_battery"])
+            else:
+                self.readValuesThis["ac_couple_to_battery"] = 0
+                self.readValuesThis["ac_couple_to_grid"] = 0
+                
+        except Exception as e:
+            _LOGGER.error(f"Error calculating power flow: {e}")
+            # Set all power flows to 0 on error
+            for key in ["pv_to_battery", "pv_to_load", "pv_to_grid", "battery_to_load", 
+                       "battery_to_grid", "grid_to_battery", "grid_to_load", 
+                       "generator_to_battery", "generator_to_load", 
+                       "ac_couple_to_battery", "ac_couple_to_grid"]:
+                self.readValuesThis[key] = 0
 
 
 if __name__ == "__main__":

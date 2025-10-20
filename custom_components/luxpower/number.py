@@ -174,6 +174,27 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage", "register_address": 222, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage", "register_address": 223, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Charge SOC Limit (%)", "register_address": 227, "def_val": 101.0, "min_val": 10, "max_val": 101, "icon": "mdi:battery-charging-100", "enabled": False},
+        
+        # 12K Model Specific Number Entities (CFAA, CEAA, CCAA)
+        # Register 176: Max system power in kW (0-90kW range, 0.1kW steps)
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K (kW)", "register_address": 176, "def_val": 24.0, "min_val": 0, "max_val": 90, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},
+        
+        # 12K Smart Load Control (Registers 181-186)
+        # Advanced load management for 12K models - controls when to start/stop smart loads based on SOC/voltage
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC(%)", "register_address": 181, "def_val": 50.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-up", "enabled": False},  # SOC threshold to start smart load
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC(%)", "register_address": 182, "def_val": 20.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-down", "enabled": False},  # SOC threshold to stop smart load
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start Voltage", "register_address": 183, "def_val": 52.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Voltage threshold to start smart load
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End Voltage", "register_address": 184, "def_val": 46.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Voltage threshold to stop smart load
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load SOC Hysteresis(%)", "register_address": 185, "def_val": 5.0, "min_val": 0, "max_val": 20, "icon": "mdi:sine-wave", "enabled": False},  # SOC hysteresis to prevent oscillation
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Volt Hysteresis", "register_address": 186, "def_val": 1.0, "min_val": 0, "max_val": 5.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Voltage hysteresis to prevent oscillation
+        
+        # 12K Enhanced AC Coupling (Registers 187-192)
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC 12K(%)", "register_address": 187, "def_val": 90.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-charging-90", "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC 12K(%)", "register_address": 188, "def_val": 100.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-charging-100", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage 12K", "register_address": 189, "def_val": 54.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage 12K", "register_address": 190, "def_val": 56.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple SOC Hysteresis 12K(%)", "register_address": 191, "def_val": 2.0, "min_val": 0, "max_val": 10, "icon": "mdi:sine-wave", "enabled": False},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Volt Hysteresis 12K", "register_address": 192, "def_val": 0.5, "min_val": 0, "max_val": 3.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
     ]
 
     for entity_definition in numbers:

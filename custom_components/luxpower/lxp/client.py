@@ -101,49 +101,89 @@ class LuxPowerClient(asyncio.Protocol):
         self._LOGGER.error("connection_lost: Disconnected from Luxpower server")
 
     async def _acquire_lock(self):
-        try:
-            async with asyncio.timeout(10):
-                await self._lxp_request_lock.acquire()
-        except TimeoutError:
-            self._lxp_request_lock.release()
+        """Acquire lock with exponential backoff retry."""
+        max_retries = 3
+        base_delay = 1.0
+        
+        for attempt in range(max_retries):
+            try:
+                async with asyncio.timeout(10):
+                    await self._lxp_request_lock.acquire()
+                    return
+            except TimeoutError:
+                if attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)
+                    self._LOGGER.warning(f"Lock acquisition timeout, retrying in {delay}s (attempt {attempt + 1}/{max_retries})")
+                    await asyncio.sleep(delay)
+                else:
+                    self._LOGGER.error("Failed to acquire lock after maximum retries")
+                    # Force release if stuck
+                    if self._lxp_request_lock.locked():
+                        self._lxp_request_lock.release()
+                    raise
 
     def data_received(self, data):
-        self._LOGGER.debug("Inverter: %s", self.lxpPacket.serial_number)
-        self._LOGGER.debug(data)
+        """Handle received data with enhanced error handling."""
+        try:
+            self._LOGGER.debug("Inverter: %s", self.lxpPacket.serial_number)
+            self._LOGGER.debug(data)
 
-        packet_remains = data
-        packet_remains_length = len(packet_remains)
-        self._LOGGER.debug(
-            "TCP OVERALL Packet Remains Length : %s", packet_remains_length
-        )
-
-        frame_number = 0
-
-        while packet_remains_length > 0:
-            frame_number = frame_number + 1
-            if frame_number > 1:
-                self._LOGGER.debug("*** Multi-Frame *** : %s", frame_number)
-
-            prefix = packet_remains[0:2]
-            if prefix != self.lxpPacket.prefix:
-                self._LOGGER.debug("Invalid Start Of Packet Prefix %s", prefix)
-                return
-
-            # protocol_number = struct.unpack("H", packet_remains[2:4])[0]
-            frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
-            frame_length_calced = frame_length_remaining + 6
-            self._LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
-
-            this_frame = packet_remains[0:frame_length_calced]
-
-            self._LOGGER.debug("THIS Packet Remains Length : %s", packet_remains_length)
-            packet_remains = packet_remains[frame_length_calced:packet_remains_length]
+            packet_remains = data
             packet_remains_length = len(packet_remains)
-            self._LOGGER.debug("NEXT Packet Remains Length : %s", packet_remains_length)
+            self._LOGGER.debug(
+                "TCP OVERALL Packet Remains Length : %s", packet_remains_length
+            )
 
-            self._LOGGER.debug("Received: %s", this_frame)
-            result = self.lxpPacket.parse_packet(this_frame)
+            frame_number = 0
+            max_frames = 10  # Prevent infinite loops
 
+            while packet_remains_length > 0 and frame_number < max_frames:
+                frame_number = frame_number + 1
+                if frame_number > 1:
+                    self._LOGGER.debug("*** Multi-Frame *** : %s", frame_number)
+
+                # Validate minimum packet length
+                if packet_remains_length < 6:
+                    self._LOGGER.warning("Packet too short, discarding remaining data")
+                    break
+
+                prefix = packet_remains[0:2]
+                if prefix != self.lxpPacket.prefix:
+                    self._LOGGER.warning("Invalid Start Of Packet Prefix %s, discarding packet", prefix)
+                    break
+
+                try:
+                    # protocol_number = struct.unpack("H", packet_remains[2:4])[0]
+                    frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
+                    frame_length_calced = frame_length_remaining + 6
+                    self._LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
+
+                    # Validate frame length
+                    if frame_length_calced > packet_remains_length:
+                        self._LOGGER.warning("Frame length exceeds remaining packet length")
+                        break
+                    if frame_length_calced < 6:
+                        self._LOGGER.warning("Invalid frame length")
+                        break
+
+                    this_frame = packet_remains[0:frame_length_calced]
+
+                    self._LOGGER.debug("THIS Packet Remains Length : %s", packet_remains_length)
+                    packet_remains = packet_remains[frame_length_calced:packet_remains_length]
+                    packet_remains_length = len(packet_remains)
+                    self._LOGGER.debug("NEXT Packet Remains Length : %s", packet_remains_length)
+
+                    self._LOGGER.debug("Received: %s", this_frame)
+                    result = self.lxpPacket.parse_packet(this_frame)
+                    
+                except struct.error as e:
+                    self._LOGGER.error(f"Struct unpack error: {e}")
+                    break
+                except Exception as e:
+                    self._LOGGER.error(f"Error processing frame {frame_number}: {e}")
+                    break
+
+            # Always release lock if it was locked, regardless of packet processing
             if (
                 self._lxp_request_lock.locked()
                 and self.lxpPacket.tcp_function != self.lxpPacket.HEARTBEAT
@@ -325,6 +365,12 @@ class LuxPowerClient(asyncio.Protocol):
                         )
 
                     # self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
+                    
+        except Exception as e:
+            self._LOGGER.error(f"Critical error in data_received: {e}")
+            # Ensure lock is released even on critical errors
+            if self._lxp_request_lock.locked():
+                self._lxp_request_lock.release()
 
     async def start_luxpower_client_daemon(self):
         while not self._stop_client:
