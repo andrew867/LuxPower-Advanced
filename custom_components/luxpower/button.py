@@ -50,6 +50,30 @@ async def async_setup_entry(
     nameID_midfix = SERIAL[-2:] if USE_SERIAL else ""
     entityID_midfix = SERIAL if USE_SERIAL else ""
     hyphen = ""
+    
+    # Retrieve cached model code
+    entry_id = config_entry.entry_id
+    model_code = None
+    
+    # Check config entry options first (persists across restarts)
+    if "model_code" in config_entry.options:
+        model_code = config_entry.options["model_code"]
+        _LOGGER.info(f"Using cached model code from config entry: {model_code}")
+    
+    # Check hass.data second (available after first register read)
+    elif entry_id in hass.data.get(DOMAIN, {}):
+        model_code = hass.data[DOMAIN][entry_id].get("model_code")
+        if model_code:
+            _LOGGER.info(f"Using cached model code from hass.data: {model_code}")
+    
+    # Log model detection status
+    if model_code:
+        from .sensor import is_12k_model, MODEL_MAP
+        is_12k = is_12k_model(model_code)
+        model_name = MODEL_MAP.get(model_code, "Unknown")
+        _LOGGER.info(f"Model detected: {model_name} ({model_code}) - {'12K' if is_12k else 'non-12K'}")
+    else:
+        _LOGGER.info("No model code available - using default entity enablement")
 
     event = Event(dongle=DONGLE)
 

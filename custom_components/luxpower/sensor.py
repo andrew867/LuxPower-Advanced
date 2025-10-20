@@ -63,6 +63,37 @@ MODEL_MAP = {
     "DAAA": "LXP Variant",
 }
 
+def detect_model_code(registers: dict) -> str:
+    """Detect model code from registers 7 and 8."""
+    try:
+        reg07_val = registers.get(7)
+        reg08_val = registers.get(8)
+        if reg07_val is not None and reg08_val is not None:
+            reg07_str = int(reg07_val).to_bytes(2, "little").decode()
+            reg08_str = int(reg08_val).to_bytes(2, "little").decode()
+            return (reg07_str + reg08_str).upper()
+    except Exception:
+        pass
+    return None
+
+def is_12k_model(model_code: str) -> bool:
+    """Check if model code is a 12K model."""
+    if not model_code:
+        return False
+    return model_code in ("CFAA", "CEAA", "FAAB")
+
+# List of 12K-specific sensor attributes
+TWELVE_K_ATTRIBUTES = {
+    "max_sys_power_12k", "max_ac_chg_12k", "sys_config_12k", 
+    "peak_shave_config", "power_limit", "smart_load_start_soc",
+    "smart_load_end_soc", "smart_load_start_volt", "smart_load_end_volt",
+    "smart_load_soc_hysteresis", "smart_load_volt_hysteresis",
+    "gen_chg_start_volt", "gen_chg_end_volt", "gen_chg_start_soc",
+    "gen_chg_end_soc", "max_gen_chg_current", "peak_shaving_power",
+    "peak_shaving_soc", "peak_shaving_volt", "ac_couple_start_soc",
+    "ac_couple_end_soc", "ac_couple_start_volt", "ac_couple_end_volt"
+}
+
 _LOGGER = logging.getLogger(__name__)
 
 hyphen = ""
@@ -102,6 +133,29 @@ async def async_setup_entry(
     # Options For Hyphen Use Before Entity Description - Suggest No Hyphen As Of 15/02/23
     # hyphen = " -" if USE_SERIAL else "-"
     hyphen = ""
+    
+    # Retrieve cached model code
+    entry_id = config_entry.entry_id
+    model_code = None
+    
+    # Check config entry options first (persists across restarts)
+    if "model_code" in config_entry.options:
+        model_code = config_entry.options["model_code"]
+        _LOGGER.info(f"Using cached model code from config entry: {model_code}")
+    
+    # Check hass.data second (available after first register read)
+    elif entry_id in hass.data.get(DOMAIN, {}):
+        model_code = hass.data[DOMAIN][entry_id].get("model_code")
+        if model_code:
+            _LOGGER.info(f"Using cached model code from hass.data: {model_code}")
+    
+    # Log model detection status
+    if model_code:
+        is_12k = is_12k_model(model_code)
+        model_name = MODEL_MAP.get(model_code, "Unknown")
+        _LOGGER.info(f"Model detected: {model_name} ({model_code}) - {'12K' if is_12k else 'non-12K'}")
+    else:
+        _LOGGER.info("No model code available - using default entity enablement")
 
     _LOGGER.info(f"Lux sensor platform_config: {platform_config}")
 
@@ -541,27 +595,27 @@ async def async_setup_entry(
     for entity_definition in sensors:
         etype = entity_definition["etype"]
         if etype == "LPSS":
-            sensorEntities.append(LuxStateSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxStateSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPSE":
-            sensorEntities.append(LuxPowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPRS":
-            sensorEntities.append(LuxPowerRegisterSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerRegisterSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPFW":
-            sensorEntities.append(LuxPowerFirmwareSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerFirmwareSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPMD":
-            sensorEntities.append(LuxPowerModelSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerModelSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPDR":
-            sensorEntities.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPST":
-            sensorEntities.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPFS":
-            sensorEntities.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPHC":
-            sensorEntities.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPBS":
-            sensorEntities.append(LuxPowerBatteryStatusSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerBatteryStatusSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPTS":
-            sensorEntities.append(LuxPowerTestSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
+            sensorEntities.append(LuxPowerTestSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
 
     # fmt: on
 
@@ -573,7 +627,7 @@ async def async_setup_entry(
 class LuxPowerSensorEntity(SensorEntity):
     """Representation of a general numeric LUXpower sensor."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
         """Initialize the sensor."""
         #
         # Visible Instance Attributes Outside Class
@@ -600,9 +654,24 @@ class LuxPowerSensorEntity(SensorEntity):
             "unit_of_measurement", None
         )
         self._attr_should_poll = False
-        self._attr_entity_registry_enabled_default = entity_definition.get(
-            "enabled", True
-        )
+        
+        # Apply model-based enablement logic
+        default_enabled = entity_definition.get("enabled", True)
+        
+        if model_code:
+            is_12k = is_12k_model(model_code)
+            attribute = entity_definition.get("attribute", "")
+            
+            # Check if this is a 12K-specific sensor
+            if attribute in TWELVE_K_ATTRIBUTES:
+                # Enable only for 12K models
+                default_enabled = is_12k
+                if is_12k:
+                    _LOGGER.debug(f"Enabling 12K-specific sensor: {entity_definition['name']}")
+                else:
+                    _LOGGER.debug(f"Disabling 12K-specific sensor for non-12K model: {entity_definition['name']}")
+        
+        self._attr_entity_registry_enabled_default = default_enabled
 
         # Hidden Class Extended Instance Attributes
         self._host = host
@@ -720,10 +789,10 @@ class LuxPowerFlowSensor(LuxPowerSensorEntity):
     """
 
     def __init__(
-        self, hass, host, port, dongle, serial, entity_definition, event: Event
+        self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None
     ):
         """Initialize the sensor."""
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
         self._device_attribute1 = entity_definition["attribute1"]
         self._device_attribute2 = entity_definition["attribute2"]
 
@@ -752,10 +821,10 @@ class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
     """
 
     def __init__(
-        self, hass, host, port, dongle, serial, entity_definition, event: Event
+        self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None
     ):
         """Initialize the sensor."""
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
         self._device_attribute1 = entity_definition[
             "attribute1"
         ]  # Power from grid to consumer unit
@@ -793,10 +862,10 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
     """
 
     def __init__(
-        self, hass, host, port, dongle, serial, entity_definition, event: Event
+        self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None
     ):
         """Initialize the sensor."""
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
         self._register_address = entity_definition["register"]
 
     async def async_added_to_hass(self) -> None:
@@ -933,9 +1002,10 @@ class LuxPowerModelSensor(LuxPowerRegisterSensor):
             reg07_str = int(reg07_val).to_bytes(2, "little").decode()
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
             code = reg07_str + reg08_str
-            model = MODEL_MAP.get(code.upper(), "Unknown")
+            model_code = code.upper()
+            model = MODEL_MAP.get(model_code, "Unknown")
 
-            # Save model into hass.data for device_info usage
+            # Save both model and model_code into hass.data for device_info usage
             entry_id = None
             for e_id, data in self.hass.data.get(DOMAIN, {}).items():
                 if data.get("DONGLE") == self.dongle:
@@ -943,6 +1013,15 @@ class LuxPowerModelSensor(LuxPowerRegisterSensor):
                     break
             if entry_id is not None:
                 self.hass.data[DOMAIN].setdefault(entry_id, {})["model"] = model
+                self.hass.data[DOMAIN][entry_id]["model_code"] = model_code
+                
+                # Also persist to config entry options for restart persistence
+                config_entry = self.hass.config_entries.async_get_entry(entry_id)
+                if config_entry and "model_code" not in config_entry.options:
+                    new_options = dict(config_entry.options)
+                    new_options["model_code"] = model_code
+                    self.hass.config_entries.async_update_entry(config_entry, options=new_options)
+                    _LOGGER.info(f"Cached model code {model_code} to config entry for persistence")
 
             oldstate = self._attr_native_value
             self._attr_native_value = model
@@ -963,10 +1042,10 @@ class LuxPowerTestSensor(LuxPowerRegisterSensor):
     """
 
     def __init__(
-        self, hass, host, port, dongle, serial, entity_definition, event: Event
+        self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None
     ):
         """Initialize the sensor."""
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
         self._register_address = entity_definition["register"]
         self.entity_id = "sensor.{}_{}_{}".format(
             "lux", serial, entity_definition["unique"]
