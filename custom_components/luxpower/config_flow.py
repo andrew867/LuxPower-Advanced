@@ -58,7 +58,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
     """
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -102,6 +101,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=config_entry.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
             vol.Optional(ATTR_LUX_AUTO_REFRESH, default=config_entry.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
             vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=config_entry.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
+            vol.Optional("bank_count", default=config_entry.get("bank_count", 3)): vol.All(int, vol.Range(min=1, max=6)),
         })  # fmt: skip
         data_schema = vol.Schema(schema)
         return self.async_show_form(
@@ -155,6 +155,25 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize options flow."""
         self.config_entry = config_entry
 
+    def _is_valid_ip(self, ip: str) -> bool:
+        """Validate IP address format."""
+        import ipaddress
+        try:
+            ipaddress.ip_address(ip)
+            return True
+        except ValueError:
+            return False
+
+    def _is_valid_dongle_serial(self, serial: str) -> bool:
+        """Validate dongle serial format (BA followed by 8 digits)."""
+        import re
+        return bool(re.match(r'^BA\d{8}$', serial))
+
+    def _is_valid_serial_number(self, serial: str) -> bool:
+        """Validate serial number format (SN followed by 8 digits)."""
+        import re
+        return bool(re.match(r'^SN\d{8}$', serial))
+
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         return await self.async_step_user(user_input)
@@ -166,7 +185,27 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
             if not user_input[ATTR_LUX_USE_SERIAL]:
                 user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
-            errors = self._validate_user_input(user_input)
+            
+            # Enhanced validation with real-time feedback
+            if not user_input.get(ATTR_LUX_HOST) or not user_input[ATTR_LUX_HOST].strip():
+                errors[ATTR_LUX_HOST] = "required"
+            elif not self._is_valid_ip(user_input[ATTR_LUX_HOST]):
+                errors[ATTR_LUX_HOST] = "invalid_ip"
+                
+            if not user_input.get(ATTR_LUX_DONGLE_SERIAL) or not user_input[ATTR_LUX_DONGLE_SERIAL].strip():
+                errors[ATTR_LUX_DONGLE_SERIAL] = "required"
+            elif not self._is_valid_dongle_serial(user_input[ATTR_LUX_DONGLE_SERIAL]):
+                errors[ATTR_LUX_DONGLE_SERIAL] = "invalid_format"
+                
+            if user_input.get(ATTR_LUX_USE_SERIAL) and not user_input.get(ATTR_LUX_SERIAL_NUMBER):
+                errors[ATTR_LUX_SERIAL_NUMBER] = "required_when_serial_enabled"
+            elif user_input.get(ATTR_LUX_USE_SERIAL) and not self._is_valid_serial_number(user_input.get(ATTR_LUX_SERIAL_NUMBER, "")):
+                errors[ATTR_LUX_SERIAL_NUMBER] = "invalid_format"
+            
+            # Also run the original validation
+            original_errors = self._validate_user_input(user_input)
+            errors.update(original_errors)
+            
             if not errors:
                 _LOGGER.info("OptionsFlowHandler: saving options ")
                 return self.async_create_entry(title="LuxPower ()", data=user_input)

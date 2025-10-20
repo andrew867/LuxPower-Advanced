@@ -18,13 +18,16 @@ _LOGGER = logging.getLogger(__name__)
 
 async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this function does
-
+    Refresh all LuxPower platform entities after a delay.
+    
+    This function waits 20 seconds then triggers a refresh of all register banks
+    and holding registers to ensure all entities have the latest data.
+    
+    Args:
+        hass: Home Assistant instance
+        dongle: Dongle serial number for the inverter
     """
-    await asyncio.sleep(20)
+    await asyncio.sleep(5)  # Reduced from 20s to 5s for faster startup
     # fmt: skip
     await hass.services.async_call(
         DOMAIN, "luxpower_refresh_holdings", {"dongle": dongle}, blocking=True
@@ -65,27 +68,47 @@ class ServiceHelper:
         raise Exception(f"Couldn't find luxpower client dongle {dongle}")
 
     async def service_reconnect(self, dongle):
-        luxpower_client = self._lux_client(dongle)
-        await luxpower_client.reconnect()
-        await asyncio.sleep(1)
-        _LOGGER.debug("service_reconnect done")
+        """Reconnect to the LuxPower inverter."""
+        try:
+            luxpower_client = self._lux_client(dongle)
+            await luxpower_client.reconnect()
+            await asyncio.sleep(1)
+            _LOGGER.debug("service_reconnect done")
+        except Exception as err:
+            _LOGGER.error("Error in service_reconnect: %s", err)
+            raise
 
     async def service_restart(self, dongle):
-        luxpower_client = self._lux_client(dongle)
-        await luxpower_client.restart()
-        await asyncio.sleep(1)
-        _LOGGER.warning("service_restart done")
+        """Restart the LuxPower inverter connection."""
+        try:
+            luxpower_client = self._lux_client(dongle)
+            await luxpower_client.restart()
+            await asyncio.sleep(1)
+            _LOGGER.warning("service_restart done")
+        except Exception as err:
+            _LOGGER.error("Error in service_restart: %s", err)
+            raise
 
     async def service_reset_settings(self, dongle):
-        luxpower_client = self._lux_client(dongle)
-        await luxpower_client.reset_all_settings()
-        await asyncio.sleep(1)
-        _LOGGER.warning("service_reset_settings done")
+        """Reset all LuxPower inverter settings to defaults."""
+        try:
+            luxpower_client = self._lux_client(dongle)
+            await luxpower_client.reset_all_settings()
+            await asyncio.sleep(1)
+            _LOGGER.warning("service_reset_settings done")
+        except Exception as err:
+            _LOGGER.error("Error in service_reset_settings: %s", err)
+            raise
 
     async def service_synctime(self, dongle, do_set_time: bool):
-        luxpower_client = self._lux_client(dongle)
-        await luxpower_client.synctime(do_set_time)
-        _LOGGER.info("service_synctime done")
+        """Synchronize time with the LuxPower inverter."""
+        try:
+            luxpower_client = self._lux_client(dongle)
+            await luxpower_client.synctime(do_set_time)
+            _LOGGER.info("service_synctime done")
+        except Exception as err:
+            _LOGGER.error("Error in service_synctime: %s", err)
+            raise
 
     async def service_start_charging(
         self, dongle, duration_minutes: int = 180, charge_slot: int = 1
@@ -97,30 +120,31 @@ class ServiceHelper:
             duration_minutes: The charging duration in minutes
             charge_slot: Which charging slot to use (1, 2, or 3)
         """
-        import datetime
-        from homeassistant.util import dt as dt_util
-
-        # Validate charge_slot parameter
-        if charge_slot not in [1, 2, 3]:
-            _LOGGER.error(f"Invalid charge_slot: {charge_slot}. Must be 1, 2, or 3.")
-            return False
-
-        # Validate duration_minutes parameter
-        if duration_minutes < 1 or duration_minutes > 1440:  # 1 minute to 24 hours
-            _LOGGER.error(f"Invalid duration_minutes: {duration_minutes}. Must be between 1 and 1440 minutes.")
-            return False
-
-        luxpower_client = self._lux_client(dongle)
-
-        # Get current time and calculate end time
-        now = dt_util.now()
-        end_time = now + datetime.timedelta(minutes=duration_minutes)
-
-        _LOGGER.info(
-            f"Starting charging in slot {charge_slot} for {duration_minutes} minutes ({duration_minutes/60:.1f} hours) until {end_time}"
-        )
-
         try:
+            import datetime
+            from homeassistant.util import dt as dt_util
+
+            # Validate charge_slot parameter
+            if charge_slot not in [1, 2, 3]:
+                _LOGGER.error(f"Invalid charge_slot: {charge_slot}. Must be 1, 2, or 3.")
+                return False
+
+            # Validate duration_minutes parameter
+            if duration_minutes < 1 or duration_minutes > 1440:  # 1 minute to 24 hours
+                _LOGGER.error(f"Invalid duration_minutes: {duration_minutes}. Must be between 1 and 1440 minutes.")
+                return False
+
+            luxpower_client = self._lux_client(dongle)
+
+            # Get current time and calculate end time
+            now = dt_util.now()
+            end_time = now + datetime.timedelta(minutes=duration_minutes)
+
+            _LOGGER.info(
+                f"Starting charging in slot {charge_slot} for {duration_minutes} minutes ({duration_minutes/60:.1f} hours) until {end_time}"
+            )
+
+            try:
             # Enable AC charging first
             current_reg21 = await luxpower_client.read(21)
             if current_reg21 is not None:
@@ -137,13 +161,31 @@ class ServiceHelper:
                 start_register = 68 + ((charge_slot - 1) * 2)
                 end_register = start_register + 1
 
-                # Encode times (hour + minute * 256)
+                # Encode times (hour + minute * 256) with bounds checking
                 start_hour = now.hour
                 start_minute = now.minute
+                
+                # Validate hour and minute ranges
+                if not (0 <= start_hour <= 23):
+                    _LOGGER.error(f"Invalid start hour: {start_hour}")
+                    return False
+                if not (0 <= start_minute <= 59):
+                    _LOGGER.error(f"Invalid start minute: {start_minute}")
+                    return False
+                    
                 start_value = start_hour + (start_minute << 8)
 
                 end_hour = end_time.hour
                 end_minute = end_time.minute
+                
+                # Validate hour and minute ranges
+                if not (0 <= end_hour <= 23):
+                    _LOGGER.error(f"Invalid end hour: {end_hour}")
+                    return False
+                if not (0 <= end_minute <= 59):
+                    _LOGGER.error(f"Invalid end minute: {end_minute}")
+                    return False
+                    
                 end_value = end_hour + (end_minute << 8)
 
                 # Set charging times for the selected slot
@@ -173,14 +215,13 @@ class ServiceHelper:
             dongle: The dongle serial
             charge_slot: Which charging slot to stop (1, 2, or 3)
         """
-        # Validate charge_slot parameter
-        if charge_slot not in [1, 2, 3]:
-            _LOGGER.error(f"Invalid charge_slot: {charge_slot}. Must be 1, 2, or 3.")
-            return False
-
-        luxpower_client = self._lux_client(dongle)
-
         try:
+            # Validate charge_slot parameter
+            if charge_slot not in [1, 2, 3]:
+                _LOGGER.error(f"Invalid charge_slot: {charge_slot}. Must be 1, 2, or 3.")
+                return False
+
+            luxpower_client = self._lux_client(dongle)
             # Calculate register addresses for the selected slot
             # Slot 1: registers 68-69, Slot 2: registers 70-71, Slot 3: registers 72-73
             start_register = 68 + ((charge_slot - 1) * 2)
@@ -224,8 +265,12 @@ class ServiceHelper:
 
     async def service_refresh_data_registers(self, dongle, bank_count):
         _LOGGER.info(f"service_refresh_data_registers start - Count: {bank_count}")
-        luxpower_client = self._lux_client(dongle)
-        await luxpower_client.do_refresh_data_registers(bank_count)
+        try:
+            luxpower_client = self._lux_client(dongle)
+            await luxpower_client.do_refresh_data_registers(bank_count)
+        except Exception as e:
+            _LOGGER.error(f"Error refreshing data registers: {e}")
+            raise
 
         # await luxpower_client.inverter_is_reachable()
         # if luxpower_client._reachable:
@@ -242,8 +287,12 @@ class ServiceHelper:
 
     async def service_refresh_hold_registers(self, dongle):
         _LOGGER.debug("service_refresh_hold_registers start")
-        luxpower_client = self._lux_client(dongle)
-        await luxpower_client.do_refresh_hold_registers()
+        try:
+            luxpower_client = self._lux_client(dongle)
+            await luxpower_client.do_refresh_hold_registers()
+        except Exception as e:
+            _LOGGER.error(f"Error refreshing hold registers: {e}")
+            raise
 
         # luxpower_client._warn_registers = True
         # await asyncio.sleep(5)
@@ -268,7 +317,11 @@ class ServiceHelper:
         _LOGGER.debug("service_refresh_hold_registers finish")
 
     async def service_refresh_data_register_bank(self, dongle, address_bank):
-        luxpower_client = self._lux_client(dongle)
-        _LOGGER.debug("service_refresh_register for address_bank: %s", address_bank)
-        await luxpower_client.request_data_bank(address_bank)
-        _LOGGER.debug("service_refresh_data_register_bank done")
+        try:
+            luxpower_client = self._lux_client(dongle)
+            _LOGGER.debug("service_refresh_register for address_bank: %s", address_bank)
+            await luxpower_client.request_data_bank(address_bank)
+            _LOGGER.debug("service_refresh_data_register_bank done")
+        except Exception as e:
+            _LOGGER.error(f"Error refreshing data register bank {address_bank}: {e}")
+            raise

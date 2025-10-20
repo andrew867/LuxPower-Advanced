@@ -769,6 +769,46 @@ class LuxPowerSensorEntity(SensorEntity):
         self.schedule_update_ha_state()
 
     @property
+    def entity_category(self):
+        """Return entity category."""
+        # Diagnostic entities for status and connection info
+        if self._device_attribute in [
+            "lux_battery_status", "lux_status", "lux_data_last_received_time", 
+            "lux_status_text", "lux_system_status", "lux_bms_status", 
+            "lux_charge_mode", "lux_eps_status", "lux_parallel_comm_status",
+            "lux_battery_wear_level", "lux_zero_export_mode", "lux_reactive_power_control",
+            "lux_peak_schedule_active", "lux_integration_status", "lux_model_detection_status",
+            "lux_firmware_update_status", "lux_parallel_system_status", "lux_parallel_system_sync",
+            "lux_parallel_system_comm", "lux_battery_firmware_update_status",
+            "lux_battery_firmware_compatibility", "lux_battery_firmware_validation"
+        ]:
+            return "diagnostic"
+        return None
+
+    @property
+    def suggested_display_precision(self) -> int:
+        """Return suggested decimal places."""
+        if self._unit_of_measurement in ["W", "kW", "V", "A"]:
+            return 1
+        elif self._unit_of_measurement == "%":
+            return 0
+        return 2
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available based on connection state."""
+        # Get the client from hass data
+        try:
+            for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    client = data.get("client")
+                    if client and hasattr(client, '_connected'):
+                        return client._connected
+            return False
+        except Exception:
+            return False
+
+    @property
     def device_info(self):
         """Return device info."""
         entry_id = None

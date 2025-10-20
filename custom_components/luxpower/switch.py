@@ -340,6 +340,28 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         await self.set_register_bit(False)
 
     @property
+    def entity_category(self):
+        """Return entity category."""
+        # Configuration entities for settings and controls
+        if self._register_address in [21, 22, 23, 24, 25]:  # Common config registers
+            return "config"
+        return None
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available based on connection state."""
+        # Get the client from hass data
+        try:
+            for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    client = data.get("client")
+                    if client and hasattr(client, '_connected'):
+                        return client._connected
+            return False
+        except Exception:
+            return False
+
+    @property
     def device_info(self):
         """Return device info."""
         entry_id = None

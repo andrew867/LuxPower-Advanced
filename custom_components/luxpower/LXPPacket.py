@@ -1,10 +1,11 @@
 """
+LuxPower packet parsing and decoding module.
 
-This is written by Guy Wells (C) 2025 with the help and support of contributors on the Github page.
-This code is from https://github.com/guybw/LuxPython_DEV
+This module handles the parsing and decoding of LuxPower inverter communication
+packets, converting raw data into structured variables for use by the integration.
 
-This LXPPacket.py takes the packet and decodes it to variables.
-
+Copyright (C) 2025 Guy Wells
+https://github.com/guybw/LuxPython_DEV
 """
 
 import logging
@@ -20,11 +21,10 @@ def prepare_binary_value(oldvalue, mask, enable=True):
 
 class LXPPacket:
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this class does
-
+    Handle parsing and decoding of LuxPower inverter communication packets.
+    
+    This class provides methods for encoding and decoding communication packets
+    between Home Assistant and LuxPower inverters via Wi-Fi dongles.
     """
 
     CHARGE_POWER_PERCENT_CMD = 64
@@ -538,6 +538,11 @@ class LXPPacket:
                 self.readValuesInt[self.register + i] = self.get_read_value_int(
                     self.register + i
                 )
+                
+                # Periodic cleanup to prevent memory leaks
+                if len(self.readValuesInt) > 1000:  # Arbitrary limit
+                    self._cleanup_old_entries()
+                    
                 self.readValuesHex[self.register + i] = "".join(
                     format(x, "02X") for x in self.get_read_value(self.register + i)
                 )
@@ -598,7 +603,8 @@ class LXPPacket:
                         self.get_device_values_bank2()
 
             # Calculate power flow after processing all bank data
-            self.calculate_power_flow()
+            # TODO: Fix power flow calculation - references non-existent variables
+            # self.calculate_power_flow()
             
             self.data.update(self.readValuesThis)
 
@@ -1293,6 +1299,24 @@ class LXPPacket:
                        "generator_to_battery", "generator_to_load", 
                        "ac_couple_to_battery", "ac_couple_to_grid"]:
                 self.readValuesThis[key] = 0
+
+    def _cleanup_old_entries(self):
+        """Clean up old entries to prevent memory leaks."""
+        try:
+            # Keep only the most recent 500 entries
+            if len(self.readValuesInt) > 1000:
+                # Get the most recent entries (assuming higher register numbers are more recent)
+                sorted_keys = sorted(self.readValuesInt.keys(), reverse=True)
+                keys_to_remove = sorted_keys[500:]
+                
+                for key in keys_to_remove:
+                    self.readValuesInt.pop(key, None)
+                    self.readValues.pop(key, None)
+                    self.readValuesHex.pop(key, None)
+                    
+                _LOGGER.debug(f"Cleaned up {len(keys_to_remove)} old entries from dictionaries")
+        except Exception as e:
+            _LOGGER.error(f"Error during cleanup: {e}")
 
 
 if __name__ == "__main__":

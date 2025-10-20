@@ -48,11 +48,13 @@ _LOGGER = logging.getLogger(__name__)
 
 def floatzero(incoming):
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this function does
-
+    Convert incoming value to float, returning 0.0 if conversion fails.
+    
+    Args:
+        incoming: Value to convert to float
+        
+    Returns:
+        float: Converted value or 0.0 if conversion fails
     """
     try:
         value_we_got = float(incoming)
@@ -95,6 +97,30 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
     # Options For Hyphen Use Before Entity Description - Suggest No Hyphen As Of 15/02/23
     # hyphen = " -" if USE_SERIAL else "-"
     hyphen = ""
+    
+    # Retrieve cached model code
+    entry_id = config_entry.entry_id
+    model_code = None
+    
+    # Check config entry options first (persists across restarts)
+    if "model_code" in config_entry.options:
+        model_code = config_entry.options["model_code"]
+        _LOGGER.info(f"Using cached model code from config entry: {model_code}")
+    
+    # Check hass.data second (available after first register read)
+    elif entry_id in hass.data.get(DOMAIN, {}):
+        model_code = hass.data[DOMAIN][entry_id].get("model_code")
+        if model_code:
+            _LOGGER.info(f"Using cached model code from hass.data: {model_code}")
+    
+    # Log model detection status
+    if model_code:
+        from .sensor import is_12k_model, MODEL_MAP
+        is_12k = is_12k_model(model_code)
+        model_name = MODEL_MAP.get(model_code, "Unknown")
+        _LOGGER.info(f"Model detected: {model_name} ({model_code}) - {'12K' if is_12k else 'non-12K'}")
+    else:
+        _LOGGER.info("No model code available - using default entity enablement")
 
     event = Event(dongle=DONGLE)
     # luxpower_client = hass.data[event.CLIENT_DAEMON]
@@ -311,6 +337,13 @@ class LuxTimeTimeEntity(TimeEntity):
 
         if value != self._attr_native_value:
             _LOGGER.debug(f"Started set_value {value}")
+            
+            # Validate hour and minute ranges before encoding
+            if not (0 <= value.hour <= 23):
+                raise vol.Invalid(f"Invalid hour: {value.hour} (must be 0-23)")
+            if not (0 <= value.minute <= 59):
+                raise vol.Invalid(f"Invalid minute: {value.minute} (must be 0-59)")
+                
             new_reg_value = value.minute * 256 + value.hour
 
             if (

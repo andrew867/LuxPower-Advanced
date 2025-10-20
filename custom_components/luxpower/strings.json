@@ -23,7 +23,8 @@
           "lux_serial_number": "Inverter Serial Number",
           "lux_respond_to_heartbeat": "Respond to Heartbeat",
           "lux_auto_refresh": "Enable Auto Refresh",
-          "lux_refresh_interval": "Refresh Interval (seconds)"
+          "lux_refresh_interval": "Refresh Interval (30-120 seconds)",
+          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6)"
         }
       }
     }

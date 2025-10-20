@@ -22,7 +22,8 @@
           "lux_use_serial": "Use serial number in entity names",
           "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter",
           "lux_auto_refresh": "Enable automatic refresh (disable for refresh automations)",
-          "lux_refresh_interval": "Refresh interval in seconds"
+          "lux_refresh_interval": "Refresh interval (30-120 seconds)",
+          "lux_refresh_bank_count": "Number of banks to refresh (1-6)"
         }
       }
     }

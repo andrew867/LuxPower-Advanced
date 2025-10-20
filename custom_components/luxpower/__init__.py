@@ -123,7 +123,7 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle: str) -> None:
         hass: Home Assistant instance
         dongle: Dongle serial number for the inverter
     """
-    await asyncio.sleep(20)
+    await asyncio.sleep(5)  # Reduced from 20s to 5s for faster startup
     # fmt: skip
     await hass.services.async_call(
         DOMAIN,
@@ -197,33 +197,45 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     async def handle_reconnect(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_reconnect service: %s %s", DOMAIN, dongle)
-        await service_helper.service_reconnect(dongle=dongle)
+        try:
+            dongle = call.data.get("dongle")
+            _LOGGER.debug("handle_reconnect service: %s %s", DOMAIN, dongle)
+            await service_helper.service_reconnect(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error reconnecting: %s", err)
 
     async def handle_restart(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_restart service: %s %s", DOMAIN, dongle)
-        await service_helper.service_restart(dongle=dongle)
+        try:
+            dongle = call.data.get("dongle")
+            _LOGGER.debug("handle_restart service: %s %s", DOMAIN, dongle)
+            await service_helper.service_restart(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error restarting: %s", err)
 
     async def handle_reset_settings(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_reset_settings service: %s %s", DOMAIN, dongle)
-        await service_helper.service_reset_settings(dongle=dongle)
+        try:
+            dongle = call.data.get("dongle")
+            _LOGGER.debug("handle_reset_settings service: %s %s", DOMAIN, dongle)
+            await service_helper.service_reset_settings(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error resetting settings: %s", err)
 
     async def handle_synctime(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        do_set_time = call.data.get("do_set_time", "False").lower() in (
-            "yes",
-            "true",
-            "t",
-            "1",
-        )
-        _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
-        await service_helper.service_synctime(dongle=dongle, do_set_time=do_set_time)
+        try:
+            dongle = call.data.get("dongle")
+            do_set_time = call.data.get("do_set_time", "False").lower() in (
+                "yes",
+                "true",
+                "t",
+                "1",
+            )
+            _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
+            await service_helper.service_synctime(dongle=dongle, do_set_time=do_set_time)
+        except Exception as err:
+            _LOGGER.error("Error syncing time: %s", err)
 
     async def handle_start_charging(call) -> None:
         """Handle the start charging service call."""
@@ -243,14 +255,17 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     async def handle_stop_charging(call) -> None:
         """Handle the stop charging service call."""
-        dongle = call.data.get("dongle")
-        charge_slot = call.data.get("charge_slot", DEFAULT_CHARGE_SLOT)
-        _LOGGER.debug(
-            "handle_stop_charging service: %s %s slot: %s", DOMAIN, dongle, charge_slot
-        )
-        await service_helper.service_stop_charging(
-            dongle=dongle, charge_slot=charge_slot
-        )
+        try:
+            dongle = call.data.get("dongle")
+            charge_slot = call.data.get("charge_slot", DEFAULT_CHARGE_SLOT)
+            _LOGGER.debug(
+                "handle_stop_charging service: %s %s slot: %s", DOMAIN, dongle, charge_slot
+            )
+            await service_helper.service_stop_charging(
+                dongle=dongle, charge_slot=charge_slot
+            )
+        except Exception as err:
+            _LOGGER.error("Error stopping charging: %s", err)
 
     hass.services.async_register(
         DOMAIN,
@@ -393,12 +408,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass_data[entry.entry_id]["refresh_remove"] = refresh_remove
 
     # wait to make sure all entities have been initialised
-    await asyncio.sleep(20)
+    await asyncio.sleep(5)  # Reduced from 20s to 5s for faster startup
 
     # start the main Inverter Polling asycnio loop
     connect_to_inverter = hass.loop.create_task(
         luxpower_client.start_luxpower_client_daemon()
     )
+    
+    # Store task for proper cleanup
+    hass_data[entry.entry_id]["connect_task"] = connect_to_inverter
 
     # Refresh ALL Platforms By Issuing Service Call, After Suitable Delay To Give The Platforms Time To Initialise
 
@@ -438,6 +456,15 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
             luxpower_client.stop_client()
         if entry_data.get("refresh_remove"):
             entry_data.get("refresh_remove")()
+        # Cancel the connection task if it exists
+        if entry_data.get("connect_task"):
+            connect_task = entry_data.get("connect_task")
+            if not connect_task.done():
+                connect_task.cancel()
+                try:
+                    await connect_task
+                except asyncio.CancelledError:
+                    pass
         hass.data.setdefault(DOMAIN, {})
         _LOGGER.info("async_unload_entry: unloaded...")
 

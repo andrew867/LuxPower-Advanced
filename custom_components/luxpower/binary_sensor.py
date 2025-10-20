@@ -95,7 +95,7 @@ async def async_setup_entry(
 
     hyphen = "-" if nameID_midfix else ""
 
-    event = Event(hass, HOST, PORT, DONGLE, SERIAL)
+    event = Event(dongle=DONGLE)
 
     binarySensorEntities = []
 
@@ -203,8 +203,7 @@ class LuxBinarySensorEntity(BinarySensorEntity):
         self._device_class = entity_definition.get("device_class")
         self._enabled = entity_definition.get("enabled", True)
 
-        # Set up event listener
-        self._event.add_listener(self._update_callback)
+        # Event listeners will be set up in async_added_to_hass
 
     @property
     def name(self):
@@ -215,6 +214,17 @@ class LuxBinarySensorEntity(BinarySensorEntity):
     def unique_id(self):
         """Return the unique ID of the binary sensor."""
         return f"{self._unique_id}_{self._serial}"
+
+    @property
+    def entity_category(self):
+        """Return entity category."""
+        # Diagnostic entities for status and connection info
+        if self._device_class in [
+            BinarySensorDeviceClass.CONNECTIVITY, 
+            BinarySensorDeviceClass.PROBLEM
+        ]:
+            return "diagnostic"
+        return None
 
     @property
     def device_info(self):
@@ -264,9 +274,34 @@ class LuxBinarySensorEntity(BinarySensorEntity):
 
     async def async_added_to_hass(self):
         """Called when entity is added to hass."""
-        if not self._enabled:
-            self.entity_registry.async_get_or_create(
-                self.entity_id,
-                suggested_object_id=self._unique_id,
-                disabled_by="integration",
+        # Set up event listeners for data updates
+        if self._bank == 0:
+            self.hass.bus.async_listen(
+                self._event.EVENT_DATA_BANK0_RECEIVED, self._update_callback
             )
+        elif self._bank == 1:
+            self.hass.bus.async_listen(
+                self._event.EVENT_DATA_BANK1_RECEIVED, self._update_callback
+            )
+        elif self._bank == 2:
+            self.hass.bus.async_listen(
+                self._event.EVENT_DATA_BANK2_RECEIVED, self._update_callback
+            )
+        elif self._bank == 3:
+            self.hass.bus.async_listen(
+                self._event.EVENT_DATA_BANK3_RECEIVED, self._update_callback
+            )
+        elif self._bank == 4:
+            self.hass.bus.async_listen(
+                self._event.EVENT_DATA_BANK4_RECEIVED, self._update_callback
+            )
+        
+        # Always listen for unavailable events
+        self.hass.bus.async_listen(
+            self._event.EVENT_UNAVAILABLE_RECEIVED, self._gone_unavailable
+        )
+
+    def _gone_unavailable(self, event):
+        """Handle unavailable event."""
+        self._state = None
+        self.schedule_update_ha_state()

@@ -54,11 +54,13 @@ _LOGGER = logging.getLogger(__name__)
 
 def floatzero(incoming):
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this function does
-
+    Convert incoming value to float, returning 0.0 if conversion fails.
+    
+    Args:
+        incoming: Value to convert to float
+        
+    Returns:
+        float: Converted value or 0.0 if conversion fails
     """
     try:
         value_we_got = float(incoming)
@@ -430,6 +432,28 @@ class LuxNormalNumberEntity(NumberEntity):
         _LOGGER.warning(f"Register: gone_unavailable event received Name: {self._attr_name} - Register Address: {self.register_address}")  # fmt: skip
         self._attr_available = False
         self.schedule_update_ha_state()
+
+    @property
+    def entity_category(self):
+        """Return entity category."""
+        # Configuration entities for settings and controls
+        if self.register_address in [64, 65, 66, 103, 105, 125]:  # Common config registers
+            return "config"
+        return None
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available based on connection state."""
+        # Get the client from hass data
+        try:
+            for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    client = data.get("client")
+                    if client and hasattr(client, '_connected'):
+                        return client._connected
+            return False
+        except Exception:
+            return False
 
     @property
     def device_info(self):

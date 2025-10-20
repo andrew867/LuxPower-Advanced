@@ -221,3 +221,72 @@ class TestOptionsFlowHandler:
         assert "lux_serial_number" in result["errors"]
         assert "lux_refresh_interval" in result["errors"]
         assert "lux_refresh_bank_count" in result["errors"]
+
+    async def test_options_flow_reconfiguration_scenarios(self, hass: HomeAssistant, mock_config_entry):
+        """Test various reconfiguration scenarios."""
+        handler = OptionsFlowHandler(mock_config_entry)
+        
+        # Test changing IP address
+        result = await handler.async_step_user({
+            "lux_host": "192.168.1.200",
+            "lux_dongle_serial": "BA12345678",
+            "lux_use_serial": False,
+            "lux_respond_to_heartbeat": False,
+            "lux_auto_refresh": True,
+            "lux_refresh_interval": 60,
+            "lux_refresh_bank_count": 3,
+        })
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+        assert result["data"]["lux_host"] == "192.168.1.200"
+        assert result["data"]["lux_refresh_interval"] == 60
+
+    async def test_options_flow_edge_cases(self, hass: HomeAssistant, mock_config_entry):
+        """Test edge cases in options flow."""
+        handler = OptionsFlowHandler(mock_config_entry)
+        
+        # Test minimum refresh interval
+        result = await handler.async_step_user({
+            "lux_host": "192.168.1.100",
+            "lux_dongle_serial": "BA12345678",
+            "lux_use_serial": False,
+            "lux_respond_to_heartbeat": False,
+            "lux_auto_refresh": True,
+            "lux_refresh_interval": 30,  # Minimum value
+            "lux_refresh_bank_count": 1,  # Minimum value
+        })
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+        
+        # Test maximum values
+        result = await handler.async_step_user({
+            "lux_host": "192.168.1.100",
+            "lux_dongle_serial": "BA12345678",
+            "lux_use_serial": False,
+            "lux_respond_to_heartbeat": False,
+            "lux_auto_refresh": True,
+            "lux_refresh_interval": 120,  # Maximum value
+            "lux_refresh_bank_count": 6,  # Maximum value
+        })
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+
+    async def test_config_flow_with_serial_number_validation(self, hass: HomeAssistant):
+        """Test config flow with serial number validation."""
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_USER}
+        )
+        
+        # Test with valid serial number
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                "lux_host": "192.168.1.100",
+                "lux_dongle_serial": "BA12345678",
+                "lux_use_serial": True,
+                "lux_serial_number": "SN12345678",
+                "lux_respond_to_heartbeat": True,
+                "lux_auto_refresh": True,
+                "lux_refresh_interval": 90,
+            },
+        )
+        assert result["type"] == FlowResultType.CREATE_ENTRY
+        assert result["data"]["lux_serial_number"] == "SN12345678"
+        assert result["data"]["lux_respond_to_heartbeat"] is True

@@ -92,7 +92,7 @@ luxpower_synctime:
       required: false
       default: "False"
       selector:
-        boolean
+        boolean:
 
 luxpower_start_charging:
   name: Start Charging
@@ -115,13 +115,13 @@ luxpower_start_charging:
           step: 1
     charge_slot:
       name: Charge Slot
-      description: Which charge slot to use (1-4)
+      description: Which charge slot to use (1-3)
       required: false
       default: 1
       selector:
         number:
           min: 1
-          max: 4
+          max: 3
           step: 1
 
 luxpower_stop_charging:
@@ -135,11 +135,11 @@ luxpower_stop_charging:
       example: "BA12345678"
     charge_slot:
       name: Charge Slot
-      description: Which charge slot to stop (1-4)
+      description: Which charge slot to stop (1-3)
       required: false
       default: 1
       selector:
         number:
           min: 1
-          max: 4
+          max: 3
           step: 1
