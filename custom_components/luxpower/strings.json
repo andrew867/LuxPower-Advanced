@@ -1,22 +1,29 @@
 {
   "config": {
     "error": {
-      "host_error": "[%key:common::config_flow::error::host_error%]",
-      "dongle_error": "[%key:common::config_flow::error::dongle_error%]",
-      "exist_error": "[%key:common::config_flow::error::exist_error%]"
+      "host_error": "Invalid host address. Please enter a valid IP address or hostname.",
+      "dongle_error": "Invalid dongle serial. Must be exactly 10 characters (e.g., BA12345678).",
+      "exist_error": "A LuxPower integration with this dongle serial already exists.",
+      "serial_error": "Invalid serial number. Must be exactly 10 characters.",
+      "use_serial_error": "Serial number is required when 'Use Serial' is enabled.",
+      "refresh_interval_error": "Refresh interval must be between 30 and 120 seconds.",
+      "refresh_bank_count_error": "Bank count must be between 1 and 6."
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "This LuxPower inverter is already configured."
     },
     "step": {
       "user": {
-        "title": "[%key:common::config_flow::title%]",
-        "description": "[%key:common::config_flow::description%]",
+        "title": "LuxPower Inverter",
+        "description": "Configure your LuxPower inverter connection. You'll need the IP address of your inverter's Wi-Fi dongle and the dongle serial number (found on the dongle or in the inverter's web interface).",
         "data": {
-          "lux_host": "[%key:common::config_flow::data::lux_host%]",
-          "lux_dongle_serial": "[%key:common::config_flow::data::lux_dongle_serial%]",
-          "lux_use_serial": "[%key:common::config_flow::data::lux_use_serial%]",
-          "lux_respond_to_heartbeat": "[%key:common::config_flow::data::lux_respond_to_heartbeat%]"
+          "lux_host": "IP Address",
+          "lux_dongle_serial": "Dongle Serial Number",
+          "lux_use_serial": "Use Serial Number in Entity IDs",
+          "lux_serial_number": "Inverter Serial Number",
+          "lux_respond_to_heartbeat": "Respond to Heartbeat",
+          "lux_auto_refresh": "Enable Auto Refresh",
+          "lux_refresh_interval": "Refresh Interval (seconds)"
         }
       }
     }
@@ -24,11 +31,17 @@
   "options": {
     "step": {
       "user": {
+        "title": "LuxPower Options",
+        "description": "Configure LuxPower integration options. You can modify connection settings and refresh behavior here.",
         "data": {
-          "lux_host": "IP address of the Lux Inverter",
-          "lux_dongle_serial": "Inverter dongle number",
-          "lux_use_serial": "Use serial to be part of entityID",
-          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter"
+          "lux_host": "IP Address of the LuxPower Inverter",
+          "lux_dongle_serial": "Inverter Dongle Serial Number",
+          "lux_use_serial": "Use Serial Number in Entity IDs",
+          "lux_serial_number": "Inverter Serial Number",
+          "lux_respond_to_heartbeat": "Respond to Heartbeat Requests from Inverter",
+          "lux_auto_refresh": "Enable Automatic Data Refresh",
+          "lux_refresh_interval": "Refresh Interval (30-120 seconds)",
+          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6)"
         }
       }
     }

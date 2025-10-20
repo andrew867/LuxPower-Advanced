@@ -1,9 +1,8 @@
 """
+Service connector for LuxPower integration.
 
-This is a docstring placeholder.
-
-This is where we will describe what this module does
-
+This module provides the ServiceHelper class for handling LuxPower service calls
+and managing communication with LuxPower inverters through their dongles.
 """
 
 import asyncio
@@ -41,7 +40,20 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
 
 
 class ServiceHelper:
-    def __init__(self, hass) -> None:
+    """
+    Service helper for LuxPower integration.
+    
+    This class provides methods for handling LuxPower service calls
+    and managing communication with LuxPower inverters.
+    """
+    
+    def __init__(self, hass: HomeAssistant) -> None:
+        """
+        Initialize ServiceHelper.
+        
+        Args:
+            hass: Home Assistant instance
+        """
         self.hass = hass
 
     def _lux_client(self, dongle: str) -> LuxPowerClient:

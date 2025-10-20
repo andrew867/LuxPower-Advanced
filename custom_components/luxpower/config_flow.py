@@ -1,9 +1,9 @@
 """
+Configuration flow for LuxPower integration.
 
-This is a docstring placeholder.
-
-This is where we will describe what this module does
-
+This module handles the user interface for setting up and configuring
+LuxPower inverter connections, including validation of connection parameters
+and options flow for reconfiguration.
 """
 
 import ipaddress
@@ -50,11 +50,11 @@ def host_valid(host):
 
 class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this class does
-
+    Handle LuxPower configuration flow.
+    
+    This class manages the initial setup process for LuxPower inverters,
+    including validation of host addresses, dongle serials, and other
+    configuration parameters.
     """
 
     VERSION = 1
@@ -145,11 +145,10 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this class does
-
+    Handle LuxPower options flow.
+    
+    This class manages the reconfiguration of existing LuxPower integrations,
+    allowing users to modify settings without removing and re-adding the integration.
     """
 
     def __init__(self, config_entry):

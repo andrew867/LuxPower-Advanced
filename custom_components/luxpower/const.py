@@ -8,7 +8,7 @@ Defines constants used throughout the Luxpower integration.
 UA = "unavailable"
 
 DOMAIN = "luxpower"
-VERSION = "2025.6.0-beta"
+VERSION = "2025.6.0"
 
 # Config UI Attributes
 ATTR_LUX_HOST = "lux_host"
@@ -31,6 +31,27 @@ PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT = False
 PLACEHOLDER_LUX_AUTO_REFRESH = False
 PLACEHOLDER_LUX_REFRESH_INTERVAL = 120
 PLACEHOLDER_LUX_REFRESH_BANK_COUNT = 2
+
+# Default values for service calls
+DEFAULT_CHARGE_DURATION_MINUTES = 180
+DEFAULT_CHARGE_SLOT = 1
+DEFAULT_DONGLE_SERIAL = "XXXXXXXXXX"
+DEFAULT_SERIAL_NUMBER = "XXXXXXXXXX"
+
+# Service call constants
+SERVICE_REFRESH_REGISTER_BANK = "luxpower_refresh_register_bank"
+SERVICE_REFRESH_REGISTERS = "luxpower_refresh_registers"
+SERVICE_REFRESH_HOLDINGS = "luxpower_refresh_holdings"
+SERVICE_RECONNECT = "luxpower_reconnect"
+SERVICE_RESTART = "luxpower_restart"
+SERVICE_RESET_SETTINGS = "luxpower_reset_settings"
+SERVICE_SYNC_TIME = "luxpower_synctime"
+SERVICE_START_CHARGING = "luxpower_start_charging"
+SERVICE_STOP_CHARGING = "luxpower_stop_charging"
+
+# Entity categories
+ENTITY_CATEGORY_DIAGNOSTIC = "diagnostic"
+ENTITY_CATEGORY_CONFIG = "config"
 
 EVENT_DATA_FORMAT = "{DOMAIN}_{DONGLE}_data_receive_{GROUP}_event"
 EVENT_REGISTER_FORMAT = "{DOMAIN}_{DONGLE}_register_receive_{GROUP}_event"

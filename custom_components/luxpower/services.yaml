@@ -1,0 +1,145 @@
+luxpower_refresh_register_bank:
+  name: Refresh Register Bank
+  description: Refresh data from a specific register bank on the LuxPower inverter.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+    address_bank:
+      name: Address Bank
+      description: The register bank address to refresh (0-5)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 1
+
+luxpower_refresh_registers:
+  name: Refresh Registers
+  description: Refresh data from multiple register banks on the LuxPower inverter.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+    bank_count:
+      name: Bank Count
+      description: Number of register banks to refresh (1-6)
+      required: false
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 6
+          step: 1
+
+luxpower_refresh_holdings:
+  name: Refresh Holdings
+  description: Refresh holding register data from the LuxPower inverter.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+
+luxpower_reconnect:
+  name: Reconnect
+  description: Reconnect to the LuxPower inverter.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+
+luxpower_restart:
+  name: Restart
+  description: Restart the LuxPower inverter connection.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+
+luxpower_reset_settings:
+  name: Reset Settings
+  description: Reset LuxPower inverter settings to defaults.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+
+luxpower_synctime:
+  name: Sync Time
+  description: Synchronize time with the LuxPower inverter.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+    do_set_time:
+      name: Set Time
+      description: Whether to actually set the time on the inverter
+      required: false
+      default: "False"
+      selector:
+        boolean
+
+luxpower_start_charging:
+  name: Start Charging
+  description: Start charging the battery from the grid.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+    duration_minutes:
+      name: Duration (minutes)
+      description: How long to charge in minutes
+      required: false
+      default: 180
+      selector:
+        number:
+          min: 1
+          max: 1440
+          step: 1
+    charge_slot:
+      name: Charge Slot
+      description: Which charge slot to use (1-4)
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 4
+          step: 1
+
+luxpower_stop_charging:
+  name: Stop Charging
+  description: Stop charging the battery from the grid.
+  fields:
+    dongle:
+      name: Dongle Serial
+      description: The serial number of the LuxPower dongle
+      required: true
+      example: "BA12345678"
+    charge_slot:
+      name: Charge Slot
+      description: Which charge slot to stop (1-4)
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 4
+          step: 1

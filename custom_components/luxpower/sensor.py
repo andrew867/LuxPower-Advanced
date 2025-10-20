@@ -1,9 +1,12 @@
 """
+LuxPower sensor platform for Home Assistant.
 
-This is written by Guy Wells (C) 2025.
-This code is from https://github.com/guybw/LuxPython_DEV
+This module provides sensor entities for monitoring LuxPower inverter data
+including power readings, battery status, grid information, and system statistics.
+Supports multiple inverter models with appropriate sensor configurations.
 
-This sensor.py is the sensors file for LUXPython
+Copyright (C) 2025 Guy Wells
+https://github.com/guybw/LuxPython_DEV
 """
 
 import logging
@@ -37,6 +40,8 @@ from .const import (
     ATTR_LUX_PORT,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     UA,
     VERSION,
@@ -119,8 +124,8 @@ async def async_setup_entry(
 
     HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = platform_config.get(ATTR_LUX_PORT, 8000)
-    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
 
     # Options For Name Midfix Based Upon Serial Number - Suggest Last Two Digits
@@ -390,28 +395,28 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 0, "register": 0, "enabled": False},  # Current warning code
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Status Code", "unique": "lux_system_status", "bank": 0, "register": 0, "enabled": False},  # System status code
         
-        # Power Flow Sensors (calculated from existing power values) - COMMENTED: register 0 invalid
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Battery Power", "unique": "lux_pv_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV charging battery
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Load Power", "unique": "lux_pv_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV directly powering loads
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Grid Power", "unique": "lux_pv_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV exporting to grid
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Load Power", "unique": "lux_battery_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery discharging to loads
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Grid Power", "unique": "lux_battery_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery exporting to grid
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Battery Power", "unique": "lux_grid_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid charging battery
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Load Power", "unique": "lux_grid_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid powering loads
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Battery Power", "unique": "lux_generator_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator charging
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Load Power", "unique": "lux_generator_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator powering loads
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Battery Power", "unique": "lux_ac_couple_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to battery
-        # {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Grid Power", "unique": "lux_ac_couple_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to grid
+        # Power Flow Sensors (calculated from existing power values) - Register 0 valid for system status
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Battery Power", "unique": "lux_pv_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV charging battery
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Load Power", "unique": "lux_pv_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV directly powering loads
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Grid Power", "unique": "lux_pv_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV exporting to grid
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Load Power", "unique": "lux_battery_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery discharging to loads
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Grid Power", "unique": "lux_battery_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery exporting to grid
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Battery Power", "unique": "lux_grid_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid charging battery
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Load Power", "unique": "lux_grid_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid powering loads
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Battery Power", "unique": "lux_generator_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator charging
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Load Power", "unique": "lux_generator_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator powering loads
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Battery Power", "unique": "lux_ac_couple_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to battery
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Grid Power", "unique": "lux_ac_couple_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to grid
         
-        # Battery Management System (BMS) Integration - COMMENTED: register 0 invalid
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Status", "unique": "lux_bms_status", "bank": 0, "register": 0, "enabled": False},  # BMS communication status
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Fault Code", "unique": "lux_bms_fault", "bank": 0, "register": 0, "enabled": False},  # BMS fault code
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Health %", "unique": "lux_battery_health", "bank": 0, "register": 0, "enabled": False},  # Battery health percentage
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Cycle Count", "unique": "lux_battery_cycles", "bank": 0, "register": 0, "enabled": False},  # Battery cycle count
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Max", "unique": "lux_cell_voltage_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell voltage
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Min", "unique": "lux_cell_voltage_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell voltage
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Max", "unique": "lux_cell_temp_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell temperature
-        # {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Min", "unique": "lux_cell_temp_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell temperature
+        # Battery Management System (BMS) Integration - Register 0 valid for system status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Status", "unique": "lux_bms_status", "bank": 0, "register": 0, "enabled": False},  # BMS communication status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Fault Code", "unique": "lux_bms_fault", "bank": 0, "register": 0, "enabled": False},  # BMS fault code
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Health %", "unique": "lux_battery_health", "bank": 0, "register": 0, "enabled": False},  # Battery health percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Cycle Count", "unique": "lux_battery_cycles", "bank": 0, "register": 0, "enabled": False},  # Battery cycle count
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Max", "unique": "lux_cell_voltage_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Min", "unique": "lux_cell_voltage_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Max", "unique": "lux_cell_temp_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell temperature
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Min", "unique": "lux_cell_temp_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell temperature
         
         # Inverter Health Metrics
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Transformer Temperature", "unique": "lux_transformer_temp", "bank": 0, "register": 0, "enabled": False},  # Transformer temperature
@@ -524,6 +529,13 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Packet Loss Rate", "unique": "lux_packet_loss_rate", "bank": 0, "register": 0, "enabled": False},  # Packet loss rate percentage
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Connection Uptime", "unique": "lux_connection_uptime", "bank": 0, "register": 0, "enabled": False},  # Connection uptime in hours
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Last Data Update", "unique": "lux_last_data_update", "bank": 0, "register": 0, "enabled": False},  # Timestamp of last data update
+        
+        # Integration Health Diagnostics
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Integration Status", "unique": "lux_integration_status", "bank": 0, "register": 0, "enabled": False},  # Integration health status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Model Detection Status", "unique": "lux_model_detection_status", "bank": 0, "register": 0, "enabled": False},  # Model detection status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Register Read Success Rate", "unique": "lux_register_success_rate", "bank": 0, "register": 0, "enabled": False},  # Register read success rate
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Error Count", "unique": "lux_error_count", "bank": 0, "register": 0, "enabled": False},  # Total error count
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Last Error", "unique": "lux_last_error", "bank": 0, "register": 0, "enabled": False},  # Last error message
         
         # Performance Metrics
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Efficiency", "unique": "lux_system_efficiency", "bank": 0, "register": 0, "enabled": False},  # Overall system efficiency percentage

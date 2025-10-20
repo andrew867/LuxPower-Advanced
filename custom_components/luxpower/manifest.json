@@ -16,5 +16,6 @@
   "version": "2025.6.0-beta",
   "codeowners": [
     "@guybw"
-  ]
+  ],
+  "quality_scale": "silver"
 }

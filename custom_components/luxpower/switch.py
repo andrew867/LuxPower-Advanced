@@ -1,10 +1,11 @@
 """
+LuxPower switch platform for Home Assistant.
 
-This is written by Guy Wells (C) 2025 with the help and support of contributors on the Github page.
-This code is from https://github.com/guybw/LuxPython_DEV
+This module provides switch entities for controlling LuxPower inverter functions
+including charging control, grid export settings, and other operational modes.
 
-This switch.py enables switches in Home Assistant.
-
+Copyright (C) 2025 Guy Wells
+https://github.com/guybw/LuxPython_DEV
 """
 
 import logging
@@ -22,6 +23,8 @@ from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     VERSION,
 )
@@ -52,8 +55,8 @@ async def async_setup_entry(
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
-    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
     luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]["client"]
 

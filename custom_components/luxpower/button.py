@@ -1,5 +1,11 @@
 """
-Button entities for LuxPower integration.
+LuxPower button platform for Home Assistant.
+
+This module provides button entities for triggering LuxPower inverter actions
+including data refresh, reconnection, restart, and charging control.
+
+Copyright (C) 2025 Guy Wells
+https://github.com/guybw/LuxPython_DEV
 """
 
 import logging
@@ -15,6 +21,8 @@ from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     VERSION,
 )
@@ -42,8 +50,8 @@ async def async_setup_entry(
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
-    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
     luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]["client"]
 

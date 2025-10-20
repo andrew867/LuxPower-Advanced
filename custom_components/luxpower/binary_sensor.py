@@ -1,8 +1,11 @@
 """
-This is written by Guy Wells (C) 2025.
-This code is from https://github.com/guybw/LuxPython_DEV
+LuxPower binary sensor platform for Home Assistant.
 
-This binary_sensor.py is the binary sensors file for LUXPython
+This module provides binary sensor entities for monitoring LuxPower inverter
+status indicators including charging state, grid connection, and system alerts.
+
+Copyright (C) 2025 Guy Wells
+https://github.com/guybw/LuxPython_DEV
 """
 
 import logging
@@ -24,6 +27,8 @@ from .const import (
     ATTR_LUX_PORT,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     UA,
     VERSION,
@@ -78,8 +83,8 @@ async def async_setup_entry(
 
     HOST = platform_config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = platform_config.get(ATTR_LUX_PORT, 8000)
-    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
 
     # Options For Name Midfix Based Upon Serial Number - Suggest Last Two Digits

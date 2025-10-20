@@ -1,9 +1,9 @@
 """
+LuxPower Home Assistant Integration.
 
-This is a docstring placeholder.
-
-This is where we will describe what this module does
-
+This module provides integration with LuxPower inverters through their Wi-Fi dongles.
+It supports multiple entity types including sensors, switches, numbers, time controls, buttons,
+and binary sensors for comprehensive inverter monitoring and control.
 """
 
 import asyncio
@@ -24,6 +24,10 @@ from .const import (
     ATTR_LUX_REFRESH_BANK_COUNT,
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_SERIAL_NUMBER,
+    DEFAULT_CHARGE_DURATION_MINUTES,
+    DEFAULT_CHARGE_SLOT,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     PLACEHOLDER_LUX_AUTO_REFRESH,
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
@@ -108,13 +112,16 @@ SCHEME_STOP_CHARGING = vol.Schema(
 )
 
 
-async def refreshALLPlatforms(hass: HomeAssistant, dongle):
+async def refreshALLPlatforms(hass: HomeAssistant, dongle: str) -> None:
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this function does
-
+    Refresh all LuxPower platform entities after a delay.
+    
+    This function waits 20 seconds then triggers a refresh of all register banks
+    and holding registers to ensure all entities have the latest data.
+    
+    Args:
+        hass: Home Assistant instance
+        dongle: Dongle serial number for the inverter
     """
     await asyncio.sleep(20)
     # fmt: skip
@@ -130,62 +137,83 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     )
 
 
-async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up the BOM component."""
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """
+    Set up the LuxPower integration.
+    
+    This function registers all the service handlers for LuxPower operations
+    including data refresh, reconnection, restart, and charging control.
+    
+    Args:
+        hass: Home Assistant instance
+        config: Integration configuration
+        
+    Returns:
+        True if setup was successful
+    """
     hass.data.setdefault(DOMAIN, {})
 
     service_helper = ServiceHelper(hass=hass)
 
-    async def handle_refresh_data_register_bank(call):
+    async def handle_refresh_data_register_bank(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        address_bank = call.data.get("address_bank")
-        _LOGGER.debug(
-            "handle_refresh_data_register_bank service: %s %s %s",
-            DOMAIN,
-            dongle,
-            address_bank,
-        )
-        await service_helper.service_refresh_data_register_bank(
-            dongle=dongle, address_bank=int(address_bank)
-        )
+        try:
+            dongle = call.data.get("dongle")
+            address_bank = call.data.get("address_bank")
+            _LOGGER.debug(
+                "handle_refresh_data_register_bank service: %s %s %s",
+                DOMAIN,
+                dongle,
+                address_bank,
+            )
+            await service_helper.service_refresh_data_register_bank(
+                dongle=dongle, address_bank=int(address_bank)
+            )
+        except Exception as err:
+            _LOGGER.error("Error refreshing register bank: %s", err)
 
-    async def handle_refresh_data_registers(call):
+    async def handle_refresh_data_registers(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        bank_count = call.data.get("bank_count")
-        if int(bank_count) == 0:
-            bank_count = 2
-        _LOGGER.debug("handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
-        await service_helper.service_refresh_data_registers(
-            dongle=dongle, bank_count=int(bank_count)
-        )
+        try:
+            dongle = call.data.get("dongle")
+            bank_count = call.data.get("bank_count")
+            if int(bank_count) == 0:
+                bank_count = 2
+            _LOGGER.debug("handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
+            await service_helper.service_refresh_data_registers(
+                dongle=dongle, bank_count=int(bank_count)
+            )
+        except Exception as err:
+            _LOGGER.error("Error refreshing registers: %s", err)
 
-    async def handle_refresh_hold_registers(call):
+    async def handle_refresh_hold_registers(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_refresh_hold_registers service: %s %s", DOMAIN, dongle)
-        await service_helper.service_refresh_hold_registers(dongle=dongle)
+        try:
+            dongle = call.data.get("dongle")
+            _LOGGER.debug("handle_refresh_hold_registers service: %s %s", DOMAIN, dongle)
+            await service_helper.service_refresh_hold_registers(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error refreshing holdings: %s", err)
 
-    async def handle_reconnect(call):
+    async def handle_reconnect(call) -> None:
         """Handle the service call."""
         dongle = call.data.get("dongle")
         _LOGGER.debug("handle_reconnect service: %s %s", DOMAIN, dongle)
         await service_helper.service_reconnect(dongle=dongle)
 
-    async def handle_restart(call):
+    async def handle_restart(call) -> None:
         """Handle the service call."""
         dongle = call.data.get("dongle")
         _LOGGER.debug("handle_restart service: %s %s", DOMAIN, dongle)
         await service_helper.service_restart(dongle=dongle)
 
-    async def handle_reset_settings(call):
+    async def handle_reset_settings(call) -> None:
         """Handle the service call."""
         dongle = call.data.get("dongle")
         _LOGGER.debug("handle_reset_settings service: %s %s", DOMAIN, dongle)
         await service_helper.service_reset_settings(dongle=dongle)
 
-    async def handle_synctime(call):
+    async def handle_synctime(call) -> None:
         """Handle the service call."""
         dongle = call.data.get("dongle")
         do_set_time = call.data.get("do_set_time", "False").lower() in (
@@ -197,26 +225,26 @@ async def async_setup(hass: HomeAssistant, config: dict):
         _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
         await service_helper.service_synctime(dongle=dongle, do_set_time=do_set_time)
 
-    async def handle_start_charging(call):
+    async def handle_start_charging(call) -> None:
         """Handle the start charging service call."""
-        dongle = call.data.get("dongle")
-        duration_minutes = call.data.get("duration_minutes", 180)
-        charge_slot = call.data.get("charge_slot", 1)
-        _LOGGER.debug("handle_start_charging service: %s %s duration: %s minutes slot: %s", 
-                      DOMAIN, dongle, duration_minutes, charge_slot)
-        await service_helper.service_start_charging(
-            dongle=dongle, 
-            duration_minutes=duration_minutes, 
-            charge_slot=charge_slot
-        )
-        await service_helper.service_start_charging(
-            dongle=dongle, duration_hours=duration_hours, charge_slot=charge_slot
-        )
+        try:
+            dongle = call.data.get("dongle")
+            duration_minutes = call.data.get("duration_minutes", DEFAULT_CHARGE_DURATION_MINUTES)
+            charge_slot = call.data.get("charge_slot", DEFAULT_CHARGE_SLOT)
+            _LOGGER.debug("handle_start_charging service: %s %s duration: %s minutes slot: %s", 
+                          DOMAIN, dongle, duration_minutes, charge_slot)
+            await service_helper.service_start_charging(
+                dongle=dongle, 
+                duration_minutes=duration_minutes, 
+                charge_slot=charge_slot
+            )
+        except Exception as err:
+            _LOGGER.error("Error starting charging: %s", err)
 
-    async def handle_stop_charging(call):
+    async def handle_stop_charging(call) -> None:
         """Handle the stop charging service call."""
         dongle = call.data.get("dongle")
-        charge_slot = call.data.get("charge_slot", 1)
+        charge_slot = call.data.get("charge_slot", DEFAULT_CHARGE_SLOT)
         _LOGGER.debug(
             "handle_stop_charging service: %s %s slot: %s", DOMAIN, dongle, charge_slot
         )
@@ -274,10 +302,17 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """
-    The LUXPower integration platform load.
-
-    This is where we will describe what this function does
-
+    Set up a LuxPower config entry.
+    
+    This function initializes the LuxPower client, sets up all platform entities,
+    and configures automatic refresh if enabled.
+    
+    Args:
+        hass: Home Assistant instance
+        entry: Configuration entry for this integration
+        
+    Returns:
+        True if setup was successful
     """
     _LOGGER.info(
         f"async_setup_entry: LuxPower integration Version {VERSION} platform load"
@@ -293,8 +328,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Read the config values entered by the user
     HOST = config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = config.get(ATTR_LUX_PORT, 8000)
-    DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     AUTO_REFRESH = config.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)
     REFRESH_INTERVAL = int(
         config.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)

@@ -1,9 +1,8 @@
 """
+Helper classes and utilities for LuxPower integration.
 
-This is a docstring placeholder.
-
-This is where we will describe what this module does
-
+This module provides the Event class for managing LuxPower-specific events
+and event naming conventions used throughout the integration.
 """
 
 from .const import (
@@ -19,20 +18,18 @@ from .const import (
 
 class Event:
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this class does
-
+    Event management for LuxPower integration.
+    
+    This class manages all event names and formats used by the LuxPower integration
+    for data updates, register changes, and connection status events.
     """
 
-    def __init__(self, dongle) -> None:
+    def __init__(self, dongle: str) -> None:
         """
-
-        This is a docstring placeholder.
-
-        This is where we will describe what this __init__ does
-
+        Initialize Event class with dongle serial.
+        
+        Args:
+            dongle: The dongle serial number for this inverter
         """
         self.INVERTER_ID = dongle
         self.EVENT_DATA_RECEIVED = EVENT_DATA_FORMAT.format(DOMAIN=DOMAIN, DONGLE=self.INVERTER_ID, GROUP="all")

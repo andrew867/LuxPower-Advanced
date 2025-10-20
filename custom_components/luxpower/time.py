@@ -1,9 +1,11 @@
 """
+LuxPower time platform for Home Assistant.
 
-This is a docstring placeholder.
+This module provides time entities for configuring LuxPower inverter
+time-based settings including charge schedules and operational time windows.
 
-This is where we will describe what this module does
-
+Copyright (C) 2025 Guy Wells
+https://github.com/guybw/LuxPython_DEV
 """
 
 import datetime
@@ -22,6 +24,8 @@ from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     VERSION,
 )
@@ -76,8 +80,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
-    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
     luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]["client"]
 
