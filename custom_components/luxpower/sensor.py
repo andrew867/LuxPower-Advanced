@@ -31,7 +31,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo, Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity, EntityCategory
 from homeassistant.util import slugify
 
 from .const import (
@@ -48,7 +48,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event
+from .helpers import Event, get_comprehensive_device_info
 from .LXPPacket import LXPPacket
 
 
@@ -157,8 +157,9 @@ async def async_setup_entry(
         {"etype": "LPSS", "name": "LUXPower {replaceID_midfix}", "unique": "states", "device_class": CONF_MODE, "luxpower_client": luxpower_client},
 
         # 2. Create HOLDING Register Based Sensors 1st - As they Are Only Populated By Default At Integration Load - Slow RPi Timing
-        {"etype": "LPFW", "name": "Lux {replaceID_midfix}{hyphen} Firmware Version", "unique": "lux_firmware_version", "bank": 0, "register": 7},
+        {"etype": "LPFW", "name": "Lux {replaceID_midfix}{hyphen} Firmware Version", "unique": "lux_firmware_version", "bank": 0, "register": 7, "device_class": None, "state_class": None, "unit_of_measurement": None},
         {"etype": "LPMD", "name": "Lux {replaceID_midfix}{hyphen} Inverter Model", "unique": "lux_inverter_model", "bank": 0, "register": 7},
+        {"etype": "LPSN", "name": "Lux {replaceID_midfix}{hyphen} Inverter Serial Number", "unique": "lux_inverter_serial_number", "bank": 0, "register": 0, "device_class": None, "state_class": None, "unit_of_measurement": None},
 
         # 3. Create Attribute Sensors Based On LuxPowerSensorEntity Class
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Discharge (Live)", "unique": "lux_battery_discharge", "bank": 0, "attribute": LXPPacket.p_discharge, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
@@ -282,7 +283,7 @@ async def async_setup_entry(
         # {"etype": "LPTS", "name": "Lux {replaceID_midfix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5},
 
         # Configuration Diagnostic Sensors (Disabled by Default)
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Capacity (Ah)", "unique": "lux_battery_capacity_ah", "bank": 0, "register": 38, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Capacity (Ah)", "unique": "lux_battery_capacity_ah_register", "bank": 0, "register": 38, "enabled": False},
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Type Code", "unique": "lux_battery_type_code", "bank": 0, "register": 19, "enabled": False},
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Module Count", "unique": "lux_battery_module_count", "bank": 2, "register": 113, "enabled": False},
 
@@ -370,8 +371,8 @@ async def async_setup_entry(
 
         # Enhanced Diagnostics & System Status (Phase 1A-B)
         # Fault Code & Warning System - Register 0 is valid for system status
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 0, "register": 0, "enabled": False},  # Current fault code
-        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 0, "register": 0, "enabled": False},  # Current warning code
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code_register", "bank": 0, "register": 0, "enabled": False},  # Current fault code
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code_register", "bank": 0, "register": 0, "enabled": False},  # Current warning code
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Status Code", "unique": "lux_system_status", "bank": 0, "register": 0, "enabled": False},  # System status code
         
         # Power Flow Sensors (calculated from existing power values) - Register 0 valid for system status
@@ -595,6 +596,8 @@ async def async_setup_entry(
             sensorEntities.append(LuxPowerFirmwareSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPMD":
             sensorEntities.append(LuxPowerModelSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPSN":
+            sensorEntities.append(LuxPowerSerialNumberSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPDR":
             sensorEntities.append(LuxPowerDataReceivedTimestampSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPST":
@@ -649,18 +652,43 @@ class LuxPowerSensorEntity(SensorEntity):
         # Apply model-based enablement logic
         default_enabled = entity_definition.get("enabled", True)
         
+        # Always enable main power sensors regardless of model
+        main_power_attributes = {
+            LXPPacket.p_discharge, LXPPacket.p_charge, LXPPacket.soc,
+            LXPPacket.p_pv_total, LXPPacket.p_to_grid, LXPPacket.p_load,
+            LXPPacket.e_dischg_day, LXPPacket.e_chg_day, LXPPacket.e_pv_total
+        }
+        
+        # Always enable energy dashboard sensors regardless of model
+        energy_dashboard_attributes = {
+            LXPPacket.e_dischg_day, LXPPacket.e_chg_day, LXPPacket.e_pv_total,
+            LXPPacket.e_to_grid_day, LXPPacket.e_to_user_day, LXPPacket.e_eps_day,
+            LXPPacket.e_inv_day, LXPPacket.e_rec_day, LXPPacket.e_pv_1_day,
+            LXPPacket.e_pv_2_day, LXPPacket.e_pv_3_day, LXPPacket.gen_power_day
+        }
+        
         if model_code:
             is_12k = is_12k_model(model_code)
             attribute = entity_definition.get("attribute", "")
             
+            # Always enable main power sensors and energy dashboard sensors
+            if attribute in main_power_attributes or attribute in energy_dashboard_attributes:
+                default_enabled = True
+                _LOGGER.debug(f"Force enabling essential sensor: {entity_definition['name']} (attribute: {attribute})")
             # Check if this is a 12K-specific sensor
-            if attribute in TWELVE_K_ATTRIBUTES:
+            elif attribute in TWELVE_K_ATTRIBUTES:
                 # Enable only for 12K models
                 default_enabled = is_12k
                 if is_12k:
                     _LOGGER.debug(f"Enabling 12K-specific sensor: {entity_definition['name']}")
                 else:
                     _LOGGER.debug(f"Disabling 12K-specific sensor for non-12K model: {entity_definition['name']}")
+        else:
+            # If no model code, ensure main power sensors and energy dashboard sensors are enabled
+            attribute = entity_definition.get("attribute", "")
+            if attribute in main_power_attributes or attribute in energy_dashboard_attributes:
+                default_enabled = True
+                _LOGGER.debug(f"Force enabling essential sensor (no model): {entity_definition['name']} (attribute: {attribute})")
         
         self._attr_entity_registry_enabled_default = default_enabled
 
@@ -712,6 +740,10 @@ class LuxPowerSensorEntity(SensorEntity):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
         
+        # Debug logging for main power sensors
+        if self._device_attribute in [LXPPacket.p_discharge, LXPPacket.p_charge, LXPPacket.soc]:
+            _LOGGER.info(f"Power sensor update: {self._attr_name} - Data: {self._data.get(self._device_attribute, 'None')}")
+        
         # Handle calculated power flow values
         if hasattr(self, '_calculated') and self._calculated:
             # For calculated power flow sensors, use the calculated values
@@ -761,15 +793,15 @@ class LuxPowerSensorEntity(SensorEntity):
             "lux_parallel_system_comm", "lux_battery_firmware_update_status",
             "lux_battery_firmware_compatibility", "lux_battery_firmware_validation"
         ]:
-            return "diagnostic"
+            return EntityCategory.DIAGNOSTIC
         return None
 
     @property
     def suggested_display_precision(self) -> int:
         """Return suggested decimal places."""
-        if self._unit_of_measurement in ["W", "kW", "V", "A"]:
+        if self._attr_native_unit_of_measurement in ["W", "kW", "V", "A"]:
             return 1
-        elif self._unit_of_measurement == "%":
+        elif self._attr_native_unit_of_measurement == "%":
             return 0
         return 2
 
@@ -789,27 +821,8 @@ class LuxPowerSensorEntity(SensorEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        entry_id = None
-        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
-            if data.get("DONGLE") == self.dongle:
-                entry_id = e_id
-                break
-        model = (
-            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        )
-        sw_version = (
-            self.hass.data[DOMAIN]
-            .get(entry_id, {})
-            .get("lux_firmware_version", VERSION)
-        )
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.dongle)},
-            manufacturer="LuxPower",
-            model=model,
-            name=self.dongle,
-            sw_version=sw_version,
-        )
+        """Return comprehensive device info."""
+        return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
 
 
 class LuxPowerFlowSensor(LuxPowerSensorEntity):
@@ -959,29 +972,70 @@ class LuxPowerRegisterSensor(LuxPowerSensorEntity):
         return self._attr_native_value
 
 
-class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
+class LuxPowerFirmwareSensor(LuxPowerSensorEntity):
     """
-    Used for both live and daily consumption calculation.
+    Used for firmware version display.
+    """
 
-    Template equation state = attribute1 - attribute2 + attribute3 - attribute4
-    """
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._register_address = entity_definition.get("register", 7)
+        self._bank = entity_definition.get("bank", 0)
+        
+        # Set initial value to indicate waiting for data
+        self._attr_native_value = "Waiting for data..."
+        self._attr_available = False
+
+    @property
+    def suggested_display_precision(self) -> Optional[int]:
+        """Return suggested decimal places for firmware version (text sensor)."""
+        return None  # No precision for text values
+    
+    @property
+    def native_value(self) -> Optional[str]:
+        """Return the native value as string for text sensors."""
+        return self._attr_native_value
+
+    async def async_added_to_hass(self) -> None:
+        """Register event listeners for firmware sensor."""
+        await super().async_added_to_hass()
+        _LOGGER.debug("async_added_to_hass firmware sensor %s", self._attr_name)
+        self.is_added_to_hass = True
+        if self.hass is not None:
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
+            # Listen to BANK0 events since registers 7, 8, 9, 10 are in bank 0
+            self.hass.bus.async_listen(
+                self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update
+            )
+            _LOGGER.info(f"Firmware sensor {self._attr_name} listening to EVENT_REGISTER_BANK0_RECEIVED")
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} FIRMWARE Register: {self._register_address} Name: {self._attr_name}")  # fmt: skip
         registers = event.data.get("registers", {})
         self._data = registers
+        
+        # Debug logging for firmware sensor
+        _LOGGER.warning(f"🔍 FIRMWARE SENSOR DEBUG - Available registers: {list(registers.keys())}")
+        _LOGGER.warning(f"🔍 FIRMWARE SENSOR DEBUG - Register 7: {registers.get(7)}, Register 8: {registers.get(8)}, Register 9: {registers.get(9)}, Register 10: {registers.get(10)}")
 
-        if self._register_address in registers.keys():
+        # Check if we have all required registers for firmware version
+        required_registers = [7, 8, 9, 10]
+        if all(reg in registers.keys() for reg in required_registers):
             _LOGGER.debug(
-                f"Register Address For FIRMWARE: {self._register_address} is in register.keys"
+                f"All required firmware registers found: {required_registers}"
             )
             reg07_val = registers.get(7, None)
             reg08_val = registers.get(8, None)
             reg09_val = registers.get(9, None)
             reg10_val = registers.get(10, None)
-            if reg07_val is None or reg08_val is None:
+            
+            # Check if all values are valid
+            if any(val is None for val in [reg07_val, reg08_val, reg09_val, reg10_val]):
                 _LOGGER.debug(
-                    f"ABORTING: reg07_val: {reg07_val} - reg08_val: {reg08_val}"
+                    f"ABORTING: Missing firmware register values - reg07: {reg07_val}, reg08: {reg08_val}, reg09: {reg09_val}, reg10: {reg10_val}"
                 )
                 return
             reg07_str = int(reg07_val).to_bytes(2, "little").decode()
@@ -1003,17 +1057,67 @@ class LuxPowerFirmwareSensor(LuxPowerRegisterSensor):
                 self.hass.data[DOMAIN].setdefault(entry_id, {})[
                     "lux_firmware_version"
                 ] = firmware
+                _LOGGER.warning(f"🔍 FIRMWARE SENSOR - Saved firmware '{firmware}' to hass.data[{DOMAIN}][{entry_id}]")
+            else:
+                _LOGGER.warning(f"🔍 FIRMWARE SENSOR - No entry_id found for dongle {self.dongle}")
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
-                _LOGGER.debug(
-                    f"Register sensor has changed from {oldstate} to {self._attr_native_value}"
-                )
+                _LOGGER.info(f"Firmware sensor updated: {oldstate} -> {self._attr_native_value}")
+                self.schedule_update_ha_state()
+        else:
+            # Log when firmware registers are not available
+            missing_registers = [reg for reg in required_registers if reg not in registers.keys()]
+            if missing_registers:
+                _LOGGER.debug(f"Firmware sensor: Missing registers {missing_registers}, available: {list(registers.keys())}")
+            else:
+                _LOGGER.debug(f"Firmware sensor: All registers present but values are None")
+            
+            # Set fallback value if no firmware data is available
+            if self._attr_native_value == "Waiting for data..." or self._attr_native_value == "Unavailable":
+                self._attr_native_value = "Firmware data not available"
+                self._attr_available = True
+                _LOGGER.warning(f"Firmware sensor: No firmware data available, setting fallback value")
                 self.schedule_update_ha_state()
         return self._attr_native_value
 
 
-class LuxPowerModelSensor(LuxPowerRegisterSensor):
+class LuxPowerModelSensor(LuxPowerSensorEntity):
     """Sensor that exposes the inverter model based on firmware code."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._register_address = entity_definition.get("register", 7)
+        self._bank = entity_definition.get("bank", 0)
+        
+        # Set initial value to indicate waiting for data
+        self._attr_native_value = "Waiting for data..."
+        self._attr_available = False
+
+    @property
+    def suggested_display_precision(self) -> Optional[int]:
+        """Return suggested decimal places for model sensor (text sensor)."""
+        return None  # No precision for text values
+    
+    @property
+    def native_value(self) -> Optional[str]:
+        """Return the native value as string for text sensors."""
+        return self._attr_native_value
+
+    async def async_added_to_hass(self) -> None:
+        """Register event listeners for model sensor."""
+        await super().async_added_to_hass()
+        _LOGGER.debug("async_added_to_hass model sensor %s", self._attr_name)
+        self.is_added_to_hass = True
+        if self.hass is not None:
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
+            # Listen to BANK0 events since registers 7, 8 are in bank 0
+            self.hass.bus.async_listen(
+                self.event.EVENT_REGISTER_BANK0_RECEIVED, self.push_update
+            )
+            _LOGGER.info(f"Model sensor {self._attr_name} listening to EVENT_REGISTER_BANK0_RECEIVED")
 
     def push_update(self, event):
         _LOGGER.debug(
@@ -1021,14 +1125,26 @@ class LuxPowerModelSensor(LuxPowerRegisterSensor):
         )
         registers = event.data.get("registers", {})
         self._data = registers
+        
+        # Debug logging for model sensor
+        _LOGGER.warning(f"🔍 MODEL SENSOR DEBUG - Available registers: {list(registers.keys())}")
+        _LOGGER.warning(f"🔍 MODEL SENSOR DEBUG - Register 7: {registers.get(7)}, Register 8: {registers.get(8)}")
 
-        if self._register_address in registers.keys():
+        # Check if we have both required registers for model detection
+        required_registers = [7, 8]
+        if all(reg in registers.keys() for reg in required_registers):
+            _LOGGER.debug(f"All required model registers found: {required_registers}")
             reg07_val = registers.get(7, None)
             reg08_val = registers.get(8, None)
-            if reg07_val is None or reg08_val is None:
-                _LOGGER.debug(
-                    f"ABORTING: reg07_val: {reg07_val} - reg08_val: {reg08_val}"
-                )
+            
+            # Check if all values are valid and not None
+            if any(val is None for val in [reg07_val, reg08_val]):
+                _LOGGER.debug(f"ABORTING: Missing model register values - reg07: {reg07_val}, reg08: {reg08_val}")
+                return
+            
+            # Additional validation: check if values are reasonable (not 0 or negative)
+            if any(val <= 0 for val in [reg07_val, reg08_val]):
+                _LOGGER.debug(f"ABORTING: Invalid model register values - reg07: {reg07_val}, reg08: {reg08_val}")
                 return
             reg07_str = int(reg07_val).to_bytes(2, "little").decode()
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
@@ -1045,23 +1161,126 @@ class LuxPowerModelSensor(LuxPowerRegisterSensor):
             if entry_id is not None:
                 self.hass.data[DOMAIN].setdefault(entry_id, {})["model"] = model
                 self.hass.data[DOMAIN][entry_id]["model_code"] = model_code
+                _LOGGER.warning(f"🔍 MODEL SENSOR - Saved model '{model}' and model_code '{model_code}' to hass.data[{DOMAIN}][{entry_id}]")
+            else:
+                _LOGGER.warning(f"🔍 MODEL SENSOR - No entry_id found for dongle {self.dongle}")
                 
                 # Also persist to config entry options for restart persistence
                 config_entry = self.hass.config_entries.async_get_entry(entry_id)
                 if config_entry and "model_code" not in config_entry.options:
                     new_options = dict(config_entry.options)
                     new_options["model_code"] = model_code
-                    self.hass.config_entries.async_update_entry(config_entry, options=new_options)
+                    # Schedule the async call to run in the event loop
+                    self.hass.async_create_task(
+                        self.hass.config_entries.async_update_entry(config_entry, options=new_options)
+                    )
                     _LOGGER.info(f"Cached model code {model_code} to config entry for persistence")
 
             oldstate = self._attr_native_value
             self._attr_native_value = model
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
-                _LOGGER.debug(
-                    f"Register sensor has changed from {oldstate} to {self._attr_native_value}"
-                )
+                _LOGGER.info(f"Model sensor updated: {oldstate} -> {self._attr_native_value}")
                 self.schedule_update_ha_state()
+        else:
+            # Log when model registers are not available
+            missing_registers = [reg for reg in required_registers if reg not in registers.keys()]
+            if missing_registers:
+                _LOGGER.debug(f"Model sensor: Missing registers {missing_registers}, available: {list(registers.keys())}")
+            else:
+                _LOGGER.debug(f"Model sensor: All registers present but values are None")
+            
+            # Set fallback value if no model data is available
+            if self._attr_native_value in ["Unavailable", "Unknown", "Waiting for data..."]:
+                self._attr_native_value = "Model detection pending"
+                self._attr_available = True
+                _LOGGER.warning(f"Model sensor: No model data available, setting fallback value")
+                self.schedule_update_ha_state()
+        return self._attr_native_value
+
+
+class LuxPowerSerialNumberSensor(LuxPowerSensorEntity):
+    """Sensor that exposes the inverter serial number from communication packets."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._register_address = entity_definition.get("register", 0)
+        self._bank = entity_definition.get("bank", 0)
+        
+        # Set initial value to indicate waiting for data
+        self._attr_native_value = "Waiting for data..."
+        self._attr_available = False
+
+    @property
+    def suggested_display_precision(self) -> Optional[int]:
+        """Return suggested decimal places for serial number sensor (text sensor)."""
+        return None  # No precision for text values
+    
+    @property
+    def native_value(self) -> Optional[str]:
+        """Return the native value as string for text sensors."""
+        return self._attr_native_value
+
+    async def async_added_to_hass(self) -> None:
+        """Register event listeners for serial number sensor."""
+        await super().async_added_to_hass()
+        _LOGGER.debug("async_added_to_hass serial number sensor %s", self._attr_name)
+        self.is_added_to_hass = True
+        if self.hass is not None:
+            self.hass.bus.async_listen(
+                self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
+            )
+            # Listen to all bank events since serial number comes from communication packets
+            self.hass.bus.async_listen(
+                self.event.EVENT_DATA_BANK0_RECEIVED, self.push_update
+            )
+            self.hass.bus.async_listen(
+                self.event.EVENT_DATA_BANK1_RECEIVED, self.push_update
+            )
+            self.hass.bus.async_listen(
+                self.event.EVENT_DATA_BANK2_RECEIVED, self.push_update
+            )
+            self.hass.bus.async_listen(
+                self.event.EVENT_DATA_BANK3_RECEIVED, self.push_update
+            )
+            _LOGGER.info(f"Serial number sensor {self._attr_name} listening to all bank events")
+
+    def push_update(self, event):
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} SERIAL Register: {self._register_address} Name: {self._attr_name}")
+        
+        # Get the LXPPacket from the event data
+        lxp_packet = event.data.get("lxp_packet")
+        if lxp_packet and hasattr(lxp_packet, 'serial_number'):
+            serial_number = lxp_packet.serial_number
+            if serial_number and serial_number != b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00":
+                # Convert bytes to string, removing null bytes
+                serial_str = serial_number.decode('utf-8', errors='ignore').rstrip('\x00')
+                if serial_str:
+                    _LOGGER.warning(f"🔍 SERIAL SENSOR DEBUG - Found serial number: '{serial_str}'")
+                    
+                    oldstate = self._attr_native_value
+                    self._attr_native_value = serial_str
+                    
+                    # Save serial number into hass.data for device_info usage
+                    entry_id = None
+                    for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+                        if data.get("DONGLE") == self.dongle:
+                            entry_id = e_id
+                            break
+                    if entry_id is not None:
+                        self.hass.data[DOMAIN].setdefault(entry_id, {})["inverter_serial_number"] = serial_str
+                        _LOGGER.warning(f"🔍 SERIAL SENSOR - Saved serial number '{serial_str}' to hass.data[{DOMAIN}][{entry_id}]")
+                    else:
+                        _LOGGER.warning(f"🔍 SERIAL SENSOR - No entry_id found for dongle {self.dongle}")
+                    
+                    if oldstate != self._attr_native_value or not self._attr_available:
+                        self._attr_available = True
+                        _LOGGER.info(f"Serial number sensor updated: {oldstate} -> {self._attr_native_value}")
+                        self.schedule_update_ha_state()
+        else:
+            _LOGGER.debug(f"Serial number sensor: No LXPPacket or serial_number in event data")
+        
         return self._attr_native_value
 
 
@@ -1086,9 +1305,14 @@ class LuxPowerTestSensor(LuxPowerRegisterSensor):
 class LuxPowerStatusTextSensor(LuxPowerSensorEntity):
     """Representation of a Status sensor for a LUXPower Inverter."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
         """Initialize the sensor."""
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+
+    @property
+    def suggested_display_precision(self) -> Optional[int]:
+        """Return suggested decimal places for status text sensor (text sensor)."""
+        return None  # No precision for text values
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
@@ -1147,9 +1371,14 @@ class LuxPowerStatusTextSensor(LuxPowerSensorEntity):
 class LuxPowerBatteryStatusSensor(LuxPowerSensorEntity):
     """Representation of the inverter battery status."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
         """Initialize the sensor."""
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+
+    @property
+    def suggested_display_precision(self) -> Optional[int]:
+        """Return suggested decimal places for battery status sensor (text sensor)."""
+        return None  # No precision for text values
 
     def push_update(self, event):
         _LOGGER.debug(
@@ -1178,10 +1407,15 @@ class LuxPowerBatteryStatusSensor(LuxPowerSensorEntity):
 class LuxPowerDataReceivedTimestampSensor(LuxPowerSensorEntity):
     """Representation of an Date & Time updated sensor for a LUXPower Inverter."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
         """Initialize the sensor."""
-        super().__init__(hass, host, port, dongle, serial, entity_definition, event)
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
         self.datetime_last_received = None
+
+    @property
+    def suggested_display_precision(self) -> Optional[int]:
+        """Return suggested decimal places for timestamp sensor (text sensor)."""
+        return None  # No precision for text values
 
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
@@ -1209,7 +1443,7 @@ class LuxPowerDataReceivedTimestampSensor(LuxPowerSensorEntity):
 class LuxStateSensorEntity(SensorEntity):
     """Representation of an overall sensor for a LUXPower Inverter."""
 
-    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event):  # fmt: skip
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
         """Initialize the sensor."""
         #
         # Visible Instance Attributes Outside Class

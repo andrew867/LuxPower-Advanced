@@ -21,7 +21,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.util import slugify
 
 from .lxp.client import LuxPowerClient
@@ -37,7 +37,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event
+from .helpers import Event, get_comprehensive_device_info
 from .LXPPacket import LXPPacket
 
 # from homeassistant.const import EntityCategory
@@ -228,29 +228,29 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple SOC Hysteresis 12K(%)", "register_address": 191, "def_val": 2.0, "min_val": 0, "max_val": 10, "icon": "mdi:sine-wave", "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Volt Hysteresis 12K", "register_address": 192, "def_val": 0.5, "min_val": 0, "max_val": 3.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
 
-        # Generator Integration Number Entities (Phase 3)
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Start SOC(%)", "register_address": 0, "def_val": 20.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-up", "enabled": False},  # Generator start SOC threshold
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Stop SOC(%)", "register_address": 0, "def_val": 80.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-down", "enabled": False},  # Generator stop SOC threshold
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Start Voltage", "register_address": 0, "def_val": 46.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Generator start voltage threshold
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Stop Voltage", "register_address": 0, "def_val": 54.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Generator stop voltage threshold
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Current Limit", "register_address": 0, "def_val": 20.0, "min_val": 0, "max_val": 100.0, "step": 0.1, "device_class": NumberDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE, "enabled": False},  # Generator charge current limit
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Cooldown Time (min)", "register_address": 0, "def_val": 30.0, "min_val": 0, "max_val": 240, "icon": "mdi:timer", "enabled": False},  # Generator cooldown time in minutes
+        # Generator Integration Number Entities (Phase 3) - UNSUPPORTED/UNKNOWN REGISTERS
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Start SOC(%)", "register_address": -1, "def_val": 20.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-up", "enabled": False, "unsupported": True},  # Generator start SOC threshold - UNKNOWN REGISTER
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Stop SOC(%)", "register_address": -1, "def_val": 80.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-down", "enabled": False, "unsupported": True},  # Generator stop SOC threshold - UNKNOWN REGISTER
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Start Voltage", "register_address": -1, "def_val": 46.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False, "unsupported": True},  # Generator start voltage threshold - UNKNOWN REGISTER
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Stop Voltage", "register_address": -1, "def_val": 54.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False, "unsupported": True},  # Generator stop voltage threshold - UNKNOWN REGISTER
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Current Limit", "register_address": -1, "def_val": 20.0, "min_val": 0, "max_val": 100.0, "step": 0.1, "device_class": NumberDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE, "enabled": False, "unsupported": True},  # Generator charge current limit - UNKNOWN REGISTER
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Cooldown Time (min)", "register_address": -1, "def_val": 30.0, "min_val": 0, "max_val": 240, "icon": "mdi:timer", "enabled": False, "unsupported": True},  # Generator cooldown time in minutes - UNKNOWN REGISTER
 
-        # Battery Management Number Entities (Phase 6)
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Over Temp Protection Threshold", "register_address": 0, "def_val": 45.0, "min_val": 30.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.TEMPERATURE, "unit_of_measurement": UnitOfTemperature.CELSIUS, "enabled": False},  # Over-temperature protection threshold
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Under Temp Lockout Threshold", "register_address": 0, "def_val": 0.0, "min_val": -20.0, "max_val": 20.0, "step": 0.1, "device_class": NumberDeviceClass.TEMPERATURE, "unit_of_measurement": UnitOfTemperature.CELSIUS, "enabled": False},  # Under-temperature lockout threshold
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Cell Imbalance Threshold", "register_address": 0, "def_val": 0.1, "min_val": 0.01, "max_val": 1.0, "step": 0.01, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Cell imbalance threshold
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Voltage", "register_address": 0, "def_val": 58.4, "min_val": 50.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Equalization voltage
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Time (hours)", "register_address": 0, "def_val": 2.0, "min_val": 0.5, "max_val": 8.0, "step": 0.5, "icon": "mdi:timer", "enabled": False},  # Equalization time in hours
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Temperature Compensation Factor", "register_address": 0, "def_val": 0.003, "min_val": 0.0, "max_val": 0.01, "step": 0.001, "icon": "mdi:thermometer", "enabled": False},  # Temperature compensation factor
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Aging Compensation Factor", "register_address": 0, "def_val": 1.0, "min_val": 0.5, "max_val": 2.0, "step": 0.1, "icon": "mdi:clock", "enabled": False},  # Aging compensation factor
+        # Battery Management Number Entities (Phase 6) - UNSUPPORTED/UNKNOWN REGISTERS
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Over Temp Protection Threshold", "register_address": -1, "def_val": 45.0, "min_val": 30.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.TEMPERATURE, "unit_of_measurement": UnitOfTemperature.CELSIUS, "enabled": False, "unsupported": True},  # Over-temperature protection threshold - UNKNOWN REGISTER
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Under Temp Lockout Threshold", "register_address": -1, "def_val": 0.0, "min_val": -20.0, "max_val": 20.0, "step": 0.1, "device_class": NumberDeviceClass.TEMPERATURE, "unit_of_measurement": UnitOfTemperature.CELSIUS, "enabled": False, "unsupported": True},  # Under-temperature lockout threshold - UNKNOWN REGISTER
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Cell Imbalance Threshold", "register_address": -1, "def_val": 0.1, "min_val": 0.01, "max_val": 1.0, "step": 0.01, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False, "unsupported": True},  # Cell imbalance threshold - UNKNOWN REGISTER
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Voltage", "register_address": -1, "def_val": 58.4, "min_val": 50.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False, "unsupported": True},  # Equalization voltage - UNKNOWN REGISTER
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Time (hours)", "register_address": -1, "def_val": 2.0, "min_val": 0.5, "max_val": 8.0, "step": 0.5, "icon": "mdi:timer", "enabled": False, "unsupported": True},  # Equalization time in hours - UNKNOWN REGISTER
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Temperature Compensation Factor", "register_address": -1, "def_val": 0.003, "min_val": 0.0, "max_val": 0.01, "step": 0.001, "icon": "mdi:thermometer", "enabled": False, "unsupported": True},  # Temperature compensation factor - UNKNOWN REGISTER
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Aging Compensation Factor", "register_address": -1, "def_val": 1.0, "min_val": 0.5, "max_val": 2.0, "step": 0.1, "icon": "mdi:clock", "enabled": False, "unsupported": True},  # Aging compensation factor - UNKNOWN REGISTER
 
-        # Grid Management Number Entities (Phase 7)
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Grid Import Limit", "register_address": 0, "def_val": 50.0, "min_val": 0, "max_val": 100.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Grid import power limit
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Grid Export Limit", "register_address": 0, "def_val": 50.0, "min_val": 0, "max_val": 100.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Grid export power limit
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Power Factor Setpoint", "register_address": 0, "def_val": 1.0, "min_val": 0.8, "max_val": 1.0, "step": 0.01, "icon": "mdi:sine-wave", "enabled": False},  # Power factor setpoint
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Anti Islanding Sensitivity", "register_address": 0, "def_val": 5.0, "min_val": 1.0, "max_val": 10.0, "step": 0.1, "icon": "mdi:shield", "enabled": False},  # Anti-islanding sensitivity
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Grid Reconnection Delay (s)", "register_address": 0, "def_val": 60.0, "min_val": 10.0, "max_val": 300.0, "step": 5.0, "icon": "mdi:timer", "enabled": False},  # Grid reconnection delay in seconds
+        # Grid Management Number Entities (Phase 7) - UNSUPPORTED/UNKNOWN REGISTERS
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Grid Import Limit", "register_address": -1, "def_val": 50.0, "min_val": 0, "max_val": 100.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False, "unsupported": True},  # Grid import power limit - UNKNOWN REGISTER
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Grid Export Limit", "register_address": -1, "def_val": 50.0, "min_val": 0, "max_val": 100.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False, "unsupported": True},  # Grid export power limit - UNKNOWN REGISTER
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Power Factor Setpoint", "register_address": -1, "def_val": 1.0, "min_val": 0.8, "max_val": 1.0, "step": 0.01, "icon": "mdi:sine-wave", "enabled": False, "unsupported": True},  # Power factor setpoint - UNKNOWN REGISTER
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Anti Islanding Sensitivity", "register_address": -1, "def_val": 5.0, "min_val": 1.0, "max_val": 10.0, "step": 0.1, "icon": "mdi:shield", "enabled": False, "unsupported": True},  # Anti-islanding sensitivity - UNKNOWN REGISTER
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Grid Reconnection Delay (s)", "register_address": -1, "def_val": 60.0, "min_val": 10.0, "max_val": 300.0, "step": 5.0, "icon": "mdi:timer", "enabled": False, "unsupported": True},  # Grid reconnection delay in seconds - UNKNOWN REGISTER
 
         # Enhanced Peak Shaving Analysis Number Entities (Phase 5B)
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power Limit 1 (kW)", "register_address": 0, "def_val": 5.0, "min_val": 0, "max_val": 50.0, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Peak shaving power limit 1
@@ -275,6 +275,23 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
 
     for entity_definition in numbers:
         etype = entity_definition["etype"]
+        
+        # Apply model-based enablement logic
+        default_enabled = entity_definition.get("enabled", True)
+        
+        if model_code:
+            is_12k = is_12k_model(model_code)
+            # Check if this is a 12K-specific number entity
+            if "12K" in entity_definition.get("name", ""):
+                default_enabled = is_12k
+                if is_12k:
+                    _LOGGER.debug(f"Enabling 12K-specific number: {entity_definition['name']}")
+                else:
+                    _LOGGER.debug(f"Disabling 12K-specific number for non-12K model: {entity_definition['name']}")
+        
+        # Update entity definition with model-based enablement
+        entity_definition["enabled"] = default_enabled
+        
         if etype == "LNNE":
             numberEntities.append(LuxNormalNumberEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
         elif etype == "LPNE":
@@ -440,7 +457,7 @@ class LuxNormalNumberEntity(NumberEntity):
         """Return entity category."""
         # Configuration entities for settings and controls
         if self.register_address in [64, 65, 66, 103, 105, 125]:  # Common config registers
-            return "config"
+            return EntityCategory.CONFIG
         return None
 
     @property
@@ -459,27 +476,8 @@ class LuxNormalNumberEntity(NumberEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        entry_id = None
-        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
-            if data.get("DONGLE") == self.dongle:
-                entry_id = e_id
-                break
-        model = (
-            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        )
-        sw_version = (
-            self.hass.data[DOMAIN]
-            .get(entry_id, {})
-            .get("lux_firmware_version", VERSION)
-        )
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.dongle)},
-            manufacturer="LuxPower",
-            model=model,
-            name=self.dongle,
-            sw_version=sw_version,
-        )
+        """Return comprehensive device info."""
+        return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
 
     async def async_set_native_value(self, value):
         """Update the current value."""

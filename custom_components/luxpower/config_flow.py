@@ -114,7 +114,9 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
         errors = {}
         if not host_valid(user_input[ATTR_LUX_HOST]):
             errors[ATTR_LUX_HOST] = "host_error"
-        if len(user_input[ATTR_LUX_DONGLE_SERIAL]) != 10:
+        # Allow dongle serials with 8-12 characters
+        dongle_serial = user_input[ATTR_LUX_DONGLE_SERIAL]
+        if len(dongle_serial) < 8 or len(dongle_serial) > 12:
             errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
         ri = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
         if type(ri) is not int or ri < 30 or ri > 120:
@@ -153,21 +155,29 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry):
         """Initialize options flow."""
-        self.config_entry = config_entry
+        # Store config entry data instead of the entry itself
+        self.config_entry_data = config_entry.data
+        self.config_entry_options = config_entry.options
 
     def _is_valid_ip(self, ip: str) -> bool:
-        """Validate IP address format."""
+        """Validate IP address or hostname format."""
         import ipaddress
         try:
+            # First try to validate as IP address
             ipaddress.ip_address(ip)
             return True
         except ValueError:
-            return False
+            # If not an IP, check if it's a valid hostname
+            import re
+            # Allow hostnames with dots, hyphens, and alphanumeric characters
+            hostname_pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9\-\.]*[a-zA-Z0-9])?$'
+            return bool(re.match(hostname_pattern, ip)) and len(ip) <= 253
 
     def _is_valid_dongle_serial(self, serial: str) -> bool:
-        """Validate dongle serial format (BA followed by 8 digits)."""
+        """Validate dongle serial format (alphanumeric, 8-12 characters)."""
         import re
-        return bool(re.match(r'^BA\d{8}$', serial))
+        # Allow alphanumeric dongle serials with 8-12 characters
+        return bool(re.match(r'^[A-Za-z0-9]{8,12}$', serial))
 
     def _is_valid_serial_number(self, serial: str) -> bool:
         """Validate serial number format (SN followed by 8 digits)."""
@@ -210,9 +220,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 _LOGGER.info("OptionsFlowHandler: saving options ")
                 return self.async_create_entry(title="LuxPower ()", data=user_input)
 
-        config_entry = self.config_entry.data
-        if len(self.config_entry.options) > 0:
-            config_entry = self.config_entry.options
+        config_entry = self.config_entry_data
+        if len(self.config_entry_options) > 0:
+            config_entry = self.config_entry_options
         if user_input:
             config_entry = user_input
 
@@ -243,7 +253,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         errors = {}
         if not host_valid(user_input[ATTR_LUX_HOST]):
             errors[ATTR_LUX_HOST] = "host_error"
-        if len(user_input[ATTR_LUX_DONGLE_SERIAL]) != 10:
+        # Allow dongle serials with 8-12 characters
+        dongle_serial = user_input[ATTR_LUX_DONGLE_SERIAL]
+        if len(dongle_serial) < 8 or len(dongle_serial) > 12:
             errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
         ri = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
         if type(ri) is not int or ri < 30 or ri > 120:

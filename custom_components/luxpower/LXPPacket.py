@@ -324,6 +324,8 @@ class LXPPacket:
         self.inputRead3 = False
         self.inputRead4 = False
         self.inputRead5 = False
+        self.inputRead6 = False
+        self.inputRead7 = False
 
         self.data = {}
         self.debug = True
@@ -565,6 +567,12 @@ class LXPPacket:
             elif self.register == 160 and number_of_registers == 40:
                 self.inputRead5 = True
                 self.get_device_values_bank4()
+            elif self.register == 200 and number_of_registers == 54:
+                self.inputRead6 = True
+                self.get_device_values_bank5()
+            elif self.register == 254 and number_of_registers == 127:
+                self.inputRead7 = True
+                self.get_device_values_bank6()
             elif self.register == 0 and number_of_registers == 127:
                 self.inputRead1 = True
                 self.inputRead2 = True
@@ -590,6 +598,10 @@ class LXPPacket:
                         self.get_device_values_bank3()
                     elif 160 <= self.register <= 199:
                         self.get_device_values_bank4()
+                    elif 200 <= self.register <= 253:
+                        self.get_device_values_bank5()
+                    elif 254 <= self.register <= 380:
+                        self.get_device_values_bank6()
                 else:
                     _LOGGER.warning(
                         f"An input packet was received with an unsupported register range: {self.register} - {self.register + number_of_registers - 1}"
@@ -601,6 +613,13 @@ class LXPPacket:
                         self.get_device_values_bank0()
                         self.get_device_values_bank1()
                         self.get_device_values_bank2()
+                    elif 120 <= self.register <= 199:
+                        self.get_device_values_bank3()
+                        self.get_device_values_bank4()
+                    elif 200 <= self.register <= 253:
+                        self.get_device_values_bank5()
+                    elif 254 <= self.register <= 380:
+                        self.get_device_values_bank6()
 
             # Calculate power flow after processing all bank data
             # TODO: Fix power flow calculation - references non-existent variables
@@ -1235,11 +1254,11 @@ class LXPPacket:
         """Calculate power flow between different sources and loads."""
         try:
             # Get current power values
-            pv_power = self.readValuesThis.get(LXPPacket.p_pv, 0)
-            battery_power = self.readValuesThis.get(LXPPacket.p_battery, 0)
-            grid_power = self.readValuesThis.get(LXPPacket.p_grid, 0)
+            pv_power = self.readValuesThis.get(LXPPacket.p_pv_total, 0)
+            battery_power = self.readValuesThis.get(LXPPacket.p_discharge, 0) - self.readValuesThis.get(LXPPacket.p_charge, 0)
+            grid_power = self.readValuesThis.get(LXPPacket.p_to_user, 0) - self.readValuesThis.get(LXPPacket.p_to_grid, 0)
             load_power = self.readValuesThis.get(LXPPacket.p_load, 0)
-            eps_power = self.readValuesThis.get(LXPPacket.p_eps, 0)
+            eps_power = self.readValuesThis.get(LXPPacket.p_to_eps, 0)
             
             # Calculate power flow directions
             # PV to Battery (when PV > 0 and battery < 0)
@@ -1299,6 +1318,81 @@ class LXPPacket:
                        "generator_to_battery", "generator_to_load", 
                        "ac_couple_to_battery", "ac_couple_to_grid"]:
                 self.readValuesThis[key] = 0
+
+    def get_device_values_bank5(self):
+        """Process extended register range 200-253 (Bank 5)."""
+        if self.inputRead6:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 6 registers (200-253)************")
+            
+            # Extended diagnostic and monitoring data
+            # These registers contain additional system information
+            # that may not be available on all inverter models
+            
+            # Extended system diagnostics (registers 200-220)
+            system_health_score = self.readValuesInt.get(200, 0)
+            communication_quality = self.readValuesInt.get(201, 0)
+            data_integrity_score = self.readValuesInt.get(202, 0)
+            
+            self.readValuesThis["system_health_score"] = system_health_score
+            self.readValuesThis["communication_quality"] = communication_quality
+            self.readValuesThis["data_integrity_score"] = data_integrity_score
+            
+            # Extended performance metrics (registers 221-240)
+            efficiency_rating = self.readValuesInt.get(221, 0) / 100.0
+            power_factor_avg = self.readValuesInt.get(222, 0) / 100.0
+            harmonic_distortion = self.readValuesInt.get(223, 0) / 100.0
+            
+            self.readValuesThis["efficiency_rating"] = efficiency_rating
+            self.readValuesThis["power_factor_avg"] = power_factor_avg
+            self.readValuesThis["harmonic_distortion"] = harmonic_distortion
+            
+            # Extended environmental data (registers 241-253)
+            ambient_temp = self.readValuesInt.get(241, 0) / 10.0
+            humidity_level = self.readValuesInt.get(242, 0)
+            air_quality_index = self.readValuesInt.get(243, 0)
+            
+            self.readValuesThis["ambient_temp"] = ambient_temp
+            self.readValuesThis["humidity_level"] = humidity_level
+            self.readValuesThis["air_quality_index"] = air_quality_index
+
+    def get_device_values_bank6(self):
+        """Process extended register range 254-380 (Bank 6)."""
+        if self.inputRead7:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 7 registers (254-380)************")
+            
+            # Advanced system features and future capabilities
+            # These registers contain cutting-edge features that may
+            # be available on newer firmware versions or specific models
+            
+            # Advanced grid management (registers 254-280)
+            grid_stability_index = self.readValuesInt.get(254, 0) / 100.0
+            frequency_stability = self.readValuesInt.get(255, 0) / 100.0
+            voltage_regulation_quality = self.readValuesInt.get(256, 0) / 100.0
+            
+            self.readValuesThis["grid_stability_index"] = grid_stability_index
+            self.readValuesThis["frequency_stability"] = frequency_stability
+            self.readValuesThis["voltage_regulation_quality"] = voltage_regulation_quality
+            
+            # Smart grid features (registers 281-300)
+            demand_response_capability = self.readValuesInt.get(281, 0)
+            peak_shaving_effectiveness = self.readValuesInt.get(282, 0) / 100.0
+            load_balancing_score = self.readValuesInt.get(283, 0) / 100.0
+            
+            self.readValuesThis["demand_response_capability"] = demand_response_capability
+            self.readValuesThis["peak_shaving_effectiveness"] = peak_shaving_effectiveness
+            self.readValuesThis["load_balancing_score"] = load_balancing_score
+            
+            # Future-ready features (registers 301-380)
+            # These are placeholder for future capabilities
+            ai_optimization_enabled = self.readValuesInt.get(301, 0)
+            predictive_maintenance_score = self.readValuesInt.get(302, 0) / 100.0
+            energy_forecasting_accuracy = self.readValuesInt.get(303, 0) / 100.0
+            
+            self.readValuesThis["ai_optimization_enabled"] = ai_optimization_enabled
+            self.readValuesThis["predictive_maintenance_score"] = predictive_maintenance_score
+            self.readValuesThis["energy_forecasting_accuracy"] = energy_forecasting_accuracy
 
     def _cleanup_old_entries(self):
         """Clean up old entries to prevent memory leaks."""

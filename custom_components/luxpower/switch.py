@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.util import slugify
 
 from .lxp.client import LuxPowerClient
@@ -30,7 +30,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event
+from .helpers import Event, get_comprehensive_device_info
 from .LXPPacket import LXPPacket, prepare_binary_value
 
 _LOGGER = logging.getLogger(__name__)
@@ -145,7 +145,7 @@ async def async_setup_entry(
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 5", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_04, "enabled": False},  # Peak shaving mode 5
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 6", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_05, "enabled": False},  # Peak shaving mode 6
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 7", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_06, "enabled": False},  # Peak shaving mode 7
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 8", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_07, "enabled": False},  # Peak shaving mode 8
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 8", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "enabled": False},  # Peak shaving mode 8
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 9", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "enabled": False},  # Peak shaving mode 9
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 10", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_09, "enabled": False},  # Peak shaving mode 10
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 11", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_10, "enabled": False},  # Peak shaving mode 11
@@ -185,6 +185,21 @@ async def async_setup_entry(
     for entity_definition in switches:
         etype = entity_definition["etype"]
         if etype == "LVSE":
+            # Apply model-based enablement logic
+            default_enabled = entity_definition.get("enabled", True)
+            
+            if model_code:
+                is_12k = is_12k_model(model_code)
+                # Check if this is a 12K-specific switch
+                if "12K" in entity_definition.get("name", ""):
+                    default_enabled = is_12k
+                    if is_12k:
+                        _LOGGER.debug(f"Enabling 12K-specific switch: {entity_definition['name']}")
+                    else:
+                        _LOGGER.debug(f"Disabling 12K-specific switch for non-12K model: {entity_definition['name']}")
+            
+            # Update entity definition with model-based enablement
+            entity_definition["enabled"] = default_enabled
             switchEntities.append(LuxPowerRegisterValueSwitchEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
 
     # fmt: on
@@ -345,7 +360,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         """Return entity category."""
         # Configuration entities for settings and controls
         if self._register_address in [21, 22, 23, 24, 25]:  # Common config registers
-            return "config"
+            return EntityCategory.CONFIG
         return None
 
     @property
@@ -364,27 +379,8 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        entry_id = None
-        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
-            if data.get("DONGLE") == self.dongle:
-                entry_id = e_id
-                break
-        model = (
-            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        )
-        sw_version = (
-            self.hass.data[DOMAIN]
-            .get(entry_id, {})
-            .get("lux_firmware_version", VERSION)
-        )
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.dongle)},
-            manufacturer="LuxPower",
-            model=model,
-            name=self.dongle,
-            sw_version=sw_version,
-        )
+        """Return comprehensive device info."""
+        return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
 
     async def set_register_bit(self, bit_polarity=False):
         self._read_value = await self._client.read(self._register_address)

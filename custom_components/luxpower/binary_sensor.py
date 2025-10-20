@@ -18,7 +18,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_MODE
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo, Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity, EntityCategory
 from homeassistant.util import slugify
 
 from .const import (
@@ -35,7 +35,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event
+from .helpers import Event, get_comprehensive_device_info
 from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
@@ -174,6 +174,21 @@ async def async_setup_entry(
     for entity_definition in binary_sensors:
         etype = entity_definition["etype"]
         if etype == "LPBS":
+            # Apply model-based enablement logic
+            default_enabled = entity_definition.get("enabled", True)
+            
+            if model_code:
+                is_12k = is_12k_model(model_code)
+                # Check if this is a 12K-specific binary sensor
+                if "12K" in entity_definition.get("name", ""):
+                    default_enabled = is_12k
+                    if is_12k:
+                        _LOGGER.debug(f"Enabling 12K-specific binary sensor: {entity_definition['name']}")
+                    else:
+                        _LOGGER.debug(f"Disabling 12K-specific binary sensor for non-12K model: {entity_definition['name']}")
+            
+            # Update entity definition with model-based enablement
+            entity_definition["enabled"] = default_enabled
             binarySensorEntities.append(LuxBinarySensorEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event))
 
     async_add_devices(binarySensorEntities, True)
@@ -224,19 +239,13 @@ class LuxBinarySensorEntity(BinarySensorEntity):
             BinarySensorDeviceClass.CONNECTIVITY, 
             BinarySensorDeviceClass.PROBLEM
         ]:
-            return "diagnostic"
+            return EntityCategory.DIAGNOSTIC
         return None
 
     @property
     def device_info(self):
-        """Return device information."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._dongle)},
-            name=self._dongle,
-            manufacturer="LuxPower",
-            model="LuxPower Inverter",
-            sw_version=VERSION,
-        )
+        """Return comprehensive device information."""
+        return get_comprehensive_device_info(self._hass, self._dongle, self._serial)
 
     @property
     def is_on(self):

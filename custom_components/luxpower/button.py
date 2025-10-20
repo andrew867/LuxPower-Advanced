@@ -28,7 +28,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event
+from .helpers import Event, get_comprehensive_device_info
 from .lxp.client import LuxPowerClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -118,6 +118,22 @@ async def async_setup_entry(
     ]
 
     for entity_definition in buttons:
+        # Apply model-based enablement logic
+        default_enabled = entity_definition.get("enabled", True)
+        
+        if model_code:
+            is_12k = is_12k_model(model_code)
+            # Check if this is a 12K-specific button
+            if "12K" in entity_definition.get("name", ""):
+                default_enabled = is_12k
+                if is_12k:
+                    _LOGGER.debug(f"Enabling 12K-specific button: {entity_definition['name']}")
+                else:
+                    _LOGGER.debug(f"Disabling 12K-specific button for non-12K model: {entity_definition['name']}")
+        
+        # Update entity definition with model-based enablement
+        entity_definition["enabled"] = default_enabled
+        
         buttonEntities.append(
             LuxPowerButtonEntity(
                 hass,
@@ -183,10 +199,5 @@ class LuxPowerButtonEntity(ButtonEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.dongle)},
-            manufacturer="LuxPower",
-            model="LUXPower Inverter",
-            name=self.dongle,
-            sw_version=VERSION,
-        )
+        """Return comprehensive device info."""
+        return get_comprehensive_device_info(self.hass, self.dongle, self.serial)

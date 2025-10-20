@@ -128,4 +128,63 @@ async def async_get_config_entry_diagnostics(
         "recent_calls": [],  # Could be enhanced to track recent service calls
     }
     
+    # Add human-readable data dump
+    if client and hasattr(client, 'luxpower_client') and client.luxpower_client:
+        try:
+            luxpower_client = client.luxpower_client
+            if hasattr(luxpower_client, 'readValuesInt') and luxpower_client.readValuesInt:
+                diagnostics["raw_register_data"] = {
+                    "description": "Raw register data from inverter (human-readable format)",
+                    "total_registers": len(luxpower_client.readValuesInt),
+                    "register_ranges": {
+                        "bank0": {k: v for k, v in luxpower_client.readValuesInt.items() if 0 <= k <= 39},
+                        "bank1": {k: v for k, v in luxpower_client.readValuesInt.items() if 40 <= k <= 79},
+                        "bank2": {k: v for k, v in luxpower_client.readValuesInt.items() if 80 <= k <= 119},
+                        "bank3": {k: v for k, v in luxpower_client.readValuesInt.items() if 120 <= k <= 159},
+                        "bank4": {k: v for k, v in luxpower_client.readValuesInt.items() if 160 <= k <= 199},
+                        "bank5": {k: v for k, v in luxpower_client.readValuesInt.items() if 200 <= k <= 253},
+                        "bank6": {k: v for k, v in luxpower_client.readValuesInt.items() if 254 <= k <= 380},
+                    },
+                    "all_registers": dict(sorted(luxpower_client.readValuesInt.items())),
+                }
+                
+                # Add processed sensor data
+                if hasattr(luxpower_client, 'readValuesThis') and luxpower_client.readValuesThis:
+                    diagnostics["processed_sensor_data"] = {
+                        "description": "Processed sensor data (human-readable values)",
+                        "total_sensors": len(luxpower_client.readValuesThis),
+                        "sensor_data": dict(sorted(luxpower_client.readValuesThis.items())),
+                    }
+                
+                # Add register analysis
+                diagnostics["register_analysis"] = {
+                    "description": "Analysis of register data patterns",
+                    "register_count_by_bank": {
+                        "bank0": len([k for k in luxpower_client.readValuesInt.keys() if 0 <= k <= 39]),
+                        "bank1": len([k for k in luxpower_client.readValuesInt.keys() if 40 <= k <= 79]),
+                        "bank2": len([k for k in luxpower_client.readValuesInt.keys() if 80 <= k <= 119]),
+                        "bank3": len([k for k in luxpower_client.readValuesInt.keys() if 120 <= k <= 159]),
+                        "bank4": len([k for k in luxpower_client.readValuesInt.keys() if 160 <= k <= 199]),
+                        "bank5": len([k for k in luxpower_client.readValuesInt.keys() if 200 <= k <= 253]),
+                        "bank6": len([k for k in luxpower_client.readValuesInt.keys() if 254 <= k <= 380]),
+                    },
+                    "data_freshness": {
+                        "last_update": getattr(luxpower_client, 'last_update', None),
+                        "connection_status": getattr(luxpower_client, '_connected', False),
+                    }
+                }
+            else:
+                diagnostics["raw_register_data"] = {
+                    "error": "No register data available",
+                    "client_status": "Connected" if getattr(client, '_connected', False) else "Disconnected"
+                }
+        except Exception as e:
+            diagnostics["raw_register_data"] = {
+                "error": f"Failed to retrieve register data: {str(e)}"
+            }
+    else:
+        diagnostics["raw_register_data"] = {
+            "error": "Client not available or not connected"
+        }
+    
     return diagnostics

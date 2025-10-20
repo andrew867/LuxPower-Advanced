@@ -312,6 +312,20 @@ class LuxPowerClient(asyncio.Protocol):
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANKX_RECEIVED, event_data
                         )
+                    elif register == 200 and number_of_registers == 54:
+                        self.hass.bus.fire(
+                            self.events.EVENT_DATA_BANK5_RECEIVED, event_data
+                        )
+                        self.hass.bus.fire(
+                            self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                        )
+                    elif register == 254 and number_of_registers == 127:
+                        self.hass.bus.fire(
+                            self.events.EVENT_DATA_BANK6_RECEIVED, event_data
+                        )
+                        self.hass.bus.fire(
+                            self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                        )
                     elif register == 0 and number_of_registers == 127:
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANK0_RECEIVED, event_data

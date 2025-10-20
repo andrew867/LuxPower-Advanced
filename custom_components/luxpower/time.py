@@ -31,7 +31,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event
+from .helpers import Event, get_comprehensive_device_info
 
 # from homeassistant.const import EntityCategory
 
@@ -174,6 +174,21 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
     for entity_definition in times:
         etype = entity_definition["etype"]
         if etype == "LTTE":
+            # Apply model-based enablement logic
+            default_enabled = entity_definition.get("enabled", True)
+            
+            if model_code:
+                is_12k = is_12k_model(model_code)
+                # Check if this is a 12K-specific time entity
+                if "12K" in entity_definition.get("name", ""):
+                    default_enabled = is_12k
+                    if is_12k:
+                        _LOGGER.debug(f"Enabling 12K-specific time: {entity_definition['name']}")
+                    else:
+                        _LOGGER.debug(f"Disabling 12K-specific time for non-12K model: {entity_definition['name']}")
+            
+            # Update entity definition with model-based enablement
+            entity_definition["enabled"] = default_enabled
             timeEntities.append(LuxTimeTimeEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
 
     async_add_entities(timeEntities, True)
@@ -310,27 +325,8 @@ class LuxTimeTimeEntity(TimeEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        entry_id = None
-        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
-            if data.get("DONGLE") == self.dongle:
-                entry_id = e_id
-                break
-        model = (
-            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        )
-        sw_version = (
-            self.hass.data[DOMAIN]
-            .get(entry_id, {})
-            .get("lux_firmware_version", VERSION)
-        )
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.dongle)},
-            manufacturer="LuxPower",
-            model=model,
-            name=self.dongle,
-            sw_version=sw_version,
-        )
+        """Return comprehensive device info."""
+        return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
 
     async def async_set_value(self, value):
         """Update the current Time value."""
