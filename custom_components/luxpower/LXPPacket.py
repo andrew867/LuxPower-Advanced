@@ -597,6 +597,9 @@ class LXPPacket:
                         self.get_device_values_bank1()
                         self.get_device_values_bank2()
 
+            # Calculate power flow after processing all bank data
+            self.calculate_power_flow()
+            
             self.data.update(self.readValuesThis)
 
             _LOGGER.debug(f"This Packet Data {self.readValuesThis}")
@@ -1113,6 +1116,75 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.e_load_all_l] = e_load_all_l
 
             # IMPORTANT!! Registers above 199 must go into a new bank (create a new method for bank 5/bank 6 etc.)
+
+    def calculate_power_flow(self):
+        """Calculate power flow between different sources and loads."""
+        try:
+            # Get current power values
+            pv_power = self.readValuesThis.get(LXPPacket.p_pv, 0)
+            battery_power = self.readValuesThis.get(LXPPacket.p_battery, 0)
+            grid_power = self.readValuesThis.get(LXPPacket.p_grid, 0)
+            load_power = self.readValuesThis.get(LXPPacket.p_load, 0)
+            eps_power = self.readValuesThis.get(LXPPacket.p_eps, 0)
+            
+            # Calculate power flow directions
+            # PV to Battery (when PV > 0 and battery < 0)
+            pv_to_battery = max(0, min(pv_power, -battery_power)) if battery_power < 0 else 0
+            
+            # PV to Load (when PV > battery charging)
+            pv_remaining = pv_power - pv_to_battery
+            pv_to_load = max(0, min(pv_remaining, load_power))
+            
+            # PV to Grid (remaining PV after battery and load)
+            pv_to_grid = max(0, pv_remaining - pv_to_load)
+            
+            # Battery to Load (when battery discharging and load > PV)
+            battery_to_load = max(0, min(-battery_power, load_power - pv_to_load)) if battery_power < 0 else 0
+            
+            # Battery to Grid (when battery discharging and grid importing)
+            battery_to_grid = max(0, min(-battery_power - battery_to_load, -grid_power)) if battery_power < 0 and grid_power < 0 else 0
+            
+            # Grid to Battery (when grid charging battery)
+            grid_to_battery = max(0, min(grid_power, -battery_power)) if battery_power < 0 and grid_power > 0 else 0
+            
+            # Grid to Load (when grid powering loads)
+            grid_to_load = max(0, min(grid_power - grid_to_battery, load_power - pv_to_load - battery_to_load)) if grid_power > 0 else 0
+            
+            # Store calculated power flows
+            self.readValuesThis["pv_to_battery"] = pv_to_battery
+            self.readValuesThis["pv_to_load"] = pv_to_load
+            self.readValuesThis["pv_to_grid"] = pv_to_grid
+            self.readValuesThis["battery_to_load"] = battery_to_load
+            self.readValuesThis["battery_to_grid"] = battery_to_grid
+            self.readValuesThis["grid_to_battery"] = grid_to_battery
+            self.readValuesThis["grid_to_load"] = grid_to_load
+            
+            # Generator power flows (if available)
+            generator_power = self.readValuesThis.get("p_generator", 0)
+            if generator_power > 0:
+                self.readValuesThis["generator_to_battery"] = max(0, min(generator_power, -battery_power)) if battery_power < 0 else 0
+                self.readValuesThis["generator_to_load"] = max(0, generator_power - self.readValuesThis["generator_to_battery"])
+            else:
+                self.readValuesThis["generator_to_battery"] = 0
+                self.readValuesThis["generator_to_load"] = 0
+            
+            # AC Couple power flows (if available)
+            ac_couple_power = self.readValuesThis.get("p_ac_couple", 0)
+            if ac_couple_power > 0:
+                self.readValuesThis["ac_couple_to_battery"] = max(0, min(ac_couple_power, -battery_power)) if battery_power < 0 else 0
+                self.readValuesThis["ac_couple_to_grid"] = max(0, ac_couple_power - self.readValuesThis["ac_couple_to_battery"])
+            else:
+                self.readValuesThis["ac_couple_to_battery"] = 0
+                self.readValuesThis["ac_couple_to_grid"] = 0
+                
+        except Exception as e:
+            _LOGGER.error(f"Error calculating power flow: {e}")
+            # Set all power flows to 0 on error
+            for key in ["pv_to_battery", "pv_to_load", "pv_to_grid", "battery_to_load", 
+                       "battery_to_grid", "grid_to_battery", "grid_to_load", 
+                       "generator_to_battery", "generator_to_load", 
+                       "ac_couple_to_battery", "ac_couple_to_grid"]:
+                self.readValuesThis[key] = 0
 
 
 if __name__ == "__main__":

@@ -274,6 +274,48 @@ async def async_setup_entry(
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact", "unique": "lux_gen_dry_contact", "bank": 0, "register": 0, "enabled": False},  # Generator dry contact status
         {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start Available", "unique": "lux_gen_quick_start", "bank": 0, "register": 0, "enabled": False},  # Generator quick start availability
 
+        # Enhanced Diagnostics & System Status (Phase 1A-B)
+        # Fault Code & Warning System
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Fault Code", "unique": "lux_fault_code", "bank": 0, "register": 0, "enabled": False},  # Current fault code (register TBD)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Warning Code", "unique": "lux_warning_code", "bank": 0, "register": 0, "enabled": False},  # Current warning code (register TBD)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Status Code", "unique": "lux_system_status", "bank": 0, "register": 0, "enabled": False},  # System status code (register TBD)
+        
+        # Power Flow Sensors (calculated from existing power values)
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Battery Power", "unique": "lux_pv_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV charging battery
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Load Power", "unique": "lux_pv_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV directly powering loads
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} PV to Grid Power", "unique": "lux_pv_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # PV exporting to grid
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Load Power", "unique": "lux_battery_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery discharging to loads
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery to Grid Power", "unique": "lux_battery_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Battery exporting to grid
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Battery Power", "unique": "lux_grid_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid charging battery
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid to Load Power", "unique": "lux_grid_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Grid powering loads
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Battery Power", "unique": "lux_generator_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator charging
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator to Load Power", "unique": "lux_generator_to_load", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # Generator powering loads
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Battery Power", "unique": "lux_ac_couple_to_battery", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to battery
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple to Grid Power", "unique": "lux_ac_couple_to_grid", "bank": 0, "register": 0, "enabled": False, "calculated": True},  # AC-coupled PV to grid
+        
+        # Battery Management System (BMS) Integration
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Status", "unique": "lux_bms_status", "bank": 0, "register": 0, "enabled": False},  # BMS communication status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} BMS Fault Code", "unique": "lux_bms_fault", "bank": 0, "register": 0, "enabled": False},  # BMS fault code
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Health %", "unique": "lux_battery_health", "bank": 0, "register": 0, "enabled": False},  # Battery health percentage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Cycle Count", "unique": "lux_battery_cycles", "bank": 0, "register": 0, "enabled": False},  # Battery cycle count
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Max", "unique": "lux_cell_voltage_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Voltage Min", "unique": "lux_cell_voltage_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell voltage
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Max", "unique": "lux_cell_temp_max", "bank": 0, "register": 0, "enabled": False},  # Maximum cell temperature
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Cell Temperature Min", "unique": "lux_cell_temp_min", "bank": 0, "register": 0, "enabled": False},  # Minimum cell temperature
+        
+        # Inverter Health Metrics
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Transformer Temperature", "unique": "lux_transformer_temp", "bank": 0, "register": 0, "enabled": False},  # Transformer temperature
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Heatsink Temperature", "unique": "lux_heatsink_temp", "bank": 0, "register": 0, "enabled": False},  # Heatsink temperature
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Fan Speed Actual", "unique": "lux_fan_speed_actual", "bank": 0, "register": 0, "enabled": False},  # Actual fan speed
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Internal Humidity", "unique": "lux_internal_humidity", "bank": 0, "register": 0, "enabled": False},  # Internal humidity
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} DC AC Efficiency", "unique": "lux_dc_ac_efficiency", "bank": 0, "register": 0, "enabled": False},  # DC/AC conversion efficiency
+        
+        # Operating Mode Sensors
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Operating Mode", "unique": "lux_operating_mode", "bank": 0, "register": 0, "enabled": False},  # Current operating mode
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Charge Mode Status", "unique": "lux_charge_mode", "bank": 0, "register": 0, "enabled": False},  # Charge mode status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Load Priority Mode", "unique": "lux_load_priority", "bank": 0, "register": 0, "enabled": False},  # Load priority mode
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} EPS Status", "unique": "lux_eps_status", "bank": 0, "register": 0, "enabled": False},  # EPS status and switch state
+
     ]
 
     for entity_definition in sensors:
@@ -349,6 +391,7 @@ class LuxPowerSensorEntity(SensorEntity):
         self._bank = entity_definition.get("bank", 0)
         self._device_attribute = entity_definition.get("attribute", None)
         self._decimal_places = entity_definition.get("decimal_places", 1)
+        self._calculated = entity_definition.get("calculated", False)
 
         # _LOGGER.debug("Slugified entity_id: %s", self.entity_id)
 
@@ -388,7 +431,15 @@ class LuxPowerSensorEntity(SensorEntity):
     def push_update(self, event):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
-        value = self._data.get(self._device_attribute)
+        
+        # Handle calculated power flow values
+        if hasattr(self, '_calculated') and self._calculated:
+            # For calculated power flow sensors, use the calculated values
+            value = self._data.get(self._device_attribute)
+        else:
+            # For regular sensors, use the standard attribute
+            value = self._data.get(self._device_attribute)
+            
         if isinstance(value, (int, float)):
             value = round(value, self._decimal_places)
             self._attr_available = True
