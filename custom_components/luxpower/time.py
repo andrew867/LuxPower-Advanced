@@ -31,7 +31,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event, get_comprehensive_device_info
+from .helpers import Event, get_comprehensive_device_info, get_device_group_info, get_entity_device_group
 
 # from homeassistant.const import EntityCategory
 
@@ -237,6 +237,7 @@ class LuxTimeTimeEntity(TimeEntity):
         )
 
         # Hidden Class Extended Instance Attributes
+        self._entity_definition = entity_definition
         self._client = luxpower_client
         self._register_value = 0
         self._bitmask = entity_definition.get("bitmask", 0xFFFF)
@@ -325,8 +326,15 @@ class LuxTimeTimeEntity(TimeEntity):
 
     @property
     def device_info(self):
-        """Return comprehensive device info."""
-        return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
+        """Return device info for the appropriate device group."""
+        # Get the device group for this entity
+        device_group = get_entity_device_group(self._entity_definition, self.hass)
+        
+        # Return device group info if available, otherwise fall back to main device
+        if device_group:
+            return get_device_group_info(self.hass, self.dongle, device_group)
+        else:
+            return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
 
     async def async_set_value(self, value):
         """Update the current Time value."""

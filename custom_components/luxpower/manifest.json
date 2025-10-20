@@ -17,5 +17,19 @@
   "codeowners": [
     "@guybw"
   ],
-  "quality_scale": "gold"
+  "quality_scale": "gold",
+  "loggers": [
+    "custom_components.luxpower",
+    "custom_components.luxpower.connector",
+    "custom_components.luxpower.helpers",
+    "custom_components.luxpower.sensor",
+    "custom_components.luxpower.binary_sensor",
+    "custom_components.luxpower.switch",
+    "custom_components.luxpower.number",
+    "custom_components.luxpower.time",
+    "custom_components.luxpower.button",
+    "custom_components.luxpower.config_flow",
+    "custom_components.luxpower.lxp.client",
+    "custom_components.luxpower.LXPPacket"
+  ]
 }

@@ -35,7 +35,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event, get_comprehensive_device_info
+from .helpers import Event, get_comprehensive_device_info, get_device_group_info, get_entity_device_group
 from .LXPPacket import LXPPacket
 
 _LOGGER = logging.getLogger(__name__)
@@ -120,7 +120,6 @@ async def async_setup_entry(
         # Operating Mode Binary Sensors
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Connected", "unique": "lux_grid_connected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} EPS Mode Active", "unique": "lux_eps_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "unique": "lux_generator_connected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Active", "unique": "lux_ac_couple_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
         
         # Parallel System Binary Sensors
@@ -132,6 +131,20 @@ async def async_setup_entry(
         
         # Generator Integration Binary Sensors
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Running", "unique": "lux_generator_running", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        
+        # Generator Integration Binary Sensors
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "unique": "lux_generator_connected", "bank": 3, "register": 77, "bit": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Type Voltage", "unique": "lux_generator_charge_type_voltage", "bank": 3, "register": 77, "bit": 7, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        
+        # AFCI Arc Detection Binary Sensors
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 1", "unique": "lux_afci_arc_alarm_ch1", "bank": 3, "register": 144, "bit": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 2", "unique": "lux_afci_arc_alarm_ch2", "bank": 3, "register": 144, "bit": 1, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 3", "unique": "lux_afci_arc_alarm_ch3", "bank": 3, "register": 144, "bit": 2, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 4", "unique": "lux_afci_arc_alarm_ch4", "bank": 3, "register": 144, "bit": 3, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 1", "unique": "lux_afci_selftest_fail_ch1", "bank": 3, "register": 144, "bit": 4, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 2", "unique": "lux_afci_selftest_fail_ch2", "bank": 3, "register": 144, "bit": 5, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 3", "unique": "lux_afci_selftest_fail_ch3", "bank": 3, "register": 144, "bit": 6, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 4", "unique": "lux_afci_selftest_fail_ch4", "bank": 3, "register": 144, "bit": 7, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start", "unique": "lux_generator_auto_start", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "unique": "lux_generator_quick_start", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact", "unique": "lux_generator_dry_contact", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
@@ -244,8 +257,15 @@ class LuxBinarySensorEntity(BinarySensorEntity):
 
     @property
     def device_info(self):
-        """Return comprehensive device information."""
-        return get_comprehensive_device_info(self._hass, self._dongle, self._serial)
+        """Return device info for the appropriate device group."""
+        # Get the device group for this entity
+        device_group = get_entity_device_group(self._entity_definition, self.hass)
+        
+        # Return device group info if available, otherwise fall back to main device
+        if device_group:
+            return get_device_group_info(self._hass, self._dongle, device_group)
+        else:
+            return get_comprehensive_device_info(self._hass, self._dongle, self._serial)
 
     @property
     def is_on(self):

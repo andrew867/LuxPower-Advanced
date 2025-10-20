@@ -15,7 +15,7 @@
     "step": {
       "user": {
         "title": "LuxPower Inverter",
-        "description": "Configure your LuxPower inverter connection. You'll need the IP address of your inverter's Wi-Fi dongle and the dongle serial number (found on the dongle or in the inverter's web interface).",
+        "description": "Configure your LuxPower inverter connection. You'll need the IP address of your inverter's Wi-Fi dongle and the dongle serial number (found on the dongle or in the inverter's web interface). Device grouping organizes 250+ entities into logical sub-devices for better navigation.",
         "data": {
           "lux_host": "IP Address",
           "lux_dongle_serial": "Dongle Serial Number",
@@ -24,7 +24,8 @@
           "lux_respond_to_heartbeat": "Respond to Heartbeat",
           "lux_auto_refresh": "Enable Auto Refresh",
           "lux_refresh_interval": "Refresh Interval (30-120 seconds)",
-          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6)"
+          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6)",
+          "lux_device_grouping": "Enable Device Grouping (Organizes 250+ entities into PV, Grid, EPS, Generator, Battery, Temperatures, and Settings groups)"
         }
       }
     }
@@ -42,7 +43,8 @@
           "lux_respond_to_heartbeat": "Respond to Heartbeat Requests from Inverter",
           "lux_auto_refresh": "Enable Automatic Data Refresh",
           "lux_refresh_interval": "Refresh Interval (30-120 seconds)",
-          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6)"
+          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6)",
+          "lux_device_grouping": "Enable Device Grouping (Organizes 250+ entities into PV, Grid, EPS, Generator, Battery, Temperatures, and Settings groups)"
         }
       }
     }

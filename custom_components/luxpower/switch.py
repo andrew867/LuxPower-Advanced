@@ -30,7 +30,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event, get_comprehensive_device_info
+from .helpers import Event, get_comprehensive_device_info, get_device_group_info, get_entity_device_group
 from .LXPPacket import LXPPacket, prepare_binary_value
 
 _LOGGER = logging.getLogger(__name__)
@@ -116,6 +116,12 @@ async def async_setup_entry(
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid On Power SS", "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Neutral Detect Enable", "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Anti Island Enable", "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "enabled": False},
+        
+        # AFCI Arc Detection Controls
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI PV Arc Enable", "register_address": 179, "bitmask": LXPPacket.AFCI_PV_ARC_ENABLE, "enabled": False},
+        
+        # Generator Control Switches
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "register_address": 77, "bitmask": LXPPacket.GENERATOR_CONNECTED, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable", "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} OVF Load Derate Enable", "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} ISO Enabled", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "enabled": False},
@@ -230,6 +236,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         )
 
         # Hidden Class Extended Instance Attributes
+        self._entity_definition = entity_definition
         self._client = luxpower_client
         self._register_address = entity_definition["register_address"]
         self._register_value = None
@@ -379,8 +386,15 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
 
     @property
     def device_info(self):
-        """Return comprehensive device info."""
-        return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
+        """Return device info for the appropriate device group."""
+        # Get the device group for this entity
+        device_group = get_entity_device_group(self._entity_definition, self.hass)
+        
+        # Return device group info if available, otherwise fall back to main device
+        if device_group:
+            return get_device_group_info(self.hass, self.dongle, device_group)
+        else:
+            return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
 
     async def set_register_bit(self, bit_polarity=False):
         self._read_value = await self._client.read(self._register_address)

@@ -28,7 +28,7 @@ from .const import (
     MODEL_MAP,
     is_12k_model,
 )
-from .helpers import Event, get_comprehensive_device_info
+from .helpers import Event, get_comprehensive_device_info, get_device_group_info, get_entity_device_group
 from .lxp.client import LuxPowerClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -102,6 +102,12 @@ async def async_setup_entry(
             "enabled": False,
         },
         {
+            "name": "Lux {replaceID_midfix}{hyphen} AFCI Alarm Clear",
+            "unique": "lux_afci_alarm_clear",
+            "action": "afci_alarm_clear",
+            "enabled": False,
+        },
+        {
             "name": "Lux {replaceID_midfix}{hyphen} Start Charging Slot 1 (180min)",
             "unique": "lux_start_charging_slot1",
             "action": "start_charging",
@@ -162,6 +168,7 @@ class LuxPowerButtonEntity(ButtonEntity):
         self.dongle = dongle
         self.serial = serial
         self.event = event
+        self._entity_definition = entity_definition
         self._client = luxpower_client
         self._action = entity_definition["action"]
         self._slot = entity_definition.get("slot", 1)
@@ -196,8 +203,23 @@ class LuxPowerButtonEntity(ButtonEntity):
                 {"dongle": self.dongle, "charge_slot": self._slot},
                 blocking=True,
             )
+        elif self._action == "afci_alarm_clear":
+            # Clear AFCI alarm
+            await self.hass.services.async_call(
+                DOMAIN,
+                "luxpower_afci_alarm_clear",
+                {"dongle": self.dongle},
+                blocking=True,
+            )
 
     @property
     def device_info(self) -> DeviceInfo:
-        """Return comprehensive device info."""
-        return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
+        """Return device info for the appropriate device group."""
+        # Get the device group for this entity
+        device_group = get_entity_device_group(self._entity_definition, self.hass)
+        
+        # Return device group info if available, otherwise fall back to main device
+        if device_group:
+            return get_device_group_info(self.hass, self.dongle, device_group)
+        else:
+            return get_comprehensive_device_info(self.hass, self.dongle, self.serial)

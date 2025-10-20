@@ -20,6 +20,7 @@ ATTR_LUX_RESPOND_TO_HEARTBEAT = "lux_respond_to_heartbeat"
 ATTR_LUX_AUTO_REFRESH = "lux_auto_refresh"
 ATTR_LUX_REFRESH_INTERVAL = "lux_refresh_interval"
 ATTR_LUX_REFRESH_BANK_COUNT = "lux_refresh_bank_count"
+ATTR_LUX_DEVICE_GROUPING = "lux_device_grouping"
 
 # Placeholder values
 PLACEHOLDER_LUX_HOST = ""
@@ -31,6 +32,7 @@ PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT = False
 PLACEHOLDER_LUX_AUTO_REFRESH = False
 PLACEHOLDER_LUX_REFRESH_INTERVAL = 120
 PLACEHOLDER_LUX_REFRESH_BANK_COUNT = 2
+PLACEHOLDER_LUX_DEVICE_GROUPING = True
 
 # Default values for service calls
 DEFAULT_CHARGE_DURATION_MINUTES = 180
@@ -52,6 +54,16 @@ SERVICE_STOP_CHARGING = "luxpower_stop_charging"
 # Entity categories
 ENTITY_CATEGORY_DIAGNOSTIC = "diagnostic"
 ENTITY_CATEGORY_CONFIG = "config"
+
+# Device grouping constants (v0.2.0+)
+DEVICE_GROUP_PV = "pv_system"           # Solar panel monitoring and MPPT controls (25 entities)
+DEVICE_GROUP_GRID = "grid"              # Utility grid connection and import/export data (42 entities)
+DEVICE_GROUP_EPS = "eps_backup"         # Emergency Power Supply / backup load outputs (18 entities)
+DEVICE_GROUP_GENERATOR = "generator"    # Backup generator monitoring and controls (12 entities)
+DEVICE_GROUP_BATTERY = "battery"        # BMS data, cell voltages, temperatures, and battery controls (62 entities)
+DEVICE_GROUP_TEMPERATURES = "temperatures"  # Temperature sensors, fault codes, and diagnostic data (12 entities)
+DEVICE_GROUP_SETTINGS = "settings"      # Configuration settings, timing schedules, and power management (56 entities)
+DEVICE_GROUP_INVERTER = "inverter"      # Main inverter device (fallback for ungrouped entities)
 
 # Mapping of firmware model codes to inverter models
 MODEL_MAP = {

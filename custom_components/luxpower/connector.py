@@ -110,6 +110,17 @@ class ServiceHelper:
             _LOGGER.error("Error in service_synctime: %s", err)
             raise
 
+    async def service_afci_alarm_clear(self, dongle):
+        """Clear AFCI alarm by setting the alarm clear bit."""
+        try:
+            luxpower_client = self._lux_client(dongle)
+            # Set bit 2 of register 179 to clear AFCI alarm
+            await luxpower_client.write_register(179, LXPPacket.AFCI_ALARM_CLEAR, LXPPacket.AFCI_ALARM_CLEAR)
+            _LOGGER.info("AFCI alarm clear sent")
+        except Exception as err:
+            _LOGGER.error("Error in service_afci_alarm_clear: %s", err)
+            raise
+
     async def service_start_charging(
         self, dongle, duration_minutes: int = 180, charge_slot: int = 1
     ):

@@ -111,6 +111,12 @@ SCHEME_STOP_CHARGING = vol.Schema(
     }
 )
 
+SCHEME_AFCI_ALARM_CLEAR = vol.Schema(
+    {
+        vol.Required("dongle"): vol.Coerce(str),
+    }
+)
+
 
 async def refreshALLPlatforms(hass: HomeAssistant, dongle: str) -> None:
     """
@@ -267,6 +273,15 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         except Exception as err:
             _LOGGER.error("Error stopping charging: %s", err)
 
+    async def handle_afci_alarm_clear(call) -> None:
+        """Handle the AFCI alarm clear service call."""
+        try:
+            dongle = call.data.get("dongle")
+            _LOGGER.debug("handle_afci_alarm_clear service: %s %s", DOMAIN, dongle)
+            await service_helper.service_afci_alarm_clear(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error clearing AFCI alarm: %s", err)
+
     hass.services.async_register(
         DOMAIN,
         "luxpower_refresh_register_bank",
@@ -310,6 +325,10 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
     hass.services.async_register(
         DOMAIN, "luxpower_stop_charging", handle_stop_charging, schema=SCHEME_STOP_CHARGING
+    )  # fmt: skip
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_afci_alarm_clear", handle_afci_alarm_clear, schema=SCHEME_AFCI_ALARM_CLEAR
     )  # fmt: skip
 
     return True
