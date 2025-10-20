@@ -45,28 +45,12 @@ from .const import (
     DOMAIN,
     UA,
     VERSION,
+    MODEL_MAP,
+    is_12k_model,
 )
 from .helpers import Event
 from .LXPPacket import LXPPacket
 
-# Mapping of firmware model codes to inverter models
-MODEL_MAP = {
-    "AAAA": "LXP 3-6K Hybrid (Standard)",
-    "AAAB": "LXP 3-6K Hybrid (Parallel)",
-    "BAAA": "LXP-3600 ACS (Standard)",
-    "BAAB": "LXP-3600 ACS (Parallel)",
-    "CBAA": "SNA 3000-6000",
-    "EAAB": "LXP-LB-EU 7K",
-    "CCAA": "SNA-US 6000",
-    "FAAB": "LXP-LB-8-12K",
-    "ACAB": "GEN-LB-EU 3-6K",
-    "HAAA": "GEB-LB-EU 7-10K",
-    "CFAA": "SNA 12K",
-    "CEAA": "SNA 12K-US",
-    # Additional model codes found in LuxPowerTek cloud UI
-    "BEAA": "LXP Variant",
-    "DAAA": "LXP Variant",
-}
 
 def detect_model_code(registers: dict) -> str:
     """Detect model code from registers 7 and 8."""
@@ -81,11 +65,6 @@ def detect_model_code(registers: dict) -> str:
         pass
     return None
 
-def is_12k_model(model_code: str) -> bool:
-    """Check if model code is a 12K model."""
-    if not model_code:
-        return False
-    return model_code in ("CFAA", "CEAA", "FAAB")
 
 # List of 12K-specific sensor attributes
 TWELVE_K_ATTRIBUTES = {

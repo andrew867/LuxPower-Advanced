@@ -32,6 +32,8 @@ from .const import (
     DOMAIN,
     UA,
     VERSION,
+    MODEL_MAP,
+    is_12k_model,
 )
 from .helpers import Event
 from .LXPPacket import LXPPacket
@@ -70,7 +72,6 @@ async def async_setup_entry(
     
     # Log model detection status
     if model_code:
-        from .sensor import is_12k_model, MODEL_MAP
         is_12k = is_12k_model(model_code)
         model_name = MODEL_MAP.get(model_code, "Unknown")
         _LOGGER.info(f"Model detected: {model_name} ({model_code}) - {'12K' if is_12k else 'non-12K'}")
@@ -230,9 +231,9 @@ class LuxBinarySensorEntity(BinarySensorEntity):
     def device_info(self):
         """Return device information."""
         return DeviceInfo(
-            identifiers={(DOMAIN, self._serial)},
-            name=f"LuxPower Inverter {self._serial}",
-            manufacturer="LuxPowerTek",
+            identifiers={(DOMAIN, self._dongle)},
+            name=self._dongle,
+            manufacturer="LuxPower",
             model="LuxPower Inverter",
             sw_version=VERSION,
         )

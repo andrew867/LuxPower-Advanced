@@ -53,6 +53,31 @@ SERVICE_STOP_CHARGING = "luxpower_stop_charging"
 ENTITY_CATEGORY_DIAGNOSTIC = "diagnostic"
 ENTITY_CATEGORY_CONFIG = "config"
 
+# Mapping of firmware model codes to inverter models
+MODEL_MAP = {
+    "AAAA": "LXP 3-6K Hybrid (Standard)",
+    "AAAB": "LXP 3-6K Hybrid (Parallel)",
+    "BAAA": "LXP-3600 ACS (Standard)",
+    "BAAB": "LXP-3600 ACS (Parallel)",
+    "CBAA": "SNA 3000-6000",
+    "EAAB": "LXP-LB-EU 7K",
+    "CCAA": "SNA-US 6000",
+    "FAAB": "LXP-LB-8-12K",
+    "ACAB": "GEN-LB-EU 3-6K",
+    "HAAA": "GEB-LB-EU 7-10K",
+    "CFAA": "SNA 12K",
+    "CEAA": "SNA 12K-US",
+    # Additional model codes found in LuxPowerTek cloud UI
+    "BEAA": "LXP Variant",
+    "DAAA": "LXP Variant",
+}
+
+def is_12k_model(model_code: str) -> bool:
+    """Check if model code is a 12K model."""
+    if not model_code:
+        return False
+    return model_code in ("CFAA", "CEAA", "FAAB")
+
 EVENT_DATA_FORMAT = "{DOMAIN}_{DONGLE}_data_receive_{GROUP}_event"
 EVENT_REGISTER_FORMAT = "{DOMAIN}_{DONGLE}_register_receive_{GROUP}_event"
 EVENT_UNAVAILABLE_FORMAT = "{DOMAIN}_{DONGLE}_unavailable_event"

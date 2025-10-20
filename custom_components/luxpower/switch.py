@@ -27,6 +27,8 @@ from .const import (
     DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     VERSION,
+    MODEL_MAP,
+    is_12k_model,
 )
 from .helpers import Event
 from .LXPPacket import LXPPacket, prepare_binary_value
@@ -88,7 +90,6 @@ async def async_setup_entry(
     
     # Log model detection status
     if model_code:
-        from .sensor import is_12k_model, MODEL_MAP
         is_12k = is_12k_model(model_code)
         model_name = MODEL_MAP.get(model_code, "Unknown")
         _LOGGER.info(f"Model detected: {model_name} ({model_code}) - {'12K' if is_12k else 'non-12K'}")
