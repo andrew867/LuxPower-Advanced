@@ -118,17 +118,27 @@ class LXPPacket:
     # Register 110, Most Significant Byte
     #
 
-    TAKE_LOAD_TOGETHER = 1 << 10
+    R110_UNKNOWN_BIT_15 = 1 << 15
+    R110_UNKNOWN_BIT_14 = 1 << 14
+    R110_UNKNOWN_BIT_13 = 1 << 13
+    R110_UNKNOWN_BIT_12 = 1 << 12
+    R110_UNKNOWN_BIT_11 = 1 << 11
+    R110_UNKNOWN_BIT_10 = 1 << 10
+    R110_UNKNOWN_BIT_09 = 1 << 9
+    R110_UNKNOWN_BIT_08 = 1 << 8
 
     #
     # Register 110, Least Significant Byte
     #
 
-    CHARGE_LAST = 1 << 4
-    MICRO_GRID_ENABLE = 1 << 2
-    FAST_ZERO_EXPORT_ENABLE = 1 << 1
-    RUN_WITHOUT_GRID = 1 << 1
-    PV_GRID_OFF_ENABLE = 1 << 0
+    TAKE_LOAD_TOGETHER = 1 << 7  # Existing
+    CHARGE_LAST = 1 << 6         # Existing
+    R110_UNKNOWN_BIT_05 = 1 << 5
+    DRMS_ENABLE_ALT = 1 << 4     # Alternative DRMS control
+    EPS_ENABLE = 1 << 3          # EPS mode enable
+    FORCED_DISCHG_EN_ALT = 1 << 2  # Alternative force discharge
+    R110_BIT_01 = 1 << 1
+    R110_BIT_00 = 1 << 0
 
     # fmt: off
 
@@ -164,14 +174,14 @@ class LXPPacket:
     # Register 179, Most Significant Byte
     #
 
-    R179_UNKNOWN_BIT_15 = 1 << 15  # = 32768
-    R179_UNKNOWN_BIT_14 = 1 << 14  # = 16384
+    R179_UNKNOWN_BIT_15 = 1 << 15  # = 32768  # ON in SNA-12K-US (value 53504 = 0xD100)
+    R179_UNKNOWN_BIT_14 = 1 << 14  # = 16384  # ON in SNA-12K-US (value 53504 = 0xD100)
     R179_UNKNOWN_BIT_13 = 1 << 13  # =  8192
-    R179_UNKNOWN_BIT_12 = 1 << 12  # =  4096   True
-    R179_UNKNOWN_BIT_11 = 1 << 11  # =  2048   True
+    R179_UNKNOWN_BIT_12 = 1 << 12  # =  4096   # ON in SNA-12K-US (value 53504 = 0xD100)
+    R179_UNKNOWN_BIT_11 = 1 << 11  # =  2048
     R179_UNKNOWN_BIT_10 = 1 << 10  # =  1024
     R179_UNKNOWN_BIT_09 = 1 << 9   # =   512
-    R179_UNKNOWN_BIT_08 = 1 << 8   # =   256
+    R179_UNKNOWN_BIT_08 = 1 << 8   # =   256   # ON in SNA-12K-US (value 53504 = 0xD100)
 
     #
     # Register 179, Least Significant Byte
@@ -994,7 +1004,7 @@ class LXPPacket:
                 model_code = None
 
             scale = (
-                10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA") else 100
+                10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA", "CEAA") else 100
             )
             max_chg_curr = self.readValuesInt.get(81, 0) / scale
             max_dischg_curr = self.readValuesInt.get(82, 0) / scale

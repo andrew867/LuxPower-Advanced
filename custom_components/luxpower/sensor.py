@@ -57,6 +57,10 @@ MODEL_MAP = {
     "ACAB": "GEN-LB-EU 3-6K",
     "HAAA": "GEB-LB-EU 7-10K",
     "CFAA": "SNA 12K",
+    "CEAA": "SNA 12K-US",
+    # Additional model codes found in LuxPowerTek cloud UI
+    "BEAA": "LXP Variant",
+    "DAAA": "LXP Variant",
 }
 
 _LOGGER = logging.getLogger(__name__)
@@ -238,6 +242,37 @@ async def async_setup_entry(
 
         # 11. Test Sensor
         # {"etype": "LPTS", "name": "Lux {replaceID_midfix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5},
+
+        # Configuration Diagnostic Sensors (Disabled by Default)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Capacity (Ah)", "unique": "lux_battery_capacity_ah", "bank": 0, "register": 38, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Type Code", "unique": "lux_battery_type_code", "bank": 0, "register": 19, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Module Count", "unique": "lux_battery_module_count", "bank": 2, "register": 113, "enabled": False},
+
+        # System Configuration Sensors
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Voltage Upper Limit", "unique": "lux_grid_v_upper", "bank": 2, "register": 90, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Frequency Lower Limit", "unique": "lux_grid_freq_lower", "bank": 2, "register": 91, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Voltage Upper Config", "unique": "lux_bat_v_upper_cfg", "bank": 2, "register": 99, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery Voltage Lower Config", "unique": "lux_bat_v_lower_cfg", "bank": 2, "register": 100, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Battery SOC Upper Config", "unique": "lux_bat_soc_upper_cfg", "bank": 2, "register": 101, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Charge Voltage Reference", "unique": "lux_charge_volt_ref", "bank": 2, "register": 107, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Discharge Cut Voltage", "unique": "lux_discharge_cut_v", "bank": 2, "register": 109, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Control Flags R110", "unique": "lux_sys_ctrl_r110", "bank": 2, "register": 110, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Min SOC Grid Charge", "unique": "lux_min_soc_grid", "bank": 2, "register": 119, "enabled": False},
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Mode Config R120", "unique": "lux_ac_mode_r120", "bank": 3, "register": 120, "enabled": False},
+
+        # 12K Model Specific Sensors (CFAA, CEAA, CCAA)
+        # These registers are only available on 12K models and provide enhanced power management
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max System Power (12K)", "unique": "lux_max_sys_power_12k", "bank": 4, "register": 176, "enabled": False},  # Max system power in watts (e.g., 24000 = 24kW)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Max AC Charge Power (12K)", "unique": "lux_max_ac_chg_12k", "bank": 4, "register": 177, "enabled": False},  # Max AC charge power in watts (e.g., 5000 = 5kW)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Config R179", "unique": "lux_peak_shave_r179", "bank": 4, "register": 179, "enabled": False},  # Peak shaving control flags (53504 = 0xD100 in SNA-12K-US)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Power Limit R180", "unique": "lux_power_limit_r180", "bank": 4, "register": 180, "enabled": False},  # Power limit setting (150 = 1.5kW in SNA-12K-US)
+        
+        # Additional 12K Features from Cloud UI Analysis
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Power", "unique": "lux_smart_load_power", "bank": 0, "register": 0, "enabled": False},  # Smart load power (calculated from cloud UI)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} EPS Load Power", "unique": "lux_eps_load_power", "bank": 0, "register": 0, "enabled": False},  # EPS load power (calculated from cloud UI)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Grid Load Power", "unique": "lux_grid_load_power", "bank": 0, "register": 0, "enabled": False},  # Grid load power (calculated from cloud UI)
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact", "unique": "lux_gen_dry_contact", "bank": 0, "register": 0, "enabled": False},  # Generator dry contact status
+        {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start Available", "unique": "lux_gen_quick_start", "bank": 0, "register": 0, "enabled": False},  # Generator quick start availability
 
     ]
 
