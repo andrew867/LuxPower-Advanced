@@ -504,7 +504,7 @@ def get_entity_device_group(entity_definition: dict, hass=None) -> str:
     grid_attributes = {
         "v_ac_r", "v_ac_s", "v_ac_t", "f_ac", "p_to_grid", "p_to_user", "p_load", "p_load2", "p_load_ongrid",
         "e_to_grid_day", "e_to_user_day", "e_to_grid_all", "e_to_user_all", "e_load_day", "e_load_all_l",
-        "pf", "rms_current"
+        "pf", "rms_current", "self_consumption_rate", "grid_dependency"
     }
     
     # EPS/Backup entities

@@ -357,6 +357,10 @@ async def async_setup_entry(
         {"etype": "LPAP", "name": "Lux {replaceID_midfix}{hyphen} Polling Interval", "unique": "lux_polling_interval", "bank": 0, "attribute": LXPPacket.status, "device_class": SensorDeviceClass.DURATION, "unit_of_measurement": "s", "enabled": True},
         {"etype": "LPAC", "name": "Lux {replaceID_midfix}{hyphen} Connection Quality", "unique": "lux_connection_quality", "bank": 0, "attribute": LXPPacket.status, "device_class": None, "unit_of_measurement": PERCENTAGE, "enabled": True},
 
+        # 13. Calculated Power Flow Sensors
+        {"etype": "LPSC", "name": "Lux {replaceID_midfix}{hyphen} Self Consumption Rate", "unique": "lux_self_consumption_rate", "bank": 0, "attribute": LXPPacket.p_load, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_to_grid, "device_class": SensorDeviceClass.POWER_FACTOR, "unit_of_measurement": PERCENTAGE, "enabled": True},
+        {"etype": "LPSG", "name": "Lux {replaceID_midfix}{hyphen} Grid Dependency", "unique": "lux_grid_dependency", "bank": 0, "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_load, "device_class": SensorDeviceClass.POWER_FACTOR, "unit_of_measurement": PERCENTAGE, "enabled": True},
+
         # 12. Test Sensor
         # {"etype": "LPTS", "name": "Lux {replaceID_midfix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5},
 
@@ -680,6 +684,10 @@ async def async_setup_entry(
             sensorEntities.append(LuxPowerAdaptivePollingSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPAC":
             sensorEntities.append(LuxPowerConnectionQualitySensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPSC":
+            sensorEntities.append(LuxPowerSelfConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPSG":
+            sensorEntities.append(LuxPowerGridDependencySensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPTS":
             sensorEntities.append(LuxPowerTestSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
 
@@ -1807,6 +1815,73 @@ class LuxPowerConnectionQualitySensor(LuxPowerSensorEntity):
         else:
             self._attr_native_value = 100.0  # Default to good connection
             _LOGGER.warning(f"No client available for connection quality")
+
+        self._attr_available = True
+        self.lastupdated_time = time.time()
+
+        # Update Home Assistant state
+        self.async_write_ha_state()
+
+
+class LuxPowerSelfConsumptionSensor(LuxPowerSensorEntity):
+    """Representation of a Self-Consumption Rate sensor for a LUXPower Inverter."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+
+    def push_update(self, event):
+        """Handle data updates and calculate self-consumption rate."""
+        _LOGGER.debug(f"Self Consumption Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+
+        # Get power flow data
+        self._data = event.data.get("data", {})
+        load_power = self._data.get(LXPPacket.p_load, 0)
+        grid_import = self._data.get(LXPPacket.p_to_user, 0)  # Power from grid to loads
+        grid_export = self._data.get(LXPPacket.p_to_grid, 0)  # Power to grid (export)
+
+        # Self-consumption = power from PV/battery to loads / total load power
+        # Grid import is power from grid, so self-consumption = 1 - (grid_import / load_power)
+        if load_power > 0:
+            grid_dependency = min(grid_import / load_power, 1.0)  # Cap at 100%
+            self_consumption_rate = (1.0 - grid_dependency) * 100
+            self._attr_native_value = round(self_consumption_rate, 1)
+            _LOGGER.debug(f"Self-Consumption: {self._attr_native_value}% (Grid: {grid_import}W, Load: {load_power}W)")
+        else:
+            self._attr_native_value = 0.0
+            _LOGGER.debug("No load power, self-consumption rate = 0%")
+
+        self._attr_available = True
+        self.lastupdated_time = time.time()
+
+        # Update Home Assistant state
+        self.async_write_ha_state()
+
+
+class LuxPowerGridDependencySensor(LuxPowerSensorEntity):
+    """Representation of a Grid Dependency sensor for a LUXPower Inverter."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+
+    def push_update(self, event):
+        """Handle data updates and calculate grid dependency percentage."""
+        _LOGGER.debug(f"Grid Dependency Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+
+        # Get power flow data
+        self._data = event.data.get("data", {})
+        grid_import = self._data.get(LXPPacket.p_to_user, 0)  # Power from grid to loads
+        load_power = self._data.get(LXPPacket.p_load, 0)
+
+        # Grid dependency = grid power / total load power
+        if load_power > 0:
+            grid_dependency = min(grid_import / load_power, 1.0) * 100  # Cap at 100%
+            self._attr_native_value = round(grid_dependency, 1)
+            _LOGGER.debug(f"Grid Dependency: {self._attr_native_value}% (Grid: {grid_import}W, Load: {load_power}W)")
+        else:
+            self._attr_native_value = 0.0
+            _LOGGER.debug("No load power, grid dependency = 0%")
 
         self._attr_available = True
         self.lastupdated_time = time.time()
