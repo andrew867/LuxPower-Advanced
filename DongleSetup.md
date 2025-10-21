@@ -21,4 +21,4 @@ After the datalogger reboots (this takes only a couple of seconds and does not a
 
 
 #Thanks
-This was copied from https://github.com/celsworth/octolux/blob/master/doc/INVERTER_SETUP.md as I don't know if he is likely going to delete this page.
+This documentation was adapted from the original octolux documentation.

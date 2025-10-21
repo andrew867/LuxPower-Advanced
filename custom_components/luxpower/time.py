@@ -3,9 +3,6 @@ LuxPower time platform for Home Assistant.
 
 This module provides time entities for configuring LuxPower inverter
 time-based settings including charge schedules and operational time windows.
-
-Copyright (C) 2025 Guy Wells
-https://github.com/guybw/LuxPython_DEV
 """
 
 import datetime

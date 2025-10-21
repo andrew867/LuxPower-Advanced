@@ -3,9 +3,6 @@ LuxPower binary sensor platform for Home Assistant.
 
 This module provides binary sensor entities for monitoring LuxPower inverter
 status indicators including charging state, grid connection, and system alerts.
-
-Copyright (C) 2025 Guy Wells
-https://github.com/guybw/LuxPython_DEV
 """
 
 import logging

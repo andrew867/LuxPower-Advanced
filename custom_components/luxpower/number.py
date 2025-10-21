@@ -3,9 +3,6 @@ LuxPower number platform for Home Assistant.
 
 This module provides number entities for configuring LuxPower inverter settings
 including charge limits, discharge settings, and other operational parameters.
-
-Copyright (C) 2025 Guy Wells
-https://github.com/guybw/LuxPython_DEV
 """
 
 import logging

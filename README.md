@@ -53,7 +53,7 @@ A comprehensive Home Assistant integration for LuxPower inverters, providing loc
 ### **Method 1: HACS (Recommended)**
 1. Open HACS in Home Assistant
 2. Go to Integrations → Custom Repositories
-3. Add repository: `https://github.com/guybw/LuxPython_DEV`
+3. Add repository: `https://github.com/YOUR_ORG/YOUR_REPO`
 4. Install "LuxPower Inverter" integration
 5. Restart Home Assistant
 
@@ -270,9 +270,9 @@ Advanced automation examples:
 ## 🤝 Support
 
 ### **Documentation**
-- **GitHub Repository**: [LuxPython_DEV](https://github.com/guybw/LuxPython_DEV)
-- **Issue Tracker**: [GitHub Issues](https://github.com/guybw/LuxPython_DEV/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/guybw/LuxPython_DEV/discussions)
+- **GitHub Repository**: [LuxPython_DEV](https://github.com/YOUR_ORG/YOUR_REPO)
+- **Issue Tracker**: [GitHub Issues](https://github.com/YOUR_ORG/YOUR_REPO/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/YOUR_ORG/YOUR_REPO/discussions)
 
 ### **Community**
 - **Home Assistant Community**: Search for "LuxPower" in the forums
@@ -291,7 +291,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Guy Wells**: Original developer and maintainer
+- **Guy Wells**: Thanks for the original codebase that served as the foundation for this substantial rewrite
 - **Home Assistant Community**: Testing and feedback
 - **LuxPowerTek**: For providing Modbus documentation
 - **Contributors**: All those who have helped improve this integration

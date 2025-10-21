@@ -3,8 +3,6 @@
   "name": "LuxPower Inverter",
   "integration_type": "device",
   "config_flow": true,
-  "documentation": "https://github.com/guybw/LuxPython_DEV",
-  "issue_tracker": "https://github.com/guybw/LuxPython_DEV/issues",
   "iot_class": "local_polling",
   "dependencies": [
     "http"
@@ -14,9 +12,7 @@
   "zeroconf": [],
   "homekit": {},
   "version": "2025.10.1-dev",
-  "codeowners": [
-    "@guybw"
-  ],
+  "codeowners": [],
   "quality_scale": "gold",
   "loggers": [
     "custom_components.luxpower",

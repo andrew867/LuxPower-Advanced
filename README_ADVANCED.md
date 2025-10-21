@@ -202,7 +202,7 @@ We used to have an issue with disconnecting. Below are the legacy notes for refe
 - This blueprint allows you to reconnect if the inverter doesn't report for a specified duration (recommendation: 20 minutes, no less than 10).
 
 #### Blueprint Import Link:
-[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/guybw/LuxPythonCard/blob/main/blueprints/automation/luxpower/reconnect.yaml)
+[![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/YOUR_ORG/YOUR_REPO/blob/main/blueprints/automation/luxpower/reconnect.yaml)
 
 ---
 

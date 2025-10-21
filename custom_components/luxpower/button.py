@@ -3,9 +3,6 @@ LuxPower button platform for Home Assistant.
 
 This module provides button entities for triggering LuxPower inverter actions
 including data refresh, reconnection, restart, and charging control.
-
-Copyright (C) 2025 Guy Wells
-https://github.com/guybw/LuxPython_DEV
 """
 
 import logging

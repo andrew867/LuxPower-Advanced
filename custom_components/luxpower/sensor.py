@@ -4,9 +4,6 @@ LuxPower sensor platform for Home Assistant.
 This module provides sensor entities for monitoring LuxPower inverter data
 including power readings, battery status, grid information, and system statistics.
 Supports multiple inverter models with appropriate sensor configurations.
-
-Copyright (C) 2025 Guy Wells
-https://github.com/guybw/LuxPython_DEV
 """
 
 import logging

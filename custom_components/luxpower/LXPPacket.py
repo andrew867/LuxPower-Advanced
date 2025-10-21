@@ -3,9 +3,6 @@ LuxPower packet parsing and decoding module.
 
 This module handles the parsing and decoding of LuxPower inverter communication
 packets, converting raw data into structured variables for use by the integration.
-
-Copyright (C) 2025 Guy Wells
-https://github.com/guybw/LuxPython_DEV
 """
 
 import logging

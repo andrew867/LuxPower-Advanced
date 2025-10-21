@@ -3,9 +3,6 @@ LuxPower switch platform for Home Assistant.
 
 This module provides switch entities for controlling LuxPower inverter functions
 including charging control, grid export settings, and other operational modes.
-
-Copyright (C) 2025 Guy Wells
-https://github.com/guybw/LuxPython_DEV
 """
 
 import logging
