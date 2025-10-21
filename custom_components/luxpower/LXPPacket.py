@@ -14,9 +14,34 @@ import struct
 
 _LOGGER = logging.getLogger(__name__)
 
+# Bank count validation constants
+MAX_BANK_COUNT = 6
+MIN_BANK_COUNT = 1
+DEFAULT_BANK_COUNT = 6
+
 
 def prepare_binary_value(oldvalue, mask, enable=True):
     return oldvalue | mask if enable else oldvalue & (65535 - mask)
+
+
+def validate_bank_count(bank_count: int) -> int:
+    """
+    Validate and normalize bank count value.
+
+    Args:
+        bank_count: The bank count to validate
+
+    Returns:
+        int: Validated bank count (clamped to valid range)
+    """
+    if bank_count < MIN_BANK_COUNT:
+        _LOGGER.warning(f"Bank count {bank_count} is below minimum {MIN_BANK_COUNT}, using {MIN_BANK_COUNT}")
+        return MIN_BANK_COUNT
+    elif bank_count > MAX_BANK_COUNT:
+        _LOGGER.warning(f"Bank count {bank_count} is above maximum {MAX_BANK_COUNT}, using {MAX_BANK_COUNT}")
+        return MAX_BANK_COUNT
+    else:
+        return bank_count
 
 
 class LXPPacket:

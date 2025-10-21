@@ -539,6 +539,10 @@ class LuxPowerClient(asyncio.Protocol):
         if not self._connected or self._transport.is_closing():
             return
 
+        # Validate bank count
+        from ..LXPPacket import validate_bank_count
+        bank_count = validate_bank_count(bank_count)
+
         log_marker = make_log_marker(
             self.serial_number, self.dongle_serial, "do_refresh_data_registers"
         )

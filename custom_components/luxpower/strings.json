@@ -24,8 +24,13 @@
           "lux_respond_to_heartbeat": "Respond to Heartbeat",
           "lux_auto_refresh": "Enable Auto Refresh",
           "lux_refresh_interval": "Refresh Interval (30-120 seconds)",
-          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6)",
-          "lux_device_grouping": "Enable Device Grouping (Organizes 250+ entities into PV, Grid, EPS, Generator, Battery, Temperatures, and Settings groups)"
+          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6). Use 6 for modern firmware, 2-3 for older firmware versions",
+          "lux_device_grouping": "Enable Device Grouping (Organizes 250+ entities into PV, Grid, EPS, Generator, Battery, Temperatures, and Settings groups)",
+          "lux_rated_power": "Inverter Rated Power (Watts)",
+          "lux_ac_charge_type": "AC Charge Type",
+          "lux_output_priority": "Output Priority",
+          "lux_work_mode": "Work Mode",
+          "lux_ac_charge_mode": "AC Charge Mode"
         }
       }
     }
@@ -43,9 +48,47 @@
           "lux_respond_to_heartbeat": "Respond to Heartbeat Requests from Inverter",
           "lux_auto_refresh": "Enable Automatic Data Refresh",
           "lux_refresh_interval": "Refresh Interval (30-120 seconds)",
-          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6)",
-          "lux_device_grouping": "Enable Device Grouping (Organizes 250+ entities into PV, Grid, EPS, Generator, Battery, Temperatures, and Settings groups)"
+          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6). Use 6 for modern firmware, 2-3 for older firmware versions",
+          "lux_device_grouping": "Enable Device Grouping (Organizes 250+ entities into PV, Grid, EPS, Generator, Battery, Temperatures, and Settings groups)",
+          "lux_rated_power": "Inverter Rated Power (Watts)",
+          "lux_ac_charge_type": "AC Charge Type",
+          "lux_output_priority": "Output Priority",
+          "lux_work_mode": "Work Mode",
+          "lux_ac_charge_mode": "AC Charge Mode"
         }
+      }
+    }
+  },
+  "selector": {
+    "ac_charge_type": {
+      "options": {
+        "stop": "Stop",
+        "time": "Time",
+        "soc": "SOC",
+        "both": "Both"
+      }
+    },
+    "output_priority": {
+      "options": {
+        "battery_first": "Battery First",
+        "pv_first": "PV First",
+        "grid_first": "Grid First"
+      }
+    },
+    "work_mode": {
+      "options": {
+        "self_use": "Self-Use",
+        "feed_in_priority": "Feed-In Priority",
+        "backup": "Backup",
+        "off_grid": "Off-Grid"
+      }
+    },
+    "ac_charge_mode": {
+      "options": {
+        "disabled": "Disabled",
+        "voltage_based": "Voltage-Based",
+        "time_based": "Time-Based",
+        "both": "Both"
       }
     }
   }

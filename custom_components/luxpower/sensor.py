@@ -345,7 +345,15 @@ async def async_setup_entry(
         },
         # att1. Power from grid to consumer, att2. Power from consumer to invert, att3. power from inv to consumer, att4. power from consumer to grid.
 
-        # 11. Test Sensor
+        # 11. Load Percentage Sensor (calculated using rated power)
+        {
+            "etype": "LPLS", "name": "Lux {replaceID_midfix}{hyphen} Load Percentage", "unique": "lux_load_percentage",
+            "bank": 0, "attribute": LXPPacket.p_load, "rated_power_key": "rated_power",
+            "device_class": SensorDeviceClass.POWER_FACTOR, "unit_of_measurement": PERCENTAGE,
+            "state_class": SensorStateClass.MEASUREMENT, "enabled": True
+        },
+
+        # 12. Test Sensor
         # {"etype": "LPTS", "name": "Lux {replaceID_midfix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5},
 
         # Configuration Diagnostic Sensors (Disabled by Default)
@@ -662,6 +670,8 @@ async def async_setup_entry(
             sensorEntities.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPBS":
             sensorEntities.append(LuxPowerBatteryStatusSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPLS":
+            sensorEntities.append(LuxPowerLoadPercentageSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPTS":
             sensorEntities.append(LuxPowerTestSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
 
@@ -1684,6 +1694,50 @@ class LuxPowerDataReceivedTimestampSensor(LuxPowerSensorEntity):
         else:
             state_attributes["timestamp"] = 0
         return state_attributes
+
+
+class LuxPowerLoadPercentageSensor(LuxPowerSensorEntity):
+    """Representation of a Load Percentage sensor for a LUXPower Inverter."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._rated_power = 6000  # Default value
+
+    def push_update(self, event):
+        """Handle data updates and calculate load percentage."""
+        _LOGGER.debug(f"Load Percentage Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+
+        # Get current load power
+        self._data = event.data.get("data", {})
+        current_load = self._data.get(LXPPacket.p_load, 0)
+
+        # Get rated power from hass.data
+        entry_id = None
+        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+            if data.get("DONGLE") == self.dongle:
+                entry_id = e_id
+                break
+
+        if entry_id:
+            rated_power = self.hass.data[DOMAIN][entry_id].get("rated_power", 6000)
+            if rated_power and rated_power > 0:
+                # Calculate load percentage: (current_load / rated_power) * 100
+                load_percentage = (current_load / rated_power) * 100
+                self._attr_native_value = round(load_percentage, 1)
+                _LOGGER.debug(f"Load Percentage: {current_load}W / {rated_power}W = {self._attr_native_value}%")
+            else:
+                self._attr_native_value = 0.0
+                _LOGGER.warning(f"No rated power available for load percentage calculation")
+        else:
+            self._attr_native_value = 0.0
+            _LOGGER.warning(f"No entry found for dongle {self.dongle}")
+
+        self._attr_available = True
+        self.lastupdated_time = time.time()
+
+        # Update Home Assistant state
+        self.async_write_ha_state()
 
 
 class LuxStateSensorEntity(SensorEntity):

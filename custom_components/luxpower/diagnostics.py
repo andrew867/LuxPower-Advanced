@@ -48,7 +48,7 @@ async def async_get_config_entry_diagnostics(
             "use_serial": config_entry.data.get("lux_use_serial", False),
             "auto_refresh": config_entry.data.get("lux_auto_refresh", False),
             "refresh_interval": config_entry.data.get("lux_refresh_interval", 120),
-            "refresh_bank_count": config_entry.data.get("lux_refresh_bank_count", 2),
+            "refresh_bank_count": config_entry.data.get("lux_refresh_bank_count", 6),
             "respond_to_heartbeat": config_entry.data.get("lux_respond_to_heartbeat", False),
         },
         "client_status": {

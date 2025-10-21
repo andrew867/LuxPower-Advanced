@@ -25,6 +25,7 @@ from .const import (
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     ATTR_LUX_DEVICE_GROUPING,
+    ATTR_LUX_RATED_POWER,
     DOMAIN,
     PLACEHOLDER_LUX_DONGLE_SERIAL,
     PLACEHOLDER_LUX_HOST,
@@ -36,6 +37,7 @@ from .const import (
     PLACEHOLDER_LUX_SERIAL_NUMBER,
     PLACEHOLDER_LUX_USE_SERIAL,
     PLACEHOLDER_LUX_DEVICE_GROUPING,
+    PLACEHOLDER_LUX_RATED_POWER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -105,6 +107,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
             vol.Optional("lux_refresh_bank_count", default=config_entry.get("lux_refresh_bank_count", 6)): vol.All(int, vol.Range(min=1, max=6)),
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
+            vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
         })  # fmt: skip
         data_schema = vol.Schema(schema)
         return self.async_show_form(
@@ -245,6 +248,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
             vol.Optional("lux_refresh_bank_count", default=config_entry.get("lux_refresh_bank_count", PLACEHOLDER_LUX_REFRESH_BANK_COUNT)): vol.All(int, vol.Range(min=1, max=6)),
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
+            vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
         })  # fmt: skip
 
         data_schema = vol.Schema(schema)

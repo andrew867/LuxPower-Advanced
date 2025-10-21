@@ -19,10 +19,10 @@ _LOGGER = logging.getLogger(__name__)
 async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     """
     Refresh all LuxPower platform entities after a delay.
-    
+
     This function waits 20 seconds then triggers a refresh of all register banks
     and holding registers to ensure all entities have the latest data.
-    
+
     Args:
         hass: Home Assistant instance
         dongle: Dongle serial number for the inverter
@@ -34,10 +34,18 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     )
     await asyncio.sleep(10)
     # fmt: skip
+
+    # Get configured bank count from integration data
+    bank_count = 6  # Default fallback
+    for entry_id, data in hass.data.get(DOMAIN, {}).items():
+        if data.get("DONGLE") == dongle:
+            bank_count = data.get("refresh_bank_count", 6)
+            break
+
     await hass.services.async_call(
         DOMAIN,
         "luxpower_refresh_registers",
-        {"dongle": dongle, "bank_count": 3},
+        {"dongle": dongle, "bank_count": bank_count},
         blocking=True,
     )
 
@@ -205,7 +213,14 @@ class ServiceHelper:
                 await asyncio.sleep(1)
 
                 # Refresh registers to ensure changes are applied
-                await self.service_refresh_data_registers(dongle=dongle, bank_count=3)
+                # Get configured bank count from integration data
+                bank_count = 3  # Default fallback
+                for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+                    if data.get("DONGLE") == dongle:
+                        bank_count = data.get("refresh_bank_count", 3)
+                        break
+
+                await self.service_refresh_data_registers(dongle=dongle, bank_count=bank_count)
 
                 _LOGGER.info(
                     f"Charging slot {charge_slot} started successfully. Will run from {start_hour:02d}:{start_minute:02d} to {end_hour:02d}:{end_minute:02d}"
@@ -264,7 +279,14 @@ class ServiceHelper:
                     _LOGGER.info("All charging slots disabled - AC charging turned off")
 
             # Refresh registers to ensure changes are applied
-            await self.service_refresh_data_registers(dongle=dongle, bank_count=3)
+            # Get configured bank count from integration data
+            bank_count = 3  # Default fallback
+            for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    bank_count = data.get("refresh_bank_count", 3)
+                    break
+
+            await self.service_refresh_data_registers(dongle=dongle, bank_count=bank_count)
 
             _LOGGER.info(f"Charging slot {charge_slot} stopped successfully")
             return True

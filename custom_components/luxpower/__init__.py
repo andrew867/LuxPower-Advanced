@@ -49,7 +49,7 @@ from .helpers import Event
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "switch", "number", "time", "button", "binary_sensor"]
+PLATFORMS = ["sensor", "switch", "number", "time", "button", "binary_sensor", "select"]
 
 SCHEME_REGISTER_BANK = vol.Schema(
     {
@@ -61,7 +61,7 @@ SCHEME_REGISTER_BANK = vol.Schema(
 SCHEME_REGISTERS_COUNT = vol.Schema(
     {
         vol.Required("dongle"): vol.Coerce(str),
-        vol.Optional("bank_count", default=2): vol.Coerce(int),
+        vol.Optional("bank_count", default=0): vol.Coerce(int),  # 0 = use configured value
     }
 )
 
@@ -131,10 +131,21 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle: str) -> None:
     """
     await asyncio.sleep(5)  # Reduced from 20s to 5s for faster startup
     # fmt: skip
+    # Get configured bank count from integration data
+    bank_count = 6  # Default fallback
+    for entry_id, data in hass.data.get(DOMAIN, {}).items():
+        if data.get("DONGLE") == dongle:
+            bank_count = data.get("refresh_bank_count", 6)
+            break
+
+    # Validate bank count
+    from .LXPPacket import validate_bank_count
+    bank_count = validate_bank_count(bank_count)
+
     await hass.services.async_call(
         DOMAIN,
         "luxpower_refresh_registers",
-        {"dongle": dongle, "bank_count": 3},
+        {"dongle": dongle, "bank_count": bank_count},
         blocking=True,
     )
     # fmt: skip
@@ -183,8 +194,14 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         try:
             dongle = call.data.get("dongle")
             bank_count = call.data.get("bank_count")
-            if int(bank_count) == 0:
-                bank_count = 2
+            if bank_count is None or int(bank_count) == 0:
+                # Use configured bank count if not provided or 0
+                for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                    if data.get("DONGLE") == dongle:
+                        bank_count = data.get("refresh_bank_count", 6)
+                        break
+                else:
+                    bank_count = 6  # Default fallback
             _LOGGER.debug("handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
             await service_helper.service_refresh_data_registers(
                 dongle=dongle, bank_count=int(bank_count)
@@ -395,10 +412,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[events.CLIENT_DAEMON] = luxpower_client
 
     hass_data = hass.data.setdefault(DOMAIN, {})
+    # Determine rated power (use configured value or auto-detect from model)
+    rated_power = config.get(ATTR_LUX_RATED_POWER, PLACEHOLDER_LUX_RATED_POWER)
+    if rated_power == 0 and model_code:  # Auto-detect from model
+        from .const import get_model_rated_power
+        rated_power = get_model_rated_power(model_code)
+
+    # Get configured refresh bank count
+    refresh_bank_count = config.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
+
     hass_data[entry.entry_id] = {
         "DONGLE": DONGLE_SERIAL,
         "client": luxpower_client,
         "model": "LUXPower Inverter",
+        "rated_power": rated_power,
+        "model_code": model_code,
+        "refresh_bank_count": refresh_bank_count,
     }  # Used for avoiding duplication of config entries
     # for component in PLATFORMS:
     # hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
