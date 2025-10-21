@@ -147,6 +147,10 @@ async def async_setup_entry(
 
     luxpower_client = hass.data[event.CLIENT_DAEMON]
 
+    # Check if read-only mode is enabled
+    read_only_mode = platform_config.get("lux_read_only_mode", False)
+    _LOGGER.info(f"Read-only mode: {read_only_mode}")
+
     # fmt: off
 
     sensorEntities: List[Entity] = []
@@ -361,7 +365,34 @@ async def async_setup_entry(
         {"etype": "LPSC", "name": "Lux {replaceID_midfix}{hyphen} Self Consumption Rate", "unique": "lux_self_consumption_rate", "bank": 0, "attribute": LXPPacket.p_load, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_to_grid, "device_class": SensorDeviceClass.POWER_FACTOR, "unit_of_measurement": PERCENTAGE, "enabled": True},
         {"etype": "LPSG", "name": "Lux {replaceID_midfix}{hyphen} Grid Dependency", "unique": "lux_grid_dependency", "bank": 0, "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_load, "device_class": SensorDeviceClass.POWER_FACTOR, "unit_of_measurement": PERCENTAGE, "enabled": True},
 
-        # 12. Test Sensor
+        # 14. Read-Only Mode Sensors (only created when read_only_mode is True)
+        # These are read-only versions of control entities for monitoring only
+        *([
+            # Number entities as sensors
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Charge Power Rate", "unique": "lux_system_charge_power_rate", "bank": 0, "register": 64, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "enabled": read_only_mode},
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} System Discharge Power Rate", "unique": "lux_system_discharge_power_rate", "bank": 0, "register": 65, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "enabled": read_only_mode},
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Power Rate", "unique": "lux_ac_charge_power_rate", "bank": 0, "register": 66, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "enabled": read_only_mode},
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Battery Charge Level", "unique": "lux_ac_battery_charge_level", "bank": 0, "register": 67, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "enabled": read_only_mode},
+            # Add more number entities as needed...
+
+            # Switch entities as binary sensors
+            {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Normal/Standby", "unique": "lux_normal_standby", "bank": 0, "register": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "enabled": read_only_mode},
+            {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Power Backup Enable", "unique": "lux_power_backup_enable", "bank": 0, "register": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "enabled": read_only_mode},
+            {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Feed-In Grid", "unique": "lux_feed_in_grid", "bank": 0, "register": 21, "bitmask": LXPPacket.FEED_IN_GRID, "enabled": read_only_mode},
+            # Add more switch entities as needed...
+
+            # Time entities as sensors (simplified - just show current values)
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Start Time 1", "unique": "lux_ac_charge_start_time_1", "bank": 0, "register": 68, "device_class": None, "unit_of_measurement": None, "enabled": read_only_mode},
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Charge End Time 1", "unique": "lux_ac_charge_end_time_1", "bank": 0, "register": 69, "device_class": None, "unit_of_measurement": None, "enabled": read_only_mode},
+            # Add more time entities as needed...
+
+            # Select entities as sensors (show current selected option)
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Type", "unique": "lux_ac_charge_type_readonly", "bank": 0, "register": 20, "device_class": None, "unit_of_measurement": None, "enabled": read_only_mode},
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Output Priority", "unique": "lux_output_priority_readonly", "bank": 0, "register": 21, "device_class": None, "unit_of_measurement": None, "enabled": read_only_mode},
+            {"etype": "LPRS", "name": "Lux {replaceID_midfix}{hyphen} Work Mode", "unique": "lux_work_mode_readonly", "bank": 0, "register": 110, "device_class": None, "unit_of_measurement": None, "enabled": read_only_mode},
+        ] if read_only_mode else []),
+
+        # 15. Test Sensor
         # {"etype": "LPTS", "name": "Lux {replaceID_midfix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5},
 
         # Configuration Diagnostic Sensors (Disabled by Default)

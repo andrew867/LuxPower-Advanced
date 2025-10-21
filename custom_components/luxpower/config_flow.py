@@ -28,6 +28,7 @@ from .const import (
     ATTR_LUX_RATED_POWER,
     ATTR_LUX_ADAPTIVE_POLLING,
     ATTR_LUX_RECONNECTION_DELAY,
+    ATTR_LUX_READ_ONLY_MODE,
     DOMAIN,
     PLACEHOLDER_LUX_DONGLE_SERIAL,
     PLACEHOLDER_LUX_HOST,
@@ -42,6 +43,7 @@ from .const import (
     PLACEHOLDER_LUX_RATED_POWER,
     PLACEHOLDER_LUX_ADAPTIVE_POLLING,
     PLACEHOLDER_LUX_RECONNECTION_DELAY,
+    PLACEHOLDER_LUX_READ_ONLY_MODE,
     MIN_RECONNECTION_DELAY,
     MAX_RECONNECTION_DELAY,
 )
@@ -115,6 +117,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
             vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
             vol.Optional("lux_adaptive_polling", default=config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
+            vol.Optional("lux_read_only_mode", default=config_entry.get("lux_read_only_mode", PLACEHOLDER_LUX_READ_ONLY_MODE)): bool,
         })
 
         # Add retry attempts field only if adaptive polling is disabled
@@ -264,6 +267,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
             vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
             vol.Optional("lux_adaptive_polling", default=config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
+            vol.Optional("lux_read_only_mode", default=config_entry.get("lux_read_only_mode", PLACEHOLDER_LUX_READ_ONLY_MODE)): bool,
         })
 
         # Add retry attempts field only if adaptive polling is disabled

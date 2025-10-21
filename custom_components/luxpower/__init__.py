@@ -240,6 +240,18 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         """Handle the service call."""
         try:
             dongle = call.data.get("dongle")
+
+            # Check if read-only mode is enabled
+            read_only_mode = False
+            for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    read_only_mode = data.get("read_only_mode", False)
+                    break
+
+            if read_only_mode:
+                _LOGGER.error(f"Cannot reset settings - read-only mode is enabled for {dongle}")
+                return
+
             _LOGGER.debug("handle_reset_settings service: %s %s", DOMAIN, dongle)
             await service_helper.service_reset_settings(dongle=dongle)
         except Exception as err:
@@ -249,6 +261,18 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         """Handle the service call."""
         try:
             dongle = call.data.get("dongle")
+
+            # Check if read-only mode is enabled
+            read_only_mode = False
+            for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    read_only_mode = data.get("read_only_mode", False)
+                    break
+
+            if read_only_mode:
+                _LOGGER.error(f"Cannot sync time - read-only mode is enabled for {dongle}")
+                return
+
             do_set_time = call.data.get("do_set_time", "False").lower() in (
                 "yes",
                 "true",
@@ -264,13 +288,25 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         """Handle the start charging service call."""
         try:
             dongle = call.data.get("dongle")
+
+            # Check if read-only mode is enabled
+            read_only_mode = False
+            for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    read_only_mode = data.get("read_only_mode", False)
+                    break
+
+            if read_only_mode:
+                _LOGGER.error(f"Cannot start charging - read-only mode is enabled for {dongle}")
+                return
+
             duration_minutes = call.data.get("duration_minutes", DEFAULT_CHARGE_DURATION_MINUTES)
             charge_slot = call.data.get("charge_slot", DEFAULT_CHARGE_SLOT)
-            _LOGGER.debug("handle_start_charging service: %s %s duration: %s minutes slot: %s", 
+            _LOGGER.debug("handle_start_charging service: %s %s duration: %s minutes slot: %s",
                           DOMAIN, dongle, duration_minutes, charge_slot)
             await service_helper.service_start_charging(
-                dongle=dongle, 
-                duration_minutes=duration_minutes, 
+                dongle=dongle,
+                duration_minutes=duration_minutes,
                 charge_slot=charge_slot
             )
         except Exception as err:
@@ -294,6 +330,18 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         """Handle the AFCI alarm clear service call."""
         try:
             dongle = call.data.get("dongle")
+
+            # Check if read-only mode is enabled
+            read_only_mode = False
+            for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    read_only_mode = data.get("read_only_mode", False)
+                    break
+
+            if read_only_mode:
+                _LOGGER.error(f"Cannot clear AFCI alarm - read-only mode is enabled for {dongle}")
+                return
+
             _LOGGER.debug("handle_afci_alarm_clear service: %s %s", DOMAIN, dongle)
             await service_helper.service_afci_alarm_clear(dongle=dongle)
         except Exception as err:
@@ -430,6 +478,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     adaptive_polling = config.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)
     reconnection_delay = config.get(ATTR_LUX_RECONNECTION_DELAY, PLACEHOLDER_LUX_RECONNECTION_DELAY)
 
+    # Get read-only mode setting
+    read_only_mode = config.get(ATTR_LUX_READ_ONLY_MODE, PLACEHOLDER_LUX_READ_ONLY_MODE)
+
     hass_data[entry.entry_id] = {
         "DONGLE": DONGLE_SERIAL,
         "client": luxpower_client,
@@ -439,6 +490,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "refresh_bank_count": refresh_bank_count,
         "adaptive_polling": adaptive_polling,
         "reconnection_delay": reconnection_delay,
+        "read_only_mode": read_only_mode,
         "connection_quality": 1.0,  # Start with good connection quality
         "last_successful_poll": None,
         "current_polling_interval": PLACEHOLDER_LUX_REFRESH_INTERVAL,
@@ -447,7 +499,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
     # _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # Conditionally load platforms based on read-only mode
+    platforms_to_load = []
+    if read_only_mode:
+        # In read-only mode, only load sensor and binary_sensor platforms
+        platforms_to_load = ["sensor", "binary_sensor"]
+        _LOGGER.info("Read-only mode enabled - loading sensor and binary_sensor platforms only")
+    else:
+        # In normal mode, load all platforms
+        platforms_to_load = PLATFORMS
+        _LOGGER.info("Normal mode - loading all platforms")
+
+    await hass.config_entries.async_forward_entry_setups(entry, platforms_to_load)
     for component in PLATFORMS:
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
 

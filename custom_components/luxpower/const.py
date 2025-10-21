@@ -24,6 +24,7 @@ ATTR_LUX_DEVICE_GROUPING = "lux_device_grouping"
 ATTR_LUX_RATED_POWER = "lux_rated_power"
 ATTR_LUX_ADAPTIVE_POLLING = "lux_adaptive_polling"
 ATTR_LUX_RECONNECTION_DELAY = "lux_reconnection_delay"
+ATTR_LUX_READ_ONLY_MODE = "lux_read_only_mode"
 
 # Placeholder values
 PLACEHOLDER_LUX_HOST = ""
@@ -39,6 +40,7 @@ PLACEHOLDER_LUX_DEVICE_GROUPING = True
 PLACEHOLDER_LUX_RATED_POWER = 0  # 0 = auto-detect from model
 PLACEHOLDER_LUX_ADAPTIVE_POLLING = True
 PLACEHOLDER_LUX_RECONNECTION_DELAY = 5
+PLACEHOLDER_LUX_READ_ONLY_MODE = False
 
 # Default values for service calls
 DEFAULT_CHARGE_DURATION_MINUTES = 180
