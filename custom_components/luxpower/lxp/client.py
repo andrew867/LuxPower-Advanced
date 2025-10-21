@@ -5,8 +5,9 @@ import struct
 from typing import Optional
 from homeassistant.core import HomeAssistant
 
-from ..LXPPacket import LXPPacket
+from ..LXPPacket import LXPPacket, MIN_ADAPTIVE_POLLING_INTERVAL, MAX_ADAPTIVE_POLLING_INTERVAL, ADAPTIVE_POLLING_BASE_INTERVAL, ADAPTIVE_POLLING_ADJUSTMENT_FACTOR
 from ..helpers import Event
+from ..const import DOMAIN
 
 
 def make_log_marker(serial: str, dongle: str, tag: str) -> str:
@@ -76,50 +77,125 @@ class LuxPowerClient(asyncio.Protocol):
         
         # Retry logic attributes
         self._connection_attempts = 0
-        self._max_retry_attempts = 3
+        self._max_retry_attempts = 10  # Keep high number for continuous reconnection
         self._retry_delay = 1  # Initial delay in seconds
         self._max_retry_delay = 60  # Maximum delay in seconds
+
+        # Adaptive polling attributes
+        self._adaptive_polling_enabled = True
+        self._connection_quality = 1.0  # 1.0 = perfect connection, 0.0 = terrible
+        self._connection_success_count = 0
+        self._connection_failure_count = 0
+        self._last_successful_connection = None
+        self._current_polling_interval = ADAPTIVE_POLLING_BASE_INTERVAL
+        self._polling_history = []  # Track recent polling intervals
+
         self.lxpPacket = LXPPacket(
             debug=False, dongle_serial=dongle_serial, serial_number=serial_number
         )
 
+    def update_connection_quality(self, success: bool) -> None:
+        """Update connection quality based on success/failure."""
+        if success:
+            self._connection_success_count += 1
+            self._last_successful_connection = asyncio.get_event_loop().time()
+        else:
+            self._connection_failure_count += 1
+
+        # Calculate connection quality (weighted average)
+        total_attempts = self._connection_success_count + self._connection_failure_count
+        if total_attempts > 0:
+            self._connection_quality = self._connection_success_count / total_attempts
+
+        # Update adaptive polling interval
+        self._update_adaptive_polling_interval()
+
+    def _update_adaptive_polling_interval(self) -> None:
+        """Update the polling interval based on connection quality."""
+        if not self._adaptive_polling_enabled:
+            return
+
+        # Base interval adjusted by connection quality
+        quality_factor = max(0.5, self._connection_quality)  # Minimum 0.5x multiplier
+        new_interval = int(ADAPTIVE_POLLING_BASE_INTERVAL / quality_factor)
+
+        # Clamp to valid range
+        new_interval = max(MIN_ADAPTIVE_POLLING_INTERVAL,
+                          min(MAX_ADAPTIVE_POLLING_INTERVAL, new_interval))
+
+        # Smooth transitions by averaging with current interval
+        if self._current_polling_interval > 0:
+            new_interval = int((self._current_polling_interval + new_interval) / 2)
+
+        self._current_polling_interval = new_interval
+
+        # Keep history for debugging
+        self._polling_history.append(new_interval)
+        if len(self._polling_history) > 10:  # Keep last 10 intervals
+            self._polling_history.pop(0)
+
+    def get_current_polling_interval(self) -> int:
+        """Get the current polling interval."""
+        return self._current_polling_interval
+
+    def set_adaptive_polling(self, enabled: bool, reconnection_delay: int = 5) -> None:
+        """Configure adaptive polling and reconnection settings."""
+        self._adaptive_polling_enabled = enabled
+        self._reconnection_delay = reconnection_delay
+
+        if enabled:
+            self._current_polling_interval = ADAPTIVE_POLLING_BASE_INTERVAL
+        else:
+            # Use fixed interval when adaptive polling is disabled
+            self._current_polling_interval = ADAPTIVE_POLLING_BASE_INTERVAL
+
     async def _retry_connection(self, max_attempts: int = None) -> bool:
         """
-        Retry connection with exponential backoff.
-        
+        Retry connection with continuous reconnection using configured delay.
+
+        Since we want continuous reconnection for WiFi dongle offline scenarios,
+        this method will keep trying indefinitely with the configured delay between attempts.
+
         Args:
             max_attempts: Maximum number of retry attempts (uses self._max_retry_attempts if None)
-            
+
         Returns:
-            True if connection successful, False if all attempts failed
+            bool: True if connection successful, False if all attempts failed
         """
         if max_attempts is None:
             max_attempts = self._max_retry_attempts
-            
-        for attempt in range(max_attempts):
+
+        attempt = 0
+        while attempt < max_attempts:
             try:
                 self._connection_attempts += 1
-                self._LOGGER.info(f"Connection attempt {self._connection_attempts}/{max_attempts}")
-                
+                self._LOGGER.info(f"Connection attempt {self._connection_attempts}")
+
                 # Try to establish connection
                 await self._connect()
                 if self._connected:
                     self._LOGGER.info("Connection successful")
                     self._retry_delay = 1  # Reset delay on success
+                    self.update_connection_quality(True)  # Successful connection
                     return True
-                    
+
             except (ConnectionError, OSError, asyncio.TimeoutError) as err:
                 self._LOGGER.warning(f"Connection attempt {attempt + 1} failed: {err}")
-                
+                self.update_connection_quality(False)  # Failed connection
+
+                # Wait with configured delay before next attempt
                 if attempt < max_attempts - 1:  # Don't wait after last attempt
-                    wait_time = min(self._retry_delay * (2 ** attempt), self._max_retry_delay)
+                    wait_time = self._reconnection_delay
                     self._LOGGER.info(f"Waiting {wait_time} seconds before retry...")
                     await asyncio.sleep(wait_time)
-                    
+
             except Exception as err:
                 self._LOGGER.error(f"Unexpected error during connection attempt {attempt + 1}: {err}")
+                self.update_connection_quality(False)  # Failed connection
                 break  # Don't retry on unexpected errors
-                    
+
+            attempt += 1
+
         self._LOGGER.error(f"All {max_attempts} connection attempts failed")
         return False
 

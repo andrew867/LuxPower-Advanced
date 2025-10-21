@@ -353,6 +353,10 @@ async def async_setup_entry(
             "state_class": SensorStateClass.MEASUREMENT, "enabled": True
         },
 
+        # 12. Adaptive Polling Sensors
+        {"etype": "LPAP", "name": "Lux {replaceID_midfix}{hyphen} Polling Interval", "unique": "lux_polling_interval", "bank": 0, "attribute": LXPPacket.status, "device_class": SensorDeviceClass.DURATION, "unit_of_measurement": "s", "enabled": True},
+        {"etype": "LPAC", "name": "Lux {replaceID_midfix}{hyphen} Connection Quality", "unique": "lux_connection_quality", "bank": 0, "attribute": LXPPacket.status, "device_class": None, "unit_of_measurement": PERCENTAGE, "enabled": True},
+
         # 12. Test Sensor
         # {"etype": "LPTS", "name": "Lux {replaceID_midfix}{hyphen} Testing", "unique": "lux_testing", "bank": 0, "register": 5},
 
@@ -672,6 +676,10 @@ async def async_setup_entry(
             sensorEntities.append(LuxPowerBatteryStatusSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPLS":
             sensorEntities.append(LuxPowerLoadPercentageSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPAP":
+            sensorEntities.append(LuxPowerAdaptivePollingSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPAC":
+            sensorEntities.append(LuxPowerConnectionQualitySensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPTS":
             sensorEntities.append(LuxPowerTestSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
 
@@ -1732,6 +1740,73 @@ class LuxPowerLoadPercentageSensor(LuxPowerSensorEntity):
         else:
             self._attr_native_value = 0.0
             _LOGGER.warning(f"No entry found for dongle {self.dongle}")
+
+        self._attr_available = True
+        self.lastupdated_time = time.time()
+
+        # Update Home Assistant state
+        self.async_write_ha_state()
+
+
+class LuxPowerAdaptivePollingSensor(LuxPowerSensorEntity):
+    """Representation of an Adaptive Polling sensor for a LUXPower Inverter."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+
+    def push_update(self, event):
+        """Handle data updates and show current polling interval."""
+        _LOGGER.debug(f"Adaptive Polling Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+
+        # Get polling interval from client
+        client = None
+        for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+            if data.get("DONGLE") == self.dongle:
+                client = data.get("client")
+                break
+
+        if client and hasattr(client, 'get_current_polling_interval'):
+            polling_interval = client.get_current_polling_interval()
+            self._attr_native_value = polling_interval
+            _LOGGER.debug(f"Polling Interval: {polling_interval}s")
+        else:
+            self._attr_native_value = 120  # Default fallback
+            _LOGGER.warning(f"No client available for polling interval")
+
+        self._attr_available = True
+        self.lastupdated_time = time.time()
+
+        # Update Home Assistant state
+        self.async_write_ha_state()
+
+
+class LuxPowerConnectionQualitySensor(LuxPowerSensorEntity):
+    """Representation of a Connection Quality sensor for a LUXPower Inverter."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+
+    def push_update(self, event):
+        """Handle data updates and show connection quality."""
+        _LOGGER.debug(f"Connection Quality Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+
+        # Get connection quality from client
+        client = None
+        for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+            if data.get("DONGLE") == self.dongle:
+                client = data.get("client")
+                break
+
+        if client and hasattr(client, '_connection_quality'):
+            connection_quality = client._connection_quality
+            # Convert to percentage (0-100)
+            self._attr_native_value = round(connection_quality * 100, 1)
+            _LOGGER.debug(f"Connection Quality: {self._attr_native_value}%")
+        else:
+            self._attr_native_value = 100.0  # Default to good connection
+            _LOGGER.warning(f"No client available for connection quality")
 
         self._attr_available = True
         self.lastupdated_time = time.time()

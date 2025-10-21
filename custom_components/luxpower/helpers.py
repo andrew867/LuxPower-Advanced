@@ -551,7 +551,8 @@ def get_entity_device_group(entity_definition: dict, hass=None) -> str:
         "smart_load_volt_hysteresis", "peak_shaving_power", "peak_shaving_soc", "peak_shaving_volt",
         "ac_couple_start_soc", "ac_couple_end_soc", "ac_couple_start_volt", "ac_couple_end_volt",
         "max_sys_power_12k", "sys_config_12k", "power_limit", "peak_shaving_effectiveness",
-        "demand_response_capability", "load_balancing_score", "ac_charge_type", "output_priority", "work_mode", "ac_charge_mode"
+        "demand_response_capability", "load_balancing_score", "ac_charge_type", "output_priority", "work_mode", "ac_charge_mode",
+        "polling_interval", "connection_quality"
     }
     
     # Check by attribute

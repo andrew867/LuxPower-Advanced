@@ -402,6 +402,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                                         PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)
                                     )  # fmt: skip
 
+    # Configure adaptive polling and reconnection settings
+    adaptive_polling = config.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)
+    reconnection_delay = config.get(ATTR_LUX_RECONNECTION_DELAY, PLACEHOLDER_LUX_RECONNECTION_DELAY)
+    luxpower_client.set_adaptive_polling(adaptive_polling, reconnection_delay)
+
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
 
     # We used to start here:
@@ -421,6 +426,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Get configured refresh bank count
     refresh_bank_count = config.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
 
+    # Get adaptive polling and reconnection settings
+    adaptive_polling = config.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)
+    reconnection_delay = config.get(ATTR_LUX_RECONNECTION_DELAY, PLACEHOLDER_LUX_RECONNECTION_DELAY)
+
     hass_data[entry.entry_id] = {
         "DONGLE": DONGLE_SERIAL,
         "client": luxpower_client,
@@ -428,6 +437,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "rated_power": rated_power,
         "model_code": model_code,
         "refresh_bank_count": refresh_bank_count,
+        "adaptive_polling": adaptive_polling,
+        "reconnection_delay": reconnection_delay,
+        "connection_quality": 1.0,  # Start with good connection quality
+        "last_successful_poll": None,
+        "current_polling_interval": PLACEHOLDER_LUX_REFRESH_INTERVAL,
     }  # Used for avoiding duplication of config entries
     # for component in PLATFORMS:
     # hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))

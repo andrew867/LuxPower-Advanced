@@ -22,6 +22,8 @@ ATTR_LUX_REFRESH_INTERVAL = "lux_refresh_interval"
 ATTR_LUX_REFRESH_BANK_COUNT = "lux_refresh_bank_count"
 ATTR_LUX_DEVICE_GROUPING = "lux_device_grouping"
 ATTR_LUX_RATED_POWER = "lux_rated_power"
+ATTR_LUX_ADAPTIVE_POLLING = "lux_adaptive_polling"
+ATTR_LUX_RECONNECTION_DELAY = "lux_reconnection_delay"
 
 # Placeholder values
 PLACEHOLDER_LUX_HOST = ""
@@ -35,6 +37,8 @@ PLACEHOLDER_LUX_REFRESH_INTERVAL = 120
 PLACEHOLDER_LUX_REFRESH_BANK_COUNT = 6
 PLACEHOLDER_LUX_DEVICE_GROUPING = True
 PLACEHOLDER_LUX_RATED_POWER = 0  # 0 = auto-detect from model
+PLACEHOLDER_LUX_ADAPTIVE_POLLING = True
+PLACEHOLDER_LUX_RECONNECTION_DELAY = 5
 
 # Default values for service calls
 DEFAULT_CHARGE_DURATION_MINUTES = 180
@@ -103,6 +107,17 @@ def get_model_name(model_code: str) -> str:
     if not model_code or model_code not in MODEL_MAP:
         return "Unknown Inverter"
     return MODEL_MAP[model_code].get("name", "Unknown Inverter")
+
+# Adaptive polling constants
+MIN_ADAPTIVE_POLLING_INTERVAL = 60   # 60 seconds minimum
+MAX_ADAPTIVE_POLLING_INTERVAL = 300  # 5 minutes maximum
+ADAPTIVE_POLLING_BASE_INTERVAL = 120  # Base polling interval
+ADAPTIVE_POLLING_ADJUSTMENT_FACTOR = 0.1  # How much to adjust based on connection quality
+
+# Reconnection delay constants
+MIN_RECONNECTION_DELAY = 0   # 0 seconds (immediate)
+MAX_RECONNECTION_DELAY = 30  # 30 seconds maximum
+DEFAULT_RECONNECTION_DELAY = 5  # 5 seconds default
 
 EVENT_DATA_FORMAT = "{DOMAIN}_{DONGLE}_data_receive_{GROUP}_event"
 EVENT_REGISTER_FORMAT = "{DOMAIN}_{DONGLE}_register_receive_{GROUP}_event"

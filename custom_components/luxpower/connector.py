@@ -214,10 +214,10 @@ class ServiceHelper:
 
                 # Refresh registers to ensure changes are applied
                 # Get configured bank count from integration data
-                bank_count = 3  # Default fallback
+                bank_count = 6  # Default fallback
                 for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
                     if data.get("DONGLE") == dongle:
-                        bank_count = data.get("refresh_bank_count", 3)
+                        bank_count = data.get("refresh_bank_count", 6)
                         break
 
                 await self.service_refresh_data_registers(dongle=dongle, bank_count=bank_count)
@@ -280,10 +280,10 @@ class ServiceHelper:
 
             # Refresh registers to ensure changes are applied
             # Get configured bank count from integration data
-            bank_count = 3  # Default fallback
+            bank_count = 6  # Default fallback
             for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
                 if data.get("DONGLE") == dongle:
-                    bank_count = data.get("refresh_bank_count", 3)
+                    bank_count = data.get("refresh_bank_count", 6)
                     break
 
             await self.service_refresh_data_registers(dongle=dongle, bank_count=bank_count)
