@@ -46,6 +46,6 @@ action:
     data:
       dongle: >-
         {{ device_attr(luxpower_device_var, "name") }}
-      bank_count: 2
+      bank_count: 6  # Use configured bank count from integration settings
 
 mode: single

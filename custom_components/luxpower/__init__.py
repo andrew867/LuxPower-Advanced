@@ -1,9 +1,9 @@
 """
+LuxPower Home Assistant Integration.
 
-This is a docstring placeholder.
-
-This is where we will describe what this module does
-
+This module provides integration with LuxPower inverters through their Wi-Fi dongles.
+It supports multiple entity types including sensors, switches, numbers, time controls, buttons,
+and binary sensors for comprehensive inverter monitoring and control.
 """
 
 import asyncio
@@ -24,6 +24,10 @@ from .const import (
     ATTR_LUX_REFRESH_BANK_COUNT,
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_SERIAL_NUMBER,
+    DEFAULT_CHARGE_DURATION_MINUTES,
+    DEFAULT_CHARGE_SLOT,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     PLACEHOLDER_LUX_AUTO_REFRESH,
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
@@ -45,7 +49,7 @@ from .helpers import Event
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "switch", "number", "time", "button"]
+PLATFORMS = ["sensor", "switch", "number", "time", "button", "binary_sensor", "select"]
 
 SCHEME_REGISTER_BANK = vol.Schema(
     {
@@ -57,7 +61,7 @@ SCHEME_REGISTER_BANK = vol.Schema(
 SCHEME_REGISTERS_COUNT = vol.Schema(
     {
         vol.Required("dongle"): vol.Coerce(str),
-        vol.Optional("bank_count", default=2): vol.Coerce(int),
+        vol.Optional("bank_count", default=0): vol.Coerce(int),  # 0 = use configured value
     }
 )
 
@@ -107,21 +111,41 @@ SCHEME_STOP_CHARGING = vol.Schema(
     }
 )
 
+SCHEME_AFCI_ALARM_CLEAR = vol.Schema(
+    {
+        vol.Required("dongle"): vol.Coerce(str),
+    }
+)
 
-async def refreshALLPlatforms(hass: HomeAssistant, dongle):
+
+async def refreshALLPlatforms(hass: HomeAssistant, dongle: str) -> None:
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this function does
-
+    Refresh all LuxPower platform entities after a delay.
+    
+    This function waits 20 seconds then triggers a refresh of all register banks
+    and holding registers to ensure all entities have the latest data.
+    
+    Args:
+        hass: Home Assistant instance
+        dongle: Dongle serial number for the inverter
     """
-    await asyncio.sleep(20)
+    await asyncio.sleep(5)  # Reduced from 20s to 5s for faster startup
     # fmt: skip
+    # Get configured bank count from integration data
+    bank_count = 6  # Default fallback
+    for entry_id, data in hass.data.get(DOMAIN, {}).items():
+        if data.get("DONGLE") == dongle:
+            bank_count = data.get("refresh_bank_count", 6)
+            break
+
+    # Validate bank count
+    from .LXPPacket import validate_bank_count
+    bank_count = validate_bank_count(bank_count)
+
     await hass.services.async_call(
         DOMAIN,
         "luxpower_refresh_registers",
-        {"dongle": dongle, "bank_count": 3},
+        {"dongle": dongle, "bank_count": bank_count},
         blocking=True,
     )
     # fmt: skip
@@ -130,99 +154,198 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     )
 
 
-async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up the BOM component."""
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """
+    Set up the LuxPower integration.
+    
+    This function registers all the service handlers for LuxPower operations
+    including data refresh, reconnection, restart, and charging control.
+    
+    Args:
+        hass: Home Assistant instance
+        config: Integration configuration
+        
+    Returns:
+        True if setup was successful
+    """
     hass.data.setdefault(DOMAIN, {})
 
     service_helper = ServiceHelper(hass=hass)
 
-    async def handle_refresh_data_register_bank(call):
+    async def handle_refresh_data_register_bank(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        address_bank = call.data.get("address_bank")
-        _LOGGER.debug(
-            "handle_refresh_data_register_bank service: %s %s %s",
-            DOMAIN,
-            dongle,
-            address_bank,
-        )
-        await service_helper.service_refresh_data_register_bank(
-            dongle=dongle, address_bank=int(address_bank)
-        )
+        try:
+            dongle = call.data.get("dongle")
+            address_bank = call.data.get("address_bank")
+            _LOGGER.debug(
+                "handle_refresh_data_register_bank service: %s %s %s",
+                DOMAIN,
+                dongle,
+                address_bank,
+            )
+            await service_helper.service_refresh_data_register_bank(
+                dongle=dongle, address_bank=int(address_bank)
+            )
+        except Exception as err:
+            _LOGGER.error("Error refreshing register bank: %s", err)
 
-    async def handle_refresh_data_registers(call):
+    async def handle_refresh_data_registers(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        bank_count = call.data.get("bank_count")
-        if int(bank_count) == 0:
-            bank_count = 2
-        _LOGGER.debug("handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
-        await service_helper.service_refresh_data_registers(
-            dongle=dongle, bank_count=int(bank_count)
-        )
+        try:
+            dongle = call.data.get("dongle")
+            bank_count = call.data.get("bank_count")
+            if bank_count is None or int(bank_count) == 0:
+                # Use configured bank count if not provided or 0
+                for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                    if data.get("DONGLE") == dongle:
+                        bank_count = data.get("refresh_bank_count", 6)
+                        break
+                else:
+                    bank_count = 6  # Default fallback
+            _LOGGER.debug("handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
+            await service_helper.service_refresh_data_registers(
+                dongle=dongle, bank_count=int(bank_count)
+            )
+        except Exception as err:
+            _LOGGER.error("Error refreshing registers: %s", err)
 
-    async def handle_refresh_hold_registers(call):
+    async def handle_refresh_hold_registers(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_refresh_hold_registers service: %s %s", DOMAIN, dongle)
-        await service_helper.service_refresh_hold_registers(dongle=dongle)
+        try:
+            dongle = call.data.get("dongle")
+            _LOGGER.debug("handle_refresh_hold_registers service: %s %s", DOMAIN, dongle)
+            await service_helper.service_refresh_hold_registers(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error refreshing holdings: %s", err)
 
-    async def handle_reconnect(call):
+    async def handle_reconnect(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_reconnect service: %s %s", DOMAIN, dongle)
-        await service_helper.service_reconnect(dongle=dongle)
+        try:
+            dongle = call.data.get("dongle")
+            _LOGGER.debug("handle_reconnect service: %s %s", DOMAIN, dongle)
+            await service_helper.service_reconnect(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error reconnecting: %s", err)
 
-    async def handle_restart(call):
+    async def handle_restart(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_restart service: %s %s", DOMAIN, dongle)
-        await service_helper.service_restart(dongle=dongle)
+        try:
+            dongle = call.data.get("dongle")
+            _LOGGER.debug("handle_restart service: %s %s", DOMAIN, dongle)
+            await service_helper.service_restart(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error restarting: %s", err)
 
-    async def handle_reset_settings(call):
+    async def handle_reset_settings(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        _LOGGER.debug("handle_reset_settings service: %s %s", DOMAIN, dongle)
-        await service_helper.service_reset_settings(dongle=dongle)
+        try:
+            dongle = call.data.get("dongle")
 
-    async def handle_synctime(call):
+            # Check if read-only mode is enabled
+            read_only_mode = False
+            for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    read_only_mode = data.get("read_only_mode", False)
+                    break
+
+            if read_only_mode:
+                _LOGGER.error(f"Cannot reset settings - read-only mode is enabled for {dongle}")
+                return
+
+            _LOGGER.debug("handle_reset_settings service: %s %s", DOMAIN, dongle)
+            await service_helper.service_reset_settings(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error resetting settings: %s", err)
+
+    async def handle_synctime(call) -> None:
         """Handle the service call."""
-        dongle = call.data.get("dongle")
-        do_set_time = call.data.get("do_set_time", "False").lower() in (
-            "yes",
-            "true",
-            "t",
-            "1",
-        )
-        _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
-        await service_helper.service_synctime(dongle=dongle, do_set_time=do_set_time)
+        try:
+            dongle = call.data.get("dongle")
 
-    async def handle_start_charging(call):
+            # Check if read-only mode is enabled
+            read_only_mode = False
+            for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    read_only_mode = data.get("read_only_mode", False)
+                    break
+
+            if read_only_mode:
+                _LOGGER.error(f"Cannot sync time - read-only mode is enabled for {dongle}")
+                return
+
+            do_set_time = call.data.get("do_set_time", "False").lower() in (
+                "yes",
+                "true",
+                "t",
+                "1",
+            )
+            _LOGGER.debug("handle_synctime service: %s %s", DOMAIN, dongle)
+            await service_helper.service_synctime(dongle=dongle, do_set_time=do_set_time)
+        except Exception as err:
+            _LOGGER.error("Error syncing time: %s", err)
+
+    async def handle_start_charging(call) -> None:
         """Handle the start charging service call."""
-        dongle = call.data.get("dongle")
-        duration_minutes = call.data.get("duration_minutes", 180)
-        charge_slot = call.data.get("charge_slot", 1)
-        _LOGGER.debug("handle_start_charging service: %s %s duration: %s minutes slot: %s", 
-                      DOMAIN, dongle, duration_minutes, charge_slot)
-        await service_helper.service_start_charging(
-            dongle=dongle, 
-            duration_minutes=duration_minutes, 
-            charge_slot=charge_slot
-        )
-        await service_helper.service_start_charging(
-            dongle=dongle, duration_hours=duration_hours, charge_slot=charge_slot
-        )
+        try:
+            dongle = call.data.get("dongle")
 
-    async def handle_stop_charging(call):
+            # Check if read-only mode is enabled
+            read_only_mode = False
+            for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    read_only_mode = data.get("read_only_mode", False)
+                    break
+
+            if read_only_mode:
+                _LOGGER.error(f"Cannot start charging - read-only mode is enabled for {dongle}")
+                return
+
+            duration_minutes = call.data.get("duration_minutes", DEFAULT_CHARGE_DURATION_MINUTES)
+            charge_slot = call.data.get("charge_slot", DEFAULT_CHARGE_SLOT)
+            _LOGGER.debug("handle_start_charging service: %s %s duration: %s minutes slot: %s",
+                          DOMAIN, dongle, duration_minutes, charge_slot)
+            await service_helper.service_start_charging(
+                dongle=dongle,
+                duration_minutes=duration_minutes,
+                charge_slot=charge_slot
+            )
+        except Exception as err:
+            _LOGGER.error("Error starting charging: %s", err)
+
+    async def handle_stop_charging(call) -> None:
         """Handle the stop charging service call."""
-        dongle = call.data.get("dongle")
-        charge_slot = call.data.get("charge_slot", 1)
-        _LOGGER.debug(
-            "handle_stop_charging service: %s %s slot: %s", DOMAIN, dongle, charge_slot
-        )
-        await service_helper.service_stop_charging(
-            dongle=dongle, charge_slot=charge_slot
-        )
+        try:
+            dongle = call.data.get("dongle")
+            charge_slot = call.data.get("charge_slot", DEFAULT_CHARGE_SLOT)
+            _LOGGER.debug(
+                "handle_stop_charging service: %s %s slot: %s", DOMAIN, dongle, charge_slot
+            )
+            await service_helper.service_stop_charging(
+                dongle=dongle, charge_slot=charge_slot
+            )
+        except Exception as err:
+            _LOGGER.error("Error stopping charging: %s", err)
+
+    async def handle_afci_alarm_clear(call) -> None:
+        """Handle the AFCI alarm clear service call."""
+        try:
+            dongle = call.data.get("dongle")
+
+            # Check if read-only mode is enabled
+            read_only_mode = False
+            for entry_id, data in hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == dongle:
+                    read_only_mode = data.get("read_only_mode", False)
+                    break
+
+            if read_only_mode:
+                _LOGGER.error(f"Cannot clear AFCI alarm - read-only mode is enabled for {dongle}")
+                return
+
+            _LOGGER.debug("handle_afci_alarm_clear service: %s %s", DOMAIN, dongle)
+            await service_helper.service_afci_alarm_clear(dongle=dongle)
+        except Exception as err:
+            _LOGGER.error("Error clearing AFCI alarm: %s", err)
 
     hass.services.async_register(
         DOMAIN,
@@ -269,15 +392,26 @@ async def async_setup(hass: HomeAssistant, config: dict):
         DOMAIN, "luxpower_stop_charging", handle_stop_charging, schema=SCHEME_STOP_CHARGING
     )  # fmt: skip
 
+    hass.services.async_register(
+        DOMAIN, "luxpower_afci_alarm_clear", handle_afci_alarm_clear, schema=SCHEME_AFCI_ALARM_CLEAR
+    )  # fmt: skip
+
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """
-    The LUXPower integration platform load.
-
-    This is where we will describe what this function does
-
+    Set up a LuxPower config entry.
+    
+    This function initializes the LuxPower client, sets up all platform entities,
+    and configures automatic refresh if enabled.
+    
+    Args:
+        hass: Home Assistant instance
+        entry: Configuration entry for this integration
+        
+    Returns:
+        True if setup was successful
     """
     _LOGGER.info(
         f"async_setup_entry: LuxPower integration Version {VERSION} platform load"
@@ -293,8 +427,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Read the config values entered by the user
     HOST = config.get(ATTR_LUX_HOST, "127.0.0.1")
     PORT = config.get(ATTR_LUX_PORT, 8000)
-    DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE_SERIAL = config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL_NUMBER = config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     AUTO_REFRESH = config.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)
     REFRESH_INTERVAL = int(
         config.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
@@ -316,6 +450,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                                         PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)
                                     )  # fmt: skip
 
+    # Configure adaptive polling and reconnection settings
+    adaptive_polling = config.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)
+    reconnection_delay = config.get(ATTR_LUX_RECONNECTION_DELAY, PLACEHOLDER_LUX_RECONNECTION_DELAY)
+    luxpower_client.set_adaptive_polling(adaptive_polling, reconnection_delay)
+
     # _server = await hass.loop.create_connection(luxpower_client.factory, HOST, PORT)
 
     # We used to start here:
@@ -326,16 +465,52 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[events.CLIENT_DAEMON] = luxpower_client
 
     hass_data = hass.data.setdefault(DOMAIN, {})
+    # Determine rated power (use configured value or auto-detect from model)
+    rated_power = config.get(ATTR_LUX_RATED_POWER, PLACEHOLDER_LUX_RATED_POWER)
+    if rated_power == 0 and model_code:  # Auto-detect from model
+        from .const import get_model_rated_power
+        rated_power = get_model_rated_power(model_code)
+
+    # Get configured refresh bank count
+    refresh_bank_count = config.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
+
+    # Get adaptive polling and reconnection settings
+    adaptive_polling = config.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)
+    reconnection_delay = config.get(ATTR_LUX_RECONNECTION_DELAY, PLACEHOLDER_LUX_RECONNECTION_DELAY)
+
+    # Get read-only mode setting
+    read_only_mode = config.get(ATTR_LUX_READ_ONLY_MODE, PLACEHOLDER_LUX_READ_ONLY_MODE)
+
     hass_data[entry.entry_id] = {
         "DONGLE": DONGLE_SERIAL,
         "client": luxpower_client,
         "model": "LUXPower Inverter",
+        "rated_power": rated_power,
+        "model_code": model_code,
+        "refresh_bank_count": refresh_bank_count,
+        "adaptive_polling": adaptive_polling,
+        "reconnection_delay": reconnection_delay,
+        "read_only_mode": read_only_mode,
+        "connection_quality": 1.0,  # Start with good connection quality
+        "last_successful_poll": None,
+        "current_polling_interval": PLACEHOLDER_LUX_REFRESH_INTERVAL,
     }  # Used for avoiding duplication of config entries
     # for component in PLATFORMS:
     # hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
     # _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # Conditionally load platforms based on read-only mode
+    platforms_to_load = []
+    if read_only_mode:
+        # In read-only mode, only load sensor and binary_sensor platforms
+        platforms_to_load = ["sensor", "binary_sensor"]
+        _LOGGER.info("Read-only mode enabled - loading sensor and binary_sensor platforms only")
+    else:
+        # In normal mode, load all platforms
+        platforms_to_load = PLATFORMS
+        _LOGGER.info("Normal mode - loading all platforms")
+
+    await hass.config_entries.async_forward_entry_setups(entry, platforms_to_load)
     for component in PLATFORMS:
         _LOGGER.debug(f"async_setup_entry: loading: {component}")
 
@@ -358,12 +533,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass_data[entry.entry_id]["refresh_remove"] = refresh_remove
 
     # wait to make sure all entities have been initialised
-    await asyncio.sleep(20)
+    await asyncio.sleep(5)  # Reduced from 20s to 5s for faster startup
 
     # start the main Inverter Polling asycnio loop
     connect_to_inverter = hass.loop.create_task(
         luxpower_client.start_luxpower_client_daemon()
     )
+    
+    # Store task for proper cleanup
+    hass_data[entry.entry_id]["connect_task"] = connect_to_inverter
 
     # Refresh ALL Platforms By Issuing Service Call, After Suitable Delay To Give The Platforms Time To Initialise
 
@@ -403,6 +581,15 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
             luxpower_client.stop_client()
         if entry_data.get("refresh_remove"):
             entry_data.get("refresh_remove")()
+        # Cancel the connection task if it exists
+        if entry_data.get("connect_task"):
+            connect_task = entry_data.get("connect_task")
+            if not connect_task.done():
+                connect_task.cancel()
+                try:
+                    await connect_task
+                except asyncio.CancelledError:
+                    pass
         hass.data.setdefault(DOMAIN, {})
         _LOGGER.info("async_unload_entry: unloaded...")
 

@@ -1,10 +1,8 @@
 """
+LuxPower switch platform for Home Assistant.
 
-This is written by Guy Wells (C) 2025 with the help and support of contributors on the Github page.
-This code is from https://github.com/guybw/LuxPython_DEV
-
-This switch.py enables switches in Home Assistant.
-
+This module provides switch entities for controlling LuxPower inverter functions
+including charging control, grid export settings, and other operational modes.
 """
 
 import logging
@@ -13,7 +11,7 @@ from typing import Any, Dict, List, Optional
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.util import slugify
 
 from .lxp.client import LuxPowerClient
@@ -22,10 +20,14 @@ from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     VERSION,
+    MODEL_MAP,
+    is_12k_model,
 )
-from .helpers import Event
+from .helpers import Event, get_comprehensive_device_info, get_device_group_info, get_entity_device_group
 from .LXPPacket import LXPPacket, prepare_binary_value
 
 _LOGGER = logging.getLogger(__name__)
@@ -52,8 +54,8 @@ async def async_setup_entry(
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
-    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
     luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]["client"]
 
@@ -67,6 +69,29 @@ async def async_setup_entry(
     # Options For Hyphen Use Before Entity Description - Suggest No Hyphen As Of 15/02/23
     # hyphen = " -" if USE_SERIAL else "-"
     hyphen = ""
+    
+    # Retrieve cached model code
+    entry_id = config_entry.entry_id
+    model_code = None
+    
+    # Check config entry options first (persists across restarts)
+    if "model_code" in config_entry.options:
+        model_code = config_entry.options["model_code"]
+        _LOGGER.info(f"Using cached model code from config entry: {model_code}")
+    
+    # Check hass.data second (available after first register read)
+    elif entry_id in hass.data.get(DOMAIN, {}):
+        model_code = hass.data[DOMAIN][entry_id].get("model_code")
+        if model_code:
+            _LOGGER.info(f"Using cached model code from hass.data: {model_code}")
+    
+    # Log model detection status
+    if model_code:
+        is_12k = is_12k_model(model_code)
+        model_name = MODEL_MAP.get(model_code, "Unknown")
+        _LOGGER.info(f"Model detected: {model_name} ({model_code}) - {'12K' if is_12k else 'non-12K'}")
+    else:
+        _LOGGER.info("No model code available - using default entity enablement")
 
     event = Event(dongle=DONGLE)
     # luxpower_client = hass.data[event.CLIENT_DAEMON]
@@ -88,6 +113,12 @@ async def async_setup_entry(
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid On Power SS", "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Neutral Detect Enable", "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Anti Island Enable", "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "enabled": False},
+        
+        # AFCI Arc Detection Controls
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI PV Arc Enable", "register_address": 179, "bitmask": LXPPacket.AFCI_PV_ARC_ENABLE, "enabled": False},
+        
+        # Generator Control Switches
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "register_address": 77, "bitmask": LXPPacket.GENERATOR_CONNECTED, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable", "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} OVF Load Derate Enable", "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} ISO Enabled", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "enabled": False},
@@ -98,11 +129,80 @@ async def async_setup_entry(
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Take Load Together", "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Last", "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": True},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid Peak-Shaving", "register_address": 179, "bitmask": LXPPacket.ENABLE_PEAK_SHAVING, "enabled": False},
+        
+        # Additional Register 110 Control Switches (Disabled by Default)
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} EPS Mode Enable", "register_address": 110, "bitmask": LXPPacket.EPS_ENABLE, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Alt", "register_address": 110, "bitmask": LXPPacket.FORCED_DISCHG_EN_ALT, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable Alt", "register_address": 110, "bitmask": LXPPacket.DRMS_ENABLE_ALT, "enabled": False},
+        
+        # 12K-Specific Control Switches (Based on Cloud UI Analysis) - UPDATED FROM CLOUD UI
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Inverter Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Smart load control enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator quick start control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Backup Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Battery backup mode control
+
+        # Enhanced Peak Shaving Analysis Control Switches
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 1", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_00, "enabled": False},  # Peak shaving mode 1
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 2", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_01, "enabled": False},  # Peak shaving mode 2
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 3", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_02, "enabled": False},  # Peak shaving mode 3
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 4", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_03, "enabled": False},  # Peak shaving mode 4
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 5", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_04, "enabled": False},  # Peak shaving mode 5
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 6", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_05, "enabled": False},  # Peak shaving mode 6
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 7", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_06, "enabled": False},  # Peak shaving mode 7
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 8", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "enabled": False},  # Peak shaving mode 8
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 9", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "enabled": False},  # Peak shaving mode 9
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 10", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_09, "enabled": False},  # Peak shaving mode 10
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 11", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_10, "enabled": False},  # Peak shaving mode 11
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 12", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_11, "enabled": False},  # Peak shaving mode 12
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 13", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_12, "enabled": False},  # Peak shaving mode 13
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 14", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_13, "enabled": False},  # Peak shaving mode 14
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 15", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_14, "enabled": False},  # Peak shaving mode 15
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 16", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_15, "enabled": False},  # Peak shaving mode 16
+
+        # UI Enhancements Control Switches
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Auto Configuration Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Auto configuration mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Diagnostic Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Diagnostic mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Performance Monitoring", "register_address": 0, "bitmask": 0, "enabled": False},  # Performance monitoring
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Energy Dashboard Integration", "register_address": 0, "bitmask": 0, "enabled": False},  # Energy dashboard integration
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Cost Tracking", "register_address": 0, "bitmask": 0, "enabled": False},  # Cost tracking
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Environmental Impact Tracking", "register_address": 0, "bitmask": 0, "enabled": False},  # Environmental impact tracking
+
+        # Generator Integration Control Switches (Phase 3)
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator auto start enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Priority", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator charge priority
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator dry contact control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Cooldown Timer", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator cooldown timer
+        
+        # Battery Management Control Switches (Phase 6)
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Battery protection enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Equalization enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Temperature Compensation Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Temperature compensation enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Aging Compensation Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Aging compensation enable
+        
+        # Grid Management Control Switches (Phase 7)
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Zero Export Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Zero export mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Reactive power control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Voltage Support Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Voltage support mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Dynamic Export Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Dynamic export control
     ]
 
     for entity_definition in switches:
         etype = entity_definition["etype"]
         if etype == "LVSE":
+            # Apply model-based enablement logic
+            default_enabled = entity_definition.get("enabled", True)
+            
+            if model_code:
+                is_12k = is_12k_model(model_code)
+                # Check if this is a 12K-specific switch
+                if "12K" in entity_definition.get("name", ""):
+                    default_enabled = is_12k
+                    if is_12k:
+                        _LOGGER.debug(f"Enabling 12K-specific switch: {entity_definition['name']}")
+                    else:
+                        _LOGGER.debug(f"Disabling 12K-specific switch for non-12K model: {entity_definition['name']}")
+            
+            # Update entity definition with model-based enablement
+            entity_definition["enabled"] = default_enabled
             switchEntities.append(LuxPowerRegisterValueSwitchEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
 
     # fmt: on
@@ -133,6 +233,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         )
 
         # Hidden Class Extended Instance Attributes
+        self._entity_definition = entity_definition
         self._client = luxpower_client
         self._register_address = entity_definition["register_address"]
         self._register_value = None
@@ -259,28 +360,38 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
         await self.set_register_bit(False)
 
     @property
+    def entity_category(self):
+        """Return entity category."""
+        # Configuration entities for settings and controls
+        if self._register_address in [21, 22, 23, 24, 25]:  # Common config registers
+            return EntityCategory.CONFIG
+        return None
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available based on connection state."""
+        # Get the client from hass data
+        try:
+            for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    client = data.get("client")
+                    if client and hasattr(client, '_connected'):
+                        return client._connected
+            return False
+        except Exception:
+            return False
+
+    @property
     def device_info(self):
-        """Return device info."""
-        entry_id = None
-        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
-            if data.get("DONGLE") == self.dongle:
-                entry_id = e_id
-                break
-        model = (
-            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        )
-        sw_version = (
-            self.hass.data[DOMAIN]
-            .get(entry_id, {})
-            .get("lux_firmware_version", VERSION)
-        )
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.dongle)},
-            manufacturer="LuxPower",
-            model=model,
-            name=self.dongle,
-            sw_version=sw_version,
-        )
+        """Return device info for the appropriate device group."""
+        # Get the device group for this entity
+        device_group = get_entity_device_group(self._entity_definition, self.hass)
+        
+        # Return device group info if available, otherwise fall back to main device
+        if device_group:
+            return get_device_group_info(self.hass, self.dongle, device_group)
+        else:
+            return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
 
     async def set_register_bit(self, bit_polarity=False):
         self._read_value = await self._client.read(self._register_address)

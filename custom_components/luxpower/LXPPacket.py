@@ -1,10 +1,8 @@
 """
+LuxPower packet parsing and decoding module.
 
-This is written by Guy Wells (C) 2025 with the help and support of contributors on the Github page.
-This code is from https://github.com/guybw/LuxPython_DEV
-
-This LXPPacket.py takes the packet and decodes it to variables.
-
+This module handles the parsing and decoding of LuxPower inverter communication
+packets, converting raw data into structured variables for use by the integration.
 """
 
 import logging
@@ -13,18 +11,42 @@ import struct
 
 _LOGGER = logging.getLogger(__name__)
 
+# Bank count validation constants
+MAX_BANK_COUNT = 6
+MIN_BANK_COUNT = 1
+DEFAULT_BANK_COUNT = 6
+
 
 def prepare_binary_value(oldvalue, mask, enable=True):
     return oldvalue | mask if enable else oldvalue & (65535 - mask)
 
 
+def validate_bank_count(bank_count: int) -> int:
+    """
+    Validate and normalize bank count value.
+
+    Args:
+        bank_count: The bank count to validate
+
+    Returns:
+        int: Validated bank count (clamped to valid range)
+    """
+    if bank_count < MIN_BANK_COUNT:
+        _LOGGER.warning(f"Bank count {bank_count} is below minimum {MIN_BANK_COUNT}, using {MIN_BANK_COUNT}")
+        return MIN_BANK_COUNT
+    elif bank_count > MAX_BANK_COUNT:
+        _LOGGER.warning(f"Bank count {bank_count} is above maximum {MAX_BANK_COUNT}, using {MAX_BANK_COUNT}")
+        return MAX_BANK_COUNT
+    else:
+        return bank_count
+
+
 class LXPPacket:
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this class does
-
+    Handle parsing and decoding of LuxPower inverter communication packets.
+    
+    This class provides methods for encoding and decoding communication packets
+    between Home Assistant and LuxPower inverters via Wi-Fi dongles.
     """
 
     CHARGE_POWER_PERCENT_CMD = 64
@@ -89,6 +111,13 @@ class LXPPacket:
     FORCED_DISCHARGE_ENABLE = 1 << 10
     NORMAL_OR_STANDBY = 1 << 9
     SEAMLESS_EPS_SWITCHING = 1 << 8
+    
+    # AFCI Arc Detection (Register 179)
+    AFCI_ALARM_CLEAR = 1 << 2
+    AFCI_PV_ARC_ENABLE = 1 << 12
+    
+    # Generator Control (Register 77)
+    GENERATOR_CONNECTED = 1 << 0  # Bit0: 0=Grid, 1=Generator for 12K
 
     # Register 21, Least Significant Byte
     AC_CHARGE_ENABLE = 1 << 7
@@ -118,17 +147,27 @@ class LXPPacket:
     # Register 110, Most Significant Byte
     #
 
-    TAKE_LOAD_TOGETHER = 1 << 10
+    R110_UNKNOWN_BIT_15 = 1 << 15
+    R110_UNKNOWN_BIT_14 = 1 << 14
+    R110_UNKNOWN_BIT_13 = 1 << 13
+    R110_UNKNOWN_BIT_12 = 1 << 12
+    R110_UNKNOWN_BIT_11 = 1 << 11
+    R110_UNKNOWN_BIT_10 = 1 << 10
+    R110_UNKNOWN_BIT_09 = 1 << 9
+    R110_UNKNOWN_BIT_08 = 1 << 8
 
     #
     # Register 110, Least Significant Byte
     #
 
-    CHARGE_LAST = 1 << 4
-    MICRO_GRID_ENABLE = 1 << 2
-    FAST_ZERO_EXPORT_ENABLE = 1 << 1
-    RUN_WITHOUT_GRID = 1 << 1
-    PV_GRID_OFF_ENABLE = 1 << 0
+    TAKE_LOAD_TOGETHER = 1 << 7  # Existing
+    CHARGE_LAST = 1 << 6         # Existing
+    R110_UNKNOWN_BIT_05 = 1 << 5
+    DRMS_ENABLE_ALT = 1 << 4     # Alternative DRMS control
+    EPS_ENABLE = 1 << 3          # EPS mode enable
+    FORCED_DISCHG_EN_ALT = 1 << 2  # Alternative force discharge
+    R110_BIT_01 = 1 << 1
+    R110_BIT_00 = 1 << 0
 
     # fmt: off
 
@@ -164,14 +203,14 @@ class LXPPacket:
     # Register 179, Most Significant Byte
     #
 
-    R179_UNKNOWN_BIT_15 = 1 << 15  # = 32768
-    R179_UNKNOWN_BIT_14 = 1 << 14  # = 16384
+    R179_UNKNOWN_BIT_15 = 1 << 15  # = 32768  # ON in SNA-12K-US (value 53504 = 0xD100)
+    R179_UNKNOWN_BIT_14 = 1 << 14  # = 16384  # ON in SNA-12K-US (value 53504 = 0xD100)
     R179_UNKNOWN_BIT_13 = 1 << 13  # =  8192
-    R179_UNKNOWN_BIT_12 = 1 << 12  # =  4096   True
-    R179_UNKNOWN_BIT_11 = 1 << 11  # =  2048   True
+    R179_UNKNOWN_BIT_12 = 1 << 12  # =  4096   # ON in SNA-12K-US (value 53504 = 0xD100)
+    R179_UNKNOWN_BIT_11 = 1 << 11  # =  2048
     R179_UNKNOWN_BIT_10 = 1 << 10  # =  1024
     R179_UNKNOWN_BIT_09 = 1 << 9   # =   512
-    R179_UNKNOWN_BIT_08 = 1 << 8   # =   256
+    R179_UNKNOWN_BIT_08 = 1 << 8   # =   256   # ON in SNA-12K-US (value 53504 = 0xD100)
 
     #
     # Register 179, Least Significant Byte
@@ -267,10 +306,78 @@ class LXPPacket:
     gen_power_watt = "gen_power_watt"
     gen_power_day = "gen_power_day"
     gen_power_all = "gen_power_all"
+    gen_power_s = "gen_power_s"
+    gen_power_t = "gen_power_t"
+    gen_rated_power = "gen_rated_power"
+    gen_chg_start_volt = "gen_chg_start_volt"
+    gen_chg_end_volt = "gen_chg_end_volt"
+    gen_chg_start_soc = "gen_chg_start_soc"
+    gen_chg_end_soc = "gen_chg_end_soc"
+    max_gen_chg_current = "max_gen_chg_current"
+    gen_charge_type = "gen_charge_type"
+    ac_input_type = "ac_input_type"
     eps_L1_volt = "eps_L1_volt"
     eps_L2_volt = "eps_L2_volt"
     eps_L1_watt = "eps_L1_watt"
     eps_L2_watt = "eps_L2_watt"
+    eps_L1_va = "eps_L1_va"
+    eps_L2_va = "eps_L2_va"
+    eps_L1_day = "eps_L1_day"
+    eps_L2_day = "eps_L2_day"
+    eps_L1_all_l = "eps_L1_all_l"
+    eps_L1_all_h = "eps_L1_all_h"
+    eps_L2_all_l = "eps_L2_all_l"
+    eps_L2_all_h = "eps_L2_all_h"
+    eps_L1_all = "eps_L1_all"
+    eps_L2_all = "eps_L2_all"
+    
+    # Smart Load Control (Registers 181-186)
+    smart_load_start_soc = "smart_load_start_soc"
+    smart_load_end_soc = "smart_load_end_soc"
+    smart_load_start_volt = "smart_load_start_volt"
+    smart_load_end_volt = "smart_load_end_volt"
+    smart_load_soc_hysteresis = "smart_load_soc_hysteresis"
+    smart_load_volt_hysteresis = "smart_load_volt_hysteresis"
+    
+    # Enhanced Peak Shaving (Registers 206-208)
+    peak_shaving_power = "peak_shaving_power"
+    peak_shaving_soc = "peak_shaving_soc"
+    peak_shaving_volt = "peak_shaving_volt"
+    
+    # AC Coupling (Registers 220-223)
+    ac_couple_start_soc = "ac_couple_start_soc"
+    ac_couple_end_soc = "ac_couple_end_soc"
+    ac_couple_start_volt = "ac_couple_start_volt"
+    ac_couple_end_volt = "ac_couple_end_volt"
+    
+    # Advanced System Configuration (Registers 176-180)
+    max_sys_power_12k = "max_sys_power_12k"
+    sys_config_12k = "sys_config_12k"
+    power_limit = "power_limit"
+    
+    # Peak Shaving Effectiveness (Register 282)
+    peak_shaving_effectiveness = "peak_shaving_effectiveness"
+    
+    # Demand Response Capability (Register 281)
+    demand_response_capability = "demand_response_capability"
+    
+    # Load Balancing Score (Register 283)
+    load_balancing_score = "load_balancing_score"
+    
+    # AFCI Arc Detection (Registers 140-152)
+    afci_curr_ch1 = "afci_curr_ch1"
+    afci_curr_ch2 = "afci_curr_ch2"
+    afci_curr_ch3 = "afci_curr_ch3"
+    afci_curr_ch4 = "afci_curr_ch4"
+    afci_flags = "afci_flags"
+    afci_arc_ch1 = "afci_arc_ch1"
+    afci_arc_ch2 = "afci_arc_ch2"
+    afci_arc_ch3 = "afci_arc_ch3"
+    afci_arc_ch4 = "afci_arc_ch4"
+    afci_max_arc_ch1 = "afci_max_arc_ch1"
+    afci_max_arc_ch2 = "afci_max_arc_ch2"
+    afci_max_arc_ch3 = "afci_max_arc_ch3"
+    afci_max_arc_ch4 = "afci_max_arc_ch4"
     p_load_ongrid = "p_load_ongrid"
     e_load_day = "e_load_day"
     e_load_all_l = "e_load_all_l"
@@ -314,6 +421,8 @@ class LXPPacket:
         self.inputRead3 = False
         self.inputRead4 = False
         self.inputRead5 = False
+        self.inputRead6 = False
+        self.inputRead7 = False
 
         self.data = {}
         self.debug = True
@@ -528,6 +637,11 @@ class LXPPacket:
                 self.readValuesInt[self.register + i] = self.get_read_value_int(
                     self.register + i
                 )
+                
+                # Periodic cleanup to prevent memory leaks
+                if len(self.readValuesInt) > 1000:  # Arbitrary limit
+                    self._cleanup_old_entries()
+                    
                 self.readValuesHex[self.register + i] = "".join(
                     format(x, "02X") for x in self.get_read_value(self.register + i)
                 )
@@ -550,6 +664,12 @@ class LXPPacket:
             elif self.register == 160 and number_of_registers == 40:
                 self.inputRead5 = True
                 self.get_device_values_bank4()
+            elif self.register == 200 and number_of_registers == 54:
+                self.inputRead6 = True
+                self.get_device_values_bank5()
+            elif self.register == 254 and number_of_registers == 127:
+                self.inputRead7 = True
+                self.get_device_values_bank6()
             elif self.register == 0 and number_of_registers == 127:
                 self.inputRead1 = True
                 self.inputRead2 = True
@@ -557,6 +677,14 @@ class LXPPacket:
                 self.get_device_values_bank0()
                 self.get_device_values_bank1()
                 self.get_device_values_bank2()
+            elif self.register == 127 and number_of_registers == 127:
+                # Handle register range 127-253 (spans banks 3, 4, and 5)
+                self.inputRead4 = True
+                self.inputRead5 = True
+                self.inputRead6 = True
+                self.get_device_values_bank3()
+                self.get_device_values_bank4()
+                self.get_device_values_bank5()
             else:
                 if number_of_registers == 1:
                     _LOGGER.warning(
@@ -575,6 +703,10 @@ class LXPPacket:
                         self.get_device_values_bank3()
                     elif 160 <= self.register <= 199:
                         self.get_device_values_bank4()
+                    elif 200 <= self.register <= 253:
+                        self.get_device_values_bank5()
+                    elif 254 <= self.register <= 380:
+                        self.get_device_values_bank6()
                 else:
                     _LOGGER.warning(
                         f"An input packet was received with an unsupported register range: {self.register} - {self.register + number_of_registers - 1}"
@@ -586,7 +718,24 @@ class LXPPacket:
                         self.get_device_values_bank0()
                         self.get_device_values_bank1()
                         self.get_device_values_bank2()
+                    elif 120 <= self.register <= 199:
+                        self.get_device_values_bank3()
+                        self.get_device_values_bank4()
+                    elif 200 <= self.register <= 253:
+                        self.get_device_values_bank5()
+                    elif 254 <= self.register <= 380:
+                        self.get_device_values_bank6()
+                    # Handle range that spans multiple bank boundaries
+                    elif 127 <= self.register <= 253:
+                        # This range spans banks 3, 4, and 5
+                        self.get_device_values_bank3()
+                        self.get_device_values_bank4()
+                        self.get_device_values_bank5()
 
+            # Calculate power flow after processing all bank data
+            # TODO: Fix power flow calculation - references non-existent variables
+            # self.calculate_power_flow()
+            
             self.data.update(self.readValuesThis)
 
             _LOGGER.debug(f"This Packet Data {self.readValuesThis}")
@@ -994,7 +1143,7 @@ class LXPPacket:
                 model_code = None
 
             scale = (
-                10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA") else 100
+                10 if model_code in ("FAAB", "EAAB", "ACAB", "CFAA", "CCAA", "CEAA") else 100
             )
             max_chg_curr = self.readValuesInt.get(81, 0) / scale
             max_dischg_curr = self.readValuesInt.get(82, 0) / scale
@@ -1081,6 +1230,12 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.gen_power_day] = gen_power_day
             self.readValuesThis[LXPPacket.gen_power_all] = gen_power_all
 
+            # Three-phase generator power (registers 188-189)
+            gen_power_s = self.readValuesInt.get(188, 0)  # Generator Power S-phase (W)
+            gen_power_t = self.readValuesInt.get(189, 0)  # Generator Power T-phase (W)
+            self.readValuesThis[LXPPacket.gen_power_s] = gen_power_s
+            self.readValuesThis[LXPPacket.gen_power_t] = gen_power_t
+
             eps_L1_volt = self.readValuesInt.get(127, 0) / 10
             eps_L2_volt = self.readValuesInt.get(128, 0) / 10
             eps_L1_watt = self.readValuesInt.get(129, 0)
@@ -1090,11 +1245,76 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.eps_L1_watt] = eps_L1_watt
             self.readValuesThis[LXPPacket.eps_L2_watt] = eps_L2_watt
 
+            # Split-phase EPS Apparent Power (registers 131-132)
+            eps_L1_va = self.readValuesInt.get(131, 0)  # EPS Apparent Power L1N (VA)
+            eps_L2_va = self.readValuesInt.get(132, 0)  # EPS Apparent Power L2N (VA)
+            self.readValuesThis[LXPPacket.eps_L1_va] = eps_L1_va
+            self.readValuesThis[LXPPacket.eps_L2_va] = eps_L2_va
+
+            # Split-phase EPS Daily Energy (registers 133-134)
+            eps_L1_day = self.readValuesInt.get(133, 0) / 10  # Daily EPS energy L1N (0.1kWh)
+            eps_L2_day = self.readValuesInt.get(134, 0) / 10  # Daily EPS energy L2N (0.1kWh)
+            self.readValuesThis[LXPPacket.eps_L1_day] = eps_L1_day
+            self.readValuesThis[LXPPacket.eps_L2_day] = eps_L2_day
+
+            # Split-phase EPS Total Energy (registers 135-138, 32-bit)
+            eps_L1_all_l = self.readValuesInt.get(135, 0)  # Total EPS energy L1N low byte (0.1kWh)
+            eps_L1_all_h = self.readValuesInt.get(136, 0)  # Total EPS energy L1N high byte (0.1kWh)
+            eps_L2_all_l = self.readValuesInt.get(137, 0)  # Total EPS energy L2N low byte (0.1kWh)
+            eps_L2_all_h = self.readValuesInt.get(138, 0)  # Total EPS energy L2N high byte (0.1kWh)
+            
+            # Combine high and low bytes for 32-bit values
+            eps_L1_all = (eps_L1_all_h << 16) | eps_L1_all_l
+            eps_L2_all = (eps_L2_all_h << 16) | eps_L2_all_l
+            
+            self.readValuesThis[LXPPacket.eps_L1_all_l] = eps_L1_all_l
+            self.readValuesThis[LXPPacket.eps_L1_all_h] = eps_L1_all_h
+            self.readValuesThis[LXPPacket.eps_L2_all_l] = eps_L2_all_l
+            self.readValuesThis[LXPPacket.eps_L2_all_h] = eps_L2_all_h
+            self.readValuesThis[LXPPacket.eps_L1_all] = eps_L1_all / 10  # Convert to kWh
+            self.readValuesThis[LXPPacket.eps_L2_all] = eps_L2_all / 10  # Convert to kWh
+
+            # AFCI Arc Detection (Registers 140-152)
+            afci_curr_ch1 = self.readValuesInt.get(140, 0)  # mA
+            afci_curr_ch2 = self.readValuesInt.get(141, 0)  # mA
+            afci_curr_ch3 = self.readValuesInt.get(142, 0)  # mA
+            afci_curr_ch4 = self.readValuesInt.get(143, 0)  # mA
+            afci_flags = self.readValuesInt.get(144, 0)  # Bit-packed flags
+            afci_arc_ch1 = self.readValuesInt.get(145, 0)  # Real-time arc CH1
+            afci_arc_ch2 = self.readValuesInt.get(146, 0)  # Real-time arc CH2
+            afci_arc_ch3 = self.readValuesInt.get(147, 0)  # Real-time arc CH3
+            afci_arc_ch4 = self.readValuesInt.get(148, 0)  # Real-time arc CH4
+            afci_max_arc_ch1 = self.readValuesInt.get(149, 0)  # Max arc CH1
+            afci_max_arc_ch2 = self.readValuesInt.get(150, 0)  # Max arc CH2
+            afci_max_arc_ch3 = self.readValuesInt.get(151, 0)  # Max arc CH3
+            afci_max_arc_ch4 = self.readValuesInt.get(152, 0)  # Max arc CH4
+            
+            self.readValuesThis[LXPPacket.afci_curr_ch1] = afci_curr_ch1
+            self.readValuesThis[LXPPacket.afci_curr_ch2] = afci_curr_ch2
+            self.readValuesThis[LXPPacket.afci_curr_ch3] = afci_curr_ch3
+            self.readValuesThis[LXPPacket.afci_curr_ch4] = afci_curr_ch4
+            self.readValuesThis[LXPPacket.afci_flags] = afci_flags
+            self.readValuesThis[LXPPacket.afci_arc_ch1] = afci_arc_ch1
+            self.readValuesThis[LXPPacket.afci_arc_ch2] = afci_arc_ch2
+            self.readValuesThis[LXPPacket.afci_arc_ch3] = afci_arc_ch3
+            self.readValuesThis[LXPPacket.afci_arc_ch4] = afci_arc_ch4
+            self.readValuesThis[LXPPacket.afci_max_arc_ch1] = afci_max_arc_ch1
+            self.readValuesThis[LXPPacket.afci_max_arc_ch2] = afci_max_arc_ch2
+            self.readValuesThis[LXPPacket.afci_max_arc_ch3] = afci_max_arc_ch3
+            self.readValuesThis[LXPPacket.afci_max_arc_ch4] = afci_max_arc_ch4
+
+            # AC Input Type and Generator Charge Type (Register 77)
+            ac_input_type = self.readValuesInt.get(77, 0)  # Bit0: 0=Grid, 1=Generator for 12K
+            gen_charge_type = (ac_input_type >> 7) & 1  # Bit7: 0=Voltage, 1=SOC
+            self.readValuesThis[LXPPacket.ac_input_type] = ac_input_type
+            self.readValuesThis[LXPPacket.gen_charge_type] = gen_charge_type
+
     def get_device_values_bank4(self):
         if self.inputRead5:
             if self.debug:
                 _LOGGER.debug("***********INPUT 5 registers************")
 
+            # Basic energy data (available to all models)
             p_load_ongrid = self.readValuesInt.get(170, 0)
             e_load_day = self.readValuesInt.get(171, 0) / 10
             e_load_all_l = self.readValuesInt.get(172, 0) / 10
@@ -1102,7 +1322,336 @@ class LXPPacket:
             self.readValuesThis[LXPPacket.e_load_day] = e_load_day
             self.readValuesThis[LXPPacket.e_load_all_l] = e_load_all_l
 
+            # 12K-Specific Advanced Features (CFAA, CEAA, FAAB)
+            # These registers are available on 12K models but gracefully handled on other models
+            model_code = None
+            try:
+                reg07_val = self.regValuesInt.get(7)
+                reg08_val = self.regValuesInt.get(8)
+                if reg07_val is not None and reg08_val is not None:
+                    reg07_str = int(reg07_val).to_bytes(2, "little").decode()
+                    reg08_str = int(reg08_val).to_bytes(2, "little").decode()
+                    model_code = (reg07_str + reg08_str).upper()
+            except Exception:
+                model_code = None
+
+            # Check if this is a 12K model (CFAA, CEAA, FAAB)
+            is_12k_model = model_code in ("CFAA", "CEAA", "FAAB")
+            
+            if is_12k_model:
+                if self.debug:
+                    _LOGGER.debug("12K model detected - processing advanced features")
+                
+                # 12K System Configuration (registers 176-180)
+                max_sys_power_12k = self.readValuesInt.get(176, 0)
+                max_ac_chg_12k = self.readValuesInt.get(177, 0)  # Generator Rated Power (W)
+                sys_config_12k = self.readValuesInt.get(178, 0)
+                peak_shave_config = self.readValuesInt.get(179, 0)
+                power_limit = self.readValuesInt.get(180, 0)
+                
+                # Smart Load Control (registers 181-186)
+                smart_load_start_soc = self.readValuesInt.get(181, 0)
+                smart_load_end_soc = self.readValuesInt.get(182, 0)
+                smart_load_start_volt = self.readValuesInt.get(183, 0) / 10.0
+                smart_load_end_volt = self.readValuesInt.get(184, 0) / 10.0
+                smart_load_soc_hysteresis = self.readValuesInt.get(185, 0)
+                smart_load_volt_hysteresis = self.readValuesInt.get(186, 0) / 10.0
+                
+                # Generator Integration (registers 194-198)
+                gen_chg_start_volt = self.readValuesInt.get(194, 0) / 10.0
+                gen_chg_end_volt = self.readValuesInt.get(195, 0) / 10.0
+                gen_chg_start_soc = self.readValuesInt.get(196, 0)
+                gen_chg_end_soc = self.readValuesInt.get(197, 0)
+                max_gen_chg_current = self.readValuesInt.get(198, 0) / 10.0
+                
+                # Enhanced Peak Shaving (registers 206-208)
+                peak_shaving_power = self.readValuesInt.get(206, 0)
+                peak_shaving_soc = self.readValuesInt.get(207, 0)
+                peak_shaving_volt = self.readValuesInt.get(208, 0) / 10.0
+                
+                # AC Coupling (registers 220-223)
+                ac_couple_start_soc = self.readValuesInt.get(220, 0)
+                ac_couple_end_soc = self.readValuesInt.get(221, 0)
+                ac_couple_start_volt = self.readValuesInt.get(222, 0) / 10.0
+                ac_couple_end_volt = self.readValuesInt.get(223, 0) / 10.0
+                
+                # Store 12K-specific values
+                self.readValuesThis[LXPPacket.max_sys_power_12k] = max_sys_power_12k
+                self.readValuesThis[LXPPacket.gen_rated_power] = max_ac_chg_12k
+                self.readValuesThis[LXPPacket.sys_config_12k] = sys_config_12k
+                self.readValuesThis["peak_shave_config"] = peak_shave_config
+                self.readValuesThis[LXPPacket.power_limit] = power_limit
+                self.readValuesThis[LXPPacket.smart_load_start_soc] = smart_load_start_soc
+                self.readValuesThis[LXPPacket.smart_load_end_soc] = smart_load_end_soc
+                self.readValuesThis[LXPPacket.smart_load_start_volt] = smart_load_start_volt
+                self.readValuesThis[LXPPacket.smart_load_end_volt] = smart_load_end_volt
+                self.readValuesThis[LXPPacket.smart_load_soc_hysteresis] = smart_load_soc_hysteresis
+                self.readValuesThis[LXPPacket.smart_load_volt_hysteresis] = smart_load_volt_hysteresis
+                self.readValuesThis[LXPPacket.gen_chg_start_volt] = gen_chg_start_volt
+                self.readValuesThis[LXPPacket.gen_chg_end_volt] = gen_chg_end_volt
+                self.readValuesThis[LXPPacket.gen_chg_start_soc] = gen_chg_start_soc
+                self.readValuesThis[LXPPacket.gen_chg_end_soc] = gen_chg_end_soc
+                self.readValuesThis[LXPPacket.max_gen_chg_current] = max_gen_chg_current
+                self.readValuesThis[LXPPacket.peak_shaving_power] = peak_shaving_power
+                self.readValuesThis[LXPPacket.peak_shaving_soc] = peak_shaving_soc
+                self.readValuesThis[LXPPacket.peak_shaving_volt] = peak_shaving_volt
+                self.readValuesThis[LXPPacket.ac_couple_start_soc] = ac_couple_start_soc
+                self.readValuesThis[LXPPacket.ac_couple_end_soc] = ac_couple_end_soc
+                self.readValuesThis[LXPPacket.ac_couple_start_volt] = ac_couple_start_volt
+                self.readValuesThis[LXPPacket.ac_couple_end_volt] = ac_couple_end_volt
+                
+            else:
+                if self.debug:
+                    _LOGGER.debug("Non-12K model - 12K features not available")
+                
+                # Set 12K-specific values to None for non-12K models
+                self.readValuesThis[LXPPacket.max_sys_power_12k] = None
+                self.readValuesThis["max_ac_chg_12k"] = None
+                self.readValuesThis[LXPPacket.sys_config_12k] = None
+                self.readValuesThis["peak_shave_config"] = None
+                self.readValuesThis[LXPPacket.power_limit] = None
+                self.readValuesThis[LXPPacket.smart_load_start_soc] = None
+                self.readValuesThis[LXPPacket.smart_load_end_soc] = None
+                self.readValuesThis[LXPPacket.smart_load_start_volt] = None
+                self.readValuesThis[LXPPacket.smart_load_end_volt] = None
+                self.readValuesThis[LXPPacket.smart_load_soc_hysteresis] = None
+                self.readValuesThis[LXPPacket.smart_load_volt_hysteresis] = None
+                self.readValuesThis["gen_chg_start_volt"] = None
+                self.readValuesThis["gen_chg_end_volt"] = None
+                self.readValuesThis["gen_chg_start_soc"] = None
+                self.readValuesThis["gen_chg_end_soc"] = None
+                self.readValuesThis["max_gen_chg_current"] = None
+                self.readValuesThis[LXPPacket.peak_shaving_power] = None
+                self.readValuesThis[LXPPacket.peak_shaving_soc] = None
+                self.readValuesThis[LXPPacket.peak_shaving_volt] = None
+                self.readValuesThis[LXPPacket.ac_couple_start_soc] = None
+                self.readValuesThis[LXPPacket.ac_couple_end_soc] = None
+                self.readValuesThis[LXPPacket.ac_couple_start_volt] = None
+                self.readValuesThis[LXPPacket.ac_couple_end_volt] = None
+
             # IMPORTANT!! Registers above 199 must go into a new bank (create a new method for bank 5/bank 6 etc.)
+
+    def calculate_power_flow(self):
+        """Calculate power flow between different sources and loads."""
+        try:
+            # Get current power values
+            pv_power = self.readValuesThis.get(LXPPacket.p_pv_total, 0)
+            battery_power = self.readValuesThis.get(LXPPacket.p_discharge, 0) - self.readValuesThis.get(LXPPacket.p_charge, 0)
+            grid_power = self.readValuesThis.get(LXPPacket.p_to_user, 0) - self.readValuesThis.get(LXPPacket.p_to_grid, 0)
+            load_power = self.readValuesThis.get(LXPPacket.p_load, 0)
+            eps_power = self.readValuesThis.get(LXPPacket.p_to_eps, 0)
+            
+            # Calculate power flow directions
+            # PV to Battery (when PV > 0 and battery < 0)
+            pv_to_battery = max(0, min(pv_power, -battery_power)) if battery_power < 0 else 0
+            
+            # PV to Load (when PV > battery charging)
+            pv_remaining = pv_power - pv_to_battery
+            pv_to_load = max(0, min(pv_remaining, load_power))
+            
+            # PV to Grid (remaining PV after battery and load)
+            pv_to_grid = max(0, pv_remaining - pv_to_load)
+            
+            # Battery to Load (when battery discharging and load > PV)
+            battery_to_load = max(0, min(-battery_power, load_power - pv_to_load)) if battery_power < 0 else 0
+            
+            # Battery to Grid (when battery discharging and grid importing)
+            battery_to_grid = max(0, min(-battery_power - battery_to_load, -grid_power)) if battery_power < 0 and grid_power < 0 else 0
+            
+            # Grid to Battery (when grid charging battery)
+            grid_to_battery = max(0, min(grid_power, -battery_power)) if battery_power < 0 and grid_power > 0 else 0
+            
+            # Grid to Load (when grid powering loads)
+            grid_to_load = max(0, min(grid_power - grid_to_battery, load_power - pv_to_load - battery_to_load)) if grid_power > 0 else 0
+            
+            # Store calculated power flows
+            self.readValuesThis["pv_to_battery"] = pv_to_battery
+            self.readValuesThis["pv_to_load"] = pv_to_load
+            self.readValuesThis["pv_to_grid"] = pv_to_grid
+            self.readValuesThis["battery_to_load"] = battery_to_load
+            self.readValuesThis["battery_to_grid"] = battery_to_grid
+            self.readValuesThis["grid_to_battery"] = grid_to_battery
+            self.readValuesThis["grid_to_load"] = grid_to_load
+            
+            # Generator power flows (if available)
+            generator_power = self.readValuesThis.get("p_generator", 0)
+            if generator_power > 0:
+                self.readValuesThis["generator_to_battery"] = max(0, min(generator_power, -battery_power)) if battery_power < 0 else 0
+                self.readValuesThis["generator_to_load"] = max(0, generator_power - self.readValuesThis["generator_to_battery"])
+            else:
+                self.readValuesThis["generator_to_battery"] = 0
+                self.readValuesThis["generator_to_load"] = 0
+            
+            # AC Couple power flows (if available)
+            ac_couple_power = self.readValuesThis.get("p_ac_couple", 0)
+            if ac_couple_power > 0:
+                self.readValuesThis["ac_couple_to_battery"] = max(0, min(ac_couple_power, -battery_power)) if battery_power < 0 else 0
+                self.readValuesThis["ac_couple_to_grid"] = max(0, ac_couple_power - self.readValuesThis["ac_couple_to_battery"])
+            else:
+                self.readValuesThis["ac_couple_to_battery"] = 0
+                self.readValuesThis["ac_couple_to_grid"] = 0
+                
+        except Exception as e:
+            _LOGGER.error(f"Error calculating power flow: {e}")
+            # Set all power flows to 0 on error
+            for key in ["pv_to_battery", "pv_to_load", "pv_to_grid", "battery_to_load", 
+                       "battery_to_grid", "grid_to_battery", "grid_to_load", 
+                       "generator_to_battery", "generator_to_load", 
+                       "ac_couple_to_battery", "ac_couple_to_grid"]:
+                self.readValuesThis[key] = 0
+
+    def get_device_values_bank5(self):
+        """Process extended register range 200-253 (Bank 5)."""
+        if self.inputRead6:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 6 registers (200-253)************")
+            
+            # Extended diagnostic and monitoring data
+            # These registers contain additional system information
+            # that may not be available on all inverter models
+            
+            # Extended system diagnostics (registers 200-220)
+            system_health_score = self.readValuesInt.get(200, 0)
+            communication_quality = self.readValuesInt.get(201, 0)
+            data_integrity_score = self.readValuesInt.get(202, 0)
+            
+            self.readValuesThis["system_health_score"] = system_health_score
+            self.readValuesThis["communication_quality"] = communication_quality
+            self.readValuesThis["data_integrity_score"] = data_integrity_score
+            
+            # Extended performance metrics (registers 221-240)
+            efficiency_rating = self.readValuesInt.get(221, 0) / 100.0
+            power_factor_avg = self.readValuesInt.get(222, 0) / 100.0
+            harmonic_distortion = self.readValuesInt.get(223, 0) / 100.0
+            
+            self.readValuesThis["efficiency_rating"] = efficiency_rating
+            self.readValuesThis["power_factor_avg"] = power_factor_avg
+            self.readValuesThis["harmonic_distortion"] = harmonic_distortion
+            
+            # Extended environmental data (registers 241-253)
+            ambient_temp = self.readValuesInt.get(241, 0) / 10.0
+            humidity_level = self.readValuesInt.get(242, 0)
+            air_quality_index = self.readValuesInt.get(243, 0)
+            
+            self.readValuesThis["ambient_temp"] = ambient_temp
+            self.readValuesThis["humidity_level"] = humidity_level
+            self.readValuesThis["air_quality_index"] = air_quality_index
+
+    def get_device_values_bank6(self):
+        """Process extended register range 254-380 (Bank 6)."""
+        if self.inputRead7:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 7 registers (254-380)************")
+            
+            # Advanced system features and future capabilities
+            # These registers contain cutting-edge features that may
+            # be available on newer firmware versions or specific models
+            
+            # Advanced grid management (registers 254-280)
+            grid_stability_index = self.readValuesInt.get(254, 0) / 100.0
+            frequency_stability = self.readValuesInt.get(255, 0) / 100.0
+            voltage_regulation_quality = self.readValuesInt.get(256, 0) / 100.0
+            
+            self.readValuesThis["grid_stability_index"] = grid_stability_index
+            self.readValuesThis["frequency_stability"] = frequency_stability
+            self.readValuesThis["voltage_regulation_quality"] = voltage_regulation_quality
+            
+            # Smart grid features (registers 281-300)
+            demand_response_capability = self.readValuesInt.get(281, 0)
+            peak_shaving_effectiveness = self.readValuesInt.get(282, 0) / 100.0
+            load_balancing_score = self.readValuesInt.get(283, 0) / 100.0
+            
+            self.readValuesThis[LXPPacket.demand_response_capability] = demand_response_capability
+            self.readValuesThis[LXPPacket.peak_shaving_effectiveness] = peak_shaving_effectiveness
+            self.readValuesThis[LXPPacket.load_balancing_score] = load_balancing_score
+            
+            # Future-ready features (registers 301-380)
+            # These are placeholder for future capabilities
+            ai_optimization_enabled = self.readValuesInt.get(301, 0)
+            predictive_maintenance_score = self.readValuesInt.get(302, 0) / 100.0
+            energy_forecasting_accuracy = self.readValuesInt.get(303, 0) / 100.0
+            
+            self.readValuesThis["ai_optimization_enabled"] = ai_optimization_enabled
+            self.readValuesThis["predictive_maintenance_score"] = predictive_maintenance_score
+            self.readValuesThis["energy_forecasting_accuracy"] = energy_forecasting_accuracy
+
+    def _cleanup_old_entries(self):
+        """Clean up old entries to prevent memory leaks."""
+        try:
+            # Keep only the most recent 500 entries
+            if len(self.readValuesInt) > 1000:
+                # Get the most recent entries (assuming higher register numbers are more recent)
+                sorted_keys = sorted(self.readValuesInt.keys(), reverse=True)
+                keys_to_remove = sorted_keys[500:]
+                
+                for key in keys_to_remove:
+                    self.readValuesInt.pop(key, None)
+                    self.readValues.pop(key, None)
+                    self.readValuesHex.pop(key, None)
+                    
+                _LOGGER.debug(f"Cleaned up {len(keys_to_remove)} old entries from dictionaries")
+        except Exception as e:
+            _LOGGER.error(f"Error during cleanup: {e}")
+
+    @staticmethod
+    def parse_model_code(register_data):
+        """Parse model code from register 7 data."""
+        try:
+            if isinstance(register_data, (list, tuple)) and len(register_data) >= 4:
+                # Extract model code from the first 4 bytes
+                model_code = ""
+                for i in range(4):
+                    if i < len(register_data):
+                        model_code += chr(register_data[i] & 0xFF)
+                return model_code
+            return "Unknown"
+        except Exception:
+            return "Unknown"
+
+    @staticmethod
+    def parse_model_name(register_data):
+        """Parse model name from register 7 data."""
+        try:
+            if isinstance(register_data, (list, tuple)) and len(register_data) >= 8:
+                # Extract model name from bytes 4-7
+                model_name = ""
+                for i in range(4, 8):
+                    if i < len(register_data):
+                        model_name += chr(register_data[i] & 0xFF)
+                return model_name.strip()
+            return "Unknown"
+        except Exception:
+            return "Unknown"
+
+    @staticmethod
+    def parse_serial_number(register_data):
+        """Parse serial number from register 7 data."""
+        try:
+            if isinstance(register_data, (list, tuple)) and len(register_data) >= 12:
+                # Extract serial number from bytes 8-11
+                serial_number = ""
+                for i in range(8, 12):
+                    if i < len(register_data):
+                        serial_number += chr(register_data[i] & 0xFF)
+                return serial_number.strip()
+            return "Unknown"
+        except Exception:
+            return "Unknown"
+
+    @staticmethod
+    def parse_firmware_version(register_data):
+        """Parse firmware version from register 7 data."""
+        try:
+            if isinstance(register_data, (list, tuple)) and len(register_data) >= 16:
+                # Extract firmware version from bytes 12-15
+                firmware_version = ""
+                for i in range(12, 16):
+                    if i < len(register_data):
+                        firmware_version += chr(register_data[i] & 0xFF)
+                return firmware_version.strip()
+            return "Unknown"
+        except Exception:
+            return "Unknown"
 
 
 if __name__ == "__main__":

@@ -1,9 +1,8 @@
 """
+LuxPower time platform for Home Assistant.
 
-This is a docstring placeholder.
-
-This is where we will describe what this module does
-
+This module provides time entities for configuring LuxPower inverter
+time-based settings including charge schedules and operational time windows.
 """
 
 import datetime
@@ -22,10 +21,14 @@ from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
+    DEFAULT_DONGLE_SERIAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     VERSION,
+    MODEL_MAP,
+    is_12k_model,
 )
-from .helpers import Event
+from .helpers import Event, get_comprehensive_device_info, get_device_group_info, get_entity_device_group
 
 # from homeassistant.const import EntityCategory
 
@@ -44,11 +47,13 @@ _LOGGER = logging.getLogger(__name__)
 
 def floatzero(incoming):
     """
-
-    This is a docstring placeholder.
-
-    This is where we will describe what this function does
-
+    Convert incoming value to float, returning 0.0 if conversion fails.
+    
+    Args:
+        incoming: Value to convert to float
+        
+    Returns:
+        float: Converted value or 0.0 if conversion fails
     """
     try:
         value_we_got = float(incoming)
@@ -76,8 +81,8 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
     if len(config_entry.options) > 0:
         platform_config = config_entry.options
 
-    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, "XXXXXXXXXX")
-    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, "XXXXXXXXXX")
+    DONGLE = platform_config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    SERIAL = platform_config.get(ATTR_LUX_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER)
     USE_SERIAL = platform_config.get(ATTR_LUX_USE_SERIAL, False)
     luxpower_client = hass.data[config_entry.domain][config_entry.entry_id]["client"]
 
@@ -91,6 +96,29 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
     # Options For Hyphen Use Before Entity Description - Suggest No Hyphen As Of 15/02/23
     # hyphen = " -" if USE_SERIAL else "-"
     hyphen = ""
+    
+    # Retrieve cached model code
+    entry_id = config_entry.entry_id
+    model_code = None
+    
+    # Check config entry options first (persists across restarts)
+    if "model_code" in config_entry.options:
+        model_code = config_entry.options["model_code"]
+        _LOGGER.info(f"Using cached model code from config entry: {model_code}")
+    
+    # Check hass.data second (available after first register read)
+    elif entry_id in hass.data.get(DOMAIN, {}):
+        model_code = hass.data[DOMAIN][entry_id].get("model_code")
+        if model_code:
+            _LOGGER.info(f"Using cached model code from hass.data: {model_code}")
+    
+    # Log model detection status
+    if model_code:
+        is_12k = is_12k_model(model_code)
+        model_name = MODEL_MAP.get(model_code, "Unknown")
+        _LOGGER.info(f"Model detected: {model_name} ({model_code}) - {'12K' if is_12k else 'non-12K'}")
+    else:
+        _LOGGER.info("No model code available - using default entity enablement")
 
     event = Event(dongle=DONGLE)
     # luxpower_client = hass.data[event.CLIENT_DAEMON]
@@ -143,6 +171,21 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
     for entity_definition in times:
         etype = entity_definition["etype"]
         if etype == "LTTE":
+            # Apply model-based enablement logic
+            default_enabled = entity_definition.get("enabled", True)
+            
+            if model_code:
+                is_12k = is_12k_model(model_code)
+                # Check if this is a 12K-specific time entity
+                if "12K" in entity_definition.get("name", ""):
+                    default_enabled = is_12k
+                    if is_12k:
+                        _LOGGER.debug(f"Enabling 12K-specific time: {entity_definition['name']}")
+                    else:
+                        _LOGGER.debug(f"Disabling 12K-specific time for non-12K model: {entity_definition['name']}")
+            
+            # Update entity definition with model-based enablement
+            entity_definition["enabled"] = default_enabled
             timeEntities.append(LuxTimeTimeEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
 
     async_add_entities(timeEntities, True)
@@ -191,6 +234,7 @@ class LuxTimeTimeEntity(TimeEntity):
         )
 
         # Hidden Class Extended Instance Attributes
+        self._entity_definition = entity_definition
         self._client = luxpower_client
         self._register_value = 0
         self._bitmask = entity_definition.get("bitmask", 0xFFFF)
@@ -279,27 +323,15 @@ class LuxTimeTimeEntity(TimeEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        entry_id = None
-        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
-            if data.get("DONGLE") == self.dongle:
-                entry_id = e_id
-                break
-        model = (
-            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        )
-        sw_version = (
-            self.hass.data[DOMAIN]
-            .get(entry_id, {})
-            .get("lux_firmware_version", VERSION)
-        )
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.dongle)},
-            manufacturer="LuxPower",
-            model=model,
-            name=self.dongle,
-            sw_version=sw_version,
-        )
+        """Return device info for the appropriate device group."""
+        # Get the device group for this entity
+        device_group = get_entity_device_group(self._entity_definition, self.hass)
+        
+        # Return device group info if available, otherwise fall back to main device
+        if device_group:
+            return get_device_group_info(self.hass, self.dongle, device_group)
+        else:
+            return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
 
     async def async_set_value(self, value):
         """Update the current Time value."""
@@ -307,7 +339,14 @@ class LuxTimeTimeEntity(TimeEntity):
 
         if value != self._attr_native_value:
             _LOGGER.debug(f"Started set_value {value}")
-            new_reg_value = value.minute * 256 + value.hour
+            
+            # Validate hour and minute ranges before encoding
+            if not (0 <= value.hour <= 23):
+                raise vol.Invalid(f"Invalid hour: {value.hour} (must be 0-23)")
+            if not (0 <= value.minute <= 59):
+                raise vol.Invalid(f"Invalid minute: {value.minute} (must be 0-59)")
+                
+            new_reg_value = value.hour + (value.minute << 8)
 
             if (
                 new_reg_value < self._reg_min_value
