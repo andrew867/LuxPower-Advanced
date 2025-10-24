@@ -1,0 +1,371 @@
+/* LuxPower Dashboard Styles */
+/* Custom CSS for enhanced dashboard appearance */
+
+:root {
+  /* Color Variables */
+  --luxpower-primary: #3498db;
+  --luxpower-secondary: #2ecc71;
+  --luxpower-accent: #f39c12;
+  --luxpower-danger: #e74c3c;
+  --luxpower-warning: #f39c12;
+  --luxpower-success: #27ae60;
+  --luxpower-info: #17a2b8;
+  --luxpower-light: #f8f9fa;
+  --luxpower-dark: #343a40;
+  
+  /* Solar Colors */
+  --luxpower-solar: #FFD700;
+  --luxpower-solar-dark: #FFA500;
+  
+  /* Battery Colors */
+  --luxpower-battery-full: #27ae60;
+  --luxpower-battery-half: #f39c12;
+  --luxpower-battery-low: #e74c3c;
+  
+  /* Grid Colors */
+  --luxpower-grid-import: #e74c3c;
+  --luxpower-grid-export: #27ae60;
+  
+  /* Load Colors */
+  --luxpower-load: #87CEEB;
+  --luxpower-consumption: #4CAF50;
+  
+  /* Shadow Variables */
+  --luxpower-shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --luxpower-shadow-md: 0 4px 8px rgba(0,0,0,0.1);
+  --luxpower-shadow-lg: 0 8px 16px rgba(0,0,0,0.1);
+  
+  /* Border Radius */
+  --luxpower-radius-sm: 4px;
+  --luxpower-radius-md: 8px;
+  --luxpower-radius-lg: 12px;
+  --luxpower-radius-xl: 16px;
+}
+
+/* Global Styles */
+.luxpower-dashboard {
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Card Styles */
+.luxpower-card {
+  background: white;
+  border-radius: var(--luxpower-radius-lg);
+  box-shadow: var(--luxpower-shadow-md);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.luxpower-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--luxpower-shadow-lg);
+}
+
+/* Energy Flow Card */
+.luxpower-energy-flow {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: var(--luxpower-radius-lg);
+  padding: 20px;
+  box-shadow: var(--luxpower-shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.luxpower-energy-flow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="%23e0e0e0" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" opacity="0.3"/></svg>');
+  pointer-events: none;
+}
+
+/* Status Indicators */
+.luxpower-status-normal {
+  background: linear-gradient(135deg, var(--luxpower-success), #2ecc71);
+  color: white;
+}
+
+.luxpower-status-warning {
+  background: linear-gradient(135deg, var(--luxpower-warning), #e67e22);
+  color: white;
+}
+
+.luxpower-status-fault {
+  background: linear-gradient(135deg, var(--luxpower-danger), #c0392b);
+  color: white;
+}
+
+.luxpower-status-offline {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8c);
+  color: white;
+}
+
+/* Power Flow Arrows */
+.luxpower-arrow {
+  animation: luxpower-pulse 2s infinite;
+  opacity: 0.8;
+}
+
+@keyframes luxpower-pulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.6; transform: scale(1); }
+}
+
+.luxpower-arrow-pv {
+  color: var(--luxpower-solar);
+}
+
+.luxpower-arrow-battery {
+  color: var(--luxpower-battery-full);
+}
+
+.luxpower-arrow-grid {
+  color: var(--luxpower-grid-import);
+}
+
+.luxpower-arrow-load {
+  color: var(--luxpower-load);
+}
+
+/* Component Hover Effects */
+.luxpower-component {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.luxpower-component:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+/* Power Values */
+.luxpower-power-value {
+  font-family: 'Roboto', sans-serif;
+  font-weight: bold;
+  font-size: 14px;
+  fill: #2c3e50;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.luxpower-power-label {
+  font-family: 'Roboto', sans-serif;
+  font-size: 10px;
+  fill: #7f8c8d;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* Battery Icons */
+.luxpower-battery-100 {
+  fill: var(--luxpower-battery-full);
+}
+
+.luxpower-battery-50 {
+  fill: var(--luxpower-battery-half);
+}
+
+.luxpower-battery-0 {
+  fill: var(--luxpower-battery-low);
+}
+
+/* Grid Status */
+.luxpower-grid-import {
+  color: var(--luxpower-grid-import);
+}
+
+.luxpower-grid-export {
+  color: var(--luxpower-grid-export);
+}
+
+/* Solar Status */
+.luxpower-solar-active {
+  color: var(--luxpower-solar);
+  animation: luxpower-solar-glow 2s infinite;
+}
+
+@keyframes luxpower-solar-glow {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+  100% { filter: brightness(1); }
+}
+
+/* Load Status */
+.luxpower-load-active {
+  color: var(--luxpower-load);
+}
+
+/* Tooltip Styles */
+.luxpower-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: var(--luxpower-radius-sm);
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  max-width: 200px;
+}
+
+.luxpower-tooltip.show {
+  opacity: 1;
+}
+
+.luxpower-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .luxpower-dashboard {
+    padding: 10px;
+  }
+  
+  .luxpower-card {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .luxpower-power-value {
+    font-size: 12px;
+  }
+  
+  .luxpower-power-label {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .luxpower-dashboard {
+    padding: 5px;
+  }
+  
+  .luxpower-card {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .luxpower-dashboard {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: #ecf0f1;
+  }
+  
+  .luxpower-card {
+    background: #34495e;
+    color: #ecf0f1;
+  }
+  
+  .luxpower-energy-flow {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  }
+  
+  .luxpower-power-value {
+    fill: #ecf0f1;
+  }
+  
+  .luxpower-power-label {
+    fill: #bdc3c7;
+  }
+}
+
+/* Animation Classes */
+.luxpower-fade-in {
+  animation: luxpower-fade-in 0.5s ease-in;
+}
+
+@keyframes luxpower-fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.luxpower-slide-in {
+  animation: luxpower-slide-in 0.5s ease-out;
+}
+
+@keyframes luxpower-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.luxpower-bounce {
+  animation: luxpower-bounce 0.6s ease-in-out;
+}
+
+@keyframes luxpower-bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+/* Utility Classes */
+.luxpower-text-center {
+  text-align: center;
+}
+
+.luxpower-text-left {
+  text-align: left;
+}
+
+.luxpower-text-right {
+  text-align: right;
+}
+
+.luxpower-mb-0 { margin-bottom: 0; }
+.luxpower-mb-1 { margin-bottom: 0.25rem; }
+.luxpower-mb-2 { margin-bottom: 0.5rem; }
+.luxpower-mb-3 { margin-bottom: 0.75rem; }
+.luxpower-mb-4 { margin-bottom: 1rem; }
+.luxpower-mb-5 { margin-bottom: 1.25rem; }
+
+.luxpower-mt-0 { margin-top: 0; }
+.luxpower-mt-1 { margin-top: 0.25rem; }
+.luxpower-mt-2 { margin-top: 0.5rem; }
+.luxpower-mt-3 { margin-top: 0.75rem; }
+.luxpower-mt-4 { margin-top: 1rem; }
+.luxpower-mt-5 { margin-top: 1.25rem; }
+
+.luxpower-p-0 { padding: 0; }
+.luxpower-p-1 { padding: 0.25rem; }
+.luxpower-p-2 { padding: 0.5rem; }
+.luxpower-p-3 { padding: 0.75rem; }
+.luxpower-p-4 { padding: 1rem; }
+.luxpower-p-5 { padding: 1.25rem; }
+
+/* Print Styles */
+@media print {
+  .luxpower-dashboard {
+    background: white;
+    color: black;
+  }
+  
+  .luxpower-card {
+    background: white;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .luxpower-arrow {
+    animation: none;
+  }
+}

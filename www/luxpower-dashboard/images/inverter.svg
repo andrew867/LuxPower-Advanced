@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="inverterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E0E0E0;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#C0C0C0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A0A0A0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Inverter case -->
+  <rect x="15" y="20" width="70" height="60" rx="8" ry="8" fill="url(#inverterGradient)" stroke="#696969" stroke-width="2"/>
+  
+  <!-- Ventilation slots -->
+  <g stroke="#696969" stroke-width="1" fill="none">
+    <line x1="25" y1="30" x2="75" y2="30"/>
+    <line x1="25" y1="35" x2="75" y2="35"/>
+    <line x1="25" y1="40" x2="75" y2="40"/>
+    <line x1="25" y1="45" x2="75" y2="45"/>
+  </g>
+  
+  <!-- Status LED -->
+  <circle cx="50" cy="55" r="4" fill="#00FF00" stroke="#000000" stroke-width="1"/>
+  
+  <!-- Power indicator -->
+  <text x="50" y="70" text-anchor="middle" font-family="Arial" font-size="8" fill="#000000">PWR</text>
+  
+  <!-- Input/Output connections -->
+  <!-- DC Input -->
+  <rect x="5" y="45" width="10" height="10" rx="2" ry="2" fill="#FFD700" stroke="#000000" stroke-width="1"/>
+  <text x="10" y="40" text-anchor="middle" font-family="Arial" font-size="6" fill="#000000">DC</text>
+  
+  <!-- AC Output -->
+  <rect x="85" y="45" width="10" height="10" rx="2" ry="2" fill="#FF6B6B" stroke="#000000" stroke-width="1"/>
+  <text x="90" y="40" text-anchor="middle" font-family="Arial" font-size="6" fill="#000000">AC</text>
+  
+  <!-- Connection lines -->
+  <line x1="15" y1="50" x2="25" y2="50" stroke="#000000" stroke-width="2"/>
+  <line x1="75" y1="50" x2="85" y2="50" stroke="#000000" stroke-width="2"/>
+</svg>

@@ -1,0 +1,310 @@
+# LuxPower Dashboard Helper Templates
+# This file provides template sensors and binary sensors for enhanced dashboard functionality
+# Place this file in your Home Assistant packages/ directory
+
+template:
+  # Energy Flow Calculation Sensors
+  - sensor:
+      - name: "LuxPower Total Consumption"
+        unique_id: "luxpower_total_consumption"
+        state: >
+          {% set pv_power = states('sensor.lux_pv_power') | float(0) %}
+          {% set battery_charge = states('sensor.lux_battery_charge') | float(0) %}
+          {% set battery_discharge = states('sensor.lux_battery_discharge') | float(0) %}
+          {% set grid_import = states('sensor.lux_grid_import_power') | float(0) %}
+          {% set grid_export = states('sensor.lux_grid_export_power') | float(0) %}
+          {% set pv_to_load = pv_power - battery_charge - grid_export %}
+          {% set battery_to_load = battery_discharge %}
+          {% set grid_to_load = grid_import %}
+          {{ (pv_to_load + battery_to_load + grid_to_load) | round(1) }}
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "LuxPower PV to Load"
+        unique_id: "luxpower_pv_to_load"
+        state: >
+          {% set pv_power = states('sensor.lux_pv_power') | float(0) %}
+          {% set battery_charge = states('sensor.lux_battery_charge') | float(0) %}
+          {% set grid_export = states('sensor.lux_grid_export_power') | float(0) %}
+          {% set pv_to_load = pv_power - battery_charge - grid_export %}
+          {{ [pv_to_load, 0] | max | round(1) }}
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "LuxPower PV to Battery"
+        unique_id: "luxpower_pv_to_battery"
+        state: >
+          {% set battery_charge = states('sensor.lux_battery_charge') | float(0) %}
+          {{ battery_charge | round(1) }}
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "LuxPower PV to Grid"
+        unique_id: "luxpower_pv_to_grid"
+        state: >
+          {% set grid_export = states('sensor.lux_grid_export_power') | float(0) %}
+          {{ grid_export | round(1) }}
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "LuxPower Battery to Load"
+        unique_id: "luxpower_battery_to_load"
+        state: >
+          {% set battery_discharge = states('sensor.lux_battery_discharge') | float(0) %}
+          {{ battery_discharge | round(1) }}
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "LuxPower Grid to Load"
+        unique_id: "luxpower_grid_to_load"
+        state: >
+          {% set grid_import = states('sensor.lux_grid_import_power') | float(0) %}
+          {{ grid_import | round(1) }}
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "LuxPower Self Sufficiency"
+        unique_id: "luxpower_self_sufficiency"
+        state: >
+          {% set pv_power = states('sensor.lux_pv_power') | float(0) %}
+          {% set battery_discharge = states('sensor.lux_battery_discharge') | float(0) %}
+          {% set total_consumption = states('sensor.luxpower_total_consumption') | float(0) %}
+          {% if total_consumption > 0 %}
+            {{ ((pv_power + battery_discharge) / total_consumption * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+
+      - name: "LuxPower Battery Icon"
+        unique_id: "luxpower_battery_icon"
+        state: >
+          {% set soc = states('sensor.lux_battery_soc') | float(0) %}
+          {% if soc >= 90 %}
+            mdi:battery-10
+          {% elif soc >= 80 %}
+            mdi:battery-9
+          {% elif soc >= 70 %}
+            mdi:battery-8
+          {% elif soc >= 60 %}
+            mdi:battery-7
+          {% elif soc >= 50 %}
+            mdi:battery-6
+          {% elif soc >= 40 %}
+            mdi:battery-5
+          {% elif soc >= 30 %}
+            mdi:battery-4
+          {% elif soc >= 20 %}
+            mdi:battery-3
+          {% elif soc >= 10 %}
+            mdi:battery-2
+          {% elif soc > 0 %}
+            mdi:battery-1
+          {% else %}
+            mdi:battery-alert
+          {% endif %}
+
+      - name: "LuxPower Energy Flow State"
+        unique_id: "luxpower_energy_flow_state"
+        state: >
+          {% set pv_power = states('sensor.lux_pv_power') | float(0) %}
+          {% set battery_charge = states('sensor.lux_battery_charge') | float(0) %}
+          {% set battery_discharge = states('sensor.lux_battery_discharge') | float(0) %}
+          {% set grid_export = states('sensor.lux_grid_export_power') | float(0) %}
+          {% set grid_import = states('sensor.lux_grid_import_power') | float(0) %}
+          {% if pv_power > 0 and battery_charge > 0 and grid_export > 0 %}
+            Solar charging battery and exporting to grid
+          {% elif pv_power > 0 and battery_charge > 0 %}
+            Solar charging battery
+          {% elif pv_power > 0 and grid_export > 0 %}
+            Solar exporting to grid
+          {% elif battery_discharge > 0 and grid_import > 0 %}
+            Battery and grid powering loads
+          {% elif battery_discharge > 0 %}
+            Battery powering loads
+          {% elif grid_import > 0 %}
+            Grid powering loads
+          {% else %}
+            System idle
+          {% endif %}
+
+  # Model Detection Binary Sensors
+  - binary_sensor:
+      - name: "LuxPower Is 12K Model"
+        unique_id: "luxpower_is_12k_model"
+        state: >
+          {% set model = states('sensor.lux_inverter_model') | string %}
+          {{ model in ['CFAA', 'CEAA', 'FAAB'] }}
+        device_class: none
+
+      - name: "LuxPower Has PV3"
+        unique_id: "luxpower_has_pv3"
+        state: >
+          {% set model = states('sensor.lux_inverter_model') | string %}
+          {{ model in ['CFAA', 'CEAA', 'FAAB', 'HAAA', 'EAAB'] }}
+        device_class: none
+
+      - name: "LuxPower Has Generator"
+        unique_id: "luxpower_has_generator"
+        state: >
+          {% set model = states('sensor.lux_inverter_model') | string %}
+          {{ model in ['CFAA', 'CEAA', 'FAAB', 'HAAA', 'ACAB'] }}
+        device_class: none
+
+      - name: "LuxPower Is Charging"
+        unique_id: "luxpower_is_charging"
+        state: >
+          {% set battery_charge = states('sensor.lux_battery_charge') | float(0) %}
+          {{ battery_charge > 50 }}
+        device_class: battery_charging
+
+      - name: "LuxPower Is Exporting"
+        unique_id: "luxpower_is_exporting"
+        state: >
+          {% set grid_export = states('sensor.lux_grid_export_power') | float(0) %}
+          {{ grid_export > 50 }}
+        device_class: none
+
+      - name: "LuxPower Is Importing"
+        unique_id: "luxpower_is_importing"
+        state: >
+          {% set grid_import = states('sensor.lux_grid_import_power') | float(0) %}
+          {{ grid_import > 50 }}
+        device_class: none
+
+      - name: "LuxPower Has EPS"
+        unique_id: "luxpower_has_eps"
+        state: >
+          {% set eps_power = states('sensor.lux_power_to_eps') | float(0) %}
+          {{ eps_power is not none and eps_power != 'unavailable' }}
+        device_class: none
+
+  # Enhanced Status Sensors
+  - sensor:
+      - name: "LuxPower System Status"
+        unique_id: "luxpower_system_status"
+        state: >
+          {% set status = states('sensor.lux_status_text') | string %}
+          {% if status == 'unavailable' %}
+            Offline
+          {% elif 'fault' in status.lower() %}
+            Fault
+          {% elif 'warning' in status.lower() %}
+            Warning
+          {% elif 'standby' in status.lower() %}
+            Standby
+          {% elif 'normal' in status.lower() %}
+            Normal
+          {% else %}
+            {{ status }}
+          {% endif %}
+        device_class: none
+
+      - name: "LuxPower Model Name"
+        unique_id: "luxpower_model_name"
+        state: >
+          {% set model = states('sensor.lux_inverter_model') | string %}
+          {% if model == 'CFAA' %}
+            SNA 12K
+          {% elif model == 'CEAA' %}
+            SNA 12K-US
+          {% elif model == 'FAAB' %}
+            LXP-LB-8-12K
+          {% elif model == 'HAAA' %}
+            GEB-LB-EU 7-10K
+          {% elif model == 'EAAB' %}
+            LXP-LB-EU 7K
+          {% elif model == 'ACAB' %}
+            GEN-LB-EU 3-6K
+          {% elif model == 'CCAA' %}
+            SNA-US 6000
+          {% elif model == 'CBAA' %}
+            SNA 3000-6000
+          {% elif model == 'BAAA' %}
+            LXP-3600 ACS (Standard)
+          {% elif model == 'BAAB' %}
+            LXP-3600 ACS (Parallel)
+          {% elif model == 'AAAA' %}
+            LXP 3-6K Hybrid (Standard)
+          {% elif model == 'AAAB' %}
+            LXP 3-6K Hybrid (Parallel)
+          {% else %}
+            Unknown Model ({{ model }})
+          {% endif %}
+        device_class: none
+
+      - name: "LuxPower Power Rating"
+        unique_id: "luxpower_power_rating"
+        state: >
+          {% set model = states('sensor.lux_inverter_model') | string %}
+          {% if model in ['CFAA', 'CEAA', 'FAAB'] %}
+            12000
+          {% elif model in ['HAAA', 'EAAB'] %}
+            10000
+          {% elif model in ['ACAB', 'CCAA', 'CBAA', 'BAAA', 'BAAB', 'AAAA', 'AAAB'] %}
+            6000
+          {% else %}
+            6000
+          {% endif %}
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+  # Energy Statistics
+  - sensor:
+      - name: "LuxPower Today Solar Yield"
+        unique_id: "luxpower_today_solar_yield"
+        state: >
+          {% set pv_daily = states('sensor.lux_pv_energy_daily') | float(0) %}
+          {{ pv_daily | round(2) }}
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+
+      - name: "LuxPower Today Battery Discharge"
+        unique_id: "luxpower_today_battery_discharge"
+        state: >
+          {% set battery_discharge_daily = states('sensor.lux_daily_battery_discharge') | float(0) %}
+          {{ battery_discharge_daily | round(2) }}
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+
+      - name: "LuxPower Today Grid Export"
+        unique_id: "luxpower_today_grid_export"
+        state: >
+          {% set grid_export_daily = states('sensor.lux_power_to_grid_daily') | float(0) %}
+          {{ grid_export_daily | round(2) }}
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+
+      - name: "LuxPower Today Grid Import"
+        unique_id: "luxpower_today_grid_import"
+        state: >
+          {% set grid_import_daily = states('sensor.lux_power_from_grid_daily') | float(0) %}
+          {{ grid_import_daily | round(2) }}
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+
+      - name: "LuxPower Today Consumption"
+        unique_id: "luxpower_today_consumption"
+        state: >
+          {% set pv_daily = states('sensor.lux_pv_energy_daily') | float(0) %}
+          {% set battery_discharge_daily = states('sensor.lux_daily_battery_discharge') | float(0) %}
+          {% set grid_import_daily = states('sensor.lux_power_from_grid_daily') | float(0) %}
+          {% set grid_export_daily = states('sensor.lux_power_to_grid_daily') | float(0) %}
+          {% set consumption = pv_daily + battery_discharge_daily + grid_import_daily - grid_export_daily %}
+          {{ consumption | round(2) }}
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing

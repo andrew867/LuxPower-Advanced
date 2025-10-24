@@ -1,0 +1,470 @@
+# LuxPower Graphs Dashboard
+# Power and energy graphs configuration
+# Based on LuxPower cloud interface charts
+
+title: LuxPower Graphs
+path: luxpower-graphs
+icon: mdi:chart-line
+panel: false
+cards:
+  # Power Flow Line Chart (Today)
+  - type: custom:apexcharts-card
+    header:
+      title: Power Flow - Today
+      show: true
+    apex_config:
+      chart:
+        type: line
+        height: 300
+        animations:
+          enabled: true
+      stroke:
+        width: 3
+        curve: smooth
+      colors:
+        - '#3BAEDA'  # Solar PV
+        - '#36BB99'  # Battery
+        - '#BE0013'  # Grid
+        - '#F8BA42'  # Consumption
+      legend:
+        position: top
+      xaxis:
+        type: datetime
+      yaxis:
+        title:
+          text: Power (W)
+        labels:
+          formatter: |
+            function(val) {
+              return val.toFixed(0) + 'W';
+            }
+    series:
+      - entity: sensor.lux_pv_power
+        name: Solar PV
+        type: line
+        color: '#3BAEDA'
+        show:
+          extremas: true
+      - entity: sensor.lux_battery_flow
+        name: Battery
+        type: line
+        color: '#36BB99'
+        show:
+          extremas: true
+      - entity: sensor.lux_grid_flow
+        name: Grid
+        type: line
+        color: '#BE0013'
+        show:
+          extremas: true
+      - entity: sensor.luxpower_total_consumption
+        name: Consumption
+        type: line
+        color: '#F8BA42'
+        show:
+          extremas: true
+    graph_span: 24h
+    update_interval: 30s
+
+  # Energy Overview Bar Chart (Today)
+  - type: custom:apexcharts-card
+    header:
+      title: Energy Overview - Today
+      show: true
+    apex_config:
+      chart:
+        type: bar
+        height: 300
+        stacked: false
+      colors:
+        - '#3BAEDA'  # Solar Production
+        - '#36BB99'  # Battery Discharged
+        - '#8CC051'  # Battery Charged
+        - '#BE0013'  # Export to Grid
+        - '#E2593A'  # Import from Grid
+        - '#F8BA42'  # Consumption
+      legend:
+        position: top
+      xaxis:
+        categories: ['Today']
+      yaxis:
+        title:
+          text: Energy (kWh)
+        labels:
+          formatter: |
+            function(val) {
+              return val.toFixed(2) + 'kWh';
+            }
+    series:
+      - entity: sensor.luxpower_today_solar_yield
+        name: Solar Production
+        type: column
+        color: '#3BAEDA'
+      - entity: sensor.luxpower_today_battery_discharge
+        name: Battery Discharged
+        type: column
+        color: '#36BB99'
+      - entity: sensor.lux_daily_battery_charge
+        name: Battery Charged
+        type: column
+        color: '#8CC051'
+      - entity: sensor.luxpower_today_grid_export
+        name: Export to Grid
+        type: column
+        color: '#BE0013'
+      - entity: sensor.luxpower_today_grid_import
+        name: Import from Grid
+        type: column
+        color: '#E2593A'
+      - entity: sensor.luxpower_today_consumption
+        name: Consumption
+        type: column
+        color: '#F8BA42'
+    graph_span: 24h
+    update_interval: 30s
+
+  # Battery SOC and Voltage Chart
+  - type: custom:apexcharts-card
+    header:
+      title: Battery Status
+      show: true
+    apex_config:
+      chart:
+        type: line
+        height: 300
+        animations:
+          enabled: true
+      stroke:
+        width: 3
+        curve: smooth
+      colors:
+        - '#27ae60'  # SOC
+        - '#3498db'  # Voltage
+      legend:
+        position: top
+      xaxis:
+        type: datetime
+      yaxis:
+        - title:
+            text: SOC (%)
+          min: 0
+          max: 100
+          labels:
+            formatter: |
+              function(val) {
+                return val.toFixed(0) + '%';
+              }
+        - title:
+            text: Voltage (V)
+          opposite: true
+          labels:
+            formatter: |
+              function(val) {
+                return val.toFixed(1) + 'V';
+              }
+    series:
+      - entity: sensor.lux_battery_soc
+        name: SOC
+        type: line
+        color: '#27ae60'
+        yaxis_id: 0
+        show:
+          extremas: true
+      - entity: sensor.lux_battery_voltage
+        name: Voltage
+        type: line
+        color: '#3498db'
+        yaxis_id: 1
+        show:
+          extremas: true
+    graph_span: 24h
+    update_interval: 30s
+
+  # Grid Power and Frequency
+  - type: custom:apexcharts-card
+    header:
+      title: Grid Status
+      show: true
+    apex_config:
+      chart:
+        type: line
+        height: 300
+        animations:
+          enabled: true
+      stroke:
+        width: 3
+        curve: smooth
+      colors:
+        - '#e74c3c'  # Import
+        - '#27ae60'  # Export
+        - '#f39c12'  # Frequency
+      legend:
+        position: top
+      xaxis:
+        type: datetime
+      yaxis:
+        - title:
+            text: Power (W)
+          labels:
+            formatter: |
+              function(val) {
+                return val.toFixed(0) + 'W';
+              }
+        - title:
+            text: Frequency (Hz)
+          opposite: true
+          labels:
+            formatter: |
+              function(val) {
+                return val.toFixed(1) + 'Hz';
+              }
+    series:
+      - entity: sensor.lux_grid_import_power
+        name: Grid Import
+        type: line
+        color: '#e74c3c'
+        yaxis_id: 0
+        show:
+          extremas: true
+      - entity: sensor.lux_grid_export_power
+        name: Grid Export
+        type: line
+        color: '#27ae60'
+        yaxis_id: 0
+        show:
+          extremas: true
+      - entity: sensor.lux_grid_frequency_live
+        name: Frequency
+        type: line
+        color: '#f39c12'
+        yaxis_id: 1
+        show:
+          extremas: true
+    graph_span: 24h
+    update_interval: 30s
+
+  # Monthly Energy Overview
+  - type: custom:apexcharts-card
+    header:
+      title: Monthly Energy Overview
+      show: true
+    apex_config:
+      chart:
+        type: bar
+        height: 300
+        stacked: true
+      colors:
+        - '#3BAEDA'  # Solar Production
+        - '#36BB99'  # Battery Discharged
+        - '#8CC051'  # Battery Charged
+        - '#BE0013'  # Export to Grid
+        - '#E2593A'  # Import from Grid
+        - '#F8BA42'  # Consumption
+      legend:
+        position: top
+      xaxis:
+        type: datetime
+      yaxis:
+        title:
+          text: Energy (kWh)
+        labels:
+          formatter: |
+            function(val) {
+              return val.toFixed(1) + 'kWh';
+            }
+    series:
+      - entity: sensor.lux_pv_energy_monthly
+        name: Solar Production
+        type: column
+        color: '#3BAEDA'
+      - entity: sensor.lux_battery_discharge_monthly
+        name: Battery Discharged
+        type: column
+        color: '#36BB99'
+      - entity: sensor.lux_battery_charge_monthly
+        name: Battery Charged
+        type: column
+        color: '#8CC051'
+      - entity: sensor.lux_grid_export_monthly
+        name: Export to Grid
+        type: column
+        color: '#BE0013'
+      - entity: sensor.lux_grid_import_monthly
+        name: Import from Grid
+        type: column
+        color: '#E2593A'
+      - entity: sensor.lux_consumption_monthly
+        name: Consumption
+        type: column
+        color: '#F8BA42'
+    graph_span: 30d
+    update_interval: 1h
+
+  # System Status Timeline
+  - type: custom:apexcharts-card
+    header:
+      title: System Status Timeline
+      show: true
+    apex_config:
+      chart:
+        type: line
+        height: 200
+        animations:
+          enabled: true
+      stroke:
+        width: 2
+        curve: step
+      colors:
+        - '#27ae60'  # Normal
+        - '#f39c12'  # Warning
+        - '#e74c3c'  # Fault
+        - '#95a5a6'  # Offline
+      legend:
+        position: top
+      xaxis:
+        type: datetime
+      yaxis:
+        title:
+          text: Status
+        min: 0
+        max: 4
+        labels:
+          formatter: |
+            function(val) {
+              const status = ['Offline', 'Fault', 'Warning', 'Normal'];
+              return status[Math.round(val)] || 'Unknown';
+            }
+    series:
+      - entity: sensor.luxpower_system_status
+        name: System Status
+        type: line
+        color: |
+          [[[
+            var status = states['sensor.luxpower_system_status'].state;
+            if (status === 'Normal') return '#27ae60';
+            if (status === 'Warning') return '#f39c12';
+            if (status === 'Fault') return '#e74c3c';
+            return '#95a5a6';
+          ]]]
+        show:
+          extremas: true
+    graph_span: 24h
+    update_interval: 30s
+
+  # 12K Model Specific Charts (conditional)
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: custom:apexcharts-card
+      header:
+        title: Smart Load Control (12K Models)
+        show: true
+      apex_config:
+        chart:
+          type: line
+          height: 300
+          animations:
+            enabled: true
+        stroke:
+          width: 3
+          curve: smooth
+        colors:
+          - '#9b59b6'  # Smart Load Power
+          - '#e67e22'  # SOC Threshold
+          - '#3498db'  # Voltage Threshold
+        legend:
+          position: top
+        xaxis:
+          type: datetime
+        yaxis:
+          title:
+            text: Power (W) / SOC (%) / Voltage (V)
+          labels:
+            formatter: |
+              function(val) {
+                return val.toFixed(0);
+              }
+      series:
+        - entity: sensor.lux_smart_load_power
+          name: Smart Load Power
+          type: line
+          color: '#9b59b6'
+          show:
+            extremas: true
+        - entity: sensor.lux_battery_soc
+          name: SOC
+          type: line
+          color: '#e67e22'
+          show:
+            extremas: true
+        - entity: sensor.lux_battery_voltage
+          name: Battery Voltage
+          type: line
+          color: '#3498db'
+          show:
+            extremas: true
+      graph_span: 24h
+      update_interval: 30s
+
+  # Energy Efficiency Metrics
+  - type: horizontal-stack
+    cards:
+      - type: gauge
+        entity: sensor.luxpower_self_sufficiency
+        name: Self Sufficiency
+        min: 0
+        max: 100
+        severity:
+          green: 80
+          yellow: 50
+          red: 0
+        needle: true
+
+      - type: gauge
+        entity: sensor.lux_battery_soc
+        name: Battery SOC
+        min: 0
+        max: 100
+        severity:
+          green: 80
+          yellow: 20
+          red: 0
+        needle: true
+
+      - type: custom:button-card
+        entity: sensor.luxpower_today_solar_yield
+        name: Today Solar
+        icon: mdi:solar-power
+        styles:
+          card:
+            - background: linear-gradient(135deg, #FFD700, #FFA500)
+            - color: #2c3e50
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 100px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 20px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.luxpower_today_consumption
+        name: Today Consumption
+        icon: mdi:home-lightning-bolt
+        styles:
+          card:
+            - background: linear-gradient(135deg, #57C696, #4CAF50)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 100px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 20px
+            - font-weight: bold

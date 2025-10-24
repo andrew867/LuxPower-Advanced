@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="epsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#32CD32;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#228B22;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#006400;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- EPS unit -->
+  <rect x="25" y="30" width="50" height="40" rx="5" ry="5" fill="url(#epsGradient)" stroke="#000000" stroke-width="2"/>
+  
+  <!-- Status indicator -->
+  <circle cx="50" cy="50" r="8" fill="#00FF00" stroke="#000000" stroke-width="1"/>
+  
+  <!-- EPS label -->
+  <text x="50" y="55" text-anchor="middle" font-family="Arial" font-size="8" fill="#000000">EPS</text>
+  
+  <!-- Backup power indicator -->
+  <text x="50" y="25" text-anchor="middle" font-family="Arial" font-size="10" fill="#000000">BACKUP</text>
+  
+  <!-- Power connection -->
+  <rect x="45" y="70" width="10" height="15" rx="2" ry="2" fill="#C0C0C0" stroke="#000000" stroke-width="1"/>
+  
+  <!-- Emergency indicator -->
+  <circle cx="70" cy="40" r="3" fill="#FF0000" stroke="#000000" stroke-width="1"/>
+</svg>

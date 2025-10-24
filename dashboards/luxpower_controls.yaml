@@ -1,0 +1,367 @@
+# LuxPower Control Panel Dashboard
+# Control panel for inverter settings and configuration
+# Based on LuxPower cloud interface controls
+
+title: LuxPower Controls
+path: luxpower-controls
+icon: mdi:cog
+panel: false
+cards:
+  # System Status and Quick Actions
+  - type: horizontal-stack
+    cards:
+      - type: custom:button-card
+        entity: sensor.luxpower_system_status
+        name: System Status
+        icon: mdi:power
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: |
+                [[[
+                  if (entity.state === 'Normal') return 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                  if (entity.state === 'Warning') return 'linear-gradient(135deg, #f39c12, #e67e22)';
+                  if (entity.state === 'Fault') return 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                  return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                ]]]
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+            - text-transform: uppercase
+            - letter-spacing: 1px
+          name:
+            - font-size: 12px
+            - opacity: 0.9
+          state:
+            - font-size: 16px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.lux_inverter_model
+        name: Model
+        icon: mdi:chip
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: linear-gradient(135deg, #3498db, #2980b9)
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+          name:
+            - font-size: 12px
+            - opacity: 0.9
+          state:
+            - font-size: 16px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.lux_battery_soc
+        name: Battery SOC
+        icon: mdi:battery
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: |
+                [[[
+                  if (entity.state > 80) return 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                  if (entity.state > 50) return 'linear-gradient(135deg, #f39c12, #e67e22)';
+                  if (entity.state > 20) return 'linear-gradient(135deg, #e67e22, #d35400)';
+                  return 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                ]]]
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+          name:
+            - font-size: 12px
+            - opacity: 0.9
+          state:
+            - font-size: 16px
+            - font-weight: bold
+
+  # Quick Control Switches
+  - type: entities
+    title: Quick Controls
+    entities:
+      - entity: switch.lux_ac_charge_enable
+        name: AC Charge Enable
+        icon: mdi:battery-charging
+      - entity: switch.lux_force_discharge_enable
+        name: Force Discharge
+        icon: mdi:battery-minus
+      - entity: switch.lux_grid_peak_shaving
+        name: Peak Shaving
+        icon: mdi:chart-line
+      - entity: switch.lux_power_backup_enable
+        name: Power Backup
+        icon: mdi:power-plug
+      - entity: switch.lux_seamless_eps_switching
+        name: Seamless EPS
+        icon: mdi:swap-horizontal
+
+  # Battery Settings
+  - type: entities
+    title: Battery Settings
+    entities:
+      - entity: number.lux_charge_power_percent
+        name: Charge Power %
+        icon: mdi:battery-charging-50
+      - entity: number.lux_dischg_power_percent
+        name: Discharge Power %
+        icon: mdi:battery-minus
+      - entity: number.lux_ac_charge_power
+        name: AC Charge Power
+        icon: mdi:lightning-bolt
+      - entity: number.lux_dischg_cut_off_soc_eod
+        name: Discharge Cut-off SOC
+        icon: mdi:battery-alert
+      - entity: number.lux_min_soc_grid
+        name: Min SOC Grid Charge
+        icon: mdi:battery-20
+
+  # Grid Settings
+  - type: entities
+    title: Grid Settings
+    entities:
+      - entity: number.lux_grid_voltage_upper
+        name: Grid Voltage Upper Limit
+        icon: mdi:transmission-tower
+      - entity: number.lux_grid_freq_lower
+        name: Grid Frequency Lower Limit
+        icon: mdi:sine-wave
+      - entity: number.lux_grid_import_limit
+        name: Grid Import Limit
+        icon: mdi:arrow-down-bold
+      - entity: number.lux_grid_export_limit
+        name: Grid Export Limit
+        icon: mdi:arrow-up-bold
+      - entity: number.lux_grid_reconnection_delay
+        name: Grid Reconnection Delay
+        icon: mdi:timer
+
+  # Time Settings
+  - type: entities
+    title: Time Settings
+    entities:
+      - entity: time.lux_ac_charge_time_1_start
+        name: AC Charge Time 1 Start
+        icon: mdi:clock-start
+      - entity: time.lux_ac_charge_time_1_end
+        name: AC Charge Time 1 End
+        icon: mdi:clock-end
+      - entity: time.lux_ac_charge_time_2_start
+        name: AC Charge Time 2 Start
+        icon: mdi:clock-start
+      - entity: time.lux_ac_charge_time_2_end
+        name: AC Charge Time 2 End
+        icon: mdi:clock-end
+      - entity: time.lux_discharge_time_1_start
+        name: Discharge Time 1 Start
+        icon: mdi:clock-start
+      - entity: time.lux_discharge_time_1_end
+        name: Discharge Time 1 End
+        icon: mdi:clock-end
+      - entity: time.lux_discharge_time_2_start
+        name: Discharge Time 2 Start
+        icon: mdi:clock-start
+      - entity: time.lux_discharge_time_2_end
+        name: Discharge Time 2 End
+        icon: mdi:clock-end
+
+  # System Configuration
+  - type: entities
+    title: System Configuration
+    entities:
+      - entity: select.lux_working_mode
+        name: Working Mode
+        icon: mdi:cog
+      - entity: select.lux_battery_type
+        name: Battery Type
+        icon: mdi:battery
+      - entity: select.lux_battery_profile
+        name: Battery Profile
+        icon: mdi:battery-heart
+      - entity: select.lux_load_priority
+        name: Load Priority
+        icon: mdi:home-lightning-bolt
+      - entity: select.lux_eps_status
+        name: EPS Status
+        icon: mdi:power-plug
+
+  # 12K Model Specific Controls (conditional)
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: entities
+      title: 12K Model Features
+      entities:
+        - entity: number.lux_max_system_power_12k
+          name: Max System Power (kW)
+          icon: mdi:lightning-bolt
+        - entity: number.lux_max_ac_chg_12k
+          name: Max AC Charge Power (kW)
+          icon: mdi:battery-charging-100
+        - entity: number.lux_smart_load_start_soc
+          name: Smart Load Start SOC
+          icon: mdi:battery-arrow-up
+        - entity: number.lux_smart_load_end_soc
+          name: Smart Load End SOC
+          icon: mdi:battery-arrow-down
+        - entity: number.lux_smart_load_start_voltage
+          name: Smart Load Start Voltage
+          icon: mdi:lightning-bolt
+        - entity: number.lux_smart_load_end_voltage
+          name: Smart Load End Voltage
+          icon: mdi:lightning-bolt
+        - entity: number.lux_smart_load_soc_hysteresis
+          name: Smart Load SOC Hysteresis
+          icon: mdi:battery-sync
+
+  # Advanced Settings
+  - type: entities
+    title: Advanced Settings
+    entities:
+      - entity: number.lux_charge_volt_ref
+        name: Charge Voltage Reference
+        icon: mdi:lightning-bolt
+      - entity: number.lux_discharge_cut_v
+        name: Discharge Cut Voltage
+        icon: mdi:battery-alert
+      - entity: number.lux_sys_ctrl_r110
+        name: System Control R110
+        icon: mdi:cog
+      - entity: number.lux_ac_mode_r120
+        name: AC Mode R120
+        icon: mdi:power-plug
+      - entity: number.lux_peak_shave_r179
+        name: Peak Shave R179
+        icon: mdi:chart-line
+      - entity: number.lux_power_limit_r180
+        name: Power Limit R180
+        icon: mdi:lightning-bolt
+
+  # Service Calls and Actions
+  - type: horizontal-stack
+    cards:
+      - type: custom:button-card
+        name: Refresh Data
+        icon: mdi:refresh
+        tap_action:
+          action: call-service
+          service: luxpower.luxpower_refresh_registers
+        styles:
+          card:
+            - background: linear-gradient(135deg, #3498db, #2980b9)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 60px
+
+      - type: custom:button-card
+        name: Reconnect
+        icon: mdi:connection
+        tap_action:
+          action: call-service
+          service: luxpower.luxpower_reconnect
+        styles:
+          card:
+            - background: linear-gradient(135deg, #27ae60, #2ecc71)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 60px
+
+      - type: custom:button-card
+        name: Sync Time
+        icon: mdi:clock-sync
+        tap_action:
+          action: call-service
+          service: luxpower.luxpower_synctime
+        styles:
+          card:
+            - background: linear-gradient(135deg, #f39c12, #e67e22)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 60px
+
+      - type: custom:button-card
+        name: Start Charging
+        icon: mdi:battery-charging
+        tap_action:
+          action: call-service
+          service: luxpower.luxpower_start_charging
+        styles:
+          card:
+            - background: linear-gradient(135deg, #9b59b6, #8e44ad)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 60px
+
+      - type: custom:button-card
+        name: Stop Charging
+        icon: mdi:battery-minus
+        tap_action:
+          action: call-service
+          service: luxpower.luxpower_stop_charging
+        styles:
+          card:
+            - background: linear-gradient(135deg, #e74c3c, #c0392b)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 60px
+
+  # System Information
+  - type: entities
+    title: System Information
+    entities:
+      - entity: sensor.lux_firmware_version
+        name: Firmware Version
+        icon: mdi:chip
+      - entity: sensor.lux_hardware_version
+        name: Hardware Version
+        icon: mdi:chip
+      - entity: sensor.lux_data_last_received_time
+        name: Last Data Update
+        icon: mdi:clock
+      - entity: sensor.lux_battery_count
+        name: Battery Count
+        icon: mdi:battery
+      - entity: sensor.lux_battery_capacity_ah
+        name: Battery Capacity (Ah)
+        icon: mdi:battery-heart
+      - entity: sensor.lux_battery_cycle_count
+        name: Battery Cycle Count
+        icon: mdi:battery-sync
+
+  # Diagnostic Information
+  - type: entities
+    title: Diagnostic Information
+    entities:
+      - entity: sensor.lux_fault_code
+        name: Fault Code
+        icon: mdi:alert-circle
+      - entity: sensor.lux_warning_code
+        name: Warning Code
+        icon: mdi:alert
+      - entity: binary_sensor.lux_battery_status
+        name: Battery Status
+        icon: mdi:battery-check
+      - entity: sensor.lux_battery_health
+        name: Battery Health
+        icon: mdi:battery-heart
+      - entity: sensor.lux_battery_wear_level
+        name: Battery Wear Level
+        icon: mdi:battery-alert
+      - entity: sensor.lux_grid_fault_detection
+        name: Grid Fault Detection
+        icon: mdi:transmission-tower-off

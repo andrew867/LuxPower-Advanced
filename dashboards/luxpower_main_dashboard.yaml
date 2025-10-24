@@ -1,0 +1,502 @@
+# LuxPower Main Dashboard
+# Complete dashboard with summary cards and energy overview
+# Based on the LuxPower cloud interface design
+
+title: LuxPower Energy Dashboard
+path: luxpower-main
+icon: mdi:solar-power
+panel: false
+cards:
+  # Header with system status and model info
+  - type: horizontal-stack
+    cards:
+      - type: custom:button-card
+        entity: sensor.luxpower_system_status
+        name: System Status
+        icon: mdi:power
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: |
+                [[[
+                  if (entity.state === 'Normal') return 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                  if (entity.state === 'Warning') return 'linear-gradient(135deg, #f39c12, #e67e22)';
+                  if (entity.state === 'Fault') return 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                  return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                ]]]
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+            - text-transform: uppercase
+            - letter-spacing: 1px
+          name:
+            - font-size: 12px
+            - opacity: 0.9
+          state:
+            - font-size: 16px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.luxpower_model_name
+        name: Inverter Model
+        icon: mdi:chip
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: linear-gradient(135deg, #3498db, #2980b9)
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+          name:
+            - font-size: 12px
+            - opacity: 0.9
+          state:
+            - font-size: 16px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.lux_battery_soc
+        name: Battery SOC
+        icon: mdi:battery
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: |
+                [[[
+                  if (entity.state > 80) return 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                  if (entity.state > 50) return 'linear-gradient(135deg, #f39c12, #e67e22)';
+                  if (entity.state > 20) return 'linear-gradient(135deg, #e67e22, #d35400)';
+                  return 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                ]]]
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+          name:
+            - font-size: 12px
+            - opacity: 0.9
+          state:
+            - font-size: 16px
+            - font-weight: bold
+
+  # Energy Summary Cards (matching LuxPower cloud UI)
+  - type: horizontal-stack
+    cards:
+      # Solar Yield Card
+      - type: custom:button-card
+        entity: sensor.luxpower_today_solar_yield
+        name: Solar Yield
+        icon: mdi:solar-power
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: linear-gradient(135deg, #63BFE6, #5DADE2)
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+            - height: 120px
+          name:
+            - font-size: 14px
+            - opacity: 0.9
+            - margin-bottom: 10px
+          state:
+            - font-size: 24px
+            - font-weight: bold
+            - margin-bottom: 5px
+          icon:
+            - font-size: 32px
+            - margin-bottom: 10px
+
+      # Battery Discharge/Charge Card
+      - type: custom:button-card
+        entity: sensor.luxpower_today_battery_discharge
+        name: Battery Discharge
+        icon: mdi:battery-minus
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: |
+                [[[
+                  if (states['sensor.lux_battery_charge'].state > 0) return 'linear-gradient(135deg, #F087A0, #E91E63)';
+                  return 'linear-gradient(135deg, #F087A0, #E91E63)';
+                ]]]
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+            - height: 120px
+          name:
+            - font-size: 14px
+            - opacity: 0.9
+            - margin-bottom: 10px
+          state:
+            - font-size: 24px
+            - font-weight: bold
+            - margin-bottom: 5px
+          icon:
+            - font-size: 32px
+            - margin-bottom: 10px
+
+      # Grid Export/Import Card
+      - type: custom:button-card
+        entity: sensor.luxpower_today_grid_export
+        name: Grid Export
+        icon: mdi:transmission-tower
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: |
+                [[[
+                  if (states['sensor.lux_grid_import_power'].state > 0) return 'linear-gradient(135deg, #F09C6B, #FF5722)';
+                  return 'linear-gradient(135deg, #F09C6B, #FF9800)';
+                ]]]
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+            - height: 120px
+          name:
+            - font-size: 14px
+            - opacity: 0.9
+            - margin-bottom: 10px
+          state:
+            - font-size: 24px
+            - font-weight: bold
+            - margin-bottom: 5px
+          icon:
+            - font-size: 32px
+            - margin-bottom: 10px
+
+      # Consumption Card
+      - type: custom:button-card
+        entity: sensor.luxpower_today_consumption
+        name: Consumption
+        icon: mdi:home-lightning-bolt
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - background: linear-gradient(135deg, #57C696, #4CAF50)
+            - color: white
+            - border-radius: 12px
+            - box-shadow: 0 4px 8px rgba(0,0,0,0.1)
+            - font-weight: bold
+            - height: 120px
+          name:
+            - font-size: 14px
+            - opacity: 0.9
+            - margin-bottom: 10px
+          state:
+            - font-size: 24px
+            - font-weight: bold
+            - margin-bottom: 5px
+          icon:
+            - font-size: 32px
+            - margin-bottom: 10px
+
+  # Energy Flow Visualization
+  - type: custom:luxpower-energy-flow-card
+    model_entity: sensor.lux_inverter_model
+    is_12k_entity: binary_sensor.luxpower_is_12k_model
+    has_pv3_entity: binary_sensor.luxpower_has_pv3
+    has_eps_entity: binary_sensor.luxpower_has_eps
+    has_generator_entity: binary_sensor.luxpower_has_generator
+    pv_power_entity: sensor.lux_pv_power
+    pv1_power_entity: sensor.lux_current_solar_output_1
+    pv2_power_entity: sensor.lux_current_solar_output_2
+    pv3_power_entity: sensor.lux_current_solar_output_3
+    battery_soc_entity: sensor.lux_battery_soc
+    battery_voltage_entity: sensor.lux_battery_voltage
+    battery_charge_entity: sensor.lux_battery_charge
+    battery_discharge_entity: sensor.lux_battery_discharge
+    grid_import_entity: sensor.lux_grid_import_power
+    grid_export_entity: sensor.lux_grid_export_power
+    grid_voltage_entity: sensor.lux_grid_voltage_live
+    grid_frequency_entity: sensor.lux_grid_frequency_live
+    load_power_entity: sensor.lux_load_power
+    consumption_entity: sensor.luxpower_total_consumption
+    eps_power_entity: sensor.lux_power_to_eps
+    status_entity: sensor.lux_status_text
+    system_status_entity: sensor.luxpower_system_status
+
+  # Power Flow Summary
+  - type: horizontal-stack
+    cards:
+      - type: custom:button-card
+        entity: sensor.luxpower_pv_to_load
+        name: PV → Load
+        icon: mdi:arrow-right-bold
+        styles:
+          card:
+            - background: linear-gradient(135deg, #FFD700, #FFA500)
+            - color: #2c3e50
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 80px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 18px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.luxpower_pv_to_battery
+        name: PV → Battery
+        icon: mdi:arrow-right-bold
+        styles:
+          card:
+            - background: linear-gradient(135deg, #32CD32, #228B22)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 80px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 18px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.luxpower_pv_to_grid
+        name: PV → Grid
+        icon: mdi:arrow-right-bold
+        styles:
+          card:
+            - background: linear-gradient(135deg, #FF6B6B, #E74C3C)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 80px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 18px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.luxpower_battery_to_load
+        name: Battery → Load
+        icon: mdi:arrow-right-bold
+        styles:
+          card:
+            - background: linear-gradient(135deg, #87CEEB, #4682B4)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 80px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 18px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.luxpower_grid_to_load
+        name: Grid → Load
+        icon: mdi:arrow-right-bold
+        styles:
+          card:
+            - background: linear-gradient(135deg, #DDA0DD, #9370DB)
+            - color: white
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 80px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 18px
+            - font-weight: bold
+
+  # Self Sufficiency and System Info
+  - type: horizontal-stack
+    cards:
+      - type: gauge
+        entity: sensor.luxpower_self_sufficiency
+        name: Self Sufficiency
+        min: 0
+        max: 100
+        severity:
+          green: 80
+          yellow: 50
+          red: 0
+        needle: true
+
+      - type: custom:button-card
+        entity: sensor.luxpower_energy_flow_state
+        name: Energy Flow State
+        icon: mdi:information
+        styles:
+          card:
+            - background: linear-gradient(135deg, #E8F4FD, #B3E5FC)
+            - color: #2c3e50
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 80px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 14px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.lux_battery_voltage
+        name: Battery Voltage
+        icon: mdi:lightning-bolt
+        styles:
+          card:
+            - background: linear-gradient(135deg, #FFF3E0, #FFE0B2)
+            - color: #2c3e50
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 80px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 18px
+            - font-weight: bold
+
+      - type: custom:button-card
+        entity: sensor.lux_grid_frequency_live
+        name: Grid Frequency
+        icon: mdi:sine-wave
+        styles:
+          card:
+            - background: linear-gradient(135deg, #F3E5F5, #E1BEE7)
+            - color: #2c3e50
+            - border-radius: 8px
+            - font-weight: bold
+            - height: 80px
+          name:
+            - font-size: 12px
+            - opacity: 0.8
+          state:
+            - font-size: 18px
+            - font-weight: bold
+
+  # Quick Actions (if switches are available)
+  - type: conditional
+    conditions:
+      - entity: switch.lux_ac_charge_enable
+        state_not: unavailable
+    card:
+      type: horizontal-stack
+      cards:
+        - type: custom:button-card
+          entity: switch.lux_ac_charge_enable
+          name: AC Charge
+          icon: mdi:battery-charging
+          tap_action:
+            action: toggle
+          styles:
+            card:
+              - background: |
+                  [[[
+                    if (entity.state === 'on') return 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                    return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                  ]]]
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+        - type: custom:button-card
+          entity: switch.lux_force_discharge_enable
+          name: Force Discharge
+          icon: mdi:battery-minus
+          tap_action:
+            action: toggle
+          styles:
+            card:
+              - background: |
+                  [[[
+                    if (entity.state === 'on') return 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                    return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                  ]]]
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+        - type: custom:button-card
+          entity: switch.lux_grid_peak_shaving
+          name: Peak Shaving
+          icon: mdi:chart-line
+          tap_action:
+            action: toggle
+          styles:
+            card:
+              - background: |
+                  [[[
+                    if (entity.state === 'on') return 'linear-gradient(135deg, #f39c12, #e67e22)';
+                    return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                  ]]]
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+  # 12K Model Specific Features (conditional)
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: horizontal-stack
+      cards:
+        - type: custom:button-card
+          entity: number.lux_smart_load_start_soc
+          name: Smart Load Start SOC
+          icon: mdi:battery-arrow-up
+          tap_action:
+            action: more-info
+          styles:
+            card:
+              - background: linear-gradient(135deg, #3498db, #2980b9)
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+        - type: custom:button-card
+          entity: number.lux_smart_load_end_soc
+          name: Smart Load End SOC
+          icon: mdi:battery-arrow-down
+          tap_action:
+            action: more-info
+          styles:
+            card:
+              - background: linear-gradient(135deg, #9b59b6, #8e44ad)
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+        - type: custom:button-card
+          entity: number.lux_max_system_power_12k
+          name: Max System Power
+          icon: mdi:lightning-bolt
+          tap_action:
+            action: more-info
+          styles:
+            card:
+              - background: linear-gradient(135deg, #e67e22, #d35400)
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px

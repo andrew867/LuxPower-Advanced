@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="homeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#98D8E8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B0E0E6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- House base -->
+  <rect x="20" y="50" width="60" height="40" rx="3" ry="3" fill="url(#homeGradient)" stroke="#000000" stroke-width="2"/>
+  
+  <!-- Roof -->
+  <polygon points="10,50 50,20 90,50" fill="#8B4513" stroke="#000000" stroke-width="2"/>
+  
+  <!-- Door -->
+  <rect x="40" y="70" width="20" height="20" rx="2" ry="2" fill="#654321" stroke="#000000" stroke-width="1"/>
+  
+  <!-- Windows -->
+  <rect x="30" y="60" width="8" height="8" rx="1" ry="1" fill="#87CEEB" stroke="#000000" stroke-width="1"/>
+  <rect x="62" y="60" width="8" height="8" rx="1" ry="1" fill="#87CEEB" stroke="#000000" stroke-width="1"/>
+  
+  <!-- Chimney -->
+  <rect x="70" y="30" width="8" height="20" rx="1" ry="1" fill="#696969" stroke="#000000" stroke-width="1"/>
+  
+  <!-- Power consumption indicator -->
+  <circle cx="50" cy="35" r="6" fill="#FFD700" stroke="#000000" stroke-width="1"/>
+  <text x="50" y="40" text-anchor="middle" font-family="Arial" font-size="8" fill="#000000">W</text>
+</svg>

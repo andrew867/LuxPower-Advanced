@@ -1,0 +1,416 @@
+# LuxPower 12K Features Dashboard
+# Additional dashboard for 12K-specific features
+# Only shows for 12K models (CFAA, CEAA, FAAB)
+
+title: LuxPower 12K Features
+path: luxpower-12k
+icon: mdi:chip
+panel: false
+cards:
+  # 12K Model Detection
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: markdown
+      content: |
+        # 🚀 12K Model Features
+        
+        This dashboard shows advanced features available on 12K models (CFAA, CEAA, FAAB).
+        
+        **Enhanced Features:**
+        - Smart Load Control
+        - AC Coupling Support
+        - Advanced Peak Shaving
+        - Higher Power Ratings
+        - Generator Integration
+        - Enhanced Monitoring
+
+  # Smart Load Control Section
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: entities
+      title: Smart Load Control
+      entities:
+        - entity: number.lux_smart_load_start_soc
+          name: Smart Load Start SOC
+          icon: mdi:battery-arrow-up
+        - entity: number.lux_smart_load_end_soc
+          name: Smart Load End SOC
+          icon: mdi:battery-arrow-down
+        - entity: number.lux_smart_load_start_voltage
+          name: Smart Load Start Voltage
+          icon: mdi:lightning-bolt
+        - entity: number.lux_smart_load_end_voltage
+          name: Smart Load End Voltage
+          icon: mdi:lightning-bolt
+        - entity: number.lux_smart_load_soc_hysteresis
+          name: Smart Load SOC Hysteresis
+          icon: mdi:battery-sync
+        - entity: sensor.lux_smart_load_power
+          name: Smart Load Power
+          icon: mdi:home-lightning-bolt
+
+  # AC Coupling Features
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: entities
+      title: AC Coupling
+      entities:
+        - entity: number.lux_ac_couple_start_voltage
+          name: AC Couple Start Voltage
+          icon: mdi:lightning-bolt
+        - entity: number.lux_ac_couple_end_voltage
+          name: AC Couple End Voltage
+          icon: mdi:lightning-bolt
+        - entity: sensor.lux_ac_couple_power
+          name: AC Couple Power
+          icon: mdi:power-plug
+        - entity: binary_sensor.lux_ac_couple_enable
+          name: AC Couple Enable
+          icon: mdi:power-plug
+
+  # Advanced Power Management
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: entities
+      title: Advanced Power Management
+      entities:
+        - entity: number.lux_max_system_power_12k
+          name: Max System Power (kW)
+          icon: mdi:lightning-bolt
+        - entity: number.lux_max_ac_chg_12k
+          name: Max AC Charge Power (kW)
+          icon: mdi:battery-charging-100
+        - entity: number.lux_peak_shave_r179
+          name: Peak Shave Configuration
+          icon: mdi:chart-line
+        - entity: number.lux_power_limit_r180
+          name: Power Limit Setting
+          icon: mdi:lightning-bolt
+
+  # Generator Integration (if available)
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+      - entity: binary_sensor.luxpower_has_generator
+        state: 'on'
+    card:
+      type: entities
+      title: Generator Integration
+      entities:
+        - entity: sensor.lux_generator_power
+          name: Generator Power
+          icon: mdi:engine
+        - entity: binary_sensor.lux_generator_running
+          name: Generator Running
+          icon: mdi:engine
+        - entity: number.lux_generator_start_soc
+          name: Generator Start SOC
+          icon: mdi:battery-arrow-up
+        - entity: number.lux_generator_stop_soc
+          name: Generator Stop SOC
+          icon: mdi:battery-arrow-down
+        - entity: switch.lux_generator_auto_start
+          name: Generator Auto Start
+          icon: mdi:engine
+
+  # Enhanced Monitoring
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: custom:apexcharts-card
+      header:
+        title: Smart Load Control Monitoring
+        show: true
+      apex_config:
+        chart:
+          type: line
+          height: 300
+          animations:
+            enabled: true
+        stroke:
+          width: 3
+          curve: smooth
+        colors:
+          - '#9b59b6'  # Smart Load Power
+          - '#e67e22'  # SOC
+          - '#3498db'  # Voltage
+          - '#27ae60'  # Start Threshold
+          - '#e74c3c'  # End Threshold
+        legend:
+          position: top
+        xaxis:
+          type: datetime
+        yaxis:
+          title:
+            text: Power (W) / SOC (%) / Voltage (V)
+          labels:
+            formatter: |
+              function(val) {
+                return val.toFixed(0);
+              }
+      series:
+        - entity: sensor.lux_smart_load_power
+          name: Smart Load Power
+          type: line
+          color: '#9b59b6'
+          show:
+            extremas: true
+        - entity: sensor.lux_battery_soc
+          name: Battery SOC
+          type: line
+          color: '#e67e22'
+          show:
+            extremas: true
+        - entity: sensor.lux_battery_voltage
+          name: Battery Voltage
+          type: line
+          color: '#3498db'
+          show:
+            extremas: true
+        - entity: number.lux_smart_load_start_soc
+          name: Start SOC Threshold
+          type: line
+          color: '#27ae60'
+          show:
+            extremas: true
+        - entity: number.lux_smart_load_end_soc
+          name: End SOC Threshold
+          type: line
+          color: '#e74c3c'
+          show:
+            extremas: true
+      graph_span: 24h
+      update_interval: 30s
+
+  # Power Distribution
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: horizontal-stack
+      cards:
+        - type: custom:button-card
+          entity: sensor.lux_smart_load_power
+          name: Smart Load
+          icon: mdi:home-lightning-bolt
+          styles:
+            card:
+              - background: linear-gradient(135deg, #9b59b6, #8e44ad)
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 80px
+            name:
+              - font-size: 12px
+              - opacity: 0.8
+            state:
+              - font-size: 18px
+              - font-weight: bold
+
+        - type: custom:button-card
+          entity: sensor.lux_ac_couple_power
+          name: AC Couple
+          icon: mdi:power-plug
+          styles:
+            card:
+              - background: linear-gradient(135deg, #e67e22, #d35400)
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 80px
+            name:
+              - font-size: 12px
+              - opacity: 0.8
+            state:
+              - font-size: 18px
+              - font-weight: bold
+
+        - type: custom:button-card
+          entity: sensor.lux_max_system_power_12k
+          name: Max System Power
+          icon: mdi:lightning-bolt
+          styles:
+            card:
+              - background: linear-gradient(135deg, #f39c12, #e67e22)
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 80px
+            name:
+              - font-size: 12px
+              - opacity: 0.8
+            state:
+              - font-size: 18px
+              - font-weight: bold
+
+        - type: custom:button-card
+          entity: sensor.lux_max_ac_chg_12k
+          name: Max AC Charge
+          icon: mdi:battery-charging-100
+          styles:
+            card:
+              - background: linear-gradient(135deg, #27ae60, #2ecc71)
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 80px
+            name:
+              - font-size: 12px
+              - opacity: 0.8
+            state:
+              - font-size: 18px
+              - font-weight: bold
+
+  # Advanced Controls
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: horizontal-stack
+      cards:
+        - type: custom:button-card
+          entity: switch.lux_smart_load_enable
+          name: Smart Load Enable
+          icon: mdi:home-lightning-bolt
+          tap_action:
+            action: toggle
+          styles:
+            card:
+              - background: |
+                  [[[
+                    if (entity.state === 'on') return 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                    return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                  ]]]
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+        - type: custom:button-card
+          entity: switch.lux_ac_couple_enable
+          name: AC Couple Enable
+          icon: mdi:power-plug
+          tap_action:
+            action: toggle
+          styles:
+            card:
+              - background: |
+                  [[[
+                    if (entity.state === 'on') return 'linear-gradient(135deg, #e67e22, #d35400)';
+                    return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                  ]]]
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+        - type: custom:button-card
+          entity: switch.lux_peak_shaving_12k
+          name: Peak Shaving 12K
+          icon: mdi:chart-line
+          tap_action:
+            action: toggle
+          styles:
+            card:
+              - background: |
+                  [[[
+                    if (entity.state === 'on') return 'linear-gradient(135deg, #f39c12, #e67e22)';
+                    return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                  ]]]
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+        - type: custom:button-card
+          entity: switch.lux_enhanced_monitoring
+          name: Enhanced Monitoring
+          icon: mdi:monitor
+          tap_action:
+            action: toggle
+          styles:
+            card:
+              - background: |
+                  [[[
+                    if (entity.state === 'on') return 'linear-gradient(135deg, #3498db, #2980b9)';
+                    return 'linear-gradient(135deg, #95a5a6, #7f8c8c)';
+                  ]]]
+              - color: white
+              - border-radius: 8px
+              - font-weight: bold
+              - height: 60px
+
+  # System Information for 12K Models
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'on'
+    card:
+      type: entities
+      title: 12K System Information
+      entities:
+        - entity: sensor.lux_inverter_model
+          name: Model Code
+          icon: mdi:chip
+        - entity: sensor.lux_firmware_version
+          name: Firmware Version
+          icon: mdi:chip
+        - entity: sensor.lux_hardware_version
+          name: Hardware Version
+          icon: mdi:chip
+        - entity: sensor.luxpower_power_rating
+          name: Power Rating
+          icon: mdi:lightning-bolt
+        - entity: binary_sensor.luxpower_has_pv3
+          name: Has PV3 Input
+          icon: mdi:solar-power
+        - entity: binary_sensor.luxpower_has_eps
+          name: Has EPS/Backup
+          icon: mdi:power-plug
+        - entity: binary_sensor.luxpower_has_generator
+          name: Has Generator
+          icon: mdi:engine
+
+  # Not 12K Model Message
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.luxpower_is_12k_model
+        state: 'off'
+    card:
+      type: markdown
+      content: |
+        # ℹ️ 12K Features Not Available
+        
+        This dashboard is designed for 12K models (CFAA, CEAA, FAAB).
+        
+        Your current model: **{{ states('sensor.lux_inverter_model') }}**
+        
+        **Available Models:**
+        - CFAA: SNA 12K
+        - CEAA: SNA 12K-US  
+        - FAAB: LXP-LB-8-12K
+        
+        **Standard Features:**
+        - Basic energy monitoring
+        - Standard controls
+        - 2 PV inputs
+        - Standard power ratings
+        
+        For full 12K features, please upgrade to a supported 12K model.
