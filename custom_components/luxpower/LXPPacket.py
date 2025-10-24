@@ -350,6 +350,59 @@ class LXPPacket:
     ac_couple_start_volt = "ac_couple_start_volt"
     ac_couple_end_volt = "ac_couple_end_volt"
     
+    # NEW 2025.03.05 Protocol: PV4-PV6 Support (6-MPPT Systems)
+    v_pv_4 = "v_pv_4"
+    v_pv_5 = "v_pv_5"
+    v_pv_6 = "v_pv_6"
+    p_pv_4 = "p_pv_4"
+    p_pv_5 = "p_pv_5"
+    p_pv_6 = "p_pv_6"
+    e_pv_4_day = "e_pv_4_day"
+    e_pv_5_day = "e_pv_5_day"
+    e_pv_6_day = "e_pv_6_day"
+    e_pv_4_all = "e_pv_4_all"
+    e_pv_5_all = "e_pv_5_all"
+    e_pv_6_all = "e_pv_6_all"
+    
+    # NEW 2025.03.05 Protocol: Enhanced Monitoring
+    remaining_charge_seconds = "remaining_charge_seconds"
+    smart_load_power = "smart_load_power"
+    t_internal_ntc = "t_internal_ntc"
+    t_dcdc_low = "t_dcdc_low"
+    t_dcdc_high = "t_dcdc_high"
+    exception_reason_1 = "exception_reason_1"
+    exception_reason_2 = "exception_reason_2"
+    
+    # NEW 2025.03.05 Protocol: Switch Entity Bitmasks
+    # Hold 110 - Function Enable 1 (12K Models)
+    PV_GRID_OFF = 1 << 0  # Bit 0
+    FAST_ZERO_EXPORT = 1 << 1  # Bit 1
+    MICRO_GRID = 1 << 2  # Bit 2
+    BATTERY_SHARED = 1 << 3  # Bit 3
+    BUZZER_DRY_CONTACTOR = 1 << 4  # Bit 4
+    GREEN_ABSOLUTE_ZERO_EXPORT = 1 << 5  # Bit 5
+    ECO_MODE_EPS_RY = 1 << 6  # Bit 6
+    
+    # Hold 179 - Function Enable 2
+    BATTERY_WAKEUP = 1 << 0  # Bit 0
+    PV_SELL_FIRST = 1 << 1  # Bit 1
+    VOLT_WATT = 1 << 2  # Bit 2
+    TRIP_TIME_UNIT = 1 << 3  # Bit 3
+    ACTIVE_POWER_CMD = 1 << 4  # Bit 4
+    GEN_PEAK_SHAVING = 1 << 5  # Bit 5
+    BATTERY_CHARGE_CONTROL = 1 << 6  # Bit 6
+    BATTERY_DISCHARGE_CONTROL = 1 << 7  # Bit 7
+    AC_COUPLING = 1 << 8  # Bit 8
+    RSD_DISABLE = 1 << 9  # Bit 9
+    ON_GRID_ALWAYS_ON = 1 << 10  # Bit 10
+    
+    # Hold 233 - Function Enable 4
+    QUICK_CHARGE_START = 1 << 0  # Bit 0
+    BATTERY_BACKUP = 1 << 1  # Bit 1
+    MAINTENANCE_ENABLE = 1 << 2  # Bit 2
+    WORKING_MODE = 1 << 3  # Bit 3
+    EN50549_F_STOP = 1 << 10  # Bit 10
+    
     # Advanced System Configuration (Registers 176-180)
     max_sys_power_12k = "max_sys_power_12k"
     sys_config_12k = "sys_config_12k"
@@ -1501,41 +1554,94 @@ class LXPPacket:
                 self.readValuesThis[key] = 0
 
     def get_device_values_bank5(self):
-        """Process extended register range 200-253 (Bank 5)."""
+        """Process extended register range 200-253 (Bank 5) - 2025.03.05 Protocol."""
         if self.inputRead6:
             if self.debug:
-                _LOGGER.debug("***********INPUT 6 registers (200-253)************")
+                _LOGGER.debug("***********INPUT 6 registers (200-253) - 2025.03.05 Protocol************")
             
-            # Extended diagnostic and monitoring data
-            # These registers contain additional system information
-            # that may not be available on all inverter models
+            # NEW 2025.03.05 Protocol: PV4-PV6 Support (6-MPPT Systems)
+            # Input 217-219: PV4-PV6 voltages (0.1V)
+            v_pv_4 = self.readValuesInt.get(217, 0) / 10
+            v_pv_5 = self.readValuesInt.get(218, 0) / 10
+            v_pv_6 = self.readValuesInt.get(219, 0) / 10
             
-            # Extended system diagnostics (registers 200-220)
-            system_health_score = self.readValuesInt.get(200, 0)
-            communication_quality = self.readValuesInt.get(201, 0)
-            data_integrity_score = self.readValuesInt.get(202, 0)
+            # Input 220-222: PV4-PV6 powers (W)
+            p_pv_4 = self.readValuesInt.get(220, 0)
+            p_pv_5 = self.readValuesInt.get(221, 0)
+            p_pv_6 = self.readValuesInt.get(222, 0)
             
-            self.readValuesThis["system_health_score"] = system_health_score
-            self.readValuesThis["communication_quality"] = communication_quality
-            self.readValuesThis["data_integrity_score"] = data_integrity_score
+            # Input 223: PV4 daily energy (0.1kWh)
+            e_pv_4_day = self.readValuesInt.get(223, 0) / 10
             
-            # Extended performance metrics (registers 221-240)
-            efficiency_rating = self.readValuesInt.get(221, 0) / 100.0
-            power_factor_avg = self.readValuesInt.get(222, 0) / 100.0
-            harmonic_distortion = self.readValuesInt.get(223, 0) / 100.0
+            # Input 224-225: PV4 total energy (0.1kWh) - Low/High bytes
+            e_pv_4_all_low = self.readValuesInt.get(224, 0)
+            e_pv_4_all_high = self.readValuesInt.get(225, 0)
+            e_pv_4_all = (e_pv_4_all_high << 16) | e_pv_4_all_low
+            e_pv_4_all = e_pv_4_all / 10
             
-            self.readValuesThis["efficiency_rating"] = efficiency_rating
-            self.readValuesThis["power_factor_avg"] = power_factor_avg
-            self.readValuesThis["harmonic_distortion"] = harmonic_distortion
+            # Input 226: PV5 daily energy (0.1kWh)
+            e_pv_5_day = self.readValuesInt.get(226, 0) / 10
             
-            # Extended environmental data (registers 241-253)
-            ambient_temp = self.readValuesInt.get(241, 0) / 10.0
-            humidity_level = self.readValuesInt.get(242, 0)
-            air_quality_index = self.readValuesInt.get(243, 0)
+            # Input 227-228: PV5 total energy (0.1kWh) - Low/High bytes
+            e_pv_5_all_low = self.readValuesInt.get(227, 0)
+            e_pv_5_all_high = self.readValuesInt.get(228, 0)
+            e_pv_5_all = (e_pv_5_all_high << 16) | e_pv_5_all_low
+            e_pv_5_all = e_pv_5_all / 10
             
-            self.readValuesThis["ambient_temp"] = ambient_temp
-            self.readValuesThis["humidity_level"] = humidity_level
-            self.readValuesThis["air_quality_index"] = air_quality_index
+            # Input 229: PV6 daily energy (0.1kWh)
+            e_pv_6_day = self.readValuesInt.get(229, 0) / 10
+            
+            # Input 230-231: PV6 total energy (0.1kWh) - Low/High bytes
+            e_pv_6_all_low = self.readValuesInt.get(230, 0)
+            e_pv_6_all_high = self.readValuesInt.get(231, 0)
+            e_pv_6_all = (e_pv_6_all_high << 16) | e_pv_6_all_low
+            e_pv_6_all = e_pv_6_all / 10
+            
+            # Input 232: Smart Load Power (W)
+            smart_load_power = self.readValuesInt.get(232, 0)
+            
+            # NEW 2025.03.05 Protocol: Enhanced Monitoring
+            # Input 210: Remaining charge seconds
+            remaining_charge_seconds = self.readValuesInt.get(210, 0)
+            
+            # Input 214-216: Updated temperature sensors
+            t_internal_ntc = self.readValuesInt.get(214, 0) / 10  # Internal NTC temperature
+            t_dcdc_low = self.readValuesInt.get(215, 0) / 10    # DCDC temperature low
+            t_dcdc_high = self.readValuesInt.get(216, 0) / 10   # DCDC temperature high
+            
+            # Input 176-178: Historical exception reasons
+            exception_reason_1 = self.readValuesInt.get(176, 0)
+            exception_reason_2 = self.readValuesInt.get(177, 0)
+            charge_discharge_disable_reason = self.readValuesInt.get(178, 0)
+            
+            # Store all new values
+            self.readValuesThis[LXPPacket.v_pv_4] = v_pv_4
+            self.readValuesThis[LXPPacket.v_pv_5] = v_pv_5
+            self.readValuesThis[LXPPacket.v_pv_6] = v_pv_6
+            self.readValuesThis[LXPPacket.p_pv_4] = p_pv_4
+            self.readValuesThis[LXPPacket.p_pv_5] = p_pv_5
+            self.readValuesThis[LXPPacket.p_pv_6] = p_pv_6
+            self.readValuesThis[LXPPacket.e_pv_4_day] = e_pv_4_day
+            self.readValuesThis[LXPPacket.e_pv_5_day] = e_pv_5_day
+            self.readValuesThis[LXPPacket.e_pv_6_day] = e_pv_6_day
+            self.readValuesThis[LXPPacket.e_pv_4_all] = e_pv_4_all
+            self.readValuesThis[LXPPacket.e_pv_5_all] = e_pv_5_all
+            self.readValuesThis[LXPPacket.e_pv_6_all] = e_pv_6_all
+            self.readValuesThis[LXPPacket.smart_load_power] = smart_load_power
+            self.readValuesThis[LXPPacket.remaining_charge_seconds] = remaining_charge_seconds
+            self.readValuesThis[LXPPacket.t_internal_ntc] = t_internal_ntc
+            self.readValuesThis[LXPPacket.t_dcdc_low] = t_dcdc_low
+            self.readValuesThis[LXPPacket.t_dcdc_high] = t_dcdc_high
+            self.readValuesThis[LXPPacket.exception_reason_1] = exception_reason_1
+            self.readValuesThis[LXPPacket.exception_reason_2] = exception_reason_2
+            self.readValuesThis[LXPPacket.charge_discharge_disable_reason] = charge_discharge_disable_reason
+            
+            if self.debug:
+                _LOGGER.debug("PV4-PV6: V4=%.1fV, V5=%.1fV, V6=%.1fV, P4=%dW, P5=%dW, P6=%dW", 
+                             v_pv_4, v_pv_5, v_pv_6, p_pv_4, p_pv_5, p_pv_6)
+                _LOGGER.debug("Smart Load Power: %dW, Remaining Charge: %ds", smart_load_power, remaining_charge_seconds)
+                _LOGGER.debug("Temperatures: Internal=%.1f°C, DCDC_Low=%.1f°C, DCDC_High=%.1f°C", 
+                             t_internal_ntc, t_dcdc_low, t_dcdc_high)
 
     def get_device_values_bank6(self):
         """Process extended register range 254-380 (Bank 6)."""

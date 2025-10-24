@@ -224,6 +224,11 @@ async def async_setup_entry(
         # Split-Phase EPS Additional Sensors
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Apparent Power (Live)", "unique": "lux_current_eps_L1_va", "bank": 3, "attribute": LXPPacket.eps_L1_va, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": "VA", "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L2 Apparent Power (Live)", "unique": "lux_current_eps_L2_va", "bank": 3, "attribute": LXPPacket.eps_L2_va, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": "VA", "state_class": SensorStateClass.MEASUREMENT},
+        
+        # EPS Power Factor Sensors
+        {"etype": "LPPF", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Power Factor", "unique": "lux_current_eps_L1_pf", "bank": 3, "attribute_watts": LXPPacket.eps_L1_watt, "attribute_va": LXPPacket.eps_L1_va, "device_class": SensorDeviceClass.POWER_FACTOR, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
+        {"etype": "LPPF", "name": "Lux {replaceID_midfix}{hyphen} EPS L2 Power Factor", "unique": "lux_current_eps_L2_pf", "bank": 3, "attribute_watts": LXPPacket.eps_L2_watt, "attribute_va": LXPPacket.eps_L2_va, "device_class": SensorDeviceClass.POWER_FACTOR, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
+        
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Energy (Daily)", "unique": "lux_current_eps_L1_day", "bank": 3, "attribute": LXPPacket.eps_L1_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L2 Energy (Daily)", "unique": "lux_current_eps_L2_day", "bank": 3, "attribute": LXPPacket.eps_L2_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Energy (Total)", "unique": "lux_current_eps_L1_all", "bank": 3, "attribute": LXPPacket.eps_L1_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
@@ -241,6 +246,34 @@ async def async_setup_entry(
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power", "unique": "lux_peak_shaving_power", "bank": 4, "attribute": LXPPacket.peak_shaving_power, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving SOC", "unique": "lux_peak_shaving_soc", "bank": 4, "attribute": LXPPacket.peak_shaving_soc, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Voltage", "unique": "lux_peak_shaving_volt", "bank": 4, "attribute": LXPPacket.peak_shaving_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        
+        # NEW 2025.03.05 Protocol: PV4-PV6 Support (6-MPPT Systems) - Trip 6-20K Models Only
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 4 (Live)", "unique": "lux_current_solar_voltage_4", "bank": 5, "attribute": LXPPacket.v_pv_4, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 5 (Live)", "unique": "lux_current_solar_voltage_5", "bank": 5, "attribute": LXPPacket.v_pv_5, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Voltage Array 6 (Live)", "unique": "lux_current_solar_voltage_6", "bank": 5, "attribute": LXPPacket.v_pv_6, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 4 (Live)", "unique": "lux_current_solar_output_4", "bank": 5, "attribute": LXPPacket.p_pv_4, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 5 (Live)", "unique": "lux_current_solar_output_5", "bank": 5, "attribute": LXPPacket.p_pv_5, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 6 (Live)", "unique": "lux_current_solar_output_6", "bank": 5, "attribute": LXPPacket.p_pv_6, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Energy Array 4 (Daily)", "unique": "lux_solar_energy_array_4_daily", "bank": 5, "attribute": LXPPacket.e_pv_4_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Energy Array 5 (Daily)", "unique": "lux_solar_energy_array_5_daily", "bank": 5, "attribute": LXPPacket.e_pv_5_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Energy Array 6 (Daily)", "unique": "lux_solar_energy_array_6_daily", "bank": 5, "attribute": LXPPacket.e_pv_6_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Energy Array 4 (Total)", "unique": "lux_solar_energy_array_4_total", "bank": 5, "attribute": LXPPacket.e_pv_4_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Energy Array 5 (Total)", "unique": "lux_solar_energy_array_5_total", "bank": 5, "attribute": LXPPacket.e_pv_5_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Energy Array 6 (Total)", "unique": "lux_solar_energy_array_6_total", "bank": 5, "attribute": LXPPacket.e_pv_6_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING, "enabled": False},
+        
+        # NEW 2025.03.05 Protocol: Enhanced Monitoring
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Remaining Charge Time", "unique": "lux_remaining_charge_time", "bank": 5, "attribute": LXPPacket.remaining_charge_seconds, "device_class": SensorDeviceClass.DURATION, "unit_of_measurement": "s", "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Power", "unique": "lux_smart_load_power", "bank": 5, "attribute": LXPPacket.smart_load_power, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        
+        # NEW 2025.03.05 Protocol: Updated Temperature Sensors (Input 214-216)
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Internal Temperature (NTC)", "unique": "lux_internal_temperature_ntc", "bank": 5, "attribute": LXPPacket.t_internal_ntc, "device_class": SensorDeviceClass.TEMPERATURE, "unit_of_measurement": UnitOfTemperature.CELSIUS, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} DCDC Temperature Low", "unique": "lux_dcdc_temperature_low", "bank": 5, "attribute": LXPPacket.t_dcdc_low, "device_class": SensorDeviceClass.TEMPERATURE, "unit_of_measurement": UnitOfTemperature.CELSIUS, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} DCDC Temperature High", "unique": "lux_dcdc_temperature_high", "bank": 5, "attribute": LXPPacket.t_dcdc_high, "device_class": SensorDeviceClass.TEMPERATURE, "unit_of_measurement": UnitOfTemperature.CELSIUS, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        
+        # NEW 2025.03.05 Protocol: Historical Exception Sensors (Input 176-178)
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Exception Reason 1", "unique": "lux_exception_reason_1", "bank": 4, "attribute": LXPPacket.exception_reason_1, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Exception Reason 2", "unique": "lux_exception_reason_2", "bank": 4, "attribute": LXPPacket.exception_reason_2, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Discharge Disable Reason", "unique": "lux_charge_discharge_disable_reason", "bank": 4, "attribute": LXPPacket.charge_discharge_disable_reason, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         
         # AC Coupling Sensors (Registers 220-223)
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling Start SOC", "unique": "lux_ac_couple_start_soc", "bank": 4, "attribute": LXPPacket.ac_couple_start_soc, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
@@ -704,6 +737,8 @@ async def async_setup_entry(
             sensorEntities.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPHC":
             sensorEntities.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPPF":
+            sensorEntities.append(LuxPowerFactorSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPBS":
             sensorEntities.append(LuxPowerBatteryStatusSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPLS":
@@ -1011,6 +1046,43 @@ class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
         self._attr_native_value = f"{round(consumption_value, 1)}"
 
         self._attr_available = True
+        self.schedule_update_ha_state()
+        return self._attr_native_value
+
+
+class LuxPowerFactorSensor(LuxPowerSensorEntity):
+    """
+    Used for power factor calculation.
+    
+    Template equation power_factor = watts / va
+    """
+
+    def __init__(
+        self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None
+    ):
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._device_attribute_watts = entity_definition["attribute_watts"]
+        self._device_attribute_va = entity_definition["attribute_va"]
+
+    def push_update(self, event):
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+        self._data = event.data.get("data", {})
+
+        watts = float(self._data.get(self._device_attribute_watts, 0.0))
+        va = float(self._data.get(self._device_attribute_va, 0.0))
+        
+        # Handle division by zero and invalid values
+        if va == 0.0 or watts is None or va is None:
+            self._attr_native_value = "Unavailable"
+            self._attr_available = False
+        else:
+            power_factor = watts / va
+            # Clamp power factor between 0 and 1
+            power_factor = max(0.0, min(1.0, power_factor))
+            self._attr_native_value = f"{round(power_factor, 2)}"
+            self._attr_available = True
+
         self.schedule_update_ha_state()
         return self._attr_native_value
 

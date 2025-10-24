@@ -100,85 +100,85 @@ async def async_setup_entry(
     # Enhanced Diagnostics Binary Sensors (Phase 1A-B)
     binary_sensors = [
         # Fault & Warning Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Fault Active", "unique": "lux_fault_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Warning Active", "unique": "lux_warning_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} System Alarm", "unique": "lux_system_alarm", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Fault Active", "unique": "lux_fault_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "internal_fault", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Warning Active", "unique": "lux_warning_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "warning_code", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} System Alarm", "unique": "lux_system_alarm", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "fault_code", "enabled": False},
         
         # BMS Status Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} BMS Connected", "unique": "lux_bms_connected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} BMS Fault", "unique": "lux_bms_fault", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Active", "unique": "lux_battery_protection", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} BMS Connected", "unique": "lux_bms_connected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "attribute": "bat_status_inv", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} BMS Fault", "unique": "lux_bms_fault", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "bat_status_inv", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Active", "unique": "lux_battery_protection", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "bat_status_inv", "enabled": False},
         
         # Inverter Health Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Over Temperature", "unique": "lux_over_temp", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.HEAT, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Fan Failure", "unique": "lux_fan_failure", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Communication Error", "unique": "lux_comm_error", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Over Temperature", "unique": "lux_over_temp", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.HEAT, "attribute": "t_inner", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Fan Failure", "unique": "lux_fan_failure", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "t_rad_1", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Communication Error", "unique": "lux_comm_error", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "attribute": "connection_quality", "enabled": False},
         
         # Operating Mode Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Connected", "unique": "lux_grid_connected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} EPS Mode Active", "unique": "lux_eps_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Active", "unique": "lux_ac_couple_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Connected", "unique": "lux_grid_connected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "attribute": "grid_status", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} EPS Mode Active", "unique": "lux_eps_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "eps_status", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Active", "unique": "lux_ac_couple_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "ac_couple_start_soc", "enabled": False},
         
         # Parallel System Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Master", "unique": "lux_parallel_master", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Slave", "unique": "lux_parallel_slave", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Sync", "unique": "lux_parallel_sync", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Active", "unique": "lux_parallel_system_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Communication Error", "unique": "lux_parallel_comm_error", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Master", "unique": "lux_parallel_master", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "parallel_system", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Slave", "unique": "lux_parallel_slave", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "parallel_system", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Sync", "unique": "lux_parallel_sync", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "attribute": "parallel_system", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel System Active", "unique": "lux_parallel_system_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "parallel_system", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Parallel Communication Error", "unique": "lux_parallel_comm_error", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "parallel_system", "enabled": False},
         
         # Generator Integration Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Running", "unique": "lux_generator_running", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Running", "unique": "lux_generator_running", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "gen_power_watt", "enabled": False},
         
         # Generator Integration Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "unique": "lux_generator_connected", "bank": 3, "register": 77, "bit": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Type Voltage", "unique": "lux_generator_charge_type_voltage", "bank": 3, "register": 77, "bit": 7, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "unique": "lux_generator_connected", "bank": 3, "register": 77, "bit": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "attribute": "gen_input_volt", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Type Voltage", "unique": "lux_generator_charge_type_voltage", "bank": 3, "register": 77, "bit": 7, "device_class": BinarySensorDeviceClass.POWER, "attribute": "gen_charge_type", "enabled": False},
         
         # AFCI Arc Detection Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 1", "unique": "lux_afci_arc_alarm_ch1", "bank": 3, "register": 144, "bit": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 2", "unique": "lux_afci_arc_alarm_ch2", "bank": 3, "register": 144, "bit": 1, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 3", "unique": "lux_afci_arc_alarm_ch3", "bank": 3, "register": 144, "bit": 2, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 4", "unique": "lux_afci_arc_alarm_ch4", "bank": 3, "register": 144, "bit": 3, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 1", "unique": "lux_afci_selftest_fail_ch1", "bank": 3, "register": 144, "bit": 4, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 2", "unique": "lux_afci_selftest_fail_ch2", "bank": 3, "register": 144, "bit": 5, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 3", "unique": "lux_afci_selftest_fail_ch3", "bank": 3, "register": 144, "bit": 6, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 4", "unique": "lux_afci_selftest_fail_ch4", "bank": 3, "register": 144, "bit": 7, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start", "unique": "lux_generator_auto_start", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "unique": "lux_generator_quick_start", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact", "unique": "lux_generator_dry_contact", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Fault", "unique": "lux_generator_fault", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Low Fuel", "unique": "lux_generator_low_fuel", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 1", "unique": "lux_afci_arc_alarm_ch1", "bank": 3, "register": 144, "bit": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "afci_arc_ch1", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 2", "unique": "lux_afci_arc_alarm_ch2", "bank": 3, "register": 144, "bit": 1, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "afci_arc_ch2", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 3", "unique": "lux_afci_arc_alarm_ch3", "bank": 3, "register": 144, "bit": 2, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "afci_arc_ch3", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Alarm Channel 4", "unique": "lux_afci_arc_alarm_ch4", "bank": 3, "register": 144, "bit": 3, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "afci_arc_ch4", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 1", "unique": "lux_afci_selftest_fail_ch1", "bank": 3, "register": 144, "bit": 4, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "afci_arc_ch1", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 2", "unique": "lux_afci_selftest_fail_ch2", "bank": 3, "register": 144, "bit": 5, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "afci_arc_ch2", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 3", "unique": "lux_afci_selftest_fail_ch3", "bank": 3, "register": 144, "bit": 6, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "afci_arc_ch3", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} AFCI Self-Test Fail Channel 4", "unique": "lux_afci_selftest_fail_ch4", "bank": 3, "register": 144, "bit": 7, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "afci_arc_ch4", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start", "unique": "lux_generator_auto_start", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "gen_charge_type", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "unique": "lux_generator_quick_start", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "gen_charge_type", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact", "unique": "lux_generator_dry_contact", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "attribute": "gen_input_volt", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Fault", "unique": "lux_generator_fault", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "gen_power_watt", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Generator Low Fuel", "unique": "lux_generator_low_fuel", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "gen_power_watt", "enabled": False},
         
         # Battery Management Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Over Temperature", "unique": "lux_battery_over_temp", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.HEAT, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Under Temperature", "unique": "lux_battery_under_temp", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.COLD, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Cell Imbalance", "unique": "lux_cell_imbalance", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Equalization Active", "unique": "lux_equalization_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Active", "unique": "lux_battery_protection_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Over Temperature", "unique": "lux_battery_over_temp", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.HEAT, "attribute": "t_bat", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Under Temperature", "unique": "lux_battery_under_temp", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.COLD, "attribute": "t_bat", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Cell Imbalance", "unique": "lux_cell_imbalance", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "max_cell_volt", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Equalization Active", "unique": "lux_equalization_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "charge_volt_ref", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Active", "unique": "lux_battery_protection_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "bat_status_inv", "enabled": False},
         
         # Grid Management Binary Sensors
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Export Limited", "unique": "lux_grid_export_limited", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Zero Export Active", "unique": "lux_zero_export_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control Active", "unique": "lux_reactive_power_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Fault Detected", "unique": "lux_grid_fault_detected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Anti Islanding Active", "unique": "lux_anti_islanding_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Export Limited", "unique": "lux_grid_export_limited", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "p_to_grid", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Zero Export Active", "unique": "lux_zero_export_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "p_to_grid", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control Active", "unique": "lux_reactive_power_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "pf", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Grid Fault Detected", "unique": "lux_grid_fault_detected", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "grid_status", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Anti Islanding Active", "unique": "lux_anti_islanding_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "grid_status", "enabled": False},
         
         # Enhanced Peak Shaving Binary Sensors (Phase 5B)
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Active", "unique": "lux_peak_shaving_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Schedule Active", "unique": "lux_peak_schedule_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 15 Active", "unique": "lux_peak_bit_15_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 14 Active", "unique": "lux_peak_bit_14_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 12 Active", "unique": "lux_peak_bit_12_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 8 Active", "unique": "lux_peak_bit_8_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 7 Active", "unique": "lux_peak_bit_7_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 6 Active", "unique": "lux_peak_bit_6_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Active", "unique": "lux_peak_shaving_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "peak_shaving_power", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Schedule Active", "unique": "lux_peak_schedule_active", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "peak_shaving_power", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 15 Active", "unique": "lux_peak_bit_15_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "attribute": "peak_shaving_power", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 14 Active", "unique": "lux_peak_bit_14_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "attribute": "peak_shaving_power", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 12 Active", "unique": "lux_peak_bit_12_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "attribute": "peak_shaving_power", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 8 Active", "unique": "lux_peak_bit_8_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "attribute": "peak_shaving_power", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 7 Active", "unique": "lux_peak_bit_7_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "attribute": "peak_shaving_power", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Bit 6 Active", "unique": "lux_peak_bit_6_active", "bank": 4, "register": 179, "device_class": BinarySensorDeviceClass.POWER, "attribute": "peak_shaving_power", "enabled": False},
         
         # UI Enhancements & Diagnostic Binary Sensors (Phase 8)
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Communication Healthy", "unique": "lux_comm_healthy", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Data Stale", "unique": "lux_data_stale", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} High Packet Loss", "unique": "lux_high_packet_loss", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Low Efficiency", "unique": "lux_low_efficiency", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} High Energy Cost", "unique": "lux_high_energy_cost", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "enabled": False},
-        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} System Optimized", "unique": "lux_system_optimized", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Communication Healthy", "unique": "lux_comm_healthy", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.CONNECTIVITY, "attribute": "connection_quality", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Data Stale", "unique": "lux_data_stale", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "connection_quality", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} High Packet Loss", "unique": "lux_high_packet_loss", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "connection_quality", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Low Efficiency", "unique": "lux_low_efficiency", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "self_consumption_rate", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} High Energy Cost", "unique": "lux_high_energy_cost", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.PROBLEM, "attribute": "self_consumption_rate", "enabled": False},
+        {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} System Optimized", "unique": "lux_system_optimized", "bank": 0, "register": 0, "device_class": BinarySensorDeviceClass.POWER, "attribute": "self_consumption_rate", "enabled": False},
     ]
 
     for entity_definition in binary_sensors:

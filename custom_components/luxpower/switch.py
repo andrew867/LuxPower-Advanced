@@ -104,85 +104,115 @@ async def async_setup_entry(
 
     """ Common Switches Displayed In The App/Web """
     switches = [
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Normal/Standby(ON/OFF)", "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "enabled": True},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Power Backup Enable", "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "enabled": True},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Feed-In Grid", "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID, "enabled": True},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DCI Enable", "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} GFCI Enable", "register_address": 21, "bitmask": LXPPacket.GFCI_ENABLE, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Seamless EPS Switching", "register_address": 21, "bitmask": LXPPacket.SEAMLESS_EPS_SWITCHING, "enabled": True},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid On Power SS", "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Neutral Detect Enable", "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Anti Island Enable", "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Normal/Standby(ON/OFF)", "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "attribute": "work_mode", "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Power Backup Enable", "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "attribute": "eps_status", "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Feed-In Grid", "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID, "attribute": "p_to_grid", "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DCI Enable", "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} GFCI Enable", "register_address": 21, "bitmask": LXPPacket.GFCI_ENABLE, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Seamless EPS Switching", "register_address": 21, "bitmask": LXPPacket.SEAMLESS_EPS_SWITCHING, "attribute": "eps_status", "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid On Power SS", "register_address": 21, "bitmask": LXPPacket.GRID_ON_POWER_SS, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Neutral Detect Enable", "register_address": 21, "bitmask": LXPPacket.NEUTRAL_DETECT_ENABLE, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Anti Island Enable", "register_address": 21, "bitmask": LXPPacket.ANTI_ISLAND_ENABLE, "attribute": "grid_status", "enabled": False},
         
         # AFCI Arc Detection Controls
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI PV Arc Enable", "register_address": 179, "bitmask": LXPPacket.AFCI_PV_ARC_ENABLE, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI PV Arc Enable", "register_address": 179, "bitmask": LXPPacket.AFCI_PV_ARC_ENABLE, "attribute": "afci_curr_ch1", "enabled": False},
         
         # Generator Control Switches
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "register_address": 77, "bitmask": LXPPacket.GENERATOR_CONNECTED, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable", "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} OVF Load Derate Enable", "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} ISO Enabled", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Low Voltage Ride Though Enable", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Enable", "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "enabled": True},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Priority", "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "enabled": True},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Enable", "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Take Load Together", "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Last", "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "enabled": True},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid Peak-Shaving", "register_address": 179, "bitmask": LXPPacket.ENABLE_PEAK_SHAVING, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "register_address": 77, "bitmask": LXPPacket.GENERATOR_CONNECTED, "attribute": "gen_input_volt", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable", "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} OVF Load Derate Enable", "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "attribute": "p_load", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} ISO Enabled", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Low Voltage Ride Though Enable", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Enable", "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "attribute": "ac_charge_mode", "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Priority", "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "attribute": "p_charge", "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Enable", "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "attribute": "p_discharge", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Take Load Together", "register_address": 110, "bitmask": LXPPacket.TAKE_LOAD_TOGETHER, "attribute": "p_load", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Last", "register_address": 110, "bitmask": LXPPacket.CHARGE_LAST, "attribute": "p_charge", "enabled": True},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Grid Peak-Shaving", "register_address": 179, "bitmask": LXPPacket.ENABLE_PEAK_SHAVING, "attribute": "peak_shaving_power", "enabled": False},
         
         # Additional Register 110 Control Switches (Disabled by Default)
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} EPS Mode Enable", "register_address": 110, "bitmask": LXPPacket.EPS_ENABLE, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Alt", "register_address": 110, "bitmask": LXPPacket.FORCED_DISCHG_EN_ALT, "enabled": False},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable Alt", "register_address": 110, "bitmask": LXPPacket.DRMS_ENABLE_ALT, "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} EPS Mode Enable", "register_address": 110, "bitmask": LXPPacket.EPS_ENABLE, "attribute": "eps_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Alt", "register_address": 110, "bitmask": LXPPacket.FORCED_DISCHG_EN_ALT, "attribute": "p_discharge", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable Alt", "register_address": 110, "bitmask": LXPPacket.DRMS_ENABLE_ALT, "attribute": "grid_status", "enabled": False},
         
         # 12K-Specific Control Switches (Based on Cloud UI Analysis) - UPDATED FROM CLOUD UI
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Inverter Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Smart load control enable
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator quick start control
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Backup Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Battery backup mode control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Inverter Enable", "register_address": 0, "bitmask": 0, "attribute": "smart_load_start_soc", "enabled": False},  # Smart load control enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Quick Start", "register_address": 0, "bitmask": 0, "attribute": "gen_charge_type", "enabled": False},  # Generator quick start control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Backup Mode", "register_address": 0, "bitmask": 0, "attribute": "bat_status_inv", "enabled": False},  # Battery backup mode control
 
         # Enhanced Peak Shaving Analysis Control Switches
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 1", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_00, "enabled": False},  # Peak shaving mode 1
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 2", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_01, "enabled": False},  # Peak shaving mode 2
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 3", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_02, "enabled": False},  # Peak shaving mode 3
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 4", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_03, "enabled": False},  # Peak shaving mode 4
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 5", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_04, "enabled": False},  # Peak shaving mode 5
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 6", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_05, "enabled": False},  # Peak shaving mode 6
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 7", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_06, "enabled": False},  # Peak shaving mode 7
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 8", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "enabled": False},  # Peak shaving mode 8
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 9", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "enabled": False},  # Peak shaving mode 9
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 10", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_09, "enabled": False},  # Peak shaving mode 10
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 11", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_10, "enabled": False},  # Peak shaving mode 11
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 12", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_11, "enabled": False},  # Peak shaving mode 12
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 13", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_12, "enabled": False},  # Peak shaving mode 13
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 14", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_13, "enabled": False},  # Peak shaving mode 14
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 15", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_14, "enabled": False},  # Peak shaving mode 15
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 16", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_15, "enabled": False},  # Peak shaving mode 16
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 1", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_00, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 1
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 2", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_01, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 2
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 3", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_02, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 3
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 4", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_03, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 4
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 5", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_04, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 5
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 6", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_05, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 6
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 7", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_06, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 7
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 8", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 8
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 9", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_08, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 9
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 10", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_09, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 10
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 11", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_10, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 11
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 12", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_11, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 12
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 13", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_12, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 13
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 14", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_13, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 14
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 15", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_14, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 15
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Mode 16", "register_address": 179, "bitmask": LXPPacket.R179_UNKNOWN_BIT_15, "attribute": "peak_shaving_power", "enabled": False},  # Peak shaving mode 16
 
         # UI Enhancements Control Switches
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Auto Configuration Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Auto configuration mode
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Diagnostic Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Diagnostic mode
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Performance Monitoring", "register_address": 0, "bitmask": 0, "enabled": False},  # Performance monitoring
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Energy Dashboard Integration", "register_address": 0, "bitmask": 0, "enabled": False},  # Energy dashboard integration
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Cost Tracking", "register_address": 0, "bitmask": 0, "enabled": False},  # Cost tracking
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Environmental Impact Tracking", "register_address": 0, "bitmask": 0, "enabled": False},  # Environmental impact tracking
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Auto Configuration Mode", "register_address": 0, "bitmask": 0, "attribute": "sys_config_12k", "enabled": False},  # Auto configuration mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Diagnostic Mode", "register_address": 0, "bitmask": 0, "attribute": "connection_quality", "enabled": False},  # Diagnostic mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Performance Monitoring", "register_address": 0, "bitmask": 0, "attribute": "self_consumption_rate", "enabled": False},  # Performance monitoring
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Energy Dashboard Integration", "register_address": 0, "bitmask": 0, "attribute": "self_consumption_rate", "enabled": False},  # Energy dashboard integration
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Cost Tracking", "register_address": 0, "bitmask": 0, "attribute": "self_consumption_rate", "enabled": False},  # Cost tracking
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Environmental Impact Tracking", "register_address": 0, "bitmask": 0, "attribute": "self_consumption_rate", "enabled": False},  # Environmental impact tracking
 
         # Generator Integration Control Switches (Phase 3)
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator auto start enable
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Priority", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator charge priority
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator dry contact control
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Cooldown Timer", "register_address": 0, "bitmask": 0, "enabled": False},  # Generator cooldown timer
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Auto Start Enable", "register_address": 0, "bitmask": 0, "attribute": "gen_charge_type", "enabled": False},  # Generator auto start enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Priority", "register_address": 0, "bitmask": 0, "attribute": "gen_charge_type", "enabled": False},  # Generator charge priority
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Dry Contact Control", "register_address": 0, "bitmask": 0, "attribute": "gen_input_volt", "enabled": False},  # Generator dry contact control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Cooldown Timer", "register_address": 0, "bitmask": 0, "attribute": "gen_charge_type", "enabled": False},  # Generator cooldown timer
         
         # Battery Management Control Switches (Phase 6)
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Battery protection enable
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Equalization enable
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Temperature Compensation Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Temperature compensation enable
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Aging Compensation Enable", "register_address": 0, "bitmask": 0, "enabled": False},  # Aging compensation enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Protection Enable", "register_address": 0, "bitmask": 0, "attribute": "bat_status_inv", "enabled": False},  # Battery protection enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Equalization Enable", "register_address": 0, "bitmask": 0, "attribute": "charge_volt_ref", "enabled": False},  # Equalization enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Temperature Compensation Enable", "register_address": 0, "bitmask": 0, "attribute": "t_bat", "enabled": False},  # Temperature compensation enable
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Aging Compensation Enable", "register_address": 0, "bitmask": 0, "attribute": "bat_cycle_count", "enabled": False},  # Aging compensation enable
         
         # Grid Management Control Switches (Phase 7)
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Zero Export Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Zero export mode
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Reactive power control
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Voltage Support Mode", "register_address": 0, "bitmask": 0, "enabled": False},  # Voltage support mode
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Dynamic Export Control", "register_address": 0, "bitmask": 0, "enabled": False},  # Dynamic export control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Zero Export Mode", "register_address": 0, "bitmask": 0, "attribute": "p_to_grid", "enabled": False},  # Zero export mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Reactive Power Control", "register_address": 0, "bitmask": 0, "attribute": "pf", "enabled": False},  # Reactive power control
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Voltage Support Mode", "register_address": 0, "bitmask": 0, "attribute": "v_ac_r", "enabled": False},  # Voltage support mode
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Dynamic Export Control", "register_address": 0, "bitmask": 0, "attribute": "p_to_grid", "enabled": False},  # Dynamic export control
+        
+        # NEW 2025.03.05 Protocol: Missing Switch Entities
+        # Hold 110 - Function Enable 1 (12K Models)
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} PV Grid Off", "register_address": 110, "bitmask": LXPPacket.PV_GRID_OFF, "attribute": "p_pv_total", "enabled": False},  # 12K models only
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Fast Zero Export", "register_address": 110, "bitmask": LXPPacket.FAST_ZERO_EXPORT, "attribute": "p_to_grid", "enabled": False},  # 12K models only
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Micro Grid", "register_address": 110, "bitmask": LXPPacket.MICRO_GRID, "attribute": "grid_status", "enabled": False},  # 12K models only
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Shared", "register_address": 110, "bitmask": LXPPacket.BATTERY_SHARED, "attribute": "bat_status_inv", "enabled": False},  # 12K models only
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Buzzer/Dry Contactor", "register_address": 110, "bitmask": LXPPacket.BUZZER_DRY_CONTACTOR, "attribute": "grid_status", "enabled": False},  # 12K models only
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Green/Absolute Zero Export", "register_address": 110, "bitmask": LXPPacket.GREEN_ABSOLUTE_ZERO_EXPORT, "attribute": "p_to_grid", "enabled": False},  # 12K models only
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Eco Mode/EPS RY", "register_address": 110, "bitmask": LXPPacket.ECO_MODE_EPS_RY, "attribute": "eps_status", "enabled": False},  # 12K models only
+        
+        # Hold 179 - Function Enable 2
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Wakeup", "register_address": 179, "bitmask": LXPPacket.BATTERY_WAKEUP, "attribute": "bat_status_inv", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} PV Sell First", "register_address": 179, "bitmask": LXPPacket.PV_SELL_FIRST, "attribute": "p_pv_total", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Volt-Watt", "register_address": 179, "bitmask": LXPPacket.VOLT_WATT, "attribute": "p_pv_total", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Trip Time Unit", "register_address": 179, "bitmask": LXPPacket.TRIP_TIME_UNIT, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Active Power CMD", "register_address": 179, "bitmask": LXPPacket.ACTIVE_POWER_CMD, "attribute": "p_inv", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Gen Peak Shaving", "register_address": 179, "bitmask": LXPPacket.GEN_PEAK_SHAVING, "attribute": "gen_power_watt", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Charge Control", "register_address": 179, "bitmask": LXPPacket.BATTERY_CHARGE_CONTROL, "attribute": "p_charge", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Discharge Control", "register_address": 179, "bitmask": LXPPacket.BATTERY_DISCHARGE_CONTROL, "attribute": "p_discharge", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling", "register_address": 179, "bitmask": LXPPacket.AC_COUPLING, "attribute": "ac_couple_start_soc", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} RSD Disable", "register_address": 179, "bitmask": LXPPacket.RSD_DISABLE, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} On Grid Always On", "register_address": 179, "bitmask": LXPPacket.ON_GRID_ALWAYS_ON, "attribute": "grid_status", "enabled": False},
+        
+        # Hold 233 - Function Enable 4
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Quick Charge Start", "register_address": 233, "bitmask": LXPPacket.QUICK_CHARGE_START, "attribute": "p_charge", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Backup", "register_address": 233, "bitmask": LXPPacket.BATTERY_BACKUP, "attribute": "bat_status_inv", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Maintenance Enable", "register_address": 233, "bitmask": LXPPacket.MAINTENANCE_ENABLE, "attribute": "grid_status", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Working Mode", "register_address": 233, "bitmask": LXPPacket.WORKING_MODE, "attribute": "work_mode", "enabled": False},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} EN50549 F-stop", "register_address": 233, "bitmask": LXPPacket.EN50549_F_STOP, "attribute": "grid_status", "enabled": False},
     ]
 
     for entity_definition in switches:

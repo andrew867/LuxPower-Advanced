@@ -12,7 +12,7 @@
   "zeroconf": [],
   "homekit": {},
   "version": "2025.10.1-dev",
-  "codeowners": [],
+  "codeowners": ["@andrew867"],
   "quality_scale": "gold",
   "loggers": [
     "custom_components.luxpower",

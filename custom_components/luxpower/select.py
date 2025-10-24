@@ -267,6 +267,237 @@ class LuxPowerACChargeModeSelectEntity(LuxPowerSelectEntity):
         super().__init__(hass, dongle, entity_definition)
 
 
+class LuxPowerCTSampleRatioSelectEntity(LuxPowerSelectEntity):
+    """CT Sample Ratio select entity for 12K models (Hold 110)."""
+    
+    def __init__(self, hass: HomeAssistant, dongle: str) -> None:
+        entity_definition = {
+            "name": f"Lux {dongle[-2:] if dongle else ''} CT Sample Ratio",
+            "unique": "lux_ct_sample_ratio",
+            "register_address": 110,
+            "category": "config",
+            "icon": "mdi:current-ac",
+            "enabled": False,  # 12K models only
+        }
+        super().__init__(hass, dongle, entity_definition)
+    
+    @property
+    def options(self) -> List[str]:
+        """Return the available options."""
+        return [
+            "1/1000",
+            "1/3000", 
+            "1/2000",
+            "1/4000",
+            "1/6000"
+        ]
+
+
+class LuxPowerACChargeType12KSelectEntity(LuxPowerSelectEntity):
+    """AC Charge Type select entity for 12K models (Hold 120)."""
+    
+    def __init__(self, hass: HomeAssistant, dongle: str) -> None:
+        entity_definition = {
+            "name": f"Lux {dongle[-2:] if dongle else ''} AC Charge Type (12K)",
+            "unique": "lux_ac_charge_type_12k",
+            "register_address": 120,
+            "category": "config",
+            "icon": "mdi:car-battery",
+            "enabled": False,  # 12K models only
+        }
+        super().__init__(hass, dongle, entity_definition)
+    
+    @property
+    def options(self) -> List[str]:
+        """Return the available options."""
+        return [
+            "According to time",
+            "According to SOC/Volt",
+            "According to time with SOC/Volt"
+        ]
+
+
+class LuxPowerDryContactorMultiplexSelectEntity(LuxPowerSelectEntity):
+    """Dry Contactor Multiplex select entity (Hold 233)."""
+    
+    def __init__(self, hass: HomeAssistant, dongle: str) -> None:
+        entity_definition = {
+            "name": f"Lux {dongle[-2:] if dongle else ''} Dry Contactor Multiplex",
+            "unique": "lux_dry_contactor_multiplex",
+            "register_address": 233,
+            "category": "config",
+            "icon": "mdi:connection",
+            "enabled": False,
+        }
+        super().__init__(hass, dongle, entity_definition)
+    
+    @property
+    def options(self) -> List[str]:
+        """Return the available options."""
+        return [
+            "Null",
+            "RSD",
+            "Dark Start",
+            "Smart Load",
+            "Non-critical Load"
+        ]
+
+
+class LuxPowerSystemTypeSelectEntity(LuxPowerSelectEntity):
+    """System Type select entity (Hold 112)."""
+    
+    def __init__(self, hass: HomeAssistant, dongle: str) -> None:
+        entity_definition = {
+            "name": f"Lux {dongle[-2:] if dongle else ''} System Type",
+            "unique": "lux_system_type",
+            "register_address": 112,
+            "category": "config",
+            "icon": "mdi:settings",
+            "enabled": False,
+        }
+        super().__init__(hass, dongle, entity_definition)
+    
+    @property
+    def options(self) -> List[str]:
+        """Return the available options."""
+        return [
+            "Single Unit",
+            "Parallel Master",
+            "Parallel Slave",
+            "Parallel Auto",
+            "Parallel Manual"
+        ]
+
+
+class LuxPowerLineModeSelectEntity(LuxPowerSelectEntity):
+    """Line Mode select entity (Hold 146)."""
+    
+    def __init__(self, hass: HomeAssistant, dongle: str) -> None:
+        entity_definition = {
+            "name": f"Lux {dongle[-2:] if dongle else ''} Line Mode",
+            "unique": "lux_line_mode",
+            "register_address": 146,
+            "category": "config",
+            "icon": "mdi:transmission-tower",
+            "enabled": False,
+        }
+        super().__init__(hass, dongle, entity_definition)
+    
+    @property
+    def options(self) -> List[str]:
+        """Return the available options."""
+        return [
+            "APL (Automatic Power Line)",
+            "UPS (Uninterruptible Power Supply)",
+            "GEN (Generator)"
+        ]
+
+
+class LuxPowerGridRegulationSelectEntity(LuxPowerSelectEntity):
+    """Grid Regulation select entity (Hold 203)."""
+    
+    def __init__(self, hass: HomeAssistant, dongle: str) -> None:
+        entity_definition = {
+            "name": f"Lux {dongle[-2:] if dongle else ''} Grid Regulation",
+            "unique": "lux_grid_regulation",
+            "register_address": 203,
+            "category": "config",
+            "icon": "mdi:shield-check",
+            "enabled": False,
+        }
+        super().__init__(hass, dongle, entity_definition)
+    
+    @property
+    def options(self) -> List[str]:
+        """Return the available options."""
+        return [
+            "VDE-AR-N 4105 (Germany)",
+            "VDE-AR-N 4110 (Germany)",
+            "VDE-AR-N 4105 (Austria)",
+            "VDE-AR-N 4110 (Austria)",
+            "VDE-AR-N 4105 (Switzerland)",
+            "VDE-AR-N 4110 (Switzerland)",
+            "VDE-AR-N 4105 (Netherlands)",
+            "VDE-AR-N 4110 (Netherlands)",
+            "VDE-AR-N 4105 (Belgium)",
+            "VDE-AR-N 4110 (Belgium)",
+            "VDE-AR-N 4105 (Luxembourg)",
+            "VDE-AR-N 4110 (Luxembourg)",
+            "VDE-AR-N 4105 (Denmark)",
+            "VDE-AR-N 4110 (Denmark)",
+            "VDE-AR-N 4105 (Sweden)",
+            "VDE-AR-N 4110 (Sweden)",
+            "VDE-AR-N 4105 (Norway)",
+            "VDE-AR-N 4110 (Norway)",
+            "VDE-AR-N 4105 (Finland)",
+            "VDE-AR-N 4110 (Finland)",
+            "VDE-AR-N 4105 (Iceland)",
+            "VDE-AR-N 4110 (Iceland)",
+            "VDE-AR-N 4105 (Ireland)",
+            "VDE-AR-N 4110 (Ireland)",
+            "VDE-AR-N 4105 (United Kingdom)",
+            "VDE-AR-N 4110 (United Kingdom)",
+            "VDE-AR-N 4105 (France)",
+            "VDE-AR-N 4110 (France)",
+            "VDE-AR-N 4105 (Italy)",
+            "VDE-AR-N 4110 (Italy)",
+            "VDE-AR-N 4105 (Spain)",
+            "VDE-AR-N 4110 (Spain)"
+        ]
+
+
+class LuxPowerGridTypeSelectEntity(LuxPowerSelectEntity):
+    """Grid Type select entity (Hold 205)."""
+    
+    def __init__(self, hass: HomeAssistant, dongle: str) -> None:
+        entity_definition = {
+            "name": f"Lux {dongle[-2:] if dongle else ''} Grid Type",
+            "unique": "lux_grid_type",
+            "register_address": 205,
+            "category": "config",
+            "icon": "mdi:transmission-tower",
+            "enabled": False,
+        }
+        super().__init__(hass, dongle, entity_definition)
+    
+    @property
+    def options(self) -> List[str]:
+        """Return the available options."""
+        return [
+            "Single Phase (1P)",
+            "Split Phase (2P)",
+            "Three Phase (3P)",
+            "Three Phase + N (3P+N)",
+            "Three Phase + N + PE (3P+N+PE)"
+        ]
+
+
+class LuxPowerPVInputModelSelectEntity(LuxPowerSelectEntity):
+    """PV Input Model select entity (Hold 20)."""
+    
+    def __init__(self, hass: HomeAssistant, dongle: str) -> None:
+        entity_definition = {
+            "name": f"Lux {dongle[-2:] if dongle else ''} PV Input Model",
+            "unique": "lux_pv_input_model",
+            "register_address": 20,
+            "category": "config",
+            "icon": "mdi:solar-power",
+            "enabled": False,
+        }
+        super().__init__(hass, dongle, entity_definition)
+    
+    @property
+    def options(self) -> List[str]:
+        """Return the available options."""
+        return [
+            "Standard PV",
+            "High Voltage PV",
+            "Low Voltage PV",
+            "Flexible PV",
+            "Custom PV"
+        ]
+
+
 def get_select_entities(hass: HomeAssistant, dongle: str) -> List[LuxPowerSelectEntity]:
     """
     Get all select entities for a given dongle.
@@ -283,6 +514,15 @@ def get_select_entities(hass: HomeAssistant, dongle: str) -> List[LuxPowerSelect
         LuxPowerOutputPrioritySelectEntity(hass, dongle),
         LuxPowerWorkModeSelectEntity(hass, dongle),
         LuxPowerACChargeModeSelectEntity(hass, dongle),
+        # NEW 2025.03.05 Protocol: Enhanced Select Entities
+        LuxPowerCTSampleRatioSelectEntity(hass, dongle),  # Hold 110 - CT Sample Ratio (12K models)
+        LuxPowerACChargeType12KSelectEntity(hass, dongle),  # Hold 120 - AC Charge Type (12K models)
+        LuxPowerDryContactorMultiplexSelectEntity(hass, dongle),  # Hold 233 - Dry Contactor Multiplex
+        LuxPowerSystemTypeSelectEntity(hass, dongle),  # Hold 112 - System Type
+        LuxPowerLineModeSelectEntity(hass, dongle),  # Hold 146 - Line Mode
+        LuxPowerGridRegulationSelectEntity(hass, dongle),  # Hold 203 - Grid Regulation
+        LuxPowerGridTypeSelectEntity(hass, dongle),  # Hold 205 - Grid Type
+        LuxPowerPVInputModelSelectEntity(hass, dongle),  # Hold 20 - PV Input Model
     ]
 
 

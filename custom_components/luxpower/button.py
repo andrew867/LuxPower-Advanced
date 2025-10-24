@@ -90,18 +90,21 @@ async def async_setup_entry(
             "name": "Lux {replaceID_midfix}{hyphen} Inverter Restart",
             "unique": "lux_inverter_restart",
             "action": "restart",
+            "attribute": "connection_quality",
             "enabled": False,
         },
         {
             "name": "Lux {replaceID_midfix}{hyphen} Reset All Settings",
             "unique": "lux_reset_all_settings",
             "action": "reset_all",
+            "attribute": "connection_quality",
             "enabled": False,
         },
         {
             "name": "Lux {replaceID_midfix}{hyphen} AFCI Alarm Clear",
             "unique": "lux_afci_alarm_clear",
             "action": "afci_alarm_clear",
+            "attribute": "afci_curr_ch1",
             "enabled": False,
         },
         {
@@ -109,6 +112,7 @@ async def async_setup_entry(
             "unique": "lux_start_charging_slot1",
             "action": "start_charging",
             "slot": 1,
+            "attribute": "p_charge",
             "enabled": True,
         },
         {
@@ -116,6 +120,7 @@ async def async_setup_entry(
             "unique": "lux_stop_charging_slot1",
             "action": "stop_charging",
             "slot": 1,
+            "attribute": "p_charge",
             "enabled": True,
         },
     ]

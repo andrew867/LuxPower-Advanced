@@ -158,6 +158,12 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
         {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge End3", "register_address": 89, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": True},
         {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start1", "register_address": 152, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
         {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First End1", "register_address": 153, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
+        
+        # NEW 2025.03.05 Protocol: Generator Time Scheduling (Hold 256-259)
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Start Time", "register_address": 256, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:generator", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Generator End Time", "register_address": 257, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:generator", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Start Time 1", "register_address": 258, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:generator", "enabled": False},
+        {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} Generator End Time 1", "register_address": 259, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:generator", "enabled": False},
         {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start2", "register_address": 154, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
         {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First End2", "register_address": 155, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
         {"etype": "LTTE", "name": "Lux {replaceID_midfix}{hyphen} AC First Start3", "register_address": 156, "def_val": 0.0, "min_val": minnumb, "max_val": maxtime, "icon": "mdi:timer-outline", "enabled": False},
