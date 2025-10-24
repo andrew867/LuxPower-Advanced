@@ -159,7 +159,7 @@ async def async_setup_entry(
 
         # 2. Create HOLDING Register Based Sensors 1st - As they Are Only Populated By Default At Integration Load - Slow RPi Timing
         {"etype": "LPFW", "name": "Lux {replaceID_midfix}{hyphen} Firmware Version", "unique": "lux_firmware_version", "bank": 0, "register": 7, "device_class": None, "state_class": None, "unit_of_measurement": None},
-        {"etype": "LPMD", "name": "Lux {replaceID_midfix}{hyphen} Inverter Model", "unique": "lux_inverter_model", "bank": 0, "register": 7},
+        {"etype": "LPMD", "name": "Lux {replaceID_midfix}{hyphen} Inverter Model", "unique": "lux_inverter_model", "bank": 0, "register": [7, 8]},
         {"etype": "LPSN", "name": "Lux {replaceID_midfix}{hyphen} Inverter Serial Number", "unique": "lux_inverter_serial_number", "bank": 0, "register": 0, "device_class": None, "state_class": None, "unit_of_measurement": None},
 
         # 3. Create Attribute Sensors Based On LuxPowerSensorEntity Class
@@ -409,7 +409,7 @@ async def async_setup_entry(
             # Add more number entities as needed...
 
             # Switch entities as binary sensors
-            {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Normal/Standby", "unique": "lux_normal_standby", "bank": 0, "register": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "enabled": read_only_mode},
+            {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Normal/Standby", "unique": "lux_normal_standby", "bank": 0, "register": 21, "bitmask": LXPPacket.SET_TO_STANDBY, "enabled": read_only_mode},
             {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Power Backup Enable", "unique": "lux_power_backup_enable", "bank": 0, "register": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "enabled": read_only_mode},
             {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Feed-In Grid", "unique": "lux_feed_in_grid", "bank": 0, "register": 21, "bitmask": LXPPacket.FEED_IN_GRID, "enabled": read_only_mode},
             # Add more switch entities as needed...
@@ -1370,7 +1370,7 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
     def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
-        self._register_address = entity_definition.get("register", 7)
+        self._register_address = entity_definition.get("register", [7, 8])
         self._bank = entity_definition.get("bank", 0)
         
         # Set initial value to indicate waiting for data
@@ -1473,6 +1473,7 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
             if oldstate != self._attr_native_value or not self._attr_available:
                 self._attr_available = True
                 _LOGGER.info(f"Model sensor updated: {oldstate} -> {self._attr_native_value}")
+                _LOGGER.info(f"Model sensor debug - model: {model}, model_code: {model_code}, type: {type(model)}")
                 self.schedule_update_ha_state()
         else:
             # Log when model registers are not available
@@ -1889,10 +1890,10 @@ class LuxPowerLoadPercentageSensor(LuxPowerSensorEntity):
                 _LOGGER.debug(f"Load Percentage: {current_load}W / {rated_power}W = {self._attr_native_value}%")
             else:
                 self._attr_native_value = 0.0
-                _LOGGER.warning(f"No rated power available for load percentage calculation")
+                _LOGGER.debug(f"No rated power available for load percentage calculation")
         else:
             self._attr_native_value = 0.0
-            _LOGGER.warning(f"No entry found for dongle {self.dongle}")
+            _LOGGER.debug(f"No entry found for dongle {self.dongle}")
 
         self._attr_available = True
         self.lastupdated_time = time.time()
@@ -1925,7 +1926,7 @@ class LuxPowerAdaptivePollingSensor(LuxPowerSensorEntity):
             _LOGGER.debug(f"Polling Interval: {polling_interval}s")
         else:
             self._attr_native_value = 120  # Default fallback
-            _LOGGER.warning(f"No client available for polling interval")
+            _LOGGER.debug(f"No client available for polling interval")
 
         self._attr_available = True
         self.lastupdated_time = time.time()
@@ -1959,7 +1960,7 @@ class LuxPowerConnectionQualitySensor(LuxPowerSensorEntity):
             _LOGGER.debug(f"Connection Quality: {self._attr_native_value}%")
         else:
             self._attr_native_value = 100.0  # Default to good connection
-            _LOGGER.warning(f"No client available for connection quality")
+            _LOGGER.debug(f"No client available for connection quality")
 
         self._attr_available = True
         self.lastupdated_time = time.time()

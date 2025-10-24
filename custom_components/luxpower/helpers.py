@@ -144,8 +144,10 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
     # Get model name from model code - ensure we get the string name, not the dict
     from .const import get_model_name
     model_name = get_model_name(model_code) if model_code != "Unknown" else model
+    _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Model name before check: {model_name}, type: {type(model_name)}")
     if isinstance(model_name, dict):
         model_name = model_name.get("name", str(model_name))
+        _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Model name after dict conversion: {model_name}, type: {type(model_name)}")
     
     # Use register-based serial number if available, otherwise fall back to configuration
     serial_number = inverter_serial or serial or dongle
