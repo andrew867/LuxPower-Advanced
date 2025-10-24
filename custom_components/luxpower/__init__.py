@@ -13,8 +13,9 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .connector import ServiceHelper
-from .lxp.client import LuxPowerClient
+# Import moved to avoid blocking imports in event loop
+# from .connector import ServiceHelper
+# from .lxp.client import LuxPowerClient
 from .const import (
     ATTR_LUX_DONGLE_SERIAL,
     ATTR_LUX_HOST,
@@ -24,6 +25,10 @@ from .const import (
     ATTR_LUX_REFRESH_BANK_COUNT,
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_SERIAL_NUMBER,
+    ATTR_LUX_ADAPTIVE_POLLING,
+    ATTR_LUX_RECONNECTION_DELAY,
+    ATTR_LUX_RATED_POWER,
+    ATTR_LUX_READ_ONLY_MODE,
     DEFAULT_CHARGE_DURATION_MINUTES,
     DEFAULT_CHARGE_SLOT,
     DEFAULT_DONGLE_SERIAL,
@@ -33,6 +38,10 @@ from .const import (
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
     PLACEHOLDER_LUX_REFRESH_BANK_COUNT,
     PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
+    PLACEHOLDER_LUX_ADAPTIVE_POLLING,
+    PLACEHOLDER_LUX_RECONNECTION_DELAY,
+    PLACEHOLDER_LUX_RATED_POWER,
+    PLACEHOLDER_LUX_READ_ONLY_MODE,
     VERSION,
 )
 from .helpers import Event
@@ -170,6 +179,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """
     hass.data.setdefault(DOMAIN, {})
 
+    # Import ServiceHelper here to avoid blocking imports
+    from .connector import ServiceHelper
     service_helper = ServiceHelper(hass=hass)
 
     async def handle_refresh_data_register_bank(call) -> None:
@@ -438,6 +449,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     # USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
+    # Import LuxPowerClient here to avoid blocking imports
+    from .lxp.client import LuxPowerClient
+    
     events = Event(dongle=DONGLE_SERIAL)
     luxpower_client = LuxPowerClient(hass,
                                      server=HOST,
@@ -467,6 +481,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass_data = hass.data.setdefault(DOMAIN, {})
     # Determine rated power (use configured value or auto-detect from model)
     rated_power = config.get(ATTR_LUX_RATED_POWER, PLACEHOLDER_LUX_RATED_POWER)
+    model_code = None  # Initialize model_code
     if rated_power == 0 and model_code:  # Auto-detect from model
         from .const import get_model_rated_power
         rated_power = get_model_rated_power(model_code)

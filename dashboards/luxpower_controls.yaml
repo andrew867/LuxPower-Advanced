@@ -6,7 +6,12 @@ title: LuxPower Controls
 path: luxpower-controls
 icon: mdi:cog
 panel: false
-cards:
+views:
+  - title: LuxPower Controls
+    path: luxpower-controls
+    icon: mdi:cog
+    panel: false
+    cards:
   # System Status and Quick Actions
   - type: horizontal-stack
     cards:

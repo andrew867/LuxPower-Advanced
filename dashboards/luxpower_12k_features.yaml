@@ -6,7 +6,12 @@ title: LuxPower 12K Features
 path: luxpower-12k
 icon: mdi:chip
 panel: false
-cards:
+views:
+  - title: LuxPower 12K Features
+    path: luxpower-12k
+    icon: mdi:chip
+    panel: false
+    cards:
   # 12K Model Detection
   - type: conditional
     conditions:

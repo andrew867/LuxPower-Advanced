@@ -6,7 +6,12 @@ title: LuxPower Graphs
 path: luxpower-graphs
 icon: mdi:chart-line
 panel: false
-cards:
+views:
+  - title: LuxPower Graphs
+    path: luxpower-graphs
+    icon: mdi:chart-line
+    panel: false
+    cards:
   # Power Flow Line Chart (Today)
   - type: custom:apexcharts-card
     header:

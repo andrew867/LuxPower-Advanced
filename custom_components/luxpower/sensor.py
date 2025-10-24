@@ -188,6 +188,11 @@ async def async_setup_entry(
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid Export Power", "unique": "lux_grid_export_power", "bank": 0, "attribute": LXPPacket.p_to_grid, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power To Grid (Daily)", "unique": "lux_power_to_grid_daily", "bank": 0, "attribute": LXPPacket.e_to_grid_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power To Grid (Total)", "unique": "lux_power_to_grid_total", "bank": 1, "attribute": LXPPacket.e_to_grid_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
+        
+        # Energy Dashboard Required Entities
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output (Total)", "unique": "lux_solar_output_total", "bank": 1, "attribute": LXPPacket.e_pv_total, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Charge (Total)", "unique": "lux_battery_charge_total", "bank": 1, "attribute": LXPPacket.e_chg_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Battery Discharge (Total)", "unique": "lux_battery_discharge_total", "bank": 1, "attribute": LXPPacket.e_dischg_all, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid Frequency (Live) ", "unique": "lux_grid_frequency_live", "bank": 0, "attribute": LXPPacket.f_ac, "device_class": SensorDeviceClass.FREQUENCY, "unit_of_measurement": UnitOfFrequency.HERTZ},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Grid Voltage (Live) ", "unique": "lux_grid_voltage_live", "bank": 0, "attribute": LXPPacket.v_ac_r, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power from Inverter to Home (Daily)", "unique": "lux_power_from_inverter_daily", "bank": 0, "attribute": LXPPacket.e_inv_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
@@ -276,8 +281,6 @@ async def async_setup_entry(
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Discharge Disable Reason", "unique": "lux_charge_discharge_disable_reason", "bank": 4, "attribute": LXPPacket.charge_discharge_disable_reason, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         
         # AC Coupling Sensors (Registers 220-223)
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling Start SOC", "unique": "lux_ac_couple_start_soc", "bank": 4, "attribute": LXPPacket.ac_couple_start_soc, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling End SOC", "unique": "lux_ac_couple_end_soc", "bank": 4, "attribute": LXPPacket.ac_couple_end_soc, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling Start Voltage", "unique": "lux_ac_couple_start_volt", "bank": 4, "attribute": LXPPacket.ac_couple_start_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling End Voltage", "unique": "lux_ac_couple_end_volt", "bank": 4, "attribute": LXPPacket.ac_couple_end_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         
@@ -784,7 +787,20 @@ class LuxPowerSensorEntity(SensorEntity):
         self._attr_name = entity_definition["name"].format(
             replaceID_midfix=nameID_midfix, hyphen=hyphen
         )
-        self._attr_native_value = "Unavailable"
+        # Initialize with appropriate unavailable value based on device class
+        if self._attr_device_class in [
+            SensorDeviceClass.ENERGY,
+            SensorDeviceClass.POWER,
+            SensorDeviceClass.CURRENT,
+            SensorDeviceClass.VOLTAGE,
+            SensorDeviceClass.FREQUENCY,
+            SensorDeviceClass.TEMPERATURE,
+            SensorDeviceClass.BATTERY,
+            SensorDeviceClass.POWER_FACTOR,
+        ]:
+            self._attr_native_value = None
+        else:
+            self._attr_native_value = "Unavailable"
         self._attr_available = False
         self._attr_device_class = entity_definition.get("device_class", None)
         self._attr_state_class = entity_definition.get("state_class", None)
@@ -913,15 +929,44 @@ class LuxPowerSensorEntity(SensorEntity):
             value = round(value, self._decimal_places)
             self._attr_available = True
         else:
-            value = UA
+            # For numeric sensors, set to None instead of "unavailable" string
+            # to avoid Home Assistant validation errors
+            if self._attr_device_class in [
+                SensorDeviceClass.ENERGY,
+                SensorDeviceClass.POWER,
+                SensorDeviceClass.CURRENT,
+                SensorDeviceClass.VOLTAGE,
+                SensorDeviceClass.FREQUENCY,
+                SensorDeviceClass.TEMPERATURE,
+                SensorDeviceClass.BATTERY,
+                SensorDeviceClass.POWER_FACTOR,
+            ]:
+                self._attr_native_value = None
+            else:
+                value = UA
+                self._attr_native_value = f"{value}"
             self._attr_available = False
-        self._attr_native_value = f"{value}"
         self.schedule_update_ha_state()
         return self._attr_native_value
 
     def gone_unavailable(self, event):
         _LOGGER.warning(f"Sensor: gone_unavailable event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._attr_available = False
+
+        # For numeric sensors, set value to None instead of keeping old value
+        # to avoid Home Assistant validation errors
+        if self._attr_device_class in [
+            SensorDeviceClass.ENERGY,
+            SensorDeviceClass.POWER,
+            SensorDeviceClass.CURRENT,
+            SensorDeviceClass.VOLTAGE,
+            SensorDeviceClass.FREQUENCY,
+            SensorDeviceClass.TEMPERATURE,
+            SensorDeviceClass.BATTERY,
+            SensorDeviceClass.POWER_FACTOR,
+        ]:
+            self._attr_native_value = None
+
         self.schedule_update_ha_state()
 
     @property
@@ -1074,7 +1119,7 @@ class LuxPowerFactorSensor(LuxPowerSensorEntity):
         
         # Handle division by zero and invalid values
         if va == 0.0 or watts is None or va is None:
-            self._attr_native_value = "Unavailable"
+            self._attr_native_value = None
             self._attr_available = False
         else:
             power_factor = watts / va
@@ -1852,8 +1897,8 @@ class LuxPowerLoadPercentageSensor(LuxPowerSensorEntity):
         self._attr_available = True
         self.lastupdated_time = time.time()
 
-        # Update Home Assistant state
-        self.async_write_ha_state()
+        # Update Home Assistant state (thread-safe)
+        self.schedule_update_ha_state()
 
 
 class LuxPowerAdaptivePollingSensor(LuxPowerSensorEntity):
@@ -1885,8 +1930,8 @@ class LuxPowerAdaptivePollingSensor(LuxPowerSensorEntity):
         self._attr_available = True
         self.lastupdated_time = time.time()
 
-        # Update Home Assistant state
-        self.async_write_ha_state()
+        # Update Home Assistant state (thread-safe)
+        self.schedule_update_ha_state()
 
 
 class LuxPowerConnectionQualitySensor(LuxPowerSensorEntity):
@@ -1919,8 +1964,8 @@ class LuxPowerConnectionQualitySensor(LuxPowerSensorEntity):
         self._attr_available = True
         self.lastupdated_time = time.time()
 
-        # Update Home Assistant state
-        self.async_write_ha_state()
+        # Update Home Assistant state (thread-safe)
+        self.schedule_update_ha_state()
 
 
 class LuxPowerSelfConsumptionSensor(LuxPowerSensorEntity):
@@ -1954,8 +1999,8 @@ class LuxPowerSelfConsumptionSensor(LuxPowerSensorEntity):
         self._attr_available = True
         self.lastupdated_time = time.time()
 
-        # Update Home Assistant state
-        self.async_write_ha_state()
+        # Update Home Assistant state (thread-safe)
+        self.schedule_update_ha_state()
 
 
 class LuxPowerGridDependencySensor(LuxPowerSensorEntity):
@@ -1986,8 +2031,8 @@ class LuxPowerGridDependencySensor(LuxPowerSensorEntity):
         self._attr_available = True
         self.lastupdated_time = time.time()
 
-        # Update Home Assistant state
-        self.async_write_ha_state()
+        # Update Home Assistant state (thread-safe)
+        self.schedule_update_ha_state()
 
 
 class LuxStateSensorEntity(SensorEntity):

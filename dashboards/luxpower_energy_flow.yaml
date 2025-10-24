@@ -1,175 +1,136 @@
-# LuxPower Energy Flow Dashboard
-# Energy flow visualization using picture-elements card
-# Replicates the LuxPower cloud interface energy flow diagram
-
 title: LuxPower Energy Flow
 path: luxpower-flow
 icon: mdi:chart-sankey
 panel: false
-cards:
-  # Energy Flow Diagram using Picture Elements
-  - type: picture-elements
-    image: /local/luxpower-dashboard/images/energy-flow-background.svg
-    elements:
-      # Solar Panel 1
-      - type: image
-        entity: sensor.lux_current_solar_output_1
-        image: /local/luxpower-dashboard/images/solar-panel.svg
-        style:
-          left: 10%
-          top: 15%
-          width: 80px
-          height: 80px
-        tap_action:
-          action: more-info
-        title: |
-          [[[
-            return 'PV1: ' + states['sensor.lux_current_solar_output_1'].state + 'W';
-          ]]]
-
-      # Solar Panel 2
-      - type: image
-        entity: sensor.lux_current_solar_output_2
-        image: /local/luxpower-dashboard/images/solar-panel.svg
-        style:
-          left: 10%
-          top: 35%
-          width: 80px
-          height: 80px
-        tap_action:
-          action: more-info
-        title: |
-          [[[
-            return 'PV2: ' + states['sensor.lux_current_solar_output_2'].state + 'W';
-          ]]]
-
-      # Solar Panel 3 (conditional for 12K models)
-      - type: conditional
-        conditions:
-          - entity: binary_sensor.luxpower_has_pv3
-            state: 'on'
+views:
+  - title: LuxPower Energy Flow
+    path: luxpower-flow
+    icon: mdi:chart-sankey
+    panel: false
+    cards:
+      # Energy Flow Diagram using Picture Elements
+      - type: picture-elements
+        image: /local/luxpower-dashboard/images/energy-flow-background.svg
         elements:
+          # Solar Panel 1
           - type: image
-            entity: sensor.lux_current_solar_output_3
+            entity: sensor.lux_current_solar_output_1
             image: /local/luxpower-dashboard/images/solar-panel.svg
             style:
               left: 10%
-              top: 55%
+              top: 15%
               width: 80px
               height: 80px
             tap_action:
               action: more-info
             title: |
               [[[
-                return 'PV3: ' + states['sensor.lux_current_solar_output_3'].state + 'W';
+                return 'PV1: ' + (states['sensor.lux_current_solar_output_1']?.state ?? '0') + 'W';
               ]]]
 
-      # Battery
-      - type: image
-        entity: sensor.lux_battery_soc
-        image: |
-          [[[
-            var soc = states['sensor.lux_battery_soc'].state;
-            if (soc >= 90) return '/local/luxpower-dashboard/images/battery-100.svg';
-            if (soc >= 50) return '/local/luxpower-dashboard/images/battery-50.svg';
-            return '/local/luxpower-dashboard/images/battery-0.svg';
-          ]]]
-        style:
-          left: 25%
-          top: 35%
-          width: 80px
-          height: 80px
-        tap_action:
-          action: more-info
-        title: |
-          [[[
-            return 'Battery: ' + states['sensor.lux_battery_soc'].state + '% (' + states['sensor.lux_battery_voltage'].state + 'V)';
-          ]]]
-
-      # Inverter
-      - type: image
-        entity: sensor.lux_pv_power
-        image: /local/luxpower-dashboard/images/inverter.svg
-        style:
-          left: 40%
-          top: 35%
-          width: 80px
-          height: 80px
-        tap_action:
-          action: more-info
-        title: |
-          [[[
-            return 'Inverter: ' + states['sensor.lux_pv_power'].state + 'W';
-          ]]]
-
-      # Grid
-      - type: image
-        entity: sensor.lux_grid_import_power
-        image: /local/luxpower-dashboard/images/grid.svg
-        style:
-          left: 55%
-          top: 35%
-          width: 80px
-          height: 80px
-        tap_action:
-          action: more-info
-        title: |
-          [[[
-            var import_power = states['sensor.lux_grid_import_power'].state;
-            var export_power = states['sensor.lux_grid_export_power'].state;
-            if (import_power > 0) return 'Grid Import: ' + import_power + 'W';
-            if (export_power > 0) return 'Grid Export: ' + export_power + 'W';
-            return 'Grid: ' + states['sensor.lux_grid_voltage_live'].state + 'V';
-          ]]]
-
-      # Home/Load
-      - type: image
-        entity: sensor.luxpower_total_consumption
-        image: /local/luxpower-dashboard/images/home.svg
-        style:
-          left: 40%
-          top: 55%
-          width: 80px
-          height: 80px
-        tap_action:
-          action: more-info
-        title: |
-          [[[
-            return 'Consumption: ' + states['sensor.luxpower_total_consumption'].state + 'W';
-          ]]]
-
-      # EPS/Backup (conditional)
-      - type: conditional
-        conditions:
-          - entity: binary_sensor.luxpower_has_eps
-            state: 'on'
-        elements:
+          # Solar Panel 2
           - type: image
-            entity: sensor.lux_power_to_eps
-            image: /local/luxpower-dashboard/images/eps-backup.svg
+            entity: sensor.lux_current_solar_output_2
+            image: /local/luxpower-dashboard/images/solar-panel.svg
+            style:
+              left: 10%
+              top: 35%
+              width: 80px
+              height: 80px
+            tap_action:
+              action: more-info
+            title: |
+              [[[
+                return 'PV2: ' + (states['sensor.lux_current_solar_output_2']?.state ?? '0') + 'W';
+              ]]]
+
+          # Solar Panel 3, conditional
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.luxpower_has_pv3
+                state: 'on'
+            elements:
+              - type: image
+                entity: sensor.lux_current_solar_output_3
+                image: /local/luxpower-dashboard/images/solar-panel.svg
+                style:
+                  left: 10%
+                  top: 55%
+                  width: 80px
+                  height: 80px
+                tap_action:
+                  action: more-info
+                title: |
+                  [[[
+                    return 'PV3: ' + (states['sensor.lux_current_solar_output_3']?.state ?? '0') + 'W';
+                  ]]]
+
+          # Battery
+          - type: image
+            entity: sensor.lux_battery_soc
+            image: |
+              [[[
+                const soc = Number(states['sensor.lux_battery_soc']?.state || 0);
+                if (soc >= 90) return '/local/luxpower-dashboard/images/battery-100.svg';
+                if (soc >= 50) return '/local/luxpower-dashboard/images/battery-50.svg';
+                return '/local/luxpower-dashboard/images/battery-0.svg';
+              ]]]
             style:
               left: 25%
-              top: 55%
+              top: 35%
               width: 80px
               height: 80px
             tap_action:
               action: more-info
             title: |
               [[[
-                return 'EPS: ' + states['sensor.lux_power_to_eps'].state + 'W';
+                const soc = states['sensor.lux_battery_soc']?.state ?? '0';
+                const v = states['sensor.lux_battery_voltage']?.state ?? '0';
+                return `Battery: ${soc}% (${v}V)`;
               ]]]
 
-      # Generator (conditional)
-      - type: conditional
-        conditions:
-          - entity: binary_sensor.luxpower_has_generator
-            state: 'on'
-        elements:
+          # Inverter
           - type: image
-            entity: sensor.lux_generator_power
-            image: /local/luxpower-dashboard/images/generator.svg
+            entity: sensor.lux_pv_power
+            image: /local/luxpower-dashboard/images/inverter.svg
+            style:
+              left: 40%
+              top: 35%
+              width: 80px
+              height: 80px
+            tap_action:
+              action: more-info
+            title: |
+              [[[
+                return 'Inverter: ' + (states['sensor.lux_pv_power']?.state ?? '0') + 'W';
+              ]]]
+
+          # Grid
+          - type: image
+            entity: sensor.lux_grid_import_power
+            image: /local/luxpower-dashboard/images/grid.svg
             style:
               left: 55%
+              top: 35%
+              width: 80px
+              height: 80px
+            tap_action:
+              action: more-info
+            title: |
+              [[[
+                const imp = Number(states['sensor.lux_grid_import_power']?.state || 0);
+                const exp = Number(states['sensor.lux_grid_export_power']?.state || 0);
+                if (imp > 0) return `Grid Import: ${imp}W`;
+                if (exp > 0) return `Grid Export: ${exp}W`;
+                return 'Grid: ' + (states['sensor.lux_grid_voltage_live']?.state ?? '0') + 'V';
+              ]]]
+
+          # Home/Load
+          - type: image
+            entity: sensor.luxpower_total_consumption
+            image: /local/luxpower-dashboard/images/home.svg
+            style:
+              left: 40%
               top: 55%
               width: 80px
               height: 80px
@@ -177,16 +138,53 @@ cards:
               action: more-info
             title: |
               [[[
-                return 'Generator: ' + (states['sensor.lux_generator_power']?.state || '0') + 'W';
+                return 'Consumption: ' + (states['sensor.luxpower_total_consumption']?.state ?? '0') + 'W';
               ]]]
 
-      # Power Flow Arrows and Values
-      # PV to Load (if PV is powering loads directly)
-      - type: conditional
-        conditions:
-          - entity: sensor.luxpower_pv_to_load
-            state: '>50'
-        elements:
+          # EPS/Backup, conditional
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.luxpower_has_eps
+                state: 'on'
+            elements:
+              - type: image
+                entity: sensor.lux_power_to_eps
+                image: /local/luxpower-dashboard/images/eps-backup.svg
+                style:
+                  left: 25%
+                  top: 55%
+                  width: 80px
+                  height: 80px
+                tap_action:
+                  action: more-info
+                title: |
+                  [[[
+                    return 'EPS: ' + (states['sensor.lux_power_to_eps']?.state ?? '0') + 'W';
+                  ]]]
+
+          # Generator, conditional
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.luxpower_has_generator
+                state: 'on'
+            elements:
+              - type: image
+                entity: sensor.lux_generator_power
+                image: /local/luxpower-dashboard/images/generator.svg
+                style:
+                  left: 55%
+                  top: 55%
+                  width: 80px
+                  height: 80px
+                tap_action:
+                  action: more-info
+                title: |
+                  [[[
+                    return 'Generator: ' + (states['sensor.lux_generator_power']?.state ?? '0') + 'W';
+                  ]]]
+
+          # Power Flow Arrows and Values
+          # PV -> Load
           - type: image
             image: /local/luxpower-dashboard/images/arrow-right.svg
             style:
@@ -195,6 +193,10 @@ cards:
               width: 40px
               height: 40px
               opacity: 0.8
+              display: >
+                [[[
+                  return Number(states['sensor.luxpower_pv_to_load']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
           - type: state-label
             entity: sensor.luxpower_pv_to_load
             style:
@@ -202,14 +204,13 @@ cards:
               top: 20%
               font-size: 12px
               font-weight: bold
-              color: #FFD700
+              color: "#FFD700"
+              display: >
+                [[[
+                  return Number(states['sensor.luxpower_pv_to_load']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
 
-      # PV to Battery (if charging)
-      - type: conditional
-        conditions:
-          - entity: sensor.lux_battery_charge
-            state: '>50'
-        elements:
+          # PV -> Battery
           - type: image
             image: /local/luxpower-dashboard/images/arrow-right.svg
             style:
@@ -218,6 +219,10 @@ cards:
               width: 40px
               height: 40px
               opacity: 0.8
+              display: >
+                [[[
+                  return Number(states['sensor.lux_battery_charge']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
           - type: state-label
             entity: sensor.lux_battery_charge
             style:
@@ -225,14 +230,13 @@ cards:
               top: 35%
               font-size: 12px
               font-weight: bold
-              color: #32CD32
+              color: "#32CD32"
+              display: >
+                [[[
+                  return Number(states['sensor.lux_battery_charge']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
 
-      # Battery to Load (if discharging)
-      - type: conditional
-        conditions:
-          - entity: sensor.lux_battery_discharge
-            state: '>50'
-        elements:
+          # Battery -> Load
           - type: image
             image: /local/luxpower-dashboard/images/arrow-right.svg
             style:
@@ -241,6 +245,10 @@ cards:
               width: 40px
               height: 40px
               opacity: 0.8
+              display: >
+                [[[
+                  return Number(states['sensor.lux_battery_discharge']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
           - type: state-label
             entity: sensor.lux_battery_discharge
             style:
@@ -248,14 +256,13 @@ cards:
               top: 35%
               font-size: 12px
               font-weight: bold
-              color: #87CEEB
+              color: "#87CEEB"
+              display: >
+                [[[
+                  return Number(states['sensor.lux_battery_discharge']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
 
-      # Grid to Load (if importing)
-      - type: conditional
-        conditions:
-          - entity: sensor.lux_grid_import_power
-            state: '>50'
-        elements:
+          # Grid -> Load
           - type: image
             image: /local/luxpower-dashboard/images/arrow-left.svg
             style:
@@ -264,6 +271,10 @@ cards:
               width: 40px
               height: 40px
               opacity: 0.8
+              display: >
+                [[[
+                  return Number(states['sensor.lux_grid_import_power']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
           - type: state-label
             entity: sensor.lux_grid_import_power
             style:
@@ -271,14 +282,13 @@ cards:
               top: 35%
               font-size: 12px
               font-weight: bold
-              color: #FF6B6B
+              color: "#FF6B6B"
+              display: >
+                [[[
+                  return Number(states['sensor.lux_grid_import_power']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
 
-      # PV to Grid (if exporting)
-      - type: conditional
-        conditions:
-          - entity: sensor.lux_grid_export_power
-            state: '>50'
-        elements:
+          # PV -> Grid
           - type: image
             image: /local/luxpower-dashboard/images/arrow-right.svg
             style:
@@ -287,6 +297,10 @@ cards:
               width: 40px
               height: 40px
               opacity: 0.8
+              display: >
+                [[[
+                  return Number(states['sensor.lux_grid_export_power']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
           - type: state-label
             entity: sensor.lux_grid_export_power
             style:
@@ -294,207 +308,211 @@ cards:
               top: 20%
               font-size: 12px
               font-weight: bold
-              color: #FF6B6B
+              color: "#FF6B6B"
+              display: >
+                [[[
+                  return Number(states['sensor.lux_grid_export_power']?.state || 0) > 50 ? 'block' : 'none';
+                ]]]
 
-      # System Status Indicator
-      - type: state-label
-        entity: sensor.luxpower_system_status
-        style:
-          left: 50%
-          top: 5%
-          font-size: 16px
-          font-weight: bold
-          color: |
-            [[[
-              var status = states['sensor.luxpower_system_status'].state;
-              if (status === 'Normal') return '#27ae60';
-              if (status === 'Warning') return '#f39c12';
-              if (status === 'Fault') return '#e74c3c';
-              return '#95a5a6';
-            ]]]
-          text-align: center
+          # System Status Indicator
+          - type: state-label
+            entity: sensor.luxpower_system_status
+            style:
+              left: 50%
+              top: 5%
+              font-size: 16px
+              font-weight: bold
+              color: |
+                [[[
+                  const s = states['sensor.luxpower_system_status']?.state || 'Unknown';
+                  if (s === 'Normal') return '#27ae60';
+                  if (s === 'Warning') return '#f39c12';
+                  if (s === 'Fault') return '#e74c3c';
+                  return '#95a5a6';
+                ]]]
+              text-align: center
 
-      # Model Information
-      - type: state-label
-        entity: sensor.luxpower_model_name
-        style:
-          left: 10%
-          top: 5%
-          font-size: 14px
-          font-weight: bold
-          color: #2c3e50
+          # Model Information
+          - type: state-label
+            entity: sensor.luxpower_model_name
+            style:
+              left: 10%
+              top: 5%
+              font-size: 14px
+              font-weight: bold
+              color: "#2c3e50"
 
-      # Energy Flow Description
-      - type: state-label
-        entity: sensor.luxpower_energy_flow_state
-        style:
-          left: 50%
-          top: 90%
-          font-size: 14px
-          font-weight: bold
-          color: #2c3e50
-          text-align: center
-          background: rgba(255, 255, 255, 0.9)
-          padding: 10px
-          border-radius: 8px
+          # Energy Flow Description
+          - type: state-label
+            entity: sensor.luxpower_energy_flow_state
+            style:
+              left: 50%
+              top: 90%
+              font-size: 14px
+              font-weight: bold
+              color: "#2c3e50"
+              text-align: center
+              background: rgba(255, 255, 255, 0.9)
+              padding: 10px
+              border-radius: 8px
 
-  # Power Flow Summary Cards
-  - type: horizontal-stack
-    cards:
-      - type: custom:button-card
-        entity: sensor.luxpower_pv_to_load
-        name: PV → Load
-        icon: mdi:arrow-right-bold
-        styles:
-          card:
-            - background: linear-gradient(135deg, #FFD700, #FFA500)
-            - color: #2c3e50
-            - border-radius: 8px
-            - font-weight: bold
-            - height: 80px
-          name:
-            - font-size: 12px
-            - opacity: 0.8
-          state:
-            - font-size: 18px
-            - font-weight: bold
+      # Power Flow Summary Cards
+      - type: horizontal-stack
+        cards:
+          - type: custom:button-card
+            entity: sensor.luxpower_pv_to_load
+            name: "PV → Load"
+            icon: mdi:arrow-right-bold
+            styles:
+              card:
+                - background: linear-gradient(135deg, #FFD700, #FFA500)
+                - color: "#2c3e50"
+                - border-radius: 8px
+                - font-weight: bold
+                - height: 80px
+              name:
+                - font-size: 12px
+                - opacity: 0.8
+              state:
+                - font-size: 18px
+                - font-weight: bold
 
-      - type: custom:button-card
-        entity: sensor.luxpower_pv_to_battery
-        name: PV → Battery
-        icon: mdi:arrow-right-bold
-        styles:
-          card:
-            - background: linear-gradient(135deg, #32CD32, #228B22)
-            - color: white
-            - border-radius: 8px
-            - font-weight: bold
-            - height: 80px
-          name:
-            - font-size: 12px
-            - opacity: 0.8
-          state:
-            - font-size: 18px
-            - font-weight: bold
+          - type: custom:button-card
+            entity: sensor.luxpower_pv_to_battery
+            name: "PV → Battery"
+            icon: mdi:arrow-right-bold
+            styles:
+              card:
+                - background: linear-gradient(135deg, #32CD32, #228B22)
+                - color: white
+                - border-radius: 8px
+                - font-weight: bold
+                - height: 80px
+              name:
+                - font-size: 12px
+                - opacity: 0.8
+              state:
+                - font-size: 18px
+                - font-weight: bold
 
-      - type: custom:button-card
-        entity: sensor.luxpower_pv_to_grid
-        name: PV → Grid
-        icon: mdi:arrow-right-bold
-        styles:
-          card:
-            - background: linear-gradient(135deg, #FF6B6B, #E74C3C)
-            - color: white
-            - border-radius: 8px
-            - font-weight: bold
-            - height: 80px
-          name:
-            - font-size: 12px
-            - opacity: 0.8
-          state:
-            - font-size: 18px
-            - font-weight: bold
+          - type: custom:button-card
+            entity: sensor.luxpower_pv_to_grid
+            name: "PV → Grid"
+            icon: mdi:arrow-right-bold
+            styles:
+              card:
+                - background: linear-gradient(135deg, #FF6B6B, #E74C3C)
+                - color: white
+                - border-radius: 8px
+                - font-weight: bold
+                - height: 80px
+              name:
+                - font-size: 12px
+                - opacity: 0.8
+              state:
+                - font-size: 18px
+                - font-weight: bold
 
-      - type: custom:button-card
-        entity: sensor.luxpower_battery_to_load
-        name: Battery → Load
-        icon: mdi:arrow-right-bold
-        styles:
-          card:
-            - background: linear-gradient(135deg, #87CEEB, #4682B4)
-            - color: white
-            - border-radius: 8px
-            - font-weight: bold
-            - height: 80px
-          name:
-            - font-size: 12px
-            - opacity: 0.8
-          state:
-            - font-size: 18px
-            - font-weight: bold
+          - type: custom:button-card
+            entity: sensor.luxpower_battery_to_load
+            name: "Battery → Load"
+            icon: mdi:arrow-right-bold
+            styles:
+              card:
+                - background: linear-gradient(135deg, #87CEEB, #4682B4)
+                - color: white
+                - border-radius: 8px
+                - font-weight: bold
+                - height: 80px
+              name:
+                - font-size: 12px
+                - opacity: 0.8
+              state:
+                - font-size: 18px
+                - font-weight: bold
 
-      - type: custom:button-card
-        entity: sensor.luxpower_grid_to_load
-        name: Grid → Load
-        icon: mdi:arrow-right-bold
-        styles:
-          card:
-            - background: linear-gradient(135deg, #DDA0DD, #9370DB)
-            - color: white
-            - border-radius: 8px
-            - font-weight: bold
-            - height: 80px
-          name:
-            - font-size: 12px
-            - opacity: 0.8
-          state:
-            - font-size: 18px
-            - font-weight: bold
+          - type: custom:button-card
+            entity: sensor.luxpower_grid_to_load
+            name: "Grid → Load"
+            icon: mdi:arrow-right-bold
+            styles:
+              card:
+                - background: linear-gradient(135deg, #DDA0DD, #9370DB)
+                - color: white
+                - border-radius: 8px
+                - font-weight: bold
+                - height: 80px
+              name:
+                - font-size: 12px
+                - opacity: 0.8
+              state:
+                - font-size: 18px
+                - font-weight: bold
 
-  # System Information
-  - type: horizontal-stack
-    cards:
-      - type: gauge
-        entity: sensor.luxpower_self_sufficiency
-        name: Self Sufficiency
-        min: 0
-        max: 100
-        severity:
-          green: 80
-          yellow: 50
-          red: 0
-        needle: true
+      # System Information
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.luxpower_self_sufficiency
+            name: Self Sufficiency
+            min: 0
+            max: 100
+            severity:
+              green: 80
+              yellow: 50
+              red: 0
+            needle: true
 
-      - type: custom:button-card
-        entity: sensor.lux_battery_voltage
-        name: Battery Voltage
-        icon: mdi:lightning-bolt
-        styles:
-          card:
-            - background: linear-gradient(135deg, #FFF3E0, #FFE0B2)
-            - color: #2c3e50
-            - border-radius: 8px
-            - font-weight: bold
-            - height: 80px
-          name:
-            - font-size: 12px
-            - opacity: 0.8
-          state:
-            - font-size: 18px
-            - font-weight: bold
+          - type: custom:button-card
+            entity: sensor.lux_battery_voltage
+            name: Battery Voltage
+            icon: mdi:lightning-bolt
+            styles:
+              card:
+                - background: linear-gradient(135deg, #FFF3E0, #FFE0B2)
+                - color: "#2c3e50"
+                - border-radius: 8px
+                - font-weight: bold
+                - height: 80px
+              name:
+                - font-size: 12px
+                - opacity: 0.8
+              state:
+                - font-size: 18px
+                - font-weight: bold
 
-      - type: custom:button-card
-        entity: sensor.lux_grid_frequency_live
-        name: Grid Frequency
-        icon: mdi:sine-wave
-        styles:
-          card:
-            - background: linear-gradient(135deg, #F3E5F5, #E1BEE7)
-            - color: #2c3e50
-            - border-radius: 8px
-            - font-weight: bold
-            - height: 80px
-          name:
-            - font-size: 12px
-            - opacity: 0.8
-          state:
-            - font-size: 18px
-            - font-weight: bold
+          - type: custom:button-card
+            entity: sensor.lux_grid_frequency_live
+            name: Grid Frequency
+            icon: mdi:sine-wave
+            styles:
+              card:
+                - background: linear-gradient(135deg, #F3E5F5, #E1BEE7)
+                - color: "#2c3e50"
+                - border-radius: 8px
+                - font-weight: bold
+                - height: 80px
+              name:
+                - font-size: 12px
+                - opacity: 0.8
+              state:
+                - font-size: 18px
+                - font-weight: bold
 
-      - type: custom:button-card
-        entity: sensor.lux_grid_voltage_live
-        name: Grid Voltage
-        icon: mdi:transmission-tower
-        styles:
-          card:
-            - background: linear-gradient(135deg, #E8F4FD, #B3E5FC)
-            - color: #2c3e50
-            - border-radius: 8px
-            - font-weight: bold
-            - height: 80px
-          name:
-            - font-size: 12px
-            - opacity: 0.8
-          state:
-            - font-size: 18px
-            - font-weight: bold
+          - type: custom:button-card
+            entity: sensor.lux_grid_voltage_live
+            name: Grid Voltage
+            icon: mdi:transmission-tower
+            styles:
+              card:
+                - background: linear-gradient(135deg, #E8F4FD, #B3E5FC)
+                - color: "#2c3e50"
+                - border-radius: 8px
+                - font-weight: bold
+                - height: 80px
+              name:
+                - font-size: 12px
+                - opacity: 0.8
+              state:
+                - font-size: 18px
+                - font-weight: bold

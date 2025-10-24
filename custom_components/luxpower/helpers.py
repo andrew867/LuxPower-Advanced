@@ -141,8 +141,11 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
     _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Device Data: {device_data}")
     _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Model: {model}, Model Code: {model_code}, Firmware: {firmware_version}, Serial: {inverter_serial}")
     
-    # Get model name from model code
-    model_name = MODEL_MAP.get(model_code, model)
+    # Get model name from model code - ensure we get the string name, not the dict
+    from .const import get_model_name
+    model_name = get_model_name(model_code) if model_code != "Unknown" else model
+    if isinstance(model_name, dict):
+        model_name = model_name.get("name", str(model_name))
     
     # Use register-based serial number if available, otherwise fall back to configuration
     serial_number = inverter_serial or serial or dongle
@@ -196,8 +199,11 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
     firmware_version = device_data.get("lux_firmware_version", "Unknown")
     inverter_serial = device_data.get("inverter_serial_number", None)
     
-    # Get model name from model code
-    model_name = MODEL_MAP.get(model_code, model)
+    # Get model name from model code - ensure we get the string name, not the dict
+    from .const import get_model_name
+    model_name = get_model_name(model_code) if model_code != "Unknown" else model
+    if isinstance(model_name, dict):
+        model_name = model_name.get("name", str(model_name))
     
     # Use register-based serial number if available, otherwise fall back to dongle
     serial_number = inverter_serial or dongle
@@ -304,8 +310,8 @@ def should_enable_entity_for_model(entity_definition: dict, model_code: str) -> 
         ]):
             return True
         
-        # Enable entities with 12K-specific register addresses
-        if register in [177, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 206, 207, 208, 220, 221, 222, 223]:
+        # Enable entities with 12K-specific register addresses (including smart load 181-186 and generator 194-198)
+        if register in [176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 206, 207, 208, 220, 221, 222, 223]:
             return True
     
     # For non-12K models, disable 12K-specific features
@@ -316,8 +322,8 @@ def should_enable_entity_for_model(entity_definition: dict, model_code: str) -> 
         ]):
             return False
         
-        # Disable entities with 12K-specific register addresses
-        if register in [177, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 206, 207, 208, 220, 221, 222, 223]:
+        # Disable entities with 12K-specific register addresses (including smart load 181-186 and generator 194-198)
+        if register in [176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 206, 207, 208, 220, 221, 222, 223]:
             return False
     
     # For all other entities, use the default enabled status
@@ -439,8 +445,9 @@ def update_model_info_and_filter_entities(hass, dongle: str, model_code: str, en
     for entry_id, data in hass.data.get(DOMAIN, {}).items():
         if data.get("DONGLE") == dongle:
             # Update model information
+            from .const import get_model_name
             data["model_code"] = model_code
-            data["model"] = MODEL_MAP.get(model_code, f"LuxPower {model_code}")
+            data["model"] = get_model_name(model_code)
             _LOGGER.info(f"Updated model information: {model_code} -> {data['model']}")
             break
     

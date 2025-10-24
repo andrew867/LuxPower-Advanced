@@ -16,6 +16,12 @@ MAX_BANK_COUNT = 6
 MIN_BANK_COUNT = 1
 DEFAULT_BANK_COUNT = 6
 
+# Adaptive polling constants
+MIN_ADAPTIVE_POLLING_INTERVAL = 1  # Minimum polling interval in seconds
+MAX_ADAPTIVE_POLLING_INTERVAL = 300  # Maximum polling interval in seconds (5 minutes)
+ADAPTIVE_POLLING_BASE_INTERVAL = 10  # Base polling interval in seconds
+ADAPTIVE_POLLING_ADJUSTMENT_FACTOR = 0.1  # Adjustment factor for connection quality
+
 
 def prepare_binary_value(oldvalue, mask, enable=True):
     return oldvalue | mask if enable else oldvalue & (65535 - mask)
@@ -144,30 +150,30 @@ class LXPPacket:
     )
 
     #
-    # Register 110, Most Significant Byte
+    # Register 110, Most Significant Byte (FunctionEn1)
     #
 
-    R110_UNKNOWN_BIT_15 = 1 << 15
-    R110_UNKNOWN_BIT_14 = 1 << 14
-    R110_UNKNOWN_BIT_13 = 1 << 13
-    R110_UNKNOWN_BIT_12 = 1 << 12
-    R110_UNKNOWN_BIT_11 = 1 << 11
-    R110_UNKNOWN_BIT_10 = 1 << 10
-    R110_UNKNOWN_BIT_09 = 1 << 9
-    R110_UNKNOWN_BIT_08 = 1 << 8
+    ECO_MODE_ENABLE = 1 << 15           # Eco Mode Enable (0-disable 1-enable)
+    GREEN_MODE_ENABLE = 1 << 14         # Green Mode Enable (0-disable 1-enable)
+    R110_UNKNOWN_BIT_13 = 1 << 13       # PV CT Sample Ratio (bits 12-13)
+    R110_UNKNOWN_BIT_12 = 1 << 12       # PV CT Sample Ratio (bits 12-13)
+    ON_GRID_WORKING_MODE = 1 << 11      # On Grid Working Mode (0-self consumption 1-Charge First)
+    TAKE_LOAD_TOGETHER = 1 << 10        # Take Load Together (12K: 0-ongrid disable 1-enable)
+    R110_UNKNOWN_BIT_09 = 1 << 9        # PV CT Sample Type (bits 8-9)
+    R110_UNKNOWN_BIT_08 = 1 << 8        # PV CT Sample Type (bits 8-9)
 
     #
     # Register 110, Least Significant Byte
     #
 
-    TAKE_LOAD_TOGETHER = 1 << 7  # Existing
-    CHARGE_LAST = 1 << 6         # Existing
-    R110_UNKNOWN_BIT_05 = 1 << 5
-    DRMS_ENABLE_ALT = 1 << 4     # Alternative DRMS control
-    EPS_ENABLE = 1 << 3          # EPS mode enable
-    FORCED_DISCHG_EN_ALT = 1 << 2  # Alternative force discharge
-    R110_BIT_01 = 1 << 1
-    R110_BIT_00 = 1 << 0
+    DRY_CONTACTOR_CONTROL = 1 << 7      # Buzzer/Dry Contactor Control (12K: DrycontactorCntl En)
+    CHARGE_LAST = 1 << 6                # Charge Last Enable (0-disable 1-enable)
+    R110_UNKNOWN_BIT_05 = 1 << 5        # CT Sample Ratio (bits 5-6)
+    DRMS_ENABLE_ALT = 1 << 4            # Alternative DRMS control (0-disable 1-enable)
+    EPS_ENABLE = 1 << 3                 # EPS mode enable (0-disable 1-enable)
+    FORCED_DISCHG_EN_ALT = 1 << 2       # Alternative force discharge (0-disable 1-enable)
+    FAST_ZERO_EXPORT = 1 << 1           # Fast Zero Export (0-disable 1-enable)
+    PV_GRID_OFF = 1 << 0                # PV Grid Off Enable (0-disable 1-enable)
 
     # fmt: off
 
@@ -200,30 +206,30 @@ class LXPPacket:
     AC_CHARGE_MODE_BITMASK = AC_CHARGE_MODE_B_01 | AC_CHARGE_MODE_B_02
 
     #
-    # Register 179, Most Significant Byte
+    # Register 179, Most Significant Byte (uFunctionEn2)
     #
 
-    R179_UNKNOWN_BIT_15 = 1 << 15  # = 32768  # ON in SNA-12K-US (value 53504 = 0xD100)
-    R179_UNKNOWN_BIT_14 = 1 << 14  # = 16384  # ON in SNA-12K-US (value 53504 = 0xD100)
-    R179_UNKNOWN_BIT_13 = 1 << 13  # =  8192
-    R179_UNKNOWN_BIT_12 = 1 << 12  # =  4096   # ON in SNA-12K-US (value 53504 = 0xD100)
-    R179_UNKNOWN_BIT_11 = 1 << 11  # =  2048
-    R179_UNKNOWN_BIT_10 = 1 << 10  # =  1024
-    R179_UNKNOWN_BIT_09 = 1 << 9   # =   512
-    R179_UNKNOWN_BIT_08 = 1 << 8   # =   256   # ON in SNA-12K-US (value 53504 = 0xD100)
+    ON_GRID_ALWAYS_ON = 1 << 15         # On Grid Always On (0-Disable 1-Enable)
+    RSD_DISABLE = 1 << 14               # RSD Disable (0-Enable 1-Disable)
+    SMART_LOAD_ENABLE = 1 << 13         # Smart Load Enable (0-Generator 1-Smart Load)
+    PV_ARC_ENABLE = 1 << 12             # PV Arc Enable (0-Disable 1-Enable)
+    AC_COUPLING = 1 << 11               # AC Coupling (0-Disable 1-Enable)
+    BATTERY_DISCHARGE_CONTROL = 1 << 10 # Battery Discharge Control (0-SOC, 1-Volt)
+    BATTERY_CHARGE_CONTROL = 1 << 9     # Battery Charge Control (0-SOC, 1-Volt)
+    GEN_PEAK_SHAVING = 1 << 8           # Generator Peak Shaving (0-Disable 1-Enable)
 
     #
     # Register 179, Least Significant Byte
     #
 
-    ENABLE_PEAK_SHAVING = 1 << 7   # =   128   True
-    R179_UNKNOWN_BIT_06 = 1 << 6   # =    64   True
-    R179_UNKNOWN_BIT_05 = 1 << 5   # =    32
-    R179_UNKNOWN_BIT_04 = 1 << 4   # =    16
-    R179_UNKNOWN_BIT_03 = 1 << 3   # =     8
-    R179_UNKNOWN_BIT_02 = 1 << 2   # =     4
-    R179_UNKNOWN_BIT_01 = 1 << 1   # =     2
-    R179_UNKNOWN_BIT_00 = 1 << 0   # =     1
+    GRID_PEAK_SHAVING = 1 << 7          # Grid Peak Shaving (0-Disable 1-Enable)
+    ACTIVE_POWER_CMD = 1 << 6           # Active Power CMD Enable (0-Disable 1-Enable)
+    TRIP_TIME_UNIT = 1 << 5             # Trip Time Unit (0-Disable 1-Enable)
+    VOLT_WATT = 1 << 4                  # Volt-Watt Enable (0-Disable 1-Enable)
+    BATTERY_WAKEUP = 1 << 3             # Battery Wakeup Enable (0-Disable 1-Enable)
+    AFCI_ALARM_CLEAR = 1 << 2           # AFCI Alarm Clear (0-null 1-clear)
+    PV_CT_DIRECTION = 1 << 1            # PV CT Direction (0-Normal 1-Reversed)
+    AC_CT_DIRECTION = 1 << 0            # AC CT Direction (0-Normal 1-Reversed)
 
     # fmt: on
 
@@ -372,6 +378,7 @@ class LXPPacket:
     t_dcdc_high = "t_dcdc_high"
     exception_reason_1 = "exception_reason_1"
     exception_reason_2 = "exception_reason_2"
+    charge_discharge_disable_reason = "charge_discharge_disable_reason"
     
     # NEW 2025.03.05 Protocol: Switch Entity Bitmasks
     # Hold 110 - Function Enable 1 (12K Models)

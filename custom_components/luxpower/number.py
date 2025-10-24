@@ -160,26 +160,29 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         
         # Generator Control Number Entities
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Rated Power", "register_address": 177, "def_val": 0, "min_val": 0, "max_val": 50000, "icon": "mdi:engine", "attribute": "gen_rated_power", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Voltage", "register_address": 194, "def_val": 48.0, "min_val": 38.4, "max_val": 52.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:car-battery", "attribute": "gen_chg_start_volt", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Voltage", "register_address": 195, "def_val": 58.0, "min_val": 48.0, "max_val": 59.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:car-battery", "attribute": "gen_chg_end_volt", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start SOC", "register_address": 196, "def_val": 20, "min_val": 0, "max_val": 90, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-charging", "attribute": "gen_chg_start_soc", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End SOC", "register_address": 197, "def_val": 80, "min_val": 20, "max_val": 100, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-charging", "attribute": "gen_chg_end_soc", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Charge Current", "register_address": 198, "def_val": 30, "min_val": 0, "max_val": 60, "step": 1, "device_class": NumberDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE, "icon": "mdi:current-ac", "attribute": "max_gen_chg_current", "enabled": True},
         
-        # Smart Load Control Number Entities
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC", "register_address": 181, "def_val": 20, "min_val": 0, "max_val": 90, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-charging", "attribute": "smart_load_start_soc", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC", "register_address": 182, "def_val": 80, "min_val": 20, "max_val": 100, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-charging", "attribute": "smart_load_end_soc", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start Voltage", "register_address": 183, "def_val": 48.0, "min_val": 38.4, "max_val": 52.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:car-battery", "attribute": "smart_load_start_volt", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End Voltage", "register_address": 184, "def_val": 58.0, "min_val": 48.0, "max_val": 59.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:car-battery", "attribute": "smart_load_end_volt", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load SOC Hysteresis", "register_address": 185, "def_val": 5, "min_val": 1, "max_val": 20, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-sync", "attribute": "smart_load_soc_hysteresis", "enabled": True},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Voltage Hysteresis", "register_address": 186, "def_val": 1.0, "min_val": 0.1, "max_val": 5.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:battery-sync", "attribute": "smart_load_volt_hysteresis", "enabled": True},
         
         # Enhanced Peak Shaving Number Entities
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Power", "unique": "lux_peak_shaving_power", "register_address": 206, "def_val": 5000, "min_val": 0, "max_val": 50000, "step": 100, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "icon": "mdi:lightning-bolt", "attribute": "peak_shaving_power", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving SOC", "unique": "lux_peak_shaving_soc", "register_address": 207, "def_val": 80, "min_val": 20, "max_val": 100, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-charging", "attribute": "peak_shaving_soc", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Voltage", "unique": "lux_peak_shaving_voltage", "register_address": 208, "def_val": 52.0, "min_val": 48.0, "max_val": 58.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:car-battery", "attribute": "peak_shaving_volt", "enabled": True},
         
-        # AC Coupling Number Entities
+        # Smart Load Control Number Entities (12K Models) - Registers 181-186
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC", "unique": "lux_smart_load_start_soc", "register_address": 181, "def_val": 20, "min_val": 0, "max_val": 100, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-arrow-up", "attribute": "smart_load_start_soc", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC", "unique": "lux_smart_load_end_soc", "register_address": 182, "def_val": 80, "min_val": 0, "max_val": 100, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-arrow-down", "attribute": "smart_load_end_soc", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start Voltage", "unique": "lux_smart_load_start_voltage", "register_address": 183, "def_val": 48.0, "min_val": 38.4, "max_val": 58.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:lightning-bolt", "attribute": "smart_load_start_volt", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End Voltage", "unique": "lux_smart_load_end_voltage", "register_address": 184, "def_val": 58.0, "min_val": 38.4, "max_val": 58.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:lightning-bolt", "attribute": "smart_load_end_volt", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load SOC Hysteresis", "unique": "lux_smart_load_soc_hysteresis", "register_address": 185, "def_val": 5, "min_val": 0, "max_val": 20, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-sync", "attribute": "smart_load_soc_hysteresis", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Voltage Hysteresis", "unique": "lux_smart_load_voltage_hysteresis", "register_address": 186, "def_val": 2.0, "min_val": 0, "max_val": 10.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:sine-wave", "attribute": "smart_load_volt_hysteresis", "enabled": True},
+        
+        # Generator Integration Number Entities (12K Models) - Registers 194-198
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start Voltage", "unique": "lux_gen_chg_start_voltage", "register_address": 194, "def_val": 48.0, "min_val": 38.4, "max_val": 58.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:engine", "attribute": "gen_chg_start_volt", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End Voltage", "unique": "lux_gen_chg_end_voltage", "register_address": 195, "def_val": 58.0, "min_val": 38.4, "max_val": 58.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:engine", "attribute": "gen_chg_end_volt", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start SOC", "unique": "lux_gen_chg_start_soc", "register_address": 196, "def_val": 20, "min_val": 0, "max_val": 100, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-arrow-up", "attribute": "gen_chg_start_soc", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End SOC", "unique": "lux_gen_chg_end_soc", "register_address": 197, "def_val": 80, "min_val": 0, "max_val": 100, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-arrow-down", "attribute": "gen_chg_end_soc", "enabled": True},
+        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Charge Current", "unique": "lux_max_gen_chg_current", "register_address": 198, "def_val": 50.0, "min_val": 0, "max_val": 100.0, "step": 0.1, "device_class": NumberDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE, "icon": "mdi:lightning-bolt", "attribute": "max_gen_chg_current", "enabled": True},
+        
+        # AC Coupling Number Entities (12K Models)
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling Start SOC", "unique": "lux_ac_coupling_start_soc", "register_address": 220, "def_val": 20, "min_val": 0, "max_val": 90, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-charging", "attribute": "ac_couple_start_soc", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling End SOC", "unique": "lux_ac_coupling_end_soc", "register_address": 221, "def_val": 80, "min_val": 20, "max_val": 100, "step": 1, "device_class": NumberDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "icon": "mdi:battery-charging", "attribute": "ac_couple_end_soc", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling Start Voltage", "unique": "lux_ac_coupling_start_voltage", "register_address": 222, "def_val": 48.0, "min_val": 38.4, "max_val": 52.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:car-battery", "attribute": "ac_couple_start_volt", "enabled": True},
@@ -233,8 +236,6 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving Volt 1", "unique": "lux_start_peak_shaving_volt_1", "register_address": 208, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving SOC 2(%)", "register_address": 218, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-80", "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Start Peak-Shaving Volt 2", "register_address": 219, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC(%)", "unique": "lux_ac_couple_start_soc_legacy", "register_address": 220, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-20", "enabled": False},
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End SOC(%)", "unique": "lux_ac_couple_end_soc_legacy", "register_address": 221, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-100", "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start Voltage", "unique": "lux_ac_couple_start_volt_legacy", "register_address": 222, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple End Voltage", "unique": "lux_ac_couple_end_volt_legacy", "register_address": 223, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Charge SOC Limit (%)", "register_address": 227, "def_val": 101.0, "min_val": 10, "max_val": 101, "icon": "mdi:battery-charging-100", "enabled": False},  # Updated: 10-101% with -5% hysteresis per 2025.03.05 protocol
@@ -243,14 +244,6 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         # Register 176: Max system power in kW (0-90kW range, 0.1kW steps)
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K (kW)", "unique": "lux_max_system_power_12k_kw", "register_address": 176, "def_val": 24.0, "min_val": 0, "max_val": 90, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},
         
-        # 12K Smart Load Control (Registers 181-186) - UPDATED FROM CLOUD UI
-        # Advanced load management for 12K models - controls when to start/stop smart loads based on SOC/voltage
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start SOC(%)", "register_address": 181, "def_val": 50.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-up", "enabled": False},  # SOC threshold to start smart load
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End SOC(%)", "register_address": 182, "def_val": 20.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-arrow-down", "enabled": False},  # SOC threshold to stop smart load
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Start Voltage", "register_address": 183, "def_val": 52.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Voltage threshold to start smart load
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load End Voltage", "register_address": 184, "def_val": 46.0, "min_val": 40.0, "max_val": 60.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Voltage threshold to stop smart load
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load SOC Hysteresis(%)", "register_address": 185, "def_val": 5.0, "min_val": 0, "max_val": 20, "icon": "mdi:sine-wave", "enabled": False},  # SOC hysteresis to prevent oscillation
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Volt Hysteresis", "register_address": 186, "def_val": 1.0, "min_val": 0, "max_val": 5.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},  # Voltage hysteresis to prevent oscillation
         
         # 12K Enhanced AC Coupling (Registers 187-192) - UPDATED FROM CLOUD UI
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Couple Start SOC 12K(%)", "register_address": 187, "def_val": 90.0, "min_val": 0, "max_val": 100, "icon": "mdi:battery-charging-90", "enabled": False},
@@ -369,9 +362,18 @@ class LuxNormalNumberEntity(NumberEntity):
         self._client = luxpower_client
 
         # Hidden Inherited Instance Attributes
-        self._attr_unique_id = (
-            f"{DOMAIN}_{self.dongle}_numbernormal_{self.register_address}"
-        )
+        # Use custom unique_id if provided, otherwise use the 'unique' field for backward compatibility
+        if "unique_id" in entity_definition:
+            # Use custom unique_id if provided
+            self._attr_unique_id = entity_definition["unique_id"]
+        elif "unique" in entity_definition:
+            # Use the 'unique' field for backward compatibility
+            self._attr_unique_id = f"{DOMAIN}_{self.dongle}_{entity_definition['unique']}"
+        else:
+            # Fallback to register-based generation
+            self._attr_unique_id = (
+                f"{DOMAIN}_{self.dongle}_numbernormal_{self.register_address}"
+            )
         self._attr_name = entity_definition["name"].format(
             replaceID_midfix=nameID_midfix, hyphen=hyphen
         )
