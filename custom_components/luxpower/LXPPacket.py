@@ -12,9 +12,9 @@ import struct
 _LOGGER = logging.getLogger(__name__)
 
 # Bank count validation constants
-MAX_BANK_COUNT = 6
+MAX_BANK_COUNT = 7
 MIN_BANK_COUNT = 1
-DEFAULT_BANK_COUNT = 6
+DEFAULT_BANK_COUNT = 7
 
 # Adaptive polling constants
 MIN_ADAPTIVE_POLLING_INTERVAL = 1  # Minimum polling interval in seconds

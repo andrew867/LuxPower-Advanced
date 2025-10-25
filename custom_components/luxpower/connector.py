@@ -35,12 +35,8 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle):
     await asyncio.sleep(10)
     # fmt: skip
 
-    # Get configured bank count from integration data
-    bank_count = 6  # Default fallback
-    for entry_id, data in hass.data.get(DOMAIN, {}).items():
-        if data.get("DONGLE") == dongle:
-            bank_count = data.get("refresh_bank_count", 6)
-            break
+    # Always use 7 banks to get all data
+    bank_count = 7
 
     await hass.services.async_call(
         DOMAIN,
@@ -214,12 +210,7 @@ class ServiceHelper:
 
                 # Refresh registers to ensure changes are applied
                 # Get configured bank count from integration data
-                bank_count = 6  # Default fallback
-                for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
-                    if data.get("DONGLE") == dongle:
-                        bank_count = data.get("refresh_bank_count", 6)
-                        break
-
+                bank_count = 7  # Always use 7 banks for complete data
                 await self.service_refresh_data_registers(dongle=dongle, bank_count=bank_count)
 
                 _LOGGER.info(
@@ -280,12 +271,7 @@ class ServiceHelper:
 
             # Refresh registers to ensure changes are applied
             # Get configured bank count from integration data
-            bank_count = 6  # Default fallback
-            for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
-                if data.get("DONGLE") == dongle:
-                    bank_count = data.get("refresh_bank_count", 6)
-                    break
-
+            bank_count = 7  # Always use 7 banks for complete data
             await self.service_refresh_data_registers(dongle=dongle, bank_count=bank_count)
 
             _LOGGER.info(f"Charging slot {charge_slot} stopped successfully")

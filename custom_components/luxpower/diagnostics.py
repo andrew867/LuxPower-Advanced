@@ -48,7 +48,7 @@ async def async_get_config_entry_diagnostics(
             "use_serial": config_entry.data.get("lux_use_serial", False),
             "auto_refresh": config_entry.data.get("lux_auto_refresh", False),
             "refresh_interval": config_entry.data.get("lux_refresh_interval", 120),
-            "refresh_bank_count": config_entry.data.get("lux_refresh_bank_count", 6),
+            "refresh_bank_count": 7,  # Always use 7 banks for complete data
             "adaptive_polling": config_entry.data.get("lux_adaptive_polling", True),
             "reconnection_delay": config_entry.data.get("lux_reconnection_delay", 5),
             "respond_to_heartbeat": config_entry.data.get("lux_respond_to_heartbeat", False),

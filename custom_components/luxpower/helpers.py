@@ -175,6 +175,14 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
     firmware_version = device_data.get("lux_firmware_version", "Unknown")
     inverter_serial = device_data.get("inverter_serial_number", None)
     
+    # If device data is not available yet, use safe defaults for backwards compatibility
+    if not device_data or model_code == "Unknown":
+        _LOGGER.debug(f"Device data not available yet for main device, using defaults")
+        model = "LuxPower Inverter"
+        model_code = "Unknown"
+        firmware_version = "Unknown"
+        inverter_serial = None
+    
     # Debug logging for device info
     _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Dongle: {dongle}")
     _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Entry ID: {entry_id}")
@@ -242,6 +250,14 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
     model_code = device_data.get("model_code", "Unknown")
     firmware_version = device_data.get("lux_firmware_version", "Unknown")
     inverter_serial = device_data.get("inverter_serial_number", None)
+    
+    # If device data is not available yet, use safe defaults for backwards compatibility
+    if not device_data or model_code == "Unknown":
+        _LOGGER.debug(f"Device data not available yet for group {device_group}, using defaults")
+        model = "LuxPower Inverter"
+        model_code = "Unknown"
+        firmware_version = "Unknown"
+        inverter_serial = None
     
     # Debug logging for device group info
     _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Group: {device_group}, Dongle: {dongle}")
@@ -337,6 +353,70 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
     )
     
     return device_info
+
+
+def update_device_info_when_available(hass, dongle: str):
+    """
+    Update device info for all device groups when device data becomes available.
+    This ensures backwards compatibility and proper device information display.
+    """
+    try:
+        from homeassistant.helpers import device_registry as dr
+        from .const import (
+            DEVICE_GROUP_PV, DEVICE_GROUP_GRID, DEVICE_GROUP_EPS, 
+            DEVICE_GROUP_GENERATOR, DEVICE_GROUP_BATTERY, DEVICE_GROUP_INVERTER, 
+            DEVICE_GROUP_TEMPERATURES, DEVICE_GROUP_SETTINGS
+        )
+        
+        device_registry = dr.async_get(hass)
+        
+        # Find the config entry ID for this dongle
+        config_entry_id = None
+        for e_id, data in hass.data.get(DOMAIN, {}).items():
+            if data.get("DONGLE") == dongle:
+                config_entry_id = e_id
+                break
+        
+        if not config_entry_id:
+            _LOGGER.warning(f"No config entry found for dongle {dongle}")
+            return
+        
+        # Device groups to update
+        device_groups = [
+            DEVICE_GROUP_PV,
+            DEVICE_GROUP_GRID, 
+            DEVICE_GROUP_EPS,
+            DEVICE_GROUP_GENERATOR,
+            DEVICE_GROUP_BATTERY,
+            DEVICE_GROUP_INVERTER,
+            DEVICE_GROUP_TEMPERATURES,
+            DEVICE_GROUP_SETTINGS
+        ]
+        
+        # Schedule device registry operations to run in the event loop
+        def update_device_groups():
+            try:
+                for device_group in device_groups:
+                    try:
+                        # Get updated device info for this group
+                        device_info = get_device_group_info(hass, dongle, device_group)
+                        if device_info:
+                            # Update the device group in the registry
+                            device_registry.async_get_or_create(
+                                config_entry_id=config_entry_id,
+                                **device_info
+                            )
+                            _LOGGER.debug(f"Updated device group: {device_group} for dongle: {dongle}")
+                    except Exception as e:
+                        _LOGGER.warning(f"Failed to update device group {device_group}: {e}")
+            except Exception as e:
+                _LOGGER.warning(f"Failed to update device groups for dongle {dongle}: {e}")
+        
+        # Schedule the update to run in the event loop
+        hass.loop.call_soon_threadsafe(update_device_groups)
+                
+    except Exception as e:
+        _LOGGER.warning(f"Failed to update device groups for dongle {dongle}: {e}")
 
 
 def should_enable_entity_for_model(entity_definition: dict, model_code: str) -> bool:
@@ -550,6 +630,7 @@ def get_entity_device_group(entity_definition: dict, hass=None) -> str:
                 
                 # If device grouping is disabled, return the main inverter group
                 if not device_grouping_enabled:
+                    _LOGGER.debug(f"Device grouping disabled, using main inverter group for entity")
                     return DEVICE_GROUP_INVERTER
         except Exception as e:
             # If there's any error checking config, default to device grouping enabled
@@ -562,6 +643,9 @@ def get_entity_device_group(entity_definition: dict, hass=None) -> str:
     
     # Debug logging for entity grouping
     _LOGGER.debug(f"Entity grouping - attribute: {attribute}, name: {name}, unique: {unique}")
+    
+    # Log the entity definition for debugging
+    _LOGGER.debug(f"Entity definition for grouping: {entity_definition}")
     
     # PV System entities
     pv_attributes = {

@@ -22,7 +22,6 @@ from .const import (
     ATTR_LUX_PORT,
     ATTR_LUX_AUTO_REFRESH,
     ATTR_LUX_REFRESH_INTERVAL,
-    ATTR_LUX_REFRESH_BANK_COUNT,
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_ADAPTIVE_POLLING,
@@ -36,7 +35,6 @@ from .const import (
     DOMAIN,
     PLACEHOLDER_LUX_AUTO_REFRESH,
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
-    PLACEHOLDER_LUX_REFRESH_BANK_COUNT,
     PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
     PLACEHOLDER_LUX_ADAPTIVE_POLLING,
     PLACEHOLDER_LUX_RECONNECTION_DELAY,
@@ -140,16 +138,8 @@ async def refreshALLPlatforms(hass: HomeAssistant, dongle: str) -> None:
     """
     await asyncio.sleep(5)  # Reduced from 20s to 5s for faster startup
     # fmt: skip
-    # Get configured bank count from integration data
-    bank_count = 6  # Default fallback
-    for entry_id, data in hass.data.get(DOMAIN, {}).items():
-        if data.get("DONGLE") == dongle:
-            bank_count = data.get("refresh_bank_count", 6)
-            break
-
-    # Validate bank count
-    from .LXPPacket import validate_bank_count
-    bank_count = validate_bank_count(bank_count)
+    # Always use 7 banks to get all data
+    bank_count = 7
 
     await hass.services.async_call(
         DOMAIN,
@@ -206,13 +196,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             dongle = call.data.get("dongle")
             bank_count = call.data.get("bank_count")
             if bank_count is None or int(bank_count) == 0:
-                # Use configured bank count if not provided or 0
-                for entry_id, data in hass.data.get(DOMAIN, {}).items():
-                    if data.get("DONGLE") == dongle:
-                        bank_count = data.get("refresh_bank_count", 6)
-                        break
-                else:
-                    bank_count = 6  # Default fallback
+                # Always use 7 banks to get all data
+                bank_count = 7
             _LOGGER.debug("handle_refresh_data_registers service: %s %s", DOMAIN, dongle)
             await service_helper.service_refresh_data_registers(
                 dongle=dongle, bank_count=int(bank_count)
@@ -410,6 +395,49 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
 
 
+async def _create_device_groups(hass: HomeAssistant, dongle: str):
+    """Create device groups for the LuxPower integration."""
+    try:
+        from homeassistant.helpers import device_registry as dr
+        from .helpers import get_device_group_info
+        from .const import (
+            DEVICE_GROUP_PV, DEVICE_GROUP_GRID, DEVICE_GROUP_EPS, 
+            DEVICE_GROUP_GENERATOR, DEVICE_GROUP_BATTERY, DEVICE_GROUP_INVERTER, 
+            DEVICE_GROUP_TEMPERATURES, DEVICE_GROUP_SETTINGS
+        )
+        
+        device_registry = dr.async_get(hass)
+        
+        # Device groups to create
+        device_groups = [
+            DEVICE_GROUP_PV,
+            DEVICE_GROUP_GRID, 
+            DEVICE_GROUP_EPS,
+            DEVICE_GROUP_GENERATOR,
+            DEVICE_GROUP_BATTERY,
+            DEVICE_GROUP_INVERTER,
+            DEVICE_GROUP_TEMPERATURES,
+            DEVICE_GROUP_SETTINGS
+        ]
+        
+        for device_group in device_groups:
+            try:
+                # Get device info for this group
+                device_info = get_device_group_info(hass, dongle, device_group)
+                if device_info:
+                    # Create or update the device group in the registry
+                    device_registry.async_get_or_create(
+                        config_entry_id=None,  # Will be set by the entity platform
+                        **device_info
+                    )
+                    _LOGGER.debug(f"Created device group: {device_group} for dongle: {dongle}")
+            except Exception as e:
+                _LOGGER.warning(f"Failed to create device group {device_group}: {e}")
+                
+    except Exception as e:
+        _LOGGER.warning(f"Failed to create device groups for dongle {dongle}: {e}")
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """
     Set up a LuxPower config entry.
@@ -445,7 +473,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
     )
     BANK_COUNT = int(
-        config.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
+        7  # Always use 7 banks for complete data
     )
     # USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
@@ -487,7 +515,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         rated_power = get_model_rated_power(model_code)
 
     # Get configured refresh bank count
-    refresh_bank_count = config.get(ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT)
+    refresh_bank_count = 7  # Always use 7 banks for complete data
 
     # Get adaptive polling and reconnection settings
     adaptive_polling = config.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)
@@ -571,6 +599,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await hass.config_entries.async_reload(entry.entry_id)
 
     entry.async_on_unload(entry.add_update_listener(reload_config_entry))
+
+    # Device groups will be created automatically when entities are added
+    # This ensures device data is available and maintains backwards compatibility
 
     return True
 

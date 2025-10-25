@@ -21,7 +21,6 @@ from .const import (
     ATTR_LUX_RESPOND_TO_HEARTBEAT,
     ATTR_LUX_AUTO_REFRESH,
     ATTR_LUX_REFRESH_INTERVAL,
-    ATTR_LUX_REFRESH_BANK_COUNT,
     ATTR_LUX_SERIAL_NUMBER,
     ATTR_LUX_USE_SERIAL,
     ATTR_LUX_DEVICE_GROUPING,
@@ -36,7 +35,6 @@ from .const import (
     PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT,
     PLACEHOLDER_LUX_AUTO_REFRESH,
     PLACEHOLDER_LUX_REFRESH_INTERVAL,
-    PLACEHOLDER_LUX_REFRESH_BANK_COUNT,
     PLACEHOLDER_LUX_SERIAL_NUMBER,
     PLACEHOLDER_LUX_USE_SERIAL,
     PLACEHOLDER_LUX_DEVICE_GROUPING,
@@ -79,7 +77,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             if not user_input[ATTR_LUX_USE_SERIAL]:
                 user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
             # Omitting bank count from initial setup:
-            user_input[ATTR_LUX_REFRESH_BANK_COUNT] = PLACEHOLDER_LUX_REFRESH_BANK_COUNT
             errors = self._validate_user_input(user_input)
             if not errors:
                 _LOGGER.info("LuxConfigFlow: saving options ")
@@ -113,7 +110,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             vol.Optional("lux_respond_to_heartbeat", default=config_entry.get("lux_respond_to_heartbeat", PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
             vol.Optional("lux_auto_refresh", default=config_entry.get("lux_auto_refresh", PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
             vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
-            vol.Optional("lux_refresh_bank_count", default=config_entry.get("lux_refresh_bank_count", 6)): vol.All(int, vol.Range(min=1, max=6)),
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
             vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
             vol.Optional("lux_adaptive_polling", default=config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
@@ -263,7 +259,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional("lux_respond_to_heartbeat", default=config_entry.get("lux_respond_to_heartbeat", PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
             vol.Optional("lux_auto_refresh", default=config_entry.get("lux_auto_refresh", PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
             vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
-            vol.Optional("lux_refresh_bank_count", default=config_entry.get("lux_refresh_bank_count", PLACEHOLDER_LUX_REFRESH_BANK_COUNT)): vol.All(int, vol.Range(min=1, max=6)),
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
             vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
             vol.Optional("lux_adaptive_polling", default=config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
@@ -295,11 +290,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         ri = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
         if type(ri) is not int or ri < 30 or ri > 120:
             errors[ATTR_LUX_REFRESH_INTERVAL] = "refresh_interval_error"
-        bc = user_input.get(
-            ATTR_LUX_REFRESH_BANK_COUNT, PLACEHOLDER_LUX_REFRESH_BANK_COUNT
-        )
-        if type(bc) is not int or bc < 1 or bc > 6:
-            errors[ATTR_LUX_REFRESH_BANK_COUNT] = "refresh_bank_count_error"
         sn = user_input.get(ATTR_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_SERIAL_NUMBER)
         use_sn = user_input.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)
         if use_sn:

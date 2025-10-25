@@ -1302,6 +1302,10 @@ class LuxPowerFirmwareSensor(LuxPowerSensorEntity):
                     
                     # Trigger device info update only if firmware changed
                     self._update_device_info()
+                    
+                    # Also update device groups with new firmware info
+                    from .helpers import update_device_info_when_available
+                    update_device_info_when_available(self.hass, self.dongle)
                 else:
                     _LOGGER.debug(f"🔍 FIRMWARE SENSOR - Firmware unchanged: '{firmware}'")
             else:
@@ -1405,6 +1409,30 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
         # Set initial value to indicate waiting for data
         self._attr_native_value = "Waiting for data..."
         self._attr_available = False
+        
+        # Try to get existing model from hass.data on initialization
+        _LOGGER.debug(f"🔍 MODEL SENSOR - Creating model sensor for dongle: {self.dongle}")
+        self._load_existing_model()
+
+    def _load_existing_model(self):
+        """Load existing model from hass.data on initialization."""
+        try:
+            entry_id = None
+            for e_id, data in self.hass.data.get(DOMAIN, {}).items():
+                if data.get("DONGLE") == self.dongle:
+                    entry_id = e_id
+                    break
+            
+            if entry_id is not None:
+                existing_model = self.hass.data[DOMAIN].get(entry_id, {}).get("model")
+                if existing_model and existing_model != "LuxPower Inverter":
+                    self._attr_native_value = existing_model
+                    self._attr_available = True
+                    _LOGGER.debug(f"🔍 MODEL SENSOR - Loaded existing model: '{existing_model}'")
+                    # Trigger device info update on initialization
+                    self._update_device_info()
+        except Exception as e:
+            _LOGGER.error(f"🔍 MODEL SENSOR - Failed to load existing model: {e}")
 
     @property
     def suggested_display_precision(self) -> Optional[int]:
@@ -1483,6 +1511,10 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
                     
                     # Trigger device info update only if model changed
                     self._update_device_info()
+                    
+                    # Also update device groups with new model info
+                    from .helpers import update_device_info_when_available
+                    update_device_info_when_available(self.hass, self.dongle)
                 else:
                     _LOGGER.debug(f"🔍 MODEL SENSOR - Model unchanged: '{model}' (code: '{model_code}')")
             else:
@@ -2284,24 +2316,12 @@ class LuxStateSensorEntity(SensorEntity):
 
     @property
     def device_info(self):
-        """Return device info."""
-        entry_id = None
-        for e_id, data in self.hass.data.get(DOMAIN, {}).items():
-            if data.get("DONGLE") == self.dongle:
-                entry_id = e_id
-                break
-        model = (
-            self.hass.data[DOMAIN].get(entry_id, {}).get("model", "LUXPower Inverter")
-        )
-        sw_version = (
-            self.hass.data[DOMAIN]
-            .get(entry_id, {})
-            .get("lux_firmware_version", VERSION)
-        )
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.dongle)},
-            manufacturer="LuxPower",
-            model=model,
-            name=self.dongle,
-            sw_version=sw_version,
-        )
+        """Return device info for the appropriate device group."""
+        # Get the device group for this entity
+        device_group = get_entity_device_group(self._entity_definition, self.hass)
+        
+        # Return device group info if available, otherwise fall back to main device
+        if device_group:
+            return get_device_group_info(self.hass, self.dongle, device_group)
+        else:
+            return get_comprehensive_device_info(self.hass, self.dongle, self.serial)
