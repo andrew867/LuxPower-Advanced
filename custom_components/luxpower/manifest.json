@@ -14,6 +14,7 @@
   "version": "2025.10.1-dev",
   "codeowners": ["@andrew867"],
   "quality_scale": "gold",
+  "logo": "/local/luxpower-images/logo_new_website.webp",
   "loggers": [
     "custom_components.luxpower",
     "custom_components.luxpower.connector",

@@ -69,6 +69,33 @@ class Event:
 # fmt: on
 
 
+def get_device_group_icon(device_group: str) -> str:
+    """
+    Get appropriate icon for device group.
+    
+    Args:
+        device_group: Device group identifier
+        
+    Returns:
+        str: Local icon URL for the device group
+    """
+    from .const import DEVICE_GROUP_PV, DEVICE_GROUP_GRID, DEVICE_GROUP_EPS, DEVICE_GROUP_GENERATOR, DEVICE_GROUP_BATTERY, DEVICE_GROUP_INVERTER, DEVICE_GROUP_TEMPERATURES, DEVICE_GROUP_SETTINGS
+    
+    # Device group icon mapping
+    group_icons = {
+        DEVICE_GROUP_PV: "/local/luxpower-images/icon-pv.svg",
+        DEVICE_GROUP_GRID: "/local/luxpower-images/icon-grid.svg",
+        DEVICE_GROUP_EPS: "/local/luxpower-images/icon-eps.svg",
+        DEVICE_GROUP_GENERATOR: "/local/luxpower-images/icon-generator.svg",
+        DEVICE_GROUP_BATTERY: "/local/luxpower-images/icon-battery.svg",
+        DEVICE_GROUP_INVERTER: "/local/luxpower-images/icon-inverter.svg",
+        DEVICE_GROUP_TEMPERATURES: "/local/luxpower-images/icon-temperatures.svg",
+        DEVICE_GROUP_SETTINGS: "/local/luxpower-images/icon-settings.svg",
+    }
+    
+    return group_icons.get(device_group, "/local/luxpower-images/icon-inverter.svg")
+
+
 def get_device_image_url(model_code: str, model_name: str) -> str:
     """
     Get appropriate device image URL based on model.
@@ -182,6 +209,7 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
         configuration_url=None,
         suggested_area="Solar",
         image=device_image_url,
+        icon="/local/luxpower-images/e-wifi-dongle-510x383.webp",
     )
     
     return device_info
@@ -236,8 +264,9 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
     _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Serial number selection: inverter_serial='{inverter_serial}', dongle='{dongle}', final='{serial_number}'")
     _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Firmware from device_data: '{firmware_version}'")
     
-    # Get appropriate device image
+    # Get appropriate device image and group icon
     device_image_url = get_device_image_url(model_code, model_name)
+    group_icon = get_device_group_icon(device_group)
     
     # Device group names and identifiers
     device_group_info = {
@@ -308,6 +337,7 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
         serial_number=group_serial_number,
         via_device=group_info["via_device"],
         image=device_image_url,
+        icon=group_icon,
     )
     
     return device_info
