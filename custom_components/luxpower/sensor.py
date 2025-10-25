@@ -1338,31 +1338,56 @@ class LuxPowerFirmwareSensor(LuxPowerSensorEntity):
         """Update device info in the device registry."""
         try:
             from homeassistant.helpers import device_registry as dr
+            from .const import DEVICE_GROUP_PV, DEVICE_GROUP_GRID, DEVICE_GROUP_EPS, DEVICE_GROUP_GENERATOR, DEVICE_GROUP_BATTERY, DEVICE_GROUP_INVERTER, DEVICE_GROUP_TEMPERATURES, DEVICE_GROUP_SETTINGS
             
             # Get the device registry
             device_registry = dr.async_get(self.hass)
             
-            # Find the device by dongle identifier
-            device = device_registry.async_get_device(
-                identifiers={(DOMAIN, self.dongle)}
-            )
+            # Device groups to update
+            device_groups = [
+                (DEVICE_GROUP_PV, f"{self.dongle}_pv"),
+                (DEVICE_GROUP_GRID, f"{self.dongle}_grid"),
+                (DEVICE_GROUP_EPS, f"{self.dongle}_eps"),
+                (DEVICE_GROUP_GENERATOR, f"{self.dongle}_generator"),
+                (DEVICE_GROUP_BATTERY, f"{self.dongle}_battery"),
+                (DEVICE_GROUP_INVERTER, f"{self.dongle}_inverter"),
+                (DEVICE_GROUP_TEMPERATURES, f"{self.dongle}_temperatures"),
+                (DEVICE_GROUP_SETTINGS, f"{self.dongle}_settings"),
+            ]
             
-            if device:
-                # Schedule device info update to run in event loop
-                def update_device_info():
-                    try:
+            # Find main device and all device groups
+            main_device = device_registry.async_get_device(identifiers={(DOMAIN, self.dongle)})
+            group_devices = {}
+            
+            for group_name, group_id in device_groups:
+                device = device_registry.async_get_device(identifiers={(DOMAIN, group_id)})
+                if device:
+                    group_devices[group_name] = device
+            
+            # Schedule device info update to run in event loop
+            def update_device_info():
+                try:
+                    # Update main device
+                    if main_device:
+                        device_registry.async_update_device(
+                            main_device.id,
+                            sw_version=self._attr_native_value
+                        )
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated main device firmware to: {self._attr_native_value}")
+                    
+                    # Update all device groups
+                    for group_name, device in group_devices.items():
                         device_registry.async_update_device(
                             device.id,
                             sw_version=self._attr_native_value
                         )
-                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated device firmware to: {self._attr_native_value}")
-                    except Exception as e:
-                        _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
-                
-                # Schedule the update to run in the event loop
-                self.hass.loop.call_soon_threadsafe(update_device_info)
-            else:
-                _LOGGER.debug(f"🔍 DEVICE INFO UPDATE - Device not found for dongle: {self.dongle}")
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated {group_name} device firmware to: {self._attr_native_value}")
+                        
+                except Exception as e:
+                    _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
+            
+            # Schedule the update to run in the event loop
+            self.hass.loop.call_soon_threadsafe(update_device_info)
                 
         except Exception as e:
             _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
@@ -1509,32 +1534,58 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
         """Update device info in the device registry."""
         try:
             from homeassistant.helpers import device_registry as dr
+            from .const import DEVICE_GROUP_PV, DEVICE_GROUP_GRID, DEVICE_GROUP_EPS, DEVICE_GROUP_GENERATOR, DEVICE_GROUP_BATTERY, DEVICE_GROUP_INVERTER, DEVICE_GROUP_TEMPERATURES, DEVICE_GROUP_SETTINGS
             
             # Get the device registry
             device_registry = dr.async_get(self.hass)
             
-            # Find the device by dongle identifier
-            device = device_registry.async_get_device(
-                identifiers={(DOMAIN, self.dongle)}
-            )
+            # Device groups to update
+            device_groups = [
+                (DEVICE_GROUP_PV, f"{self.dongle}_pv"),
+                (DEVICE_GROUP_GRID, f"{self.dongle}_grid"),
+                (DEVICE_GROUP_EPS, f"{self.dongle}_eps"),
+                (DEVICE_GROUP_GENERATOR, f"{self.dongle}_generator"),
+                (DEVICE_GROUP_BATTERY, f"{self.dongle}_battery"),
+                (DEVICE_GROUP_INVERTER, f"{self.dongle}_inverter"),
+                (DEVICE_GROUP_TEMPERATURES, f"{self.dongle}_temperatures"),
+                (DEVICE_GROUP_SETTINGS, f"{self.dongle}_settings"),
+            ]
             
-            if device:
-                # Schedule device info update to run in event loop
-                def update_device_info():
-                    try:
+            # Find main device and all device groups
+            main_device = device_registry.async_get_device(identifiers={(DOMAIN, self.dongle)})
+            group_devices = {}
+            
+            for group_name, group_id in device_groups:
+                device = device_registry.async_get_device(identifiers={(DOMAIN, group_id)})
+                if device:
+                    group_devices[group_name] = device
+            
+            # Schedule device info update to run in event loop
+            def update_device_info():
+                try:
+                    # Update main device
+                    if main_device:
+                        device_registry.async_update_device(
+                            main_device.id,
+                            model=self._attr_native_value,
+                            hw_version=self._attr_native_value
+                        )
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated main device model to: {self._attr_native_value}")
+                    
+                    # Update all device groups
+                    for group_name, device in group_devices.items():
                         device_registry.async_update_device(
                             device.id,
                             model=self._attr_native_value,
                             hw_version=self._attr_native_value
                         )
-                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated device model to: {self._attr_native_value}")
-                    except Exception as e:
-                        _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
-                
-                # Schedule the update to run in the event loop
-                self.hass.loop.call_soon_threadsafe(update_device_info)
-            else:
-                _LOGGER.debug(f"🔍 DEVICE INFO UPDATE - Device not found for dongle: {self.dongle}")
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated {group_name} device model to: {self._attr_native_value}")
+                        
+                except Exception as e:
+                    _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
+            
+            # Schedule the update to run in the event loop
+            self.hass.loop.call_soon_threadsafe(update_device_info)
                 
         except Exception as e:
             _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
@@ -1678,33 +1729,58 @@ class LuxPowerSerialNumberSensor(LuxPowerSensorEntity):
         """Update device info in the device registry."""
         try:
             from homeassistant.helpers import device_registry as dr
+            from .const import DEVICE_GROUP_PV, DEVICE_GROUP_GRID, DEVICE_GROUP_EPS, DEVICE_GROUP_GENERATOR, DEVICE_GROUP_BATTERY, DEVICE_GROUP_INVERTER, DEVICE_GROUP_TEMPERATURES, DEVICE_GROUP_SETTINGS
             
             # Get the device registry
             device_registry = dr.async_get(self.hass)
             
-            # Find the device by dongle identifier
-            device = device_registry.async_get_device(
-                identifiers={(DOMAIN, self.dongle)}
-            )
+            # Device groups to update
+            device_groups = [
+                (DEVICE_GROUP_PV, f"{self.dongle}_pv"),
+                (DEVICE_GROUP_GRID, f"{self.dongle}_grid"),
+                (DEVICE_GROUP_EPS, f"{self.dongle}_eps"),
+                (DEVICE_GROUP_GENERATOR, f"{self.dongle}_generator"),
+                (DEVICE_GROUP_BATTERY, f"{self.dongle}_battery"),
+                (DEVICE_GROUP_INVERTER, f"{self.dongle}_inverter"),
+                (DEVICE_GROUP_TEMPERATURES, f"{self.dongle}_temperatures"),
+                (DEVICE_GROUP_SETTINGS, f"{self.dongle}_settings"),
+            ]
             
-            if device:
-                # Schedule device info update to run in event loop
-                def update_device_info():
-                    try:
+            # Find main device and all device groups
+            main_device = device_registry.async_get_device(identifiers={(DOMAIN, self.dongle)})
+            group_devices = {}
+            
+            for group_name, group_id in device_groups:
+                device = device_registry.async_get_device(identifiers={(DOMAIN, group_id)})
+                if device:
+                    group_devices[group_name] = device
+            
+            # Schedule device info update to run in event loop
+            def update_device_info():
+                try:
+                    # Update main device
+                    if main_device:
+                        device_registry.async_update_device(
+                            main_device.id,
+                            serial_number=self._attr_native_value
+                        )
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated main device serial number to: {self._attr_native_value}")
+                    
+                    # Update all device groups
+                    for group_name, device in group_devices.items():
                         device_registry.async_update_device(
                             device.id,
                             serial_number=self._attr_native_value
                         )
-                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated device serial number to: {self._attr_native_value}")
-                    except Exception as e:
-                        _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
+                        _LOGGER.info(f"🔍 DEVICE INFO UPDATE - Updated {group_name} device serial number to: {self._attr_native_value}")
+                        
+                except Exception as e:
+                    _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
+            
+            # Schedule the update to run in the event loop
+            _LOGGER.debug(f"🔍 SERIAL SENSOR - Scheduling device info update for serial: {self._attr_native_value}")
+            self.hass.loop.call_soon_threadsafe(update_device_info)
                 
-                # Schedule the update to run in the event loop
-                _LOGGER.debug(f"🔍 SERIAL SENSOR - Scheduling device info update for serial: {self._attr_native_value}")
-                self.hass.loop.call_soon_threadsafe(update_device_info)
-            else:
-                _LOGGER.debug(f"🔍 DEVICE INFO UPDATE - Device not found for dongle: {self.dongle}")
-                    
         except Exception as e:
             _LOGGER.error(f"🔍 DEVICE INFO UPDATE - Failed to update device info: {e}")
 
