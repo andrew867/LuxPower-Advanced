@@ -787,6 +787,14 @@ class LuxPowerSensorEntity(SensorEntity):
         self._attr_name = entity_definition["name"].format(
             replaceID_midfix=nameID_midfix, hyphen=hyphen
         )
+        # Set device class before using it
+        self._attr_device_class = entity_definition.get("device_class", None)
+        self._attr_state_class = entity_definition.get("state_class", None)
+        self._attr_native_unit_of_measurement = entity_definition.get(
+            "unit_of_measurement", None
+        )
+        self._attr_should_poll = False
+        
         # Initialize with appropriate unavailable value based on device class
         if self._attr_device_class in [
             SensorDeviceClass.ENERGY,
@@ -802,12 +810,6 @@ class LuxPowerSensorEntity(SensorEntity):
         else:
             self._attr_native_value = "Unavailable"
         self._attr_available = False
-        self._attr_device_class = entity_definition.get("device_class", None)
-        self._attr_state_class = entity_definition.get("state_class", None)
-        self._attr_native_unit_of_measurement = entity_definition.get(
-            "unit_of_measurement", None
-        )
-        self._attr_should_poll = False
         
         # Apply model-based enablement logic
         default_enabled = entity_definition.get("enabled", True)

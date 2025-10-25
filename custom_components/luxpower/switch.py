@@ -104,7 +104,7 @@ async def async_setup_entry(
 
     """ Common Switches Displayed In The App/Web """
     switches = [
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Normal/Standby(ON/OFF)", "register_address": 21, "bitmask": LXPPacket.NORMAL_OR_STANDBY, "attribute": "work_mode", "enabled": True, "unique": "lux_normal_standby"},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Normal/Standby(ON/OFF)", "register_address": 21, "bitmask": LXPPacket.SET_TO_STANDBY, "attribute": "work_mode", "enabled": True, "unique": "lux_normal_standby"},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Power Backup Enable", "register_address": 21, "bitmask": LXPPacket.POWER_BACKUP_ENABLE, "attribute": "eps_status", "enabled": True, "unique": "lux_power_backup_enable"},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Feed-In Grid", "register_address": 21, "bitmask": LXPPacket.FEED_IN_GRID, "attribute": "p_to_grid", "enabled": True, "unique": "lux_feed_in_grid"},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DCI Enable", "register_address": 21, "bitmask": LXPPacket.DCI_ENABLE, "attribute": "grid_status", "enabled": False, "unique": "lux_dci_enable"},
@@ -121,8 +121,7 @@ async def async_setup_entry(
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Connected", "register_address": 77, "bitmask": LXPPacket.GENERATOR_CONNECTED, "attribute": "gen_input_volt", "enabled": False},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable", "register_address": 21, "bitmask": LXPPacket.DRMS_ENABLE, "attribute": "grid_status", "enabled": False, "unique": "lux_drms_enable"},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} OVF Load Derate Enable", "register_address": 21, "bitmask": LXPPacket.OVF_LOAD_DERATE_ENABLE, "attribute": "p_load", "enabled": False, "unique": "lux_ovf_load_derate_enable"},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} ISO Enabled", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_12, "attribute": "grid_status", "enabled": False, "unique": "lux_iso_enabled"},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Low Voltage Ride Though Enable", "register_address": 21, "bitmask": LXPPacket.R21_UNKNOWN_BIT_3, "attribute": "grid_status", "enabled": False, "unique": "lux_low_voltage_ride_through"},
+        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} ISO Enabled", "register_address": 21, "bitmask": LXPPacket.ISO_ENABLE, "attribute": "grid_status", "enabled": False, "unique": "lux_iso_enabled"},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Enable", "register_address": 21, "bitmask": LXPPacket.AC_CHARGE_ENABLE, "attribute": "ac_charge_mode", "enabled": True, "unique": "lux_ac_charge_enable"},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Priority", "register_address": 21, "bitmask": LXPPacket.CHARGE_PRIORITY, "attribute": "p_charge", "enabled": True, "unique": "lux_charge_priority"},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Enable", "register_address": 21, "bitmask": LXPPacket.FORCED_DISCHARGE_ENABLE, "attribute": "p_discharge", "enabled": False, "unique": "lux_force_discharge_enable"},
@@ -447,7 +446,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             old_value = int(self._read_value)
         else:
             # Read has been UNsuccessful - use LAST KNOWN register value
-            _LOGGER.warning(
+            _LOGGER.debug(
                 f"Cannot read Register - Using LAST KNOWN Register {self._register_address} value of {self._register_value}"
             )
             old_value = int(self._register_value)
@@ -473,11 +472,11 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                         f"CAN confirm WRITTEN value is same as that sent to SET Register: {self._register_address} Value: {self._read_value} Entity: {self.entity_id}"
                     )
                 else:
-                    _LOGGER.warning(
+                    _LOGGER.error(
                         f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self._register_address} ValueSENT: {new_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
                     )
             else:
-                _LOGGER.warning(
+                _LOGGER.error(
                     f"CanNOT confirm successful WRITE of SET Register: {self._register_address} Entity: {self.entity_id}"
                 )
 
