@@ -203,14 +203,24 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
     firmware_version = device_data.get("lux_firmware_version", "Unknown")
     inverter_serial = device_data.get("inverter_serial_number", None)
     
+    # Debug logging for device group info
+    _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Group: {device_group}, Dongle: {dongle}")
+    _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Entry ID: {entry_id}")
+    _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Device Data: {device_data}")
+    _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Model: {model}, Model Code: {model_code}, Firmware: {firmware_version}, Serial: {inverter_serial}")
+    
     # Get model name from model code - ensure we get the string name, not the dict
     from .const import get_model_name
     model_name = get_model_name(model_code) if model_code != "Unknown" else model
+    _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Model name before check: {model_name}, type: {type(model_name)}")
     if isinstance(model_name, dict):
         model_name = model_name.get("name", str(model_name))
+        _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Model name after dict conversion: {model_name}, type: {type(model_name)}")
     
     # Use register-based serial number if available, otherwise fall back to dongle
     serial_number = inverter_serial or dongle
+    _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Serial number selection: inverter_serial='{inverter_serial}', dongle='{dongle}', final='{serial_number}'")
+    _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Firmware from device_data: '{firmware_version}'")
     
     # Get appropriate device image
     device_image_url = get_device_image_url(model_code, model_name)
