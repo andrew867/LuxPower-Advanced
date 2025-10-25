@@ -929,6 +929,7 @@ class LuxPowerSensorEntity(SensorEntity):
             self._attr_available = False
         elif isinstance(value, (int, float)):
             value = round(value, self._decimal_places)
+            self._attr_native_value = value
             self._attr_available = True
         else:
             # For numeric sensors, set to None instead of "unavailable" string
