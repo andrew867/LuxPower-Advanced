@@ -208,7 +208,6 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
         serial_number=serial_number,
         configuration_url=None,
         suggested_area="Solar",
-        image=device_image_url,
         icon="/local/luxpower-images/e-wifi-dongle-510x383.webp",
     )
     
@@ -336,7 +335,6 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
         hw_version=model_code if model_code != "Unknown" else "Unknown",
         serial_number=group_serial_number,
         via_device=group_info["via_device"],
-        image=device_image_url,
         icon=group_icon,
     )
     
