@@ -228,42 +228,42 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
     # Device group names and identifiers
     device_group_info = {
         DEVICE_GROUP_PV: {
-            "name": f"PV System - {model_name}",
+            "name": "PV System",
             "identifiers": {(DOMAIN, f"{dongle}_pv")},
             "via_device": (DOMAIN, dongle),
         },
         DEVICE_GROUP_GRID: {
-            "name": f"Grid - {model_name}",
+            "name": "Grid",
             "identifiers": {(DOMAIN, f"{dongle}_grid")},
             "via_device": (DOMAIN, dongle),
         },
         DEVICE_GROUP_EPS: {
-            "name": f"EPS/Backup - {model_name}",
+            "name": "EPS/Backup",
             "identifiers": {(DOMAIN, f"{dongle}_eps")},
             "via_device": (DOMAIN, dongle),
         },
         DEVICE_GROUP_GENERATOR: {
-            "name": f"Generator - {model_name}",
+            "name": "Generator",
             "identifiers": {(DOMAIN, f"{dongle}_generator")},
             "via_device": (DOMAIN, dongle),
         },
         DEVICE_GROUP_BATTERY: {
-            "name": f"Battery - {model_name}",
+            "name": "Battery",
             "identifiers": {(DOMAIN, f"{dongle}_battery")},
             "via_device": (DOMAIN, dongle),
         },
         DEVICE_GROUP_INVERTER: {
-            "name": f"Inverter - {model_name}",
+            "name": "Inverter",
             "identifiers": {(DOMAIN, f"{dongle}_inverter")},
             "via_device": (DOMAIN, dongle),
         },
         DEVICE_GROUP_TEMPERATURES: {
-            "name": f"Temperatures & Diagnostics - {model_name}",
+            "name": "Temperatures & Diagnostics",
             "identifiers": {(DOMAIN, f"{dongle}_temperatures")},
             "via_device": (DOMAIN, dongle),
         },
         DEVICE_GROUP_SETTINGS: {
-            "name": f"Settings & Schedules - {model_name}",
+            "name": "Settings & Schedules",
             "identifiers": {(DOMAIN, f"{dongle}_settings")},
             "via_device": (DOMAIN, dongle),
         },
@@ -275,6 +275,14 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
     
     group_info = device_group_info[device_group]
     
+    # For the "Inverter" group, use the inverter serial number (5xxx) instead of dongle serial
+    if device_group == DEVICE_GROUP_INVERTER:
+        group_serial_number = inverter_serial or dongle
+        _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Using inverter serial for INVERTER group: '{group_serial_number}'")
+    else:
+        group_serial_number = serial_number
+        _LOGGER.debug(f"🔍 DEVICE GROUP INFO DEBUG - Using standard serial for {device_group} group: '{group_serial_number}'")
+    
     # Create device info for the group
     device_info = DeviceInfo(
         identifiers=group_info["identifiers"],
@@ -283,7 +291,7 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
         model=model_name,
         sw_version=firmware_version,
         hw_version=model_code if model_code != "Unknown" else "Unknown",
-        serial_number=serial_number,
+        serial_number=group_serial_number,
         via_device=group_info["via_device"],
     )
     
