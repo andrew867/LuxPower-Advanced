@@ -78,27 +78,40 @@ def get_device_image_url(model_code: str, model_name: str) -> str:
         model_name: Human-readable model name
         
     Returns:
-        str: Image URL for the device
+        str: Local image URL for the device
     """
-    # Default LuxPower logo (using working image)
-    default_logo = "https://luxpowertek.com/wp-content/uploads/2023/05/HYBRID-001.webp"
+    # Default LuxPower logo (local image)
+    default_logo = "/local/luxpower-images/logo_new_website.webp"
     
-    # Model-specific image mapping (using updated working URLs)
+    # Model-specific image mapping (using local images)
     model_images = {
         # 12K models - EU 12K hybrid inverter
-        "CFAA": "https://luxpowertek.com/wp-content/uploads/2023/05/EU-12k-1.webp",
-        "CEAA": "https://luxpowertek.com/wp-content/uploads/2023/05/EU-12k-1.webp", 
-        "CCAA": "https://luxpowertek.com/wp-content/uploads/2023/05/EU-12k-1.webp",
+        "CFAA": "/local/luxpower-images/EU-12K-263x300.webp",
+        "CEAA": "/local/luxpower-images/SNA-US-12K-300x225.webp",  # SNA 12K-US
+        "CCAA": "/local/luxpower-images/SNA-US-12K-300x225.webp",  # SNA-US 6000
         
         # 6K models - Hybrid inverter
-        "CFAB": "https://luxpowertek.com/wp-content/uploads/2023/05/HYBRID-001.webp",
-        "CEAB": "https://luxpowertek.com/wp-content/uploads/2023/05/HYBRID-001.webp",
-        "CCAB": "https://luxpowertek.com/wp-content/uploads/2023/05/HYBRID-001.webp",
+        "CFAB": "/local/luxpower-images/SNA-3-6K-510x306.webp",
+        "CEAB": "/local/luxpower-images/SNA-3-6K-510x306.webp",
+        "CCAB": "/local/luxpower-images/SNA-US-6K-300x225.webp",
         
         # 3K models - ECO series
-        "CFAC": "https://luxpowertek.com/wp-content/uploads/2023/05/ECO-001-A-183x300.webp",
-        "CEAC": "https://luxpowertek.com/wp-content/uploads/2023/05/ECO-001-A-183x300.webp",
-        "CCAC": "https://luxpowertek.com/wp-content/uploads/2023/05/ECO-001-A-183x300.webp",
+        "CFAC": "/local/luxpower-images/ACS-3600-510x287.webp",
+        "CEAC": "/local/luxpower-images/ACS-3600-510x287.webp",
+        "CCAC": "/local/luxpower-images/ACS-3600-510x287.webp",
+        
+        # Additional model codes from MODEL_MAP
+        "AAAA": "/local/luxpower-images/SNA-3-6K-510x306.webp",  # LXP 3-6K Hybrid (Standard)
+        "AAAB": "/local/luxpower-images/SNA-3-6K-510x306.webp",  # LXP 3-6K Hybrid (Parallel)
+        "BAAA": "/local/luxpower-images/ACS-3600-510x287.webp",  # LXP-3600 ACS (Standard)
+        "BAAB": "/local/luxpower-images/ACS-3600-510x287.webp",  # LXP-3600 ACS (Parallel)
+        "CBAA": "/local/luxpower-images/SNA-3-6K-510x306.webp",  # SNA 3000-6000
+        "EAAB": "/local/luxpower-images/SNA-3-6K-510x306.webp",  # LXP-LB-EU 7K
+        "FAAB": "/local/luxpower-images/US-8-10K-510x383.webp",  # LXP-LB-8-12K
+        "ACAB": "/local/luxpower-images/GEN-3-6K-scaled.webp",   # GEN-LB-EU 3-6K
+        "HAAA": "/local/luxpower-images/GEN-7-10K-scaled.webp",   # GEB-LB-EU 7-10K
+        "BEAA": "/local/luxpower-images/SNA-3-6K-510x306.webp",  # LXP Variant
+        "DAAA": "/local/luxpower-images/SNA-3-6K-510x306.webp",  # LXP Variant
     }
     
     # Return model-specific image if available, otherwise default logo
@@ -168,6 +181,7 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
         serial_number=serial_number,
         configuration_url=None,
         suggested_area="Solar",
+        image=device_image_url,
     )
     
     return device_info
@@ -293,6 +307,7 @@ def get_device_group_info(hass, dongle: str, device_group: str) -> dict:
         hw_version=model_code if model_code != "Unknown" else "Unknown",
         serial_number=group_serial_number,
         via_device=group_info["via_device"],
+        image=device_image_url,
     )
     
     return device_info
