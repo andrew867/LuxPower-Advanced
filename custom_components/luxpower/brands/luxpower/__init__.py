@@ -1,0 +1,1 @@
+"""LuxPower brand configuration."""

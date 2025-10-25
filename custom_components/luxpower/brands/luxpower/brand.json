@@ -1,0 +1,6 @@
+{
+  "name": "LuxPower",
+  "integrations": ["luxpower"],
+  "iot_standards": ["modbus"],
+  "homeassistant": "2023.1.0"
+}
