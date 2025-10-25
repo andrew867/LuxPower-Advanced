@@ -1,0 +1,36 @@
+{
+  "config": {
+    "error": {
+      "host_error": "[%key:common::config_flow::error::host_error%]",
+      "dongle_error": "[%key:common::config_flow::error::dongle_error%]",
+      "exist_error": "[%key:common::config_flow::error::exist_error%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    },
+    "step": {
+      "user": {
+        "title": "[%key:common::config_flow::title%]",
+        "description": "[%key:common::config_flow::description%]",
+        "data": {
+          "lux_host": "[%key:common::config_flow::data::lux_host%]",
+          "lux_dongle_serial": "[%key:common::config_flow::data::lux_dongle_serial%]",
+          "lux_use_serial": "[%key:common::config_flow::data::lux_use_serial%]",
+          "lux_respond_to_heartbeat": "[%key:common::config_flow::data::lux_respond_to_heartbeat%]"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "data": {
+          "lux_host": "IP address of the Lux Inverter",
+          "lux_dongle_serial": "Inverter dongle number",
+          "lux_use_serial": "Use serial to be part of entityID",
+          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter"
+        }
+      }
+    }
+  }
+}

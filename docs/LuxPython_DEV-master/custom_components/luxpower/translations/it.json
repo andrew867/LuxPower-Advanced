@@ -1,0 +1,40 @@
+{
+  "config": {
+    "error": {
+      "host_error": "L'indirizzo IP non è valido",
+      "dongle_error": "Il dongle dell'inverter deve contenere esattamente 10 caratteri",
+      "exist_error": "Integrazione già aggiunta!"
+    },
+    "abort": {
+        "already_configured": "Il dispositivo è già configurato"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Configurazione di integrazione per inverter LuxPower",
+        "data": {
+          "lux_host": "Indirizzo IP dell'Inverter Lux",
+          "lux_dongle_serial": "Numero di chiave",
+          "lux_use_serial": "Usa serial per far parte dell'entità",
+          "lux_respond_to_heartbeat": "Rispondere alle richieste di heartbeat dall'inverter",
+          "lux_refresh_interval": "Intervallo di aggiornamento in secondi (0 disabilita)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Configurazione di integrazione per inverter LuxPower",
+        "data": {
+          "lux_host": "Indirizzo IP dell'Inverter Lux",
+          "lux_dongle_serial": "Numero dongle inverter",
+          "lux_use_serial": "Usa il seriale per far parte dell'entità",
+          "lux_respond_to_heartbeat": "Rispondere alle richieste di heartbeat dall'inverter",
+          "lux_refresh_interval": "Intervallo di aggiornamento in secondi (0 disabilita)"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "config": {
+    "error": {
+      "host_error": "IP address is invalid",
+      "dongle_error": "Inverter dongle should contain exactly 10 characters",
+      "serial_error": "Enter a valid 10 character inverter serial number...",
+      "use_serial_error": "...or disable this option",
+      "exist_error": "Integration already added for this dongle!",
+      "refresh_interval_error": "Refresh interval must be 30-120"
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Integration configuration for LuxPower Inverters",
+        "data": {
+          "lux_host": "IP address of Lux Inverter",
+          "lux_dongle_serial": "Dongle Number",
+          "lux_serial_number": "Inverter Serial Number",
+          "lux_use_serial": "Use serial number in entity names",
+          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter",
+          "lux_auto_refresh": "Enable automatic refresh (disable for refresh automations)",
+          "lux_refresh_interval": "Refresh interval in seconds"
+        }
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "host_error": "IP address is invalid",
+      "dongle_error": "Inverter dongle should contain exactly 10 characters",
+      "serial_error": "Enter a valid 10 character inverter serial number...",
+      "use_serial_error": "...or disable this option",
+      "exist_error": "Integration already added for this dongle!",
+      "refresh_interval_error": "Refresh interval must be 30-120",
+      "refresh_bank_count_error": "Refresh bank count must be 1-6"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Integration configuration for LuxPower Inverters",
+        "data": {
+          "lux_host": "IP address of Lux Inverter",
+          "lux_dongle_serial": "Dongle Number",
+          "lux_serial_number": "Inverter Serial Number",
+          "lux_use_serial": "Use serial number in entity names",
+          "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter",
+          "lux_auto_refresh": "Enable automatic refresh (disable for refresh automations)",
+          "lux_refresh_interval": "Refresh interval in seconds",
+          "lux_refresh_bank_count": "Number of banks to refresh (increase only if you blocked Lux servers!)"
+        }
+      }
+    }
+  }
+}

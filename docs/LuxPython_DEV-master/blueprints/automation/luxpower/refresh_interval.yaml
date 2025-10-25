@@ -1,0 +1,51 @@
+blueprint:
+  name: LUX Refresh Interval
+  description: Change the interval for the LUX inverter to refresh
+  domain: automation
+  input:
+    luxpower_device:
+      name: Luxpower Inverter
+      description: Select the inverter to refresh data from.
+      selector:
+        device:
+          filter:
+            - integration: luxpower
+          multiple: false
+    luxpower_refresh_interval:
+      name: Refresh Interval
+      description: Input the interval in seconds to refresh data.
+      selector:
+        number:
+          max: 300
+          min: 20
+          step: 20
+      default: 120
+
+variables:
+  luxpower_device_var: !input luxpower_device
+  refresh_interval_seconds: !input luxpower_refresh_interval
+  # Find the data_received_time entity from the luxpower device:
+  lux_data_received_time_entity: >
+    {{ device_entities(luxpower_device_var) | select("search", "data_received_time") | list | first }}
+
+trigger:
+  # Template triggers only update every minute, so use time pattern to check every 20 seconds instead.
+  # It will only run if the condition below is true regardless of this time pattern value.
+  - trigger: time_pattern
+    seconds: /20
+
+conditions:
+  # Only update if the last update time is more than refresh interval ago (-1 second)
+  # The -1 second is to allow for slight deviation between the trigger and the last data received time.
+  - condition: template
+    value_template: >
+      {{now().timestamp() - state_attr(lux_data_received_time_entity, "timestamp") > refresh_interval_seconds - 1 }}
+
+action:
+  - action: luxpower.luxpower_refresh_registers
+    data:
+      dongle: >-
+        {{ device_attr(luxpower_device_var, "name") }}
+      bank_count: 2
+
+mode: single

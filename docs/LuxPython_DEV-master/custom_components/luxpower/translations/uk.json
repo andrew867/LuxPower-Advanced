@@ -1,0 +1,40 @@
+{
+  "config": {
+    "error": {
+      "host_error": "IP-адреса недійсна",
+      "dongle_error": "Номер донгла інвертора повинен містити рівно 10 символів",
+      "exist_error": "Інтеграція вже додана!"
+    },
+    "abort": {
+      "already_configured": "Пристрій вже налаштовано"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Конфігурація інтеграції для інверторів LuxPower",
+        "data": {
+          "lux_host": "IP-адреса інвертора Lux",
+          "lux_dongle_serial": "Номер донгла",
+          "lux_use_serial": "Використовувати серійний номер як частину сутності",
+          "lux_respond_to_heartbeat": "Відповідати на heartbeat запити від інвертора",
+          "lux_refresh_interval": "Інтервал оновлення в секундах (0 вимкнути)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Конфігурація інтеграції для інверторів LuxPower",
+        "data": {
+          "lux_host": "IP-адреса інвертора Lux",
+          "lux_dongle_serial": "Номер донгла інвертора",
+          "lux_use_serial": "Використовувати серійний номер як частину сутності",
+          "lux_respond_to_heartbeat": "Відповідати на heartbeat запити від інвертора",
+          "lux_refresh_interval": "Інтервал оновлення в секундах (0 вимкнути)"
+        }
+      }
+    }
+  }
+}

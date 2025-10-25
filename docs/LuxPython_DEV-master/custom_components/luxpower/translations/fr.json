@@ -1,0 +1,40 @@
+{
+  "config": {
+    "error": {
+      "host_error": "L'adresse IP est invalide",
+      "dongle_error": "Le numéro de dongle doit contenir exactement 10 caractères",
+      "exist_error": "L'intégration a déjà été ajoutée!"
+    },
+    "abort": {
+        "already_configured": "Le dispositif est déjà configuré"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Configuration d'intégration pour les onduleurs LuxPower",
+        "data": {
+          "lux_host": "Adresse IP de l'onduleur Lux",
+          "lux_dongle_serial": "Numéro de dongle de l'onduleur",
+          "lux_use_serial": "Utiliser le numéro de série pour faire partie de l'entité",
+          "lux_respond_to_heartbeat": "Répondre aux requêtes heartbeat de l'onduleur",
+          "lux_refresh_interval": "Intervalle de rafraîchissement en secondes (0 pour désactiver)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Configuration d'intégration pour les onduleurs LuxPower",
+        "data": {
+          "lux_host": "Adresse IP de l'onduleur Lux",
+          "lux_dongle_serial": "Numéro de dongle de l'onduleur",
+          "lux_use_serial": "Utiliser le numéro de série pour faire partie de l'entité",
+          "lux_respond_to_heartbeat": "Répondre aux requêtes heartbeat de l'onduleur",
+          "lux_refresh_interval": "Intervalle de rafraîchissement en secondes (0 pour désactiver)"
+        }
+      }
+    }
+  }
+}

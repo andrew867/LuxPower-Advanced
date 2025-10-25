@@ -5,22 +5,17 @@ import struct
 from typing import Optional
 from homeassistant.core import HomeAssistant
 
-from ..LXPPacket import LXPPacket, MIN_ADAPTIVE_POLLING_INTERVAL, MAX_ADAPTIVE_POLLING_INTERVAL, ADAPTIVE_POLLING_BASE_INTERVAL, ADAPTIVE_POLLING_ADJUSTMENT_FACTOR
+from ..LXPPacket import LXPPacket
 from ..helpers import Event
-from ..const import DOMAIN
 
 
-def make_log_marker(serial: str, dongle: str, tag: str) -> str:
+def make_log_marker(serial, dongle, tag):
     """
-    Create a standardized log marker for LuxPower client operations.
-    
-    Args:
-        serial: Inverter serial number
-        dongle: Dongle serial number  
-        tag: Operation tag identifier
-        
-    Returns:
-        Formatted log marker string
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this function does
+
     """
     now = datetime.datetime.now()
     marker = str(
@@ -37,11 +32,11 @@ def make_log_marker(serial: str, dongle: str, tag: str) -> str:
 
 class LuxPowerClient(asyncio.Protocol):
     """
-    LuxPower inverter communication client.
-    
-    This class handles the TCP communication protocol with LuxPower inverters,
-    managing connection, data exchange, and register operations through the
-    inverter's Wi-Fi dongle.
+
+    This is a docstring placeholder.
+
+    This is where we will describe what this class does
+
     """
 
     _transport: asyncio.WriteTransport | None
@@ -74,136 +69,9 @@ class LuxPowerClient(asyncio.Protocol):
         self._LOGGER = logging.getLogger(__name__)
         self._lxp_request_lock = asyncio.Lock()
         self._lxp_single_register_result = None
-        
-        # Retry logic attributes
-        self._connection_attempts = 0
-        self._max_retry_attempts = 10  # Keep high number for continuous reconnection
-        self._retry_delay = 1  # Initial delay in seconds
-        self._max_retry_delay = 60  # Maximum delay in seconds
-
-        # Adaptive polling attributes
-        self._adaptive_polling_enabled = True
-        self._connection_quality = 1.0  # 1.0 = perfect connection, 0.0 = terrible
-        self._connection_success_count = 0
-        self._connection_failure_count = 0
-        self._last_successful_connection = None
-        self._current_polling_interval = ADAPTIVE_POLLING_BASE_INTERVAL
-        self._polling_history = []  # Track recent polling intervals
-
         self.lxpPacket = LXPPacket(
             debug=False, dongle_serial=dongle_serial, serial_number=serial_number
         )
-
-    def update_connection_quality(self, success: bool) -> None:
-        """Update connection quality based on success/failure."""
-        if success:
-            self._connection_success_count += 1
-            self._last_successful_connection = asyncio.get_event_loop().time()
-        else:
-            self._connection_failure_count += 1
-
-        # Calculate connection quality (weighted average)
-        total_attempts = self._connection_success_count + self._connection_failure_count
-        if total_attempts > 0:
-            self._connection_quality = self._connection_success_count / total_attempts
-
-        # Update adaptive polling interval
-        self._update_adaptive_polling_interval()
-
-    def _update_adaptive_polling_interval(self) -> None:
-        """Update the polling interval based on connection quality."""
-        if not self._adaptive_polling_enabled:
-            return
-
-        # Base interval adjusted by connection quality
-        quality_factor = max(0.5, self._connection_quality)  # Minimum 0.5x multiplier
-        new_interval = int(ADAPTIVE_POLLING_BASE_INTERVAL / quality_factor)
-
-        # Clamp to valid range
-        new_interval = max(MIN_ADAPTIVE_POLLING_INTERVAL,
-                          min(MAX_ADAPTIVE_POLLING_INTERVAL, new_interval))
-
-        # Smooth transitions by averaging with current interval
-        if self._current_polling_interval > 0:
-            new_interval = int((self._current_polling_interval + new_interval) / 2)
-
-        self._current_polling_interval = new_interval
-
-        # Keep history for debugging
-        self._polling_history.append(new_interval)
-        if len(self._polling_history) > 10:  # Keep last 10 intervals
-            self._polling_history.pop(0)
-
-    def get_current_polling_interval(self) -> int:
-        """Get the current polling interval."""
-        return self._current_polling_interval
-
-    def set_adaptive_polling(self, enabled: bool, reconnection_delay: int = 5) -> None:
-        """Configure adaptive polling and reconnection settings."""
-        self._adaptive_polling_enabled = enabled
-        self._reconnection_delay = reconnection_delay
-
-        if enabled:
-            self._current_polling_interval = ADAPTIVE_POLLING_BASE_INTERVAL
-        else:
-            # Use fixed interval when adaptive polling is disabled
-            self._current_polling_interval = ADAPTIVE_POLLING_BASE_INTERVAL
-
-    async def _retry_connection(self, max_attempts: int = None) -> bool:
-        """
-        Retry connection with continuous reconnection using configured delay.
-
-        Since we want continuous reconnection for WiFi dongle offline scenarios,
-        this method will keep trying indefinitely with the configured delay between attempts.
-
-        Args:
-            max_attempts: Maximum number of retry attempts (uses self._max_retry_attempts if None)
-
-        Returns:
-            bool: True if connection successful, False if all attempts failed
-        """
-        if max_attempts is None:
-            max_attempts = self._max_retry_attempts
-
-        attempt = 0
-        while attempt < max_attempts:
-            try:
-                self._connection_attempts += 1
-                self._LOGGER.info(f"Connection attempt {self._connection_attempts}")
-
-                # Try to establish connection
-                await self._connect()
-                if self._connected:
-                    self._LOGGER.info("Connection successful")
-                    self._retry_delay = 1  # Reset delay on success
-                    self.update_connection_quality(True)  # Successful connection
-                    return True
-
-            except (ConnectionError, OSError, asyncio.TimeoutError) as err:
-                self._LOGGER.warning(f"Connection attempt {attempt + 1} failed: {err}")
-                self.update_connection_quality(False)  # Failed connection
-
-                # Wait with configured delay before next attempt
-                if attempt < max_attempts - 1:  # Don't wait after last attempt
-                    wait_time = self._reconnection_delay
-                    self._LOGGER.info(f"Waiting {wait_time} seconds before retry...")
-                    await asyncio.sleep(wait_time)
-
-            except Exception as err:
-                self._LOGGER.error(f"Unexpected error during connection attempt {attempt + 1}: {err}")
-                self.update_connection_quality(False)  # Failed connection
-                break  # Don't retry on unexpected errors
-
-            attempt += 1
-
-        self._LOGGER.error(f"All {max_attempts} connection attempts failed")
-        return False
-
-    async def _connect(self):
-        """Internal connection method."""
-        # This would contain the actual connection logic
-        # For now, we'll assume it's handled by the existing connection methods
-        pass
 
     def factory(self):
         """
@@ -231,103 +99,51 @@ class LuxPowerClient(asyncio.Protocol):
         self.hass.bus.fire(self.events.EVENT_UNAVAILABLE_RECEIVED, "")
         self._connected = False
         self._LOGGER.error("connection_lost: Disconnected from Luxpower server")
-        
-        # Force release lock if held to prevent deadlock
-        if self._lxp_request_lock.locked():
-            self._lxp_request_lock.release()
-            self._LOGGER.warning("Force released lock due to connection loss")
-            
-        # Cancel any pending futures to prevent resource leaks
-        if self._lxp_single_register_result and not self._lxp_single_register_result.done():
-            self._lxp_single_register_result.cancel()
-            self._LOGGER.warning("Cancelled pending register result future due to connection loss")
 
     async def _acquire_lock(self):
-        """Acquire lock with exponential backoff retry."""
-        max_retries = 3
-        base_delay = 1.0
-        
-        for attempt in range(max_retries):
-            try:
-                await asyncio.wait_for(self._lxp_request_lock.acquire(), timeout=10)
-                return
-            except asyncio.TimeoutError:
-                if attempt < max_retries - 1:
-                    delay = base_delay * (2 ** attempt)
-                    self._LOGGER.warning(f"Lock acquisition timeout, retrying in {delay}s (attempt {attempt + 1}/{max_retries})")
-                    await asyncio.sleep(delay)
-                else:
-                    self._LOGGER.error("Failed to acquire lock after maximum retries")
-                    # Force release if stuck
-                    if self._lxp_request_lock.locked():
-                        self._lxp_request_lock.release()
-                    raise
+        try:
+            async with asyncio.timeout(10):
+                await self._lxp_request_lock.acquire()
+        except TimeoutError:
+            self._lxp_request_lock.release()
 
     def data_received(self, data):
-        """Handle received data with enhanced error handling."""
-        try:
-            self._LOGGER.debug("Inverter: %s", self.lxpPacket.serial_number)
-            self._LOGGER.debug(data)
+        self._LOGGER.debug("Inverter: %s", self.lxpPacket.serial_number)
+        self._LOGGER.debug(data)
 
-            packet_remains = data
+        packet_remains = data
+        packet_remains_length = len(packet_remains)
+        self._LOGGER.debug(
+            "TCP OVERALL Packet Remains Length : %s", packet_remains_length
+        )
+
+        frame_number = 0
+
+        while packet_remains_length > 0:
+            frame_number = frame_number + 1
+            if frame_number > 1:
+                self._LOGGER.debug("*** Multi-Frame *** : %s", frame_number)
+
+            prefix = packet_remains[0:2]
+            if prefix != self.lxpPacket.prefix:
+                self._LOGGER.debug("Invalid Start Of Packet Prefix %s", prefix)
+                return
+
+            # protocol_number = struct.unpack("H", packet_remains[2:4])[0]
+            frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
+            frame_length_calced = frame_length_remaining + 6
+            self._LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
+
+            this_frame = packet_remains[0:frame_length_calced]
+
+            self._LOGGER.debug("THIS Packet Remains Length : %s", packet_remains_length)
+            packet_remains = packet_remains[frame_length_calced:packet_remains_length]
             packet_remains_length = len(packet_remains)
-            self._LOGGER.debug(
-                "TCP OVERALL Packet Remains Length : %s", packet_remains_length
-            )
+            self._LOGGER.debug("NEXT Packet Remains Length : %s", packet_remains_length)
 
-            frame_number = 0
-            max_frames = 10  # Prevent infinite loops
+            self._LOGGER.debug("Received: %s", this_frame)
+            result = self.lxpPacket.parse_packet(this_frame)
 
-            while packet_remains_length > 0 and frame_number < max_frames:
-                frame_number = frame_number + 1
-                if frame_number > 1:
-                    self._LOGGER.debug("*** Multi-Frame *** : %s", frame_number)
-
-                # Validate minimum packet length
-                if packet_remains_length < 6:
-                    self._LOGGER.warning("Packet too short, discarding remaining data")
-                    break
-
-                prefix = packet_remains[0:2]
-                if prefix != self.lxpPacket.prefix:
-                    self._LOGGER.warning("Invalid Start Of Packet Prefix %s, discarding packet", prefix)
-                    break
-
-                try:
-                    # protocol_number = struct.unpack("H", packet_remains[2:4])[0]
-                    frame_length_remaining = struct.unpack("H", packet_remains[4:6])[0]
-                    frame_length_calced = frame_length_remaining + 6
-                    self._LOGGER.debug("CALCULATED Frame Length : %s", frame_length_calced)
-
-                    # Validate frame length
-                    if frame_length_calced > packet_remains_length:
-                        self._LOGGER.warning("Frame length exceeds remaining packet length")
-                        break
-                    if frame_length_calced < 6:
-                        self._LOGGER.warning("Invalid frame length")
-                        break
-
-                    this_frame = packet_remains[0:frame_length_calced]
-
-                    self._LOGGER.debug("THIS Packet Remains Length : %s", packet_remains_length)
-                    packet_remains = packet_remains[frame_length_calced:packet_remains_length]
-                    packet_remains_length = len(packet_remains)
-                    self._LOGGER.debug("NEXT Packet Remains Length : %s", packet_remains_length)
-
-                    self._LOGGER.debug("Received: %s", this_frame)
-                    result = self.lxpPacket.parse_packet(this_frame)
-                    
-                except struct.error as e:
-                    self._LOGGER.error(f"Struct unpack error: {e}")
-                    break
-                except (ValueError, IndexError, KeyError) as e:
-                    self._LOGGER.error(f"Data processing error in frame {frame_number}: {e}")
-                    break
-                except Exception as e:
-                    self._LOGGER.error(f"Unexpected error processing frame {frame_number}: {e}")
-                    break
-
-            # Always release lock if it was locked, regardless of packet processing
             if (
                 self._lxp_request_lock.locked()
                 and self.lxpPacket.tcp_function != self.lxpPacket.HEARTBEAT
@@ -349,11 +165,7 @@ class LuxPowerClient(asyncio.Protocol):
                     number_of_registers = int(len(result.get("value", "")) / 2)
                     self._LOGGER.debug("number_of_registers: %s ", number_of_registers)
                     total_data = {"data": result.get("data", {})}
-                    # Extract serial number from LXPPacket for serialization
-                    serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00') if hasattr(self.lxpPacket, 'serial_number') else ""
-                    self._LOGGER.debug(f"🔍 CLIENT DEBUG - Raw serial_number bytes: {getattr(self.lxpPacket, 'serial_number', b'')}")
-                    self._LOGGER.debug(f"🔍 CLIENT DEBUG - Decoded serial_number: '{serial_number}'")
-                    event_data = {"data": result.get("thesedata", {}), "serial_number": serial_number}
+                    event_data = {"data": result.get("thesedata", {})}
                     self._LOGGER.debug("EVENT DATA: %s ", event_data)
 
                     # Decode Standard Block Registers
@@ -388,20 +200,6 @@ class LuxPowerClient(asyncio.Protocol):
                     elif register == 160 and number_of_registers == 40:
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANK4_RECEIVED, event_data
-                        )
-                        self.hass.bus.fire(
-                            self.events.EVENT_DATA_BANKX_RECEIVED, event_data
-                        )
-                    elif register == 200 and number_of_registers == 54:
-                        self.hass.bus.fire(
-                            self.events.EVENT_DATA_BANK5_RECEIVED, event_data
-                        )
-                        self.hass.bus.fire(
-                            self.events.EVENT_DATA_BANKX_RECEIVED, event_data
-                        )
-                    elif register == 254 and number_of_registers == 127:
-                        self.hass.bus.fire(
-                            self.events.EVENT_DATA_BANK6_RECEIVED, event_data
                         )
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANKX_RECEIVED, event_data
@@ -488,14 +286,10 @@ class LuxPowerClient(asyncio.Protocol):
                         )
 
                     total_data = {"registers": result.get("registers", {})}
-                    # Extract serial number from LXPPacket for serialization
-                    serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00') if hasattr(self.lxpPacket, 'serial_number') else ""
-                    self._LOGGER.debug(f"🔍 CLIENT REGISTER DEBUG - Raw serial_number bytes: {getattr(self.lxpPacket, 'serial_number', b'')}")
-                    self._LOGGER.debug(f"🔍 CLIENT REGISTER DEBUG - Decoded serial_number: '{serial_number}'")
-                    event_data = {"registers": result.get("thesereg", {}), "serial_number": serial_number}
+                    event_data = {"registers": result.get("thesereg", {})}
                     self._LOGGER.debug("EVENT REGISTER: %s ", event_data)
                     if self.lxpPacket.register >= 160 and self._warn_registers:
-                        self._LOGGER.debug("REGISTERS: %s ", total_data)
+                        self._LOGGER.warning("REGISTERS: %s ", total_data)
                     if 0 <= self.lxpPacket.register <= 39:
                         self.hass.bus.fire(
                             self.events.EVENT_REGISTER_BANK0_RECEIVED, event_data
@@ -531,17 +325,6 @@ class LuxPowerClient(asyncio.Protocol):
                         )
 
                     # self.hass.bus.fire(self.events.EVENT_REGISTER_RECEIVED, event_data)
-                    
-        except (ConnectionError, OSError, RuntimeError) as e:
-            self._LOGGER.error(f"Connection error in data_received: {e}")
-            # Ensure lock is released even on critical errors
-            if self._lxp_request_lock.locked():
-                self._lxp_request_lock.release()
-        except Exception as e:
-            self._LOGGER.error(f"Critical error in data_received: {e}")
-            # Ensure lock is released even on critical errors
-            if self._lxp_request_lock.locked():
-                self._lxp_request_lock.release()
 
     async def start_luxpower_client_daemon(self):
         while not self._stop_client:
@@ -552,13 +335,9 @@ class LuxPowerClient(asyncio.Protocol):
                         self.factory, self.server, self.port
                     )
                     self._LOGGER.info("luxpower daemon: Connected to lux power server")
-                except (ConnectionError, OSError, asyncio.TimeoutError) as e:
-                    self._LOGGER.error(
-                        f"Connection failed in daemon - retrying in 10 seconds: {e}"
-                    )
                 except Exception as e:
                     self._LOGGER.error(
-                        f"Unexpected error in daemon - retrying in 10 seconds: {e}"
+                        f"Exception luxpower daemon client open failed - retrying in 10 seconds : {e}"
                     )
 
                 await asyncio.sleep(1)
@@ -572,10 +351,7 @@ class LuxPowerClient(asyncio.Protocol):
                         # self.hass.async_create_task(self.do_refresh_data_registers(3, True))
                         # self.hass.async_create_task(self.do_refresh_hold_registers(True))
                         if self._connect_after_failure:
-                            try:
-                                await asyncio.wait_for(asyncio.sleep(60), timeout=65)
-                            except asyncio.TimeoutError:
-                                self._LOGGER.warning("Sleep timeout exceeded")
+                            await asyncio.sleep(60)
                             self._connect_after_failure = False
                         await self.do_refresh_data_registers(3)
                         await self.do_refresh_hold_registers()
@@ -594,30 +370,18 @@ class LuxPowerClient(asyncio.Protocol):
         await self._acquire_lock()
         try:
             self._LOGGER.debug("request_data_bank for address_bank: %s", address_bank)
-            
-            # Check transport availability before write
-            if self._transport is None or self._transport.is_closing():
-                raise ConnectionError("Transport not available")
-                
             packet = self.lxpPacket.prepare_packet_for_read(
                 start_register, number_of_registers, type=LXPPacket.READ_INPUT)  # fmt: skip
             self._transport.write(packet)
             self._LOGGER.debug(
                 f"Packet Written for getting {serial} DATA registers address_bank {address_bank} , {number_of_registers}")  # fmt: skip
         except Exception as e:
+            self._lxp_request_lock.release()
             self._LOGGER.error("Exception request_data_bank %s", e)
-        finally:
-            # Always release lock to prevent deadlock
-            if self._lxp_request_lock.locked():
-                self._lxp_request_lock.release()
 
     async def do_refresh_data_registers(self, bank_count):
         if not self._connected or self._transport.is_closing():
             return
-
-        # Validate bank count
-        from ..LXPPacket import validate_bank_count
-        bank_count = validate_bank_count(bank_count)
 
         log_marker = make_log_marker(
             self.serial_number, self.dongle_serial, "do_refresh_data_registers"
@@ -645,22 +409,14 @@ class LuxPowerClient(asyncio.Protocol):
             self._LOGGER.debug(
                 f"request_hold_bank for {serial} address_bank: {address_bank} , {number_of_registers}"
             )
-            
-            # Check transport availability before write
-            if self._transport is None or self._transport.is_closing():
-                raise ConnectionError("Transport not available")
-                
             packet = self.lxpPacket.prepare_packet_for_read(
                 start_register, number_of_registers, type=LXPPacket.READ_HOLD)  # fmt: skip
             self._transport.write(packet)
             self._LOGGER.debug(
                 f"Packet Written for getting {serial} HOLD registers address_bank {address_bank} , {number_of_registers}")  # fmt: skip
         except Exception as e:
+            self._lxp_request_lock.release()
             self._LOGGER.error("Exception request_hold_bank %s", e)
-        finally:
-            # Always release lock to prevent deadlock
-            if self._lxp_request_lock.locked():
-                self._lxp_request_lock.release()
 
     async def do_refresh_hold_registers(self):
         log_marker = make_log_marker(
@@ -706,10 +462,8 @@ class LuxPowerClient(asyncio.Protocol):
         if self._transport is not None:
             try:
                 self._transport.close()
-            except (OSError, RuntimeError) as e:
-                self._LOGGER.warning("Error closing transport: %s", e)
             except Exception as e:
-                self._LOGGER.error("Unexpected error closing transport: %s", e)
+                self._LOGGER.error("Exception close connection %s", e)
 
     async def reconnect(self):
         self._LOGGER.info("Reconnecting to Luxpower server")
@@ -720,23 +474,24 @@ class LuxPowerClient(asyncio.Protocol):
 
     async def _wait_for_value(self, register):
         try:
-            value = await asyncio.wait_for(self._lxp_single_register_result, timeout=10)
-            return value.get(register)
-        except asyncio.TimeoutError:
+            async with asyncio.timeout(10):
+                value = await self._lxp_single_register_result
+                return value.get(register)
+        except TimeoutError:
             return None
         finally:
             self._lxp_single_register_result = None
 
     async def restart(self):
-        self._LOGGER.info("Restarting Luxpower Inverter")
-        self._LOGGER.debug("Register to be written 11 with value 128")
+        self._LOGGER.warning("Restarting Luxpower Inverter")
+        self._LOGGER.warning("Register to be written 11 with value 128")
         await self.write(11, 128)  # WRITE_SINGLE to register 11
         self._close_connection()
         self._connected = False
-        self._LOGGER.info("restart inverter finished")
+        self._LOGGER.warning("restart inverter finished")
 
     async def reset_all_settings(self):
-        self._LOGGER.info("Resetting Luxpower Inverter settings to defaults")
+        self._LOGGER.warning("Resetting Luxpower Inverter settings to defaults")
 
         lxpPacket = LXPPacket(
             debug=True,
@@ -750,95 +505,36 @@ class LuxPowerClient(asyncio.Protocol):
         )
         self._close_connection()
         self._connected = False
-        self._LOGGER.info("reset inverter settings finished")
+        self._LOGGER.warning("reset inverter settings finished")
 
-    async def write(self, register, value, max_retries=3):
-        """Write to register with retry logic."""
-        for attempt in range(max_retries):
-            await self._acquire_lock()
-            try:
-                # Check transport availability before write
-                if self._transport is None or self._transport.is_closing():
-                    raise ConnectionError("Transport not available")
-                    
-                self._lxp_single_register_result = asyncio.Future()
-                packet = self.lxpPacket.prepare_packet_for_write(register, value)
-                self._transport.write(packet)
-                self._LOGGER.info(f"write {register} with value {value} (attempt {attempt + 1})")
+    async def write(self, register, value):
+        await self._acquire_lock()
+        try:
+            self._lxp_single_register_result = asyncio.Future()
+            packet = self.lxpPacket.prepare_packet_for_write(register, value)
+            self._transport.write(packet)
+            self._LOGGER.info(f"write {register} with value {value}")
 
-                result = await self._wait_for_value(register)
-                if result is not None:
-                    return result
-                elif attempt < max_retries - 1:
-                    self._LOGGER.warning(f"Write attempt {attempt + 1} failed, retrying...")
-                    await asyncio.sleep(1)
-                else:
-                    self._LOGGER.error(f"Write failed after {max_retries} attempts")
-                    return None
-            except (ConnectionError, OSError, asyncio.TimeoutError) as e:
-                self._LOGGER.error(
-                    f"Connection error writing register {register} with value {value}: {e}"
-                )
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(1)
-                else:
-                    return None
-            except Exception as e:
-                self._LOGGER.error(
-                    f"Unexpected error writing register {register} with value {value}: {e}"
-                )
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(1)
-                else:
-                    return None
-            finally:
-                # Always release lock to prevent deadlock
-                if self._lxp_request_lock.locked():
-                    self._lxp_request_lock.release()
+            return await self._wait_for_value(register)
+        except Exception as e:
+            self._lxp_request_lock.release()
+            self._LOGGER.error(
+                "Exception during writing register {register} with value {value}", e
+            )
 
-    async def read(self, register, type=LXPPacket.READ_HOLD, max_retries=3):
-        """Read from register with retry logic."""
-        for attempt in range(max_retries):
-            await self._acquire_lock()
-            try:
-                # Check transport availability before write
-                if self._transport is None or self._transport.is_closing():
-                    raise ConnectionError("Transport not available")
-                    
-                self._lxp_single_register_result = asyncio.Future()
-                packet = self.lxpPacket.prepare_packet_for_read(register, 1, type)
-                self._transport.write(packet)
-                self._LOGGER.info(f"read {register} value with type {type} (attempt {attempt + 1})")
-                
-                result = await self._wait_for_value(register)
-                if result is not None:
-                    return result
-                elif attempt < max_retries - 1:
-                    self._LOGGER.warning(f"Read attempt {attempt + 1} failed, retrying...")
-                    await asyncio.sleep(1)
-                else:
-                    self._LOGGER.error(f"Read failed after {max_retries} attempts")
-                    return None
-            except (ConnectionError, OSError, asyncio.TimeoutError) as e:
-                self._LOGGER.error(
-                    f"Connection error reading register {register}: {e}"
-                )
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(1)
-                else:
-                    return None
-            except Exception as e:
-                self._LOGGER.error(
-                    f"Unexpected error reading register {register}: {e}"
-                )
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(1)
-                else:
-                    return None
-            finally:
-                # Always release lock to prevent deadlock
-                if self._lxp_request_lock.locked():
-                    self._lxp_request_lock.release()
+    async def read(self, register, type=LXPPacket.READ_HOLD):
+        await self._acquire_lock()
+        try:
+            self._lxp_single_register_result = asyncio.Future()
+            packet = self.lxpPacket.prepare_packet_for_read(register, 1, type)
+            self._transport.write(packet)
+            self._LOGGER.info(f"read {register} value with type {type}")
+            return await self._wait_for_value(register)
+        except Exception as e:
+            self._lxp_request_lock.release()
+            self._LOGGER.error(
+                "Exception during reading register {register} with value {value}", e
+            )
 
     async def synctime(self, do_set_time):
         self._LOGGER.info("Syncing Time to Luxpower Inverter")
@@ -861,7 +557,7 @@ class LuxPowerClient(asyncio.Protocol):
             )
         else:
             # Read has been UNsuccessful
-            self._LOGGER.error("Cannot READ Register: 12 - Aborting")
+            self._LOGGER.warning("Cannot READ Register: 12 - Aborting")
             return
 
         self._LOGGER.info("Register to be read 13")
@@ -882,7 +578,7 @@ class LuxPowerClient(asyncio.Protocol):
             )
         else:
             # Read has been UNsuccessful
-            self._LOGGER.error("Cannot READ Register: 13 - Aborting")
+            self._LOGGER.warning("Cannot READ Register: 13 - Aborting")
             return
 
         self._LOGGER.info("Register to be read 14")
@@ -904,7 +600,7 @@ class LuxPowerClient(asyncio.Protocol):
             )
         else:
             # Read has been UNsuccessful
-            self._LOGGER.error("Cannot READ Register: 14 - Aborting")
+            self._LOGGER.warning("Cannot READ Register: 14 - Aborting")
             return
 
         was = datetime.datetime(

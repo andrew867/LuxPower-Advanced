@@ -1,0 +1,40 @@
+{
+  "config": {
+    "error": {
+      "host_error": "IP-adres is ongeldig",
+      "dongle_error": "Inverter-dongle moet presies 10 karakters bevat",
+      "exist_error": "Integrasie is reeds bygevoeg!"
+    },
+    "abort": {
+        "already_configured": "Toestel is reeds geconfigureer"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Integrasiekonfigurasie vir LuxPower-inverters",
+        "data": {
+          "lux_host": "IP-adres van Lux-inverter",
+          "lux_dongle_serial": "Donglenommer",
+          "lux_use_serial": "Gebruik reeksnommer as deel van entiteit",
+          "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter",
+          "lux_refresh_interval": "Vernuwingsinterval in sekondes (0 deaktiveer)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Integrasiekonfigurasie vir LuxPower-inverters",
+        "data": {
+          "lux_host": "IP-adres van Lux-inverter",
+          "lux_dongle_serial": "Inverter-donglenommer",
+          "lux_use_serial": "Gebruik reeksnommer as deel van entiteit",
+          "lux_respond_to_heartbeat": "Reageer op heartbeat-versoeke van die inverter",
+          "lux_refresh_interval": "Vernuwingsinterval in sekondes (0 deaktiveer)"
+        }
+      }
+    }
+  }
+}

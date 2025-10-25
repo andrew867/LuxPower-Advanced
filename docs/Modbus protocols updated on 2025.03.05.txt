@@ -1,0 +1,2058 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Modbus RTU Protocol
+Administrator 2025/3/13
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Shenzhen Lux Power Technology Co., Ltd	www.luxpowertek.com
+
+VersionChangesDate of changeResponsible personRemarkV00First version2024.02.23V01Definition modifications on Hold reg19 and Hold reg 20.
+Add Hold 21 register as the Permit Service
+function.2024.04.24Mason ChloeV021. Add Hold233 uFuntion4. DryContactorMultiplex bit4-7,Select dry contact multiplexing function ;
+2. Add Input206?207?AC couple power for S- phase and T-phase ?TriP 6-20K?;
+3. Add Hold248~251,CT ratio and direction for WattNode meter
+4. Add Hold233 uFuntion4 .uExCTPosition bit8-9 External power grid CT settings
+5. Add Hold252 Used for NEC120% Rule BusBar current limiting setting
+6. Add Hold110 CTSampleRatio? PVCTSampleRatio
+7. Add Hold233 Bit10 ?EN50549 F-stop opening and closing of over frequency load shedding logic
+Added hold253: DeltaSOC, used to set the hysteresis of battery SOC
+8. Added hold254: DeltaVolt, used to set the hysteresis of the battery Volt
+9. Add hold120 bit8?SeparateZeroExportEn
+10. Add Rule 24(TOR),25(Denmark DK2) ?TriP 6- 20K?
+10. Add hold255 Bit3-7 Used to read WattNode meter frequency2024.10.16JiaLuoV031. Add input214, input215, and input216 to store three temperatures
+2. Add input217-231 to store the voltage and power, daily energy, and total energy of PV4-PV6
+3. Add an option in bit 1 - 3 of hold 120 for 12K: AC charging Enable bit (both time period and SOC/Volt are required);
+4. Add hold 256 - 259 to store Generator start time and end time;
+5. Added input232,used to display Smart load power
+6. Add input210,Remaining seconds of one click charging process
+7. For 12K, Change the CT ratio setting bits
+5-6 and 12-13 of hold110 to CTSampleRatioL2 and CTSampleRatioH2, and merge them into a 4-bit CTSampleRatio to increase the CT ratio option settings.
+8. Add the Input174 register Bit10 as a flag to indicate whether the generator quick start function is displayed
+9. Add hold260 as the alarm voltage setting value for BUS overvoltage point
+10. Add input176?177?178 to display the historical events of three-phase ExceptionReason1, ExceptionReason2, ChgDischgDisabReason;
+11. Add Trip_LV low-voltage LCD11 to the LCD coding definition
+12. New Hold261 register: Recovery discharge threshold setting register (including voltage and SOC). The recovery of battery low warning point, off grid discharge cut-off point, and grid connected
+discharge cut-off point will all share the same2025.3.13JiaLuo
+threshold. Discharge recovery point=discharge cut- off point+discharge recovery threshold
+
+Directory
+1. Introduction to the Modbus RTU protocol	3
+1) Message Format	3
+2) Byte Order	3
+3) Requests and Responses	3
+2. Communication Configuration	7
+3. Register Mapping Table	8
+1) Input Register	8
+2) Hold Register	17
+4. Appendix	34
+1) Definition of the operation mode of on/off energy storage all in one machine . 34
+2) Fault and Alarm Code Definitions	35
+3) On-grid Regulatory Mapping Table	40
+4) LCD Definition Table	40
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Shenzhen Lux Power Technology Co., Ltd	www.luxpowertek.com
+2 / 41
+
+c
+
+1. Introduction to the Modbus RTU protocol
+1) Message Format
+
+AddressFunction CodeDataCRC checksum1 byte1 byte1-252 byteLow byteHigh byteTable 1 Message Format
+The Modbus protocol utilizes several function codes, including:
+Function Code 0x03: Read Holding Registers Function Code 0x04: Read Input Registers Function Code 0x06: Write Single Holding Register
+Function Code 0x10: Write Multiple Holding Registers
+
+
+2) Byte Order
+
+Start bitDataStop bit1Bit0Bit1Bit2Bit3Bit4Bit5Bit6Bit71Table 2 Byte Order
+3) Requests and Responses
+Responses include normal responses and exception responses, the exception codes are defined as follows:
+
+Exception codeDescription of the exceptionRemark0x01Illegal FunctionSecondary does not recognize the function code0x02Illegal Data AddressThe data address does not match the length0x03Illegal Data ValueThe data value is out of bounds or the number of registers is incorrect0x04Secondary read and write failedRead and write errors0x06Secondary BusySecondary busyTable 3 Exception Code Definitions
+
+a) Read the hold and input registers
+
+RequestNormal ResponseException ResponseAddressAddressAddressFunction code(0x03/0x04?Function Code(0x03/0x04?Function Code(0x83/0x84)SN[0]SN[0]SN[0]SN[1]SN[1]SN[1]SN[2]SN[2]SN[2]SN[3]SN[3]SN[3]SN[4]SN[4]SN[4]SN[5]SN[5]SN[5]SN[6]SN[6]SN[6]SN[7]SN[7]SN[7]SN[8]SN[8]SN[8]SN[9]SN[9]SN[9]Start address A low byteStart address A low byteStart address A low byteStart address A high byteStart address A high byteStart address A high byteNumber of registers N low bytesNumber of bytesException codeNumber of registers N high bytesRegister A value is low byteCRC checks low bytesCRC checks low bytesRegister A value high bytesCRC checks high bytesCRC checks high bytesRegister A+1 value low bytesRegister A+1 value high bytes…………Register A+N-1 value low bytesRegister A+N-1 value high bytesCRC checks low bytesCRC checks high bytesTable 4 Read Requests and Responses
+
+b) Write a single hold register
+RequestNormal ResponseException ResponseAddressAddressAddressFunction Code(0x06?Function Code(0x06?Function Code(0x86)SN[0]SN[0]SN[0]SN[1]SN[1]SN[1]SN[2]SN[2]SN[2]SN[3]SN[3]SN[3]SN[4]SN[4]SN[4]SN[5]SN[5]SN[5]SN[6]SN[6]SN[6]SN[7]SN[7]SN[7]SN[8]SN[8]SN[8]SN[9]SN[9]SN[9]Register address low byteRegister address low byteRegister address low byteRegister address high bytesRegister address high bytesRegister address high bytesRegister value low byteRegister value low byteException codeRegister value high bytesRegister value high bytesCRC checks low bytesCRC checks low bytesCRC checks low bytesCRC checks high bytesCRC checks high bytesCRC checks high bytesTable 5 Writing Individual Registers and Responses
+c) Write multiple hold registers
+
+RequestNormal ResponseException ResponseAddressAddressAddressFunction Code(0x10)Function Code(0x10)Function Code(0x90)SN[0]SN[0]SN[0]SN[1]SN[1]SN[1]SN[2]SN[2]SN[2]SN[3]SN[3]SN[3]
+SN[4]SN[4]SN[4]SN[5]SN[5]SN[5]SN[6]SN[6]SN[6]SN[7]SN[7]SN[7]SN[8]SN[8]SN[8]SN[9]SN[9]SN[9]Start address A low byteStart address A low byteStart address A low byteStart address A high byteStart address A high byteStart address A high byteNumber of registers N low bytesNumber of registers N low bytesException codeNumber of registers N high bytesNumber of registers N high bytesCRC checks low bytesNumber of bytesCRC checks low bytesCRC checks high bytesRegister A value low bytesCRC checks high bytesRegister A value high bytesRegister A+1 value low bytesRegister A+1 value high bytes…………Register A+N-1 value low bytesRegister A+N-1 value high bytesCRC checks low bytesCRC checks high bytesTable 6 Writing Multiple Registers and Responses
+
+2. Communication Configuration
+1) Physical interface: RS-485
+2) Communication mode: Universal asynchronous transceiver (UART)
+3) Baud rate: 19200bps
+4) One start bit, 8 data bits, no parity bits, one stop bit, total 10 bytes.
+5) Minimum polling period: 1s
+6) Register width: 2 bytes
+7) 16-bit integer decoding order: The high and low byte order is reversed, for example 0x01 0x02, it should be parsed as 0x0201=513
+8) 32-bit integer decoding order: The high and low byte order is reversed, the byte sequence within the word reversed, for example 0x01 0x02 0x03 0x04, should be parsed as 0x04030201=67305985
+9) A maximum of 40 registers can be queried in a single request. The inverter software groups the registers in sets of 40, starting from 0-39 for the first group, 40-79 for the second group, 80-119 for the third group, and so on. When querying 40 registers, the starting address must be 0 (0-39), 40 (40-79), 80 (80-119), and so on. It is not allowed to query registers that span across different groups simultaneously. For example, if you need to query the values of
+registers 38-40, you must perform two separate queries because 38-39 are in the first group and 40 is in the second group.
+10) The maximum number of registers that can be queried in a single request for the new inverter is 127.
+
+3. Register Mapping Table
+1) Input Register
+It is used to store the operational data of the energy storage inverter, which can only be read and not written, and supports function codes 0x04.
+
+Input AddrItemUnitRangeNote
+0
+State
+0-65535For more information,see the definition of the operation mode of off-grid-connected energy storage all-
+in-one file1Vpv10.1V0-65535PV1 voltage, the AC energy storage system does not have this variable2Vpv20.1V0-65535PV2 voltage, the AC energy storage system does not have this variable3Vpv30.1V0-65536PV3 voltage, the AC energy storage system does not have this variable4Vbat0.1V0-65535Battery voltage5SOC%0-100Battery capacitySOH%0-100Battery State of health6Internal Fault0-65535For more information, see Internal Fault Code Definition file7Ppv1W0-65535PV1 power/ AC energy storage Ppv8Ppv2W0-65535PV2 power, the AC energy storage system does not have this variable
+9
+Ppv3
+W
+0-65536PV3 power (total PV power, obtained by adding PV1, 2, 3), the AC energy
+storage system does not have this variable10PchargeW0-65535Charging power (power flowing into the battery)11PdischargeW0-65535Discharging power (power flowing out of battery power)12VacR0.1V0-65535R-phase utility grid voltage13VacS0.1V0-65535S-phase utility grid voltage14VacT0.1V0-65535T-phase utility grid voltage15Fac0.01Hz0-65535Utility grid frequency16PinvW0-65535 On-gird inverter power (For three phase: R phase)17PrecW0-65535AC charging rectification power (For three phase: R phase)18IinvRMS0.01A0-65535Inverter rms current output (For three phase: R phase)
+19
+PF
+0.001
+0-2000Power factor x?(0,1000]->x/1000 x?(1000,2000)->(1000-x)/1000
+(For three phase: R phase)20VepsR0.1V0-65535R phase off-grid output voltage21VepsS0.1V0-65535S phase off-grid output voltage22VepsT0.1V0-65535T phase off-grid output voltage
+23Feps0.01Hz0-65535Off-grid output frequency24PepsW0-65535 Off-grid inverter power (For three phase: R phase)25SepsVA0-65535 Off-grid apparent power (For three phase: R phase)26PtogridW0-65535User on-grid power (For three phase: R phase)27PtouserW0-65535   Grid power capacity (For three phase: R phase)28Epv1_day0.1kWh0-65535PV1 power generation today / AC
+Energy Storage Epv_day
+29
+Epv2_day
+0.1kWh
+0-65535PV2 power generation today, the AC energy storage system does not have
+this variable
+30
+Epv3_day
+0.1kWh
+0-65535PV3 power generation today (total PV=PV1+PV2+PV3), the AC energy storage system does not have this variable31Einv_day0.1kWh0-65535Today's on-grid inverter output energy32Erec_day0.1kWh0-65535Today's AC charging rectifier energy33Echg_day0.1kWh0-65535Energy Charge today34Edischg_day0.1kWh0-65535Energy Discharge today35Eeps_day0.1kWh0-65535Today's off-grid output energy36Etogrid_day0.1kWh0-65535Today's export to gird energy37Etouser_day0.1kWh0-65535Electricity supplied to user from the grid today38Vbus10.1V0-65535Voltage of Bus 139Vbus20.1V0-65535Voltage of Bus 240Epv1_all L0.1kWh0-65535PV1 cumulative power generation/AC energy storage Epv_all Low byte41Epv1_all H0.1kWh0-65535PV1 cumulative power generation/AC energy storage Epv_all high byte
+42
+Epv2_all L
+0.1kWh
+0-65535PV2 cumulative power generation low byte, AC energy storage does not
+have this variable
+43
+Epv2_all H
+0.1kWh
+0-65535PV2 cumulative power generation high byte, AC energy storage does not have this variable
+44
+Epv3_all L
+0.1kWh
+0-65535PV3 cumulative power generation low byte (total PV=PV1+PV2+PV3), AC energy storage does not have this
+variable.
+45
+Epv3_all H
+0.1kWh
+0-65535PV3 cumulative power generation high byte (total PV=PV1+PV2+PV3),
+AC energy storage does not have this variable46Einv_all L0.1kWh0-65535Inverter output accumulated power low byte
+47Einv_all H0.1kWh0-65535Inverter output accumulates power high byte48Erec_all L0.1kWh0-65535AC charging accumulates rectified power Low byte49Erec_all H0.1kWh0-65535AC charging accumulates rectified power high byte50Echg_all L0.1kWh0-65535Cumulative charge energy low byte51Echg_all H0.1kWh0-65535Cumulative charge energy high byte52Edischg_all L0.1kWh0-65535Cumulative discharge charge energy Low byte53Edischg_all H0.1kWh0-65535Cumulative discharge charge energy High byte54Eeps_all L0.1kWh0-65535Cumulative inverter off-grid output energy Low byte55Eeps_all H0.1kWh0-65535Cumulative inverter off-grid output energy High byte56Etogrid_all L0.1kWh0-65535Accumulate export energy Low byte57Etogrid_all H0.1kWh0-65535Accumulate export energy High byte58Etouser_all L0.1kWh0-65535Cumulative import energy Low byte59Etouser_all H0.1kWh0-65535Cumulative import energy high byte60FaultCode L0-65535For more information, see Fault code definition file61FaultCode H0-65535For more information, see Fault code definition file62WarningCode L0-65535For more information, see Alarm code definition file63WarningCode H0-65535For more information, see Alarm code definition file64Tinnercelsius0-65535Internal temperature65Tradiator1Celsius0-65535Radiator temperature 166Tradiator2celsius0-65535Radiator temperature 267Tbatcelsius0-65535Battery temperature69RunningTime LsecondRuntime duration
+70
+RunningTime H
+second
+Runtime duration
+
+
+
+
+71AutoTestStartBit0-30 - not started ;
+1 - started
+
+UbAutoTestStatus
+
+Bit4-70-waiting 1-testing 2-test fail
+3-V test OK 4-F test OK
+5- test pass
+UbAutoTestStep
+Bit8-111-V1L test 2-V1H
+3-F1L test
+4-F1H test
+5- V2L test
+6- V2H test
+7- F2L test
+8- F2H test
+
+
+
+72 wAutoTestLimit
+
+73 uwAutoTestDefault Time
+
+74 uwAutoTestTripValue
+
+75 uwAutoTestTripTime ACInputType
+77	ACCoupleInverterFlow ACCoupleEn On SmartLoadFlow
+
+
+SmartLoadEnOn
+
+
+
+EpsLoadPowerShow
+
+
+GridLoadPowerShow
+
+
+PloadPowerShow
+
+
+
+BatTypeAndBrand
+80
+BatComType
+
+81 MaxChgCurr
+
+82 MaxDischgCurr
+
+83 ChargeVoltRef
+
+
+0.1V/0.
+01Hz
+  ms 0.1V/0.
+01Hz
+
+ms Bit0
+Bit1 Bit2 Bit3
+
+
+Bit4
+
+
+
+Bit5
+
+
+Bit6
+
+
+Bit7
+
+
+
+
+
+
+
+0.01A
+
+0.01A
+
+0.1V
+
+
+
+
+
+
+
+
+
+
+
+
+0	or 1
+
+0 or 1
+
+0 or 1
+
+0 or 1
+
+
+
+0 or 1
+
+
+
+0 or 1
+
+
+0 or 1
+
+
+0 or 1
+
+
+
+
+
+0	or 1
+
+When ubAuto Test Step=1,2,5,6, is the voltage limit;
+When ubAutoTest Step=3,4,7,8, it is the frequency limit
+
+
+When ubAuto Test Step=1,2,5,6, is the voltage limit;
+When ubAutoTestStep=3,4,7,8, it is the frequency limit
+
+0-Grid
+1-Generator for 12KHybrid
+0-no flow
+1-show flow
+0-Disable 1-Enable
+0-no flow	1-show flow
+When Bit4 is 1 and smartload power>0, set it to 1; Used to monitor the power arrow displayed on the homepage;
+  0-Disable	1-Enable Set to 1 when the user enables SmartLoad and the machine has reached the activation condition; Display power;
+0-no power display	1-power display Temporarily set to 1 during initialization for compatibility with new and old software; Monitor whether the EPS side load power is displayed based on this flag
+0-no power display	1-power display Temporarily set to 1 during initialization for compatibility with new and old software; Monitor whether the Grid side load power is displayed based on this flag
+0-no power display	1-power display Temporarily set to 1 during initialization for compatibility with new and old software;Monitor whether to display the total load power based on the flag position
+For more information, see the model definition file
+0-CAN
+1-485
+The maximum charging current of BMS limits
+The maximum discharging current of BMS limits
+Recommends charging voltage by
+
+Shenzhen Lux Power Technology Co., Ltd
+
+BMSwww.luxpowertek.com
+
+84 DischgCutVolt
+85 BatStatus0_BMS
+86 BatStatus1_BMS
+
+0.1V
+
+11 / 41
+
+Recommends a discharging cut-off voltage by BMS
+Status information of BMS Status information of BMS
+
+87BatStatus2_BMSStatus information of BMS88BatStatus3_BMSStatus information of BMS89BatStatus4_BMSStatus information of BMS90BatStatus5_BMSStatus information of BMS91BatStatus6_BMSStatus information of BMS92BatStatus7_BMSStatus information of BMS93BatStatus8_BMSStatus information of BMS94BatStatus9_BMSStatus information of BMS95BatStatus_INVThe inverter aggregates lithium battery status information96BatParallelNumNumber of batteries in parallel97BatCapacityAhBattery capacity98BatCurrent_BMS0.01ABattery current , with signed number99FaultCode_BMS
+100WarningCode_BMS101MaxCellVolt_BMS0.001VMaximum voltage of cell102MinCellVolt_BMS0.001VMinimum voltage of cell103MaxCellTemp_BMS0.1?Maximum temperature of cell, with signed number104MinCellTemp_BMS0.1?Minimum temperature of cell, with signed number
+105
+BMSFWUpdateState
+1-31- Upgrade in process
+2- Upgrade successful
+3- Upgrade failed106CycleCnt_BMSNumber of charging/discharging
+cycles107BatVoltSample_INV0.1VTnverter samples the battery voltage108T10.1?BT temperature for 12k109T20.1?Reserved110T30.1?Reserved111T40.1?Reserved112T50.1?Reserved
+
+
+
+
+113
+MasterOrSlave
+Bit0~1
+1,2Master or Slave 1: Master
+2: Slave
+SingleOrThreePhase
+
+Bit2~3
+
+1-3Parallel phase 1:R
+2:S
+3:TPhases sequenceBit4~50-10- Positive order
+1- Negative orderRsvdBit6~7ReservedParallelNumBit8~161~255Number of inverters in parallel
+114
+OnGridloadPower
+W
+Load power of the 12k inverter when it is not off-gridSN[0]-Year'0'-'9' 'A'-
+The serial number is a ten-digit ASCII code
+For example: The serial number is AB12345678 SN[0]=0x41(A)
+:
+:
+:
+: SN[9]=0x38(8)
+www.luxpowertek.com115'Z'SN[1]-week'0'-'9' 'A'-'Z'SN[2]-week'0'-'9' 'A'-116'Z'SN[3]-factory'0'-'9' 'A'-'Z'SN[4]-product code'0'-'9' 'A'-117'Z'SN[5] -product code
+er Technology Co., Ltd'0'-'9' 'A'-Shenzhen Lux Pow'Z'12 / 41
+
+
+118SN[6] -serial number'0'-'9' 'A'- 'Z'SN[7]-serial number'0'-'9' 'A'- 'Z'
+119SN[8] -serial number'0'-'9' 'A'- 'Z'SN[9] -serial number'0'-'9' 'A'- 'Z'120VBusP0.1VHalf BUS voltage
+121
+GenVolt
+0.1VGenerator voltage
+Voltage of generator for three phase:
+R phase122GenFreq0.01HzGenerator frequency123GenPowerWVoltage of generator for three phase: R phase124Egen_day0.1kWhEnergy of generator today125Egen_all L0.1kWhLow byte of total generator energy126Egen_all H0.1kWhHigh byte of total generator energy
+127
+EPSVoltL1N
+0.1VVoltage of EPS L1N
+Voltage of generator for three phase:
+S phase
+128
+EPSVoltL2N
+0.1VVoltage of EPS L2N
+Voltage of generator for three phase: T phase
+129
+Peps_L1N
+WActive power of EPS L1N
+Off-grid active power of three phase: S phase
+130
+Peps_L2N
+WActive power of EPS L2N
+Off-grid active power of three phase:
+T phase
+131
+Seps_L1N
+VA  Apparent power of EPS L1N Off-grid apparent power of three
+phase: S phase
+132
+Seps_L2N
+VA  Apparent power of EPS L2N Off-grid apparent power of three
+phase: T phase
+133
+EepsL1N_day
+0.1kWhDaily energy of EPSL1N
+Off-grid daily energy of three phase: S
+phase
+134
+EepsL2N_day
+0.1kWhDaily energy of EPSL2N
+Off-grid daily energy of three phase: T
+phase
+135
+EepsL1N_all L
+0.1kWhLow byte of total EPSL1N energy Total off-grid power of three phase: S
+phase
+136
+EepsL1N_all H
+0.1kWhHigh byte of total EPSL1N energy Total off-grid power of three
+cameras: S phase
+137
+EepsL2N_all L
+0.1kWhLow word of total EPSL2N energy Total off-grid power of three phase: T
+phaseShenzhen Lux Power Technology Co., Ltd	www.luxpowertek.com
+
+
+138
+EepsL2N_all H
+0.1kWhHigh byte of total EPSL2N energy Total off-grid power of three byte: T
+phase139QinvVarReactive power140AFCI_CurrCH1mAAFCI current141AFCI_CurrCH2mAAFCI current142AFCI_CurrCH3mAAFCI current143AFCI_CurrCH4mAAFCI current
+
+
+
+
+
+144AFCIFlag.ArcAlarmCH1Bit0Arc status of CH1 0-Normal 1-AlarmAFCIFlag.ArcAlarmCH2Bit1Arc status of CH2 0-Normal 1-AlarmAFCIFlag.ArcAlarmCH3Bit2Arc status of CH3 0-Normal 1-AlarmAFCIFlag.ArcAlarmCH4Bit3Arc status of CH4 0-Normal 1-AlarmAFCIFlag.SelfTestResult CH1Bit4Test result of CH1 0-Normal 1-failAFCIFlag.SelfTestResult CH2Bit5Test result of CH2 0-Normal 1-failAFCIFlag.SelfTestResult CH3Bit6Test result of CH3 0-Normal 1-failAFCIFlag.SelfTestResult CH4Bit7Test result of CH4 0-Normal 1-failAFCI_ArcAlarm.rsvdBit8-15145AFCI_ArcCH1Real time arc of CH1146AFCI_ArcCH2Real time arc of CH2147AFCI_ArcCH3Real time arc of CH3148AFCI_ArcCH4Real time arc of CH4149AFCI_MaxArcCH1Max arc of CH1150AFCI_MaxArcCH2Max arc of CH2151AFCI_MaxArcCH3Max arc of CH3152AFCI_MaxArcCH4Max arc of CH4153ACCouplePowerWAC Coupled inverter power154AutoTestTripValue[0]0.1V/0.
+01Hz……161AutoTestTripValue[7]0.1V/0.
+01Hz162AutoTestTripTime [0]ms……169AutoTestTripTime [7]ms170PloadWLoad consumption when working in
+on-grid mode171Eload_day0.1kWhLoad energy for today172Eload_allL0.1kWhLoad energy for total High byte173Eload_allH0.1kWhLoad energy for total Low byte
+174SwitchState.SafetySwBit0~40~0x1FThe status of the 5-digit safety DIP switchSwitchState.rsvdBit5-70ReservedSwitchState.EpsSwOnBit8Status of EPS switchSwitchState.DrySwOnBit9Generator dry contact statusSwitchState.GenQuick
+StartUsedBit10generator quick start flag displayedSwitchState.rsvdBit11-14ReservedSwitchState.SwRegUsedBit15Determine whether the switch register is
+being used175EPS overload ctrl timesConnect in xx S after triggering the
+EPS overload issue
+
+
+176
+
+
+
+ExceptionReason1Bit0~33phase:PVGridOn Exit ReasonBit4~73phase:PVChgGridOn Exit ReasonBit8~113phase:BatGridOn Exit ReasonBit12~1
+53phase:PVBatGridOn Exit Reason
+
+
+
+177
+
+
+
+ExceptionReason2Bit0~33phase:PVCharge Exit ReasonBit4~73phase:ACCharge Exit ReasonBit8~113phase:PVACCharge Exit ReasonBit12~1
+53phase:EPS Exit Reason
+178ChgDischgDisableReaso
+nBit0~73phase:Charge Exit ReasonBit8~153phase:Discharge Exit Reason…………………………180Pinv_SW0-65535On grid inverter power of three phase: S phase
+181Pinv_TW0-65535On grid inverter power of three phase: T phase182Prec_SW0-65535Charging rectification power of three phase: S phase183Prec_TW0-65535Charging rectification power of three phase: T phase184Ptogrid_SW0-65535User on-grid power of three phase: S phase185Ptogrid_TW0-65535User on-grid power of three phase: T phase186Ptouser_SW0-65535Grid supply power of three phase: S phase187Ptouser_TW0-65535Grid supply power of three phase:T phase188GenPower_SW0-65535Power of generator for three phase: S phase189GenPower_TW0-65535Power of generator for three phase: T phase190IinvRMS_S0.010-65535Effective value of three phase inverter current: S phase191IinvRMS_T0.010-65535Effective value of three phase inverter current: T phase
+192
+PF_S
+0.001
+0-2000Power factor of phase S in three- phase inverter x?(0,1000]->x/1000 x?(1000,2000)->(1000-x)/1000
+193
+GridVoltL1N
+0.1V
+Voltage of Grid L1N ?for US model?
+194
+GridVoltL2N
+0.1V
+Voltage of Grid L2N?for US model?
+195
+GenVoltL1N
+0.1V
+Voltage of Gen L1N?for US model?
+196
+GenVoltL2N
+0.1V
+Voltage of Gen L2N?for US model?
+197
+PinvL1N
+W
+0-65535Inverting power of phase L1N ?for US model?
+198
+PinvL2N
+W
+0-65535Inverting power of phase L2N ?for US model?
+199
+PrecL1N
+W
+0-65535Rectifying power of phase L1N ?for US model?
+200
+PrecL2N
+W
+0-65535Rectifying power of phase L2N ?for US model?201Ptogrid_L1NW0-65535Grid export power of phase L1N (for US
+model?202Ptogrid_L2NW0-65535Grid export power of phase L2N (for US
+model?203Ptouser_L1NW0-65535Grid import power of phase L1N (for US
+model?204Ptouser_L2NW0-65535Grid import power of phase L2N (for US
+model?
+205
+PF_T
+0.001
+0-2000 Power factor of phase T in three-
+phase inverter x?(0,1000]->x/1000 x?(1000,2000)->(1000-x)/1000206ACCouplePower_SWAC Couple inverter power_S207ACCouplePower_TWAC Couple inverter power_T
+208OnGridloadPowerSWLoad power of S-phase the Trip6-20k
+inverter when it is not off-grid
+209OnGridloadPowerTWLoad power of T-phase the Trip6-20k
+inverter when it is not off-grid210Remaining secondsSRemaining seconds of one click charging process...214uwNTCForINDCcelsius0-65535Internal temperature215uwNTCForDCDCLCelsius0-65535Radiator temperature 1216uwNTCForDCDCHcelsius0-65535Radiator temperature 2217
+Vpv40.1V0-65535PV4 voltage, the AC energy storage system does not have this variable218
+Vpv50.1V0-65535PV5 voltage, the AC energy storage system does not have this variable219
+Vpv60.1V0-65536PV6 voltage, the AC energy storage system does not have this variable220
+Ppv4W0-65535PV4 power, the AC energy storage system does not have this variable221
+Ppv5W0-65535PV5 power, the AC energy storage system does not have this variable222
+Ppv6W0-65535PV6 power, the AC energy storage system does not have this variable223
+
+Epv4_day
+0.1kWh
+0-65535 PV4 power generation today, the AC energy storage system does not have
+this variable224
+
+Epv4_all L
+0.1kWh
+0-65535  PV4 cumulative power generation low byte, AC energy storage does not
+have this variable225
+
+
+Epv4_all H
+0.1kWh
+0-65535  PV4 cumulative power generation high byte, AC energy storage does not
+have this variable226
+
+Epv5_day
+0.1kWh
+0-65535 PV5 power generation today, the AC energy storage system does not have
+this variable227
+
+Epv5_all L
+0.1kWh
+0-65535  PV5 cumulative power generation low byte, AC energy storage does not
+have this variable228
+
+
+Epv5_all H
+0.1kWh
+0-65535  PV5 cumulative power generation high byte, AC energy storage does not
+have this variable229
+
+Epv6_day
+0.1kWh
+0-65535 PV6 power generation today, the AC energy storage system does not have
+this variable230
+
+Epv6_all L
+0.1kWh
+0-65535  PV6 cumulative power generation low byte, AC energy storage does not
+have this variable231
+
+
+Epv6_all H
+0.1kWh
+0-65535  PV6 cumulative power generation high byte, AC energy storage does not
+have this variable232Smart Load PowerWSmart Load output power
+Table 7 Input Register Mapping Table (Signed numbers indicated with a green background)
+
+
+2) Hold Register
+……
+It is used to store the operational data of the energy storage inverter, which can only be read and written, and supports function codes 0x03, 0x06, 0x10.
+
+Hold AddrItemUnitRange and defaultNote
+
+7
+FWCode0
+'A'-'Z' 'a'-'z'For more information of the model code, see Software
+Version Definition file
+FWCode1
+'A'-'Z' 'a'-'z'For more information of the code name for the derived model, see the software version
+definition file
+
+8
+FWCode2
+'A'-'Z' 'a'-'z'For more information of the ODM code,see Software
+Version Definition
+FWCode3
+'A'-'Z' 'a'-'z'For more information of the region code, see Software
+Version Definition file
+
+9
+Slave Ver
+0-255 For more information of the software version number for redundant CPU, see Software
+version definition file
+Com Ver
+0-255  For Communication CPU
+software version number, see software version definition file
+10
+Cntl Ver
+0-255For Control CPU software version number, see software
+version definition fileFWVer0-255For external software version number, see Software Version
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Shenzhen Lux Power Technology Co., Ltd	www.luxpowertek.com
+17 / 41
+
+
+
+
+
+
+
+
+
+
+
+11...
+Bit0
+0/1ResetSetting.AlltoDefaultBit10/1System settings restored to
+default values...Bit20/1...Bit30/1...Bit40/1...Bit50/1...Bit60/1ResetSetting. InvRebootBit70/10-null 1- restart inverterResetSetting.rsvdBit80/1RetainResetSetting.rsvdBit90/1RetainResetSetting.rsvdBit100/1RetainResetSetting.rsvdBit110/1RetainResetSetting.rsvdBit120/1RetainResetSetting.rsvdBit130/1RetainResetSetting.rsvdBit140/1RetainResetSetting.rsvdBit150/1Retain12Time_Year17-255inverter time-yearTime_Month1-12inverter time-month13Time_Date1-31inverter time-dayTime_Hour0-23inverter time-hour14Time_Minute0-59inverter time-minuteTime_Second0-59inverter time-second15Com Addr0-150MODBUS address16Language0-1    0-English 1-German Language 0-English 1-German19DTC:Device type0-310? Default
+3:  XOLTA (for high-speed
+communication interval )
+
+
+
+
+
+
+20
+
+
+
+
+
+
+PVInputModel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1
+
+
+
+
+
+0-4
+For 12KHybrid:0-7
+
+
+
+
+
+
+
+
+
+8 / 410: No PV plug in 1: PV1 plug in 2: PV2 plug in
+3: two PVs in parallel
+4: two separate PVs, AC energy storage does not have this variable.
+For 12KHybrid?
+0- No PV
+1- PV1 in
+2- PV2 in
+3- PV3 in
+4- PV1&2 in
+5- PV1&3 in
+6- PV2&3 in
+7-PV1&2&3 in For TriP 6-20k :
+0- All MPPTs with individual PV strings
+1- 	PV1&2 in parallel connection
+2- PV1 & 3 in parallel connection
+3 - PV2 and PV3 in parallel
+connection
+4 - PV1&2&3 in parallel connection
+
+
+
+
+FuncEn.EPSEn	0
+21	FuncEn.OVFLoadDerate
+En
+FuncEn.DRMSEn	2
+
+0/1
+0/1
+0/1
+
+Off-grid mode enable
+Overfrequency load reduction enable
+DRMS enable
+
+FuncEn.LVRTEn30/1Low voltage ride-through enableFuncEn.AntiIslandEn40/1Anti-islanding enablementFuncEn.NeutralDetectE
+n50/1Ground neutral detection enableFuncEn.GridOnPowerSS En60/1On-grid power soft start enableFuncEn.ACChargeEn70/1AC charging enableFuncEn.SWSeamlesslyE n80/1seamless off-grid mode switching enableFuncEn.SetToStandby90/10: Standby 1: Power onFuncEn.ForcedDischgEn100/1Forced discharge enableFuncEn.ForcedChgEn110/1Force charge enable
+FuncEn.ISOEn
+12
+0/1ISO enable, and AC energy storage does not have this
+variableFuncEn.GFCIEn130/1GFCI enableFuncEn.DCIEn140/1DCI enableFuncEn.FeedInGridEn150/10-disable 1-enable22
+StartPVVolt
+0.1V
+900-5000PV start-up voltage, AC energy storage does not have this
+variable23ConnectTimes30-600Waiting time of on-grid24ReconnectTime
+s0-900Waiting time of Reconnect on- gird
+25
+GridVoltConnLow
+0.1VAccording to specific regulatory
+requirements
+The lower limit of the allowed on-grid voltage.
+26
+GridVoltConnHigh
+0.1VAccording to specific regulatory
+requirements
+The upper limit of the the allowed on-grid voltage.
+27
+GridFreqConnLow
+0.01HzAccording to specific regulatory
+requirements
+The lower limit of the allowable on-grid frequency
+28
+GridFreqConnHigh
+0.01HzAccording to specific regulatory
+requirements
+The upper limit of the the allowed on-grid frequency.
+29
+GridVoltLimit1Low
+0.1VAccording to specific regulatory
+requirements
+    Grid voltage level 1 undervoltage protection point
+
+30
+GridVoltLimit1High
+0.1VAccording to specific regulatory
+requirements
+Grid voltage level 1 overvoltage protection point
+31
+
+GridVoltLimit1LowTime
+
+Main periodAccording to specific regulatory requirements
+    Grid voltage level 1 undervoltage protection time
+32
+GridVoltLimit1HighTime
+Main periodAccording to specific regulatory
+requirementsGrid voltage level 1 overvoltage protection time
+33
+GridVoltLimit2Low
+0.1VAccording to specific regulatory
+requirements
+    Grid voltage level 2 undervoltage protection point
+34
+GridVoltLimit2High
+0.1VAccording to specific regulatory
+requirementsGrid voltage level 2 overvoltage protection point
+35
+GridVoltLimit2LowTime
+Main periodAccording to specific regulatory
+requirements
+    Grid voltage level 2 undervoltage protection time
+
+36
+
+GridVoltLimit2HighTime
+
+Main period
+According to specific regulatory requirements
+
+Grid voltage level 2 overvoltage protection time
+37
+GridVoltLimit3Low
+0.1VAccording to specific regulatory
+requirements
+    Grid voltage level 3 undervoltage protection point
+38
+GridVoltLimit3High
+0.1VAccording to specific regulatory
+requirements
+Grid voltage level 3 overvoltage protection point
+39
+GridVoltLimit3LowTime
+Main periodAccording to specific regulatory
+requirements
+    Grid voltage level 3 undervoltage protection time
+40
+
+GridVoltLimit3HighTime
+
+Main periodAccording to specific regulatory requirements
+Grid voltage level 3 overvoltage protection time41
+GridVoltMovAvgHigh
+0.1VAccording to specific regulatoryGrid voltage sliding average overvoltage protection point
+
+
+42
+
+GridFreqLimit1Low
+
+0.01Hzrequirements According to specific regulatory
+requirements
+Grid frequency level 1 underfrequency protection point
+43
+GridFreqLimit1High
+0.01HzAccording to specific regulatory
+requirements
+    Grid frequency level 1 overfrequency protection point
+44
+GridFreqLimit1LowTime
+Main periodAccording to specific regulatory
+requirements
+    Grid frequency level 1 underfrequency protection time
+45
+GridFreqLimit1HighTime
+Main periodAccording to specific regulatory requirements
+    Grid frequency level 1 overfrequency protection time
+46
+GridFreqLimit2Low
+0.01HzAccording to specific regulatory
+requirementsGrid frequency level 2 underfrequency protection point
+47
+GridFreqLimit2High
+0.01HzAccording to specific regulatory
+requirements
+ Power grid frequency level 2 overfrequency protection point
+
+48
+
+GridFreqLimit2LowTime
+
+Main periodAccording to specific regulatory requirements
+    Grid frequency level 2 underfrequency protection time
+49
+GridFreqLimit2HighTime
+Main periodAccording to specific regulatory
+requirements
+    Grid frequency level 2 overfrequency protection time
+50
+GridFreqLimit3Low
+0.01HzAccording to specific regulatory
+requirementsGrid frequency level 3 underfrequency protection point
+51
+GridFreqLimit3High
+0.01HzAccording to specific regulatory
+requirements
+    Grid frequency level 3 overfrequency protection point
+52
+GridFreqLimit3LowTime
+Main periodAccording to specific
+regulatory requirements
+    Grid frequency level 3 underfrequency protection time
+53
+GridFreqLimit3HighTime
+Main periodAccording to specific regulatory
+requirements
+    Grid frequency level 3 overfrequency protection time
+
+54
+MaxQPercentForQV
+%According to specific regulatory
+requirementsThe maximum percentage of reactive power for the Q(V) curve
+55
+V2L
+0.1VAccording to specific regulatory
+requirements
+Q(V) curve undervoltage 2
+56
+V1L
+0.1VAccording to specific regulatory
+requirements
+Q(V) curve undervoltage 1
+57
+V1H
+0.1VAccording to specific regulatory
+requirements
+Q(V) curve overvoltage 1
+58
+V2H
+0.1VAccording to specific regulatory
+requirements
+Q(V) curve overvoltage 2
+
+
+
+
+59
+
+
+
+
+ReactivePowerCMDTyp e
+
+
+
+
+0-7Reactive power command type 0 - unit power factor
+1 - fixed PF
+2 - default PF curve (American
+machine: Q(P))
+3 - custom PF curve
+4 - capacitive reactive power
+percentage
+5- inductive reactive power percentage
+6- QV curve
+7- QV_Dynamic60ActivePowerPercentCM D%0-100Active power percentage set value61ReactivePowerPercentC MD%0-60Reactive power percentage set value62PFCMD0.001750-1000, 1750-
+2000PF set value, 750-1000(under), 1750-2000(over)63PowerSoftStartSlope‰/min1-4000Loading rate, the percentage of power increase per minute.64ChargePowerPercentC MD%0-100Charging power percentage setting65DischgPowerPercentCM D%0-100Discharging power percentage setting66ACChgPowerCMD%0-100AC charge percentage setting67ACChgSOCLimit%0-100SOC limit setting for AC charging
+68ACChgStartHourhour0-23AC charging start time - hour setting.ACChgStartMinutemin0-59AC charging start time_minute setting
+
+
+69ACChgEndHourhour0-23AC charging end time_hour settingACChgEndMinutemin0-59AC charging end time_minute setting
+70ACChgStartHour1hour0-23AC charging start time_hour settingACChgStartMinute1min0-59AC charging start
+time_minutesetting
+71ACChgEndHour1hour0-23AC charging end time_hour settingACChgEndMinute1min0-59AC charging end time_minute setting
+72ACChgStartHour2hour0-23AC charging start time_hour settingACChgStartMinute2min0-59AC charging start time_minute setting
+73ACChgEndHour2hour0-23AC charging end time_hour settingACChgEndMinute2min0-59AC charging end time_minute setting74ChgFirstPowerCMD%0-100Charging priority percentage setting75ChgFirstSOCLimit%Charging priority SOC limit setting
+
+76
+ChgFirstStartHour
+hour
+0-23Charging priority start time_hour setting
+ChgFirstStartMinute
+min
+0-59Charge priority start time_min setting
+77ChgFirstEndHourhour0-23Charging priority end time_hour settingChgFirstEndMinutemin0-59Charging priority end time_minute setting
+78ChgFirstStartHour1hour0-23Charging priority start time_hour settingChgFirstStartMinute1min0-59Charging priority start time_min setting
+79ChgFirstEndHour1hour0-23Charging priority end time_hour settingChgFirstEndMinute1min0-59Charging priority end time_minute setting
+80ChgFirstStartHour2hour0-23Charging priority start time_hour settingChgFirstStartMinute2min0-59Charging priority start time_minute setting81ChgFirstEndHour2hour0-23Charging priority end time_hour settingChgFirstEndMinute2min0-59Charging priority end
+
+time_minut setting82ForcedDischgPowerCM D%0-100Forced discharge percentage setting83ForcedDischgSOCLimit%0-100Forced discharge SOC limit setting
+84ForcedDischgStartHourhour0-23Forced discharge start time_hour settingForcedDischgStartMinut emin0-59Forced discharge start time_minute setting
+85ForcedDischgEndHourhour0-23Forced discharge end time_hour settingForcedDischgEndMinutemin0-59Forced discharge end time_minute setting
+86ForcedDischgStartHour1hour0-23Forced discharge start time_hour settingForcedDischgStartMinut e1min0-59Forced discharge start time_minute setting
+
+87
+ForcedDischgEndHour1
+hour
+0-23Forced discharge end time_hour settingForcedDischgEndMinute 1min0-59Forced discharge end time_minute setting
+88ForcedDischgStartHour2hour0-23Forced discharge start time_hour settingForcedDischgStartMinut e2min0-59Forced discharge start time_minute setting
+
+89
+ForcedDischgEndHour2
+hour
+0-23Forced discharge end time_hour settingForcedDischgEndMinute 2
+min
+0-59Forced discharge end time_minute setting90
+EPSVoltageSet
+1V230,240,
+277,208
+,220Off-grid output voltage level setting91EPSFreqSet1Hz50,60Off-grid output frequency system settings92LockInGridVForPFCurve0.1V2300-3000cosphi(P)lock in voltage93LockOutGridVForPFCurv
+e0.1V1500-3000cosphi(P)lock out voltage94LockInPowerForQVCurv e%0-100Q(V) lock in power95LockOutPowerForQVCur ve%0-100Q(V) lock out power
+96DelayTimeForQVCurveMain period0-2000Q(V) delay97DelayTimeForOverFDer ateMain period0-1000Overfrequency load reduction delay99ChargeVoltRef0.1V500-590Lead-acid battery charging specified voltage100CutVoltForDischg0.1V400-520Lead-acid battery discharge cut- off voltage101ChargeRate ChargeCurrA0-140Charging current102DischgRate DischgCurrA0-140Discharging current103MaxBackFlow%0-100Feed-in grid power setting105EOD%10%-90%Cut SOC for discharging106TemprLowerLimitDischg0.1?0-65536Lead-acid Temperature low limit for discharging107TemprUpperLimitDischg0.1?0-65536Lead-acid Temperature high limit for discharging108TemprLowerLimitChg0.1?0-65536Lead-acid Temperature low limit for charging109TemprUpperLimitChg0.1?0-65536Lead-acid Temperature high limit for charging
+
+
+
+
+
+
+
+
+
+
+
+
+110FunctionEn1.ubPVGridO ffEn
+Bit0
+0,10 - disable 1 - enable, AC energy
+storage does not have this variableFunctionEn1.ubFastZero ExportBit10 - disable 1 - enableFunctionEn1.ubMicroGr idEnBit20 - disable 1 - enableFunctionEn1.
+ubBatSharedBit30 - disable 1 - enableFunctionEn1.
+ubChgLastEnBit40 - disable 1 - enable FunctionEn1. CTSampleRatioBit5-60 :1/1000 1:1/3000 2:1/2000
+For 12k: CTSampleRatioL2bit, Combine CTSampleRatioH2 bit to form a 4-bit CTSampleRatio
+0?1/1000 1:1/3000 2:1/2000
+3:1/4000 4:1/6000
+FunctionEn1. BuzzerEn
+Bit70-disable 1-enable, only available for off-grid
+For 12k: DrycontactorCntl En  FunctionEn1. PVCTSampleTypeBit8-9For ACS3600: 0-PV power 1- SpecLoad
+For 12k :L2N CT reuse 0- no reuse 1-
+SpecLoad 2-ACCouple powerFunctionEn1.
+TakeLoadTogether
+Bit10For off-grid: 0-disable 1- enable, for 12K : 0-ongrid disable 1-
+enable
+
+FunctionEn1.
+OnGridWorkingMode
+
+Bit11	2
+
+
+5 / 41For 12K: consistant chk mask 0- disable 1-enable
+
+0-self consumption 1-Charge First, only available for off-grid For 12K: consistantchk mask 0-
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+112
+
+
+
+
+
+
+
+
+113
+
+
+FunctionEn1. PVCTSampleRatio
+
+
+
+
+FunctionEn1.GreenMod eEn
+
+
+FunctionEn1.EcoModeE n
+
+
+
+
+
+
+
+SetSystemType
+
+
+
+
+
+
+
+
+SetComposedPhase
+
+
+Bit12-13
+
+
+
+
+
+Bit14
+
+
+
+Bit15
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Write only
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+0,1,2,3,4
+
+
+
+
+
+
+
+
+Set 0
+
+disable 1-enable
+0 : 1/1000 1- 1/3000 2:1/2000
+For 12k: CTSampleRatioL2bit, Combine CTSampleRatioH2 bit to form a 4-bit CTSampleRatio
+0?1/1000 1:1/3000 2:1/2000
+3:1/4000 4:1/6000
+0-disable 1- enable, only available for off-grid
+For 12K: AbsoluteZeroExport 0-disable 1- enable,
+0-disable 1- enable, only available for off-grid
+For 12K: 0-20ms 1-EPSRY on
+ahead(10ms)
+Set the single/parallel type
+0- no parallel (single one)
+1- Single-phase parallel operation forms a single-phase system. (Primary, which will not show on off-grid mode)
+2- Secondary (will not show on off-grid mode)
+3- Three phase parallel(Master) operation forms a three-phase
+System
+4-2*208(Master)
+Option used for two split- phase inverter to make up a three-phase system
+Clear the detected phases
+
+
+Write onlySet 1-3Set Composed phase 1-R 2-S 3-TRead onlyBit0-7Off-grid composed phasesRead onlyBit8-15On-grid detected phases1Parallel Alarm clear 1- clear
+0.01Hz
+
+1W
+
+1W
+
+5000-5200
+
+50W
+
+-50W
+
+Over-frequency load reduction start frequency point
+Device starts discharging when Ptouser higher than this value
+Device starts charging when Ptouser less than this value
+
+
+
+
+118
+
+
+VbatStartDerating
+
+
+0.1V
+
+
+>CutVoltForDisc hg+2V
+
+For lead-acid battery, according to given curve decrease discharging power when voltage lower than this value
+
+
+
+119
+
+wCT_PowerOffset
+
+26 / 41
+1W	±1000W
+
+signed short int; CT Power compensation, PtoUser direction is positive.
+
+
+
+
+
+
+120
+
+stSysEnable.bit.HalfHou rACChrStartEn
+
+
+
+
+stSysEnable.bit.ACCharg eType
+
+Bit0
+
+
+
+
+
+Bit1~3
+
+0,1
+
+
+
+
+
+0-5
+0- 
+Disable?1-Enable? Default:0;
+0-disable
+ 1- according to time 2-accoridng to voltage
+3- according to SOC
+4- according to Voltage and Time
+5- according to SOC and Time
+For 12K:
+0 - according to time
+1 - according to SOC/Volt
+2 - according to time with SOC/Volt
+
+stSysEnable.bit.DischgCt rlType
+Bit4~5
+0-20-according to voltage 1- according to SOC 2- according
+to bothstSysEnable.bit.OnGridE ODTypeBit60-10-according to voltage 1- according to SOC
+
+stSysEnable.bit. GenChargeType
+
+Bit7
+
+0-1
+
+0-According to Battery voltage
+ 1-According to Battery SOC 
+
+
+
+stSysEnable.bit.
+SeparateZeroExportEn
+
+Bit8
+
+0-1
+
+0-Disable(Default)?1-Enable
+
+124OVFDerateEndPoint0.01Hz5000-5200Overfrequency load reduction ends at the frequency point125SOCLowLimitForEPSDisc hg%0-EODSOC low limit for EPS discharge
+
+
+
+
+
+
+126
+OptimalChg_DisChg.Tim e0
+
+Bit0~1
+
+0~20:00~0:30 Mark of time period charging and discharging.
+Default: 0;
+0 - does not operate, 1-AC charge, 2-PV charge, 3 -
+dischargeOptimalChg_DisChg.Tim e1Bit2~30~20:30~1:00 Mark of time period charging and discharging.OptimalChg_DisChg.Tim e2Bit4~50~21:00~1:30 Mark of time period charging and discharging.….OptimalChg_DisChg.Tim e7
+Bit14~15
+0~23:30~4:00 Mark of time period charging and discharging.
+
+
+
+
+
+
+
+
+
+127
+
+OptimalChg_DisChg.Tim e8
+
+
+Bit0~1
+
+
+0~24:00~4:30 Mark of time period charging and discharging.
+Default: 0;
+0 - does not operate, 1-AC charge, 2-PV charge, 3 - dischargeOptimalChg_DisChg.Tim e9
+Bit2~3
+0~24:30~5:00 Mark of time period charging and discharging.OptimalChg_DisChg.Tim e10
+Bit4~5
+0~25:00~5:30 Mark of time period charging and discharging.….OptimalChg_DisChg.Tim e15
+Bit14~15
+0~2
+7:30~8:00 Mark of time period charging and discharging.
+
+
+
+
+
+
+
+
+128
+OptimalChg_DisChg.Tim e16
+
+Bit0~1
+
+0~28:00~8:30 Mark of time period charging and discharging.
+Default: 0;
+0 - does not operate, 1-AC charge, 2-PV charge, 3 -
+dischargeOptimalChg_DisChg.Tim e17Bit2~30~28:30~9:00 Mark of time period charging and discharging.OptimalChg_DisChg.Tim e18
+Bit4~5
+0~29:00~9:30 Mark of time period charging and discharging.….OptimalChg_DisChg.Tim e23
+Bit14~15
+0~211:30~12:00 Mark of time
+period charging and discharging.
+
+
+
+
+
+
+
+
+
+
+129
+
+
+
+OptimalChg_DisChg.Tim e24
+
+
+
+
+Bit0~1
+
+
+
+
+0~212:00~12:30 Mark of time period charging and discharging.
+Default: 0;
+0 - does not operate, 1-AC charge, 2-PV charge, 3 - discharge;OptimalChg_DisChg.Tim e25
+Bit2~3
+0~212:30~13:00 Mark of time period charging and
+discharging.OptimalChg_DisChg.Tim e26
+Bit4~5
+0~213:00~13:30 Mark of time period charging and
+discharging.….OptimalChg_DisChg.Tim e31
+Bit14~15
+0~217:00~17:30 Mark of time period charging and discharging.
+
+
+
+130
+
+OptimalChg_DisChg.Tim e32
+
+
+Bit0~1
+
+
+0~216:00~16:30 Mark of time period charging and discharging.
+0 - does not operate, 1-AC charge, 2-PV charge, 3 - discharge;OptimalChg_DisChg.Tim e33
+Bit2~3
+0~216:30~17:00 Mark of time period charging and discharging.
+
+OptimalChg_DisChg.Tim e34
+
+Bit4~5
+
+0~217:00~17:30 Mark of time period charging and discharging.….OptimalChg_DisChg.Tim e39
+Bit14~15
+0~219:30~20:00 Mark of time period charging and discharging.
+
+
+
+
+
+
+131
+OptimalChg_DisChg.Tim e40
+
+Bit0~1
+
+0~220:00~20:30 Mark of time period charging and discharging.
+0-does not operate, 1-AC charge, 2-PV charge, 3 -
+dischargeOptimalChg_DisChg.Tim e41
+Bit2~3
+0~220:30~21:00 Mark of time period charging and
+discharging.OptimalChg_DisChg.Tim e42
+Bit4~5
+0~221:00~21:30 Mark of time period charging and
+discharging.….OptimalChg_DisChg.Tim e47Bit14~150~223:30~0:00 Mark of time period charging and discharging.
+132BatCellVoltLow0.1V0-200Battery cell voltage lower limit.BatCellVoltHigh
+0.1V
+0-200
+Battery cell voltage upper limit
+133BatCellSerialNum10-200Number of battery cells in seriesBatCellParaNum10-200Number of battery cells in parallel134UVFDerateStartPoint0.01Hz4500-5000Underfrequency load reduction starting point135UVFDerateEndPoint0.01Hz4500-5000      The end point of underfrequency load reduction136OVFDerateRatio%Pm/Hz1-100Underfrequency load ramp rate137SpecLoadCompensatew0-65535   The maximum amount of compensation for a specific load138ChargePowerPercentC MD0.1%0-1000Charging power percentage setting139DischgPowerPercentCM D0.1%0-1000Discharging power percentage setting140ACChgPowerCMD0.1%0-1000AC charge percentage setting141ChgFirstPowerCMD0.1%0-1000Charging priority percentage setting
+142ForcedDischgPowerCM D0.1%0-1000Forced discharge percentage setting143ActivePowerPercentCM D0.1%0-1000Inverse active percentage setting144FloatChargeVolt0.1V500-560Float charge voltage145OutputPrioConfig0-30-bat first 1-PV first 2-AC first146
+LineMode
+0-20-APL(90-280V 20ms) 1-UPS (170-280V 10ms)2-GEN (90-
+280V 20ms)147Battery capacityAh0-10000Battery capacity, for unmatched batteries148Battery nominal Voltage0.1V400-590Battery rating voltage, for unmatched batteries149EqualizationVolt500-590Battery equalization voltage150EqualizationIntervalDay0-365Balancing interval151EqualizationTimehour0-24Balancing duration152ACFirstStartHourhour0-23AC load start time_hours settingACFirstStartMinutemin0-59AC load start time _minutes setting153ACFirstEndHourhour0-23AC load end time _hours settingACFirstEndMinutemin0-59AC load end ime_minutes setting154ACFirstStartHour1hour0-23AC load start time_hours settingACFirstStartMinute1min0-59AC load start time_minutes setting155ACFirstEndHour1hour0-23AC load end time_hours settingACFirstEndMinute1min0-59AC load end time_minutes setting
+156ACFirstStartHour2hour0-23AC load start time_Hours settingACFirstStartMinute2min0-59AC load start time_minutes setting157ACFirstEndHour2hour0-23AC load end time_hours settingACFirstEndMinute2min0-59AC load end time_minutes setting
+158
+ACChgStartVolt
+0.1V
+385-520Battery voltage of AC charging start, which will be valid after selecting ACChg according to
+voltage
+159
+ACChgEndVolt
+0.1V
+480-590Battery voltage of AC charging cut-off, effective after selecting ACChg according to voltage.160ACChgStartSOC
+%
+0-90SOC of AC charging start , which will be valid after selecting
+ACChg according to SOC
+161
+162
+BatLowVoltage
+
+0.1V
+
+400-500 Battery under-voltage alarm point, which will be valid after selecting DisChgCtrl according
+to voltage or both voltage and time
+163
+BatLowBackVoltage
+0.1V
+420-520 Battery under-voltage alarm recovery point, which will be valid after selecting DisChgCtrl according to voltage or
+bothvoltage and time
+164
+BatLowSOC
+%
+0-90 Battery under-voltage alarm point, which will be valid after selecting DisChgCtrl according
+to SOC or both SOC and
+time
+165
+BatLowBackSOC
+%
+20-100 Battery under-voltage alarm recovery point, which will be valid after selecting DisChgCtrl
+according to SOC or both SOC
+and time
+166
+BatLowtoUtilityVoltage
+
+0.1V
+
+444-514Voltage point for battery undervoltage to grid transfer, which will be valid after selecting DisChgCtrl according
+to voltage or both.
+167
+BatLowtoUtilitySOC
+%
+0-100SOC for battery under-voltage to grid transfer, which will be valid after selecting DisChgCtrl
+according to SOC or both.168ACCharge Bat CurrentA0-140Charge Current from AC169OngridEOD_Voltage0.1V400-560On-grid end of dischage voltage...171
+SOCCurve_BatVolt1
+0.1V
+400-600Voltage point 1 for SOC
+calibration172SOCCurve_BatVolt 20.1V400-600Voltage point 2 for SOC
+calibration173SOCCurve_SOC11%0-100SOC reading based on Voltage
+point 1174SOCCurve_SOC21%0-100SOC reading based on Voltage
+point 2175SOCCurve_InnerResistancem?0-100Inner resistance of the battery176MaxGridInputPowerWMax. Grid import power limitation177GenRatePowerWThe rated power of generator
+input
+
+
+179uFunctionEn2.ACCTDire ctionBit00,10-Normal 1-ReverseduFunctionEn2.PVCTDire ctionBit10,10-Normal 1-ReverseduFunctionEn2.AFCIAlar mClrBit20,10-null 1-clear
+For ACS 0-single phase compensation
+?1-three phase compensationuFunctionEn2.BatWake upEn PVSellFirstBit30,10-Disable 1-Enable
+
+uFunctionEn2.VoltWatt EnBit40,10-Disable 1-EnableuFunctionEn2.TriptimeU nitBit50,10-Disable 1-EnableuFunctionEn2.ActPower CMDEnBit60,10-Disable 1-EnableuFunctionEn2.ubGridPe akShavingBit70,10-Disable 1-EnableuFunctionEn2.ubGenPe akShavingBit80,10-Disable 1-EnableuFunctionEn2.ubBatChg controlBit90,10-SOC,1-VoltuFunctionEn2.ubBatDisc hgControlBit100,10-SOC,1-VoltuFunctionEn2.ubACcou plingBit110,10-Disable 1-EnableuFunctionEn2.ubPVArcE
+nBit120,10-Disable 1-EnableuFunctionEn2.
+ubSmartLoadEnBit130,10-Generator 1-Smart LoaduFunctionEn2.ubRSDDis ableBit140,10-Enable 1-DisableuFunctionEn2.OnGridAl waysOnBit150,10-Disable 1-Enable180AFCIArcThreshold181VoltWatt_V10.1V1.05Vn-1.09Vn, default1.06Vn182VoltWatt_V20.1V(V1+0.01Vn)-1.10Vn,
+default1.1Vn183VoltWatt_DelayTimeMain cnt500-60000msDefault 10000ms184VoltWatt_P2%0-200185Vref_QV0.1V186Vref_filtertimes300-5000187Q3_QV%188Q4_QV%189P1_QP%190P2_QP%191P3_QP%192P4_QP%193UVFIncreaseRatio%Pm/Hz1-100Underfrequency load ramp rate194GenChgStartVolt0.1V384-520 Intitial voltage for generator charging the battery, which will
+Shenzhen Lux Power Technology Co., Ltd	www.luxpowertek.com
+
+be valid after selecting GenChg according to voltage.
+195
+GenChgEndVolt
+0.1V
+480-590 Battery voltage at the end of generator charging, which will be valid after selecting GenChg
+according to voltage.
+196
+GenChgStartSOC
+%
+0-90SOC limit for generator charging the battery, which will be valid after selecting charge according to SOC
+197
+GenChgEndSOC
+%
+20-100SOC limit to end thegenerator charging, which will be valid
+after selecting charge
+according to SOC198MaxGenChgBatCurrA0-4000Max. Charge current from
+generator199OverTempDeratePoint0.1?600-900Overtemperature load reduction point201ChgFirstEndVolt0.1V480-590Charging priority voltage limit202ForceDichgEndVolt0.1V400-560Forced discharge voltage limit203GridRegulationGrid regulation settings204LeadCapacityAh50-5000Capacity of the lead acid battery
+
+
+205
+
+
+GridType0-Split240V/120V
+1-3phase 208V/120V
+2- Single 240V
+3- Single 230V
+4- Split 200V/100V206GridPeakShavingPower0.1kw0-255207GridPeakShavingSOC%0-100208GridPeakShavingVolt0.1V480-590
+209PeakShavingStartHourhour0-23PeakShaving start time_Hour settingPeakShavingStartMinut emin0-59PeakShaving start time_minutes setting
+210PeakShavingEndHourhour0-23PeakShaving end time_hours settingPeakShavingEndMinutemin0-59PeakShaving end time_minutes setting
+211PeakShavingStartHour1hour0-23PeakShaving sttart ime_hours settingPeakShavingStartMinut e1min0-59PeakShaving start time_minutes setting212PeakShavingEndHour1hour0-23PeakShaving end time_ hours
+settingPeakShavingEndMinute 1min0-59PeakShaving end
+time_minutes setting213SmartLoadOnVolt0.1V480-590214SmartLoadOffVolt0.1V400-520215SmartLoadOnSOC%0-100216SmartLoadOffSOC%0-100217StartPVpower0.1kW0-120218GridPeakShavingSOC1%0-100219GridPeakShavingVolt10.1V480-590220ACCoupleStartSOC%0-100221ACCoupleEndSOC%0-255222ACCoupleStartVolt0.1V400-595223ACCoupleEndVolt0.1V420-800
+
+
+224
+LCDVersion
+But0~7
+0-255
+LCDScreenType
+Bit8
+0-10-screen of B size 1-screen of S size
+
+LCDODM
+
+Bit9~15
+
+0-127
+See LCD Definition Table225
+LCDPassword
+0~65535
+Password for LCD Advanced page
+
+227
+
+BatStopChgSOC
+
+%
+
+10-101When battery SOC reaches set value , inverter will stop charging the battery , and when the battery SOC < = (Set value
+-5), inverter will return charging the battery
+
+228
+
+BatStopChgVolt
+
+0.1V
+
+400-595When battery Voltage reaches
+set value , inverter will stop charging the battery , and when the battery Volt < = (Set value -
+20 ), inverter will return charging the battery
+
+
+
+
+
+230unMeterCfg.MetersNumBit0~30-15Meter NumbersRSVD0Bit4~7
+
+unMeterCfg.MeterMeasureType
+
+Bit8
+
+0,10- Meter1(Addr=1)measure AC Meter2(Addr=2)measure PV
+1- reversed
+
+
+
+
+unMeterCfg.InstallPhase
+
+
+
+
+Bit9~10
+
+
+
+
+0-30-R phase?1-S phase?2-T phase?ensure the Install Phases of all meters are the
+same ?(only valid for 3phase meter)RSVD1Bit11~120-3RSVD2Bit13~15RVSD
+231unResetRecord.bit.G100Bit00,11-Reset the G100 lockout stateunResetRecord.bit.RsvdRVSD232GridPeakShavingPower10.1kW0-255
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+233uFunction4En. ubQuickChgStartEnBit00,1uFunction4En. ubBattBackupEnBit10,1
+
+
+
+
+uFunction4En. ubMaintenaceEn
+
+
+
+
+Bit2
+
+
+
+0?11-Enable? Once enabled ,andif battery is detected to be never got charged fully within 30days ?then battery will get fully charged from grid at 23?00 of the last day of
+30days duration
+
+
+uFunction4En.ubWorkingMode
+
+
+Bit3
+
+0?10?arranging the work mode 1 for a 7-days time period
+1?arranging the work mode 2 for a 7-days time period
+
+
+uFunction4En.ubDryContactorMultiplex
+
+
+Bit4-70 - null
+1 - RSD
+2 - Dark Start
+3 - Smart load
+4 - Non-critical LoaduFunction4En.ubExCTPositionBit8-90-GridtoUser 1-InvGridPortuFunction4En.ubOverFreq_fstopBit100?10?deactivated , 1?activated234QuickChgTimemin
+
+235uwNoFullChgDayBit0~Bit7(Read
+only )0~255Days counter since the last time that
+battery SOC>=99uwNoFullChgDayNumSetBit8~Bit150~255Calibration period (Days) from the
+last time that battery SOC< 99
+236
+FloatChgThreshold
+0.01C
+1-255When charge current in CV getting lower than this setting, switch to float
+charge237GenCoolDownTime0.1min1-255Gen cool down time when dry
+contactor is off241Permit Service0-disable ,
+non 0-enable242uwNPEThreshold0.1V0-65535Zero ground detection voltage range setting value243...
+244Bootloader_VersionBit0-70-255Bootloader VersionBootloader_UpdateFlagBit8-15245FlashSize0-65535248WattNode uwCtAmps1A0-6000CT1 ratio of wattnode meters249WattNode uwCtAmps2A0-6000CT2 ratio of wattnode meters250WattNode uwCtAmps3A0-6000CT3 ratio of wattnode meters
+
+
+
+
+
+251WattNode uwCtDirections1Bit00,1CT1 direction of wattnode meterWattNode uwCtDirections2Bit10,1CT2 direction of wattnode meterWattNode uwCtDirections3Bit20,1CT3 direction of wattnode meterWattNode_UpdateFrequencyBit3~50~70 - 1S 1 - 5S 2 - 20S 3 - 60S
+4 - 100 ms 5- 200ms	6- 500 msResvdBit6~15……252NEC120BusBarLimitAFor NEC 120% Rule253DeltaSOC%5~80SOC hysteresis, only set lower limit,
+to be improved254DeltaVolt0.1V20~100Volt hysteresis, only set lower limit,
+to be improved
+
+256
+GenStartHour
+hour
+0-23Generator start time_Hour setting
+GenStartMinute
+min
+0-59Generator start time_minutes
+setting
+
+
+257
+GenEndHour
+hour
+0-23Generator end time_hours setting
+GenEndMinute
+min
+0-59Generator end time_minutes
+setting
+
+258
+GenStartHour1
+hour
+0-23Generator start time_Hour setting
+GenStartMinute1
+min
+0-59Generator start time_minutes
+setting259
+GenEndHour1
+hour
+0-23Generator end time_hours setting
+Generator end time_minutesGenEndMinute1min0-59setting260uwBusVoltHightSet1 V550-595BUS overvoltage point alarm voltage setting valueBattery discharge recovery threshold261bDisRecovSocThresh%Min:5%?SOCBattery discharge recovery thresholdbDisRecovVoltThresh0.1VMin:1V?VoltTable 8 Hold register mapping table
+4. Appendix
+1) Definition of the operation mode of on/off-grid energy storage all in one machine.
+
+Status
+codeDevice work statusRemark
+0x00Standby0x01Fault0x02Programming0x04PV
+PV connected to gridPV power feed back to grid, AC energy storage does not have this variable.0x08PV
+PV chargingPV power charge the battery, AC energy storage does not have this variable.
+0x0C
+PV charging connected to the gridA portion of the PV power is used for battery charging, while another portion is used for feeding back to grid, and AC energy storage does not have this variable.
+0x10The battery connect to the grid
+The power od battery discharging will feed back to grid
+0x14(PV+ battery) connected to the gridBattery discharge and PV energy are connected to the grid together, and AC energy storage does not have this
+variable0x20AC chargingGrid charges the battery0x28(PV+AC) chargingPV and grid power charge the battery together, and AC energy storage does not have this variable.0x40The battery is off-gridoff-grid mode, battery discharge0x60Off-grid + battery chargingOn-grid system charge the battery (AC Coupled)
+
+0x80
+
+PV off-gridPV power fluctuates randomly, the off-grid output is unstable, and the inverter is prohibited from working in this state, and AC energy storage does not have this variable.0xC0(PV+ battery) off-gridIn 0ff-gird mode, PV power and battery discharge, AC energy storage does not have this variable.
+0x88PV charging + off-gridA portion of the PV power is used for off-grid output, while another portion is used for battery charging, and AC energy
+storage does not have this variable.Table 9 Operational mode definitions
+
+2? Fault and Alarm Code Definitions
+
+Bit0-31Fault informationFault CodeWarning informationWarning Code0Internal communication failure 1E000Battery communication failedW0001Model faultE001AFCI communication failureW001
+2
+rsvd
+E002      AFCI High Battery low temperature
+AFCI High
+W0023rsvdE003Meter communication failedW0034rsvdE004The battery cannot beW004Shenzhen Lux Power Technology Co., Ltd	www.luxpowertek.com
+35 / 41
+
+charged and discharged5rsvdE005The automated test failedW0056rsvdE006RSD ActiveW0067rsvdE007LCD communication failureW0078Parallel CAN communication failureE008Software version mismatchW0089The host is missingE009The fan is stuck and not rotatingW009
+10The rated power output of multiple hosts or parallel machines is inconsistent
+8-12K:Inconsistent rated power output for grid connection
+Trip6-20k:Inconsistent rated power output for grid
+connection
+E010
+Rsvd
+Trip6-20k: Grid overload
+W010
+11The AC of the parallel system is inconsistent or the safety settings of the parallel system are inconsistent
+8-12K:Inconsistent parallel machine safety regulations
+Trip6-20k:Inconsistent parallel
+machine safety regulations
+E011The number of secondary units for parallel operation exceeds the Limit
+Trip6-20k:Rsvd
+W011
+12
+UPS short circuit
+E012Battery reverse MOS becomes abnormal
+8-12k:The parallel system is experiencing phase loss
+Trip6-20k:The parallel system is experiencing
+phase loss
+W012
+13
+UPS reverse current
+E013 Temperature of the radiator is out of range
+ 8-12k:The parallel system does not have a designated primary unit
+ Trip6-20k:The parallel system does not have a designated primary unit
+W01314BUS short circuitE014Set up multiple hosts in the parallel systemW01415The phase of the three-phase parallel system is abnormalE015Battery reverseW01516Relay failureE016No grid connectionW01617Internal communication failure 2E017The grid voltage exceeds the specified rangeW017
+18Internal communication failure 3
+E018The grid frequency exceeds the specified
+range
+W01819BUS overvoltageE019rsvdW019
+
+20
+
+EPS connection fault
+
+E020The insulation resistance is low, and AC energy storage does not have this variable
+
+W02021PV overvoltage, AC energy storage without this faultE021The leakage current is too highW021
+22 Overcurrent protection
+
+23 Neutral fault
+
+24 PV short circuit, AC energy storage has no such fault
+
+
+25 Heatsink temperature out of
+range
+26 Internal failure
+
+E022 E023 E024
+
+E025 E026
+
+DCI exceeded the standard
+PV short circuit, AC energy storage does not have this variable
+Rsvd
+Trip6-20k:GFCI module failure
+Battery overvoltage Battery undervoltage
+
+W022 W023 W024
+
+W025 W026
+
+27Consistency failureE027Battery open circuitW02728The generator connection in parallel system is inconsistentE028EPS overloadW02829Parallel synchronization triggers signal lossE029EPS voltage highW02930rsvdE030Meter reversedW03031Internal communication failure 4E031DCV exceeded the standardW031Table 10 Fault and alarm definitions
+
+
+
+
+FaultCodeFault decriptionLCD displayTrouble shooting
+E000Internal communication fault1
+E000Restart inverter, if the error still exist, contact us (DSP&M3)E001Model faultE001Reset model, check if safety standard switch is at the right placeE002rsvdE002
+E003
+rsvd
+E003
+E004
+rsvd
+E004
+E005
+rsvd
+E005E006rsvdE006E007rsvdE007E008    Parallel CAN communication failureE008Check CAN cable connectionE009The host is missingE009Check parallel setting
+
+E010Muti Master units in parallel system
+8-12KW : Para
+     Rating Watt Diff Inverters are with different power rating configurations
+
+E010
+
+Check parallel setting
+
+E011Inconsistent AC connection
+ 8-12k: grid safety settings in parallel computing systems.
+
+E011
+
+Check parallel connection Check parallel settingE012UPSE012Check parallel connection or contact us
+UPS short circuit
+E013UPS
+UPS backfilling
+E013Restart inverter, if the error still exist, contact usE014BUS BUS short circuitE014Contact us
+E015Phase abnormality in a three-phase parallel system
+E015
+Check parallel connection and settingE016Relay faultE016Restart inverter, if the error still exist, contact usE017Internal communication fault2E017Restart inverter, if the error still exist, contact us (DSP&M8)E018Internal communication fault3E018Restart inverter, if the error still exist, contact us (DSP&M3)E019Bus voltage highE019Check PV input connectionE020EPS connection faultEPS CN FaultCheck EPS and AC connection
+E021
+PV voltage high
+PV voltage high
+Check PV input connectionE023Neutral faultNeutral faultCheck neutral connection
+
+E024
+
+PV short
+
+E024
+
+Check PV connectionE025Temperature over rangeNTC OpenCheck NTC connectionE026Internal FaultE026Restart inverter, if the error still exist, contact us (Bus sample)
+E027Sample inconsistant
+between main and slave CPU
+E027Restart inverter, if the error still exist, contact us
+
+E028SNA 3000-6000: sync signal lost in parallel system ;
+The parallel synchronization signal is lost
+8-12KW :Para Gen connection unAccord;
+ the generator connection is abnormal
+
+
+E028
+
+Check CAN cable connection Check Gen connection
+E029sync triger signal lost in parallel system.
+Parallel synchronization triggers signal loss
+
+E029
+
+Check CAN cable connection
+E030
+rsvd
+E030
+
+E031Internal communication fault4E031Restart inverter, if the error still exist, contact us (DSP&M8)Table 11 Failure Information Table
+
+
+WarningCodeWarning decriptionLCD displayTrouble shooting
+W000Communication failure with battery
+Batery Com FaultCheck communication cable, if the warning still exist, contact usW001W002
+W003Communication failure with meter
+Meter Com FaultCheck communication cable, if the warning still exist, contact us
+W004
+Battery failure
+Battery failureRestart battery, if the warning still exist, contact us
+W005
+AutoTest failure
+AutoTest failureRestart inverter, if the error still exist, contact usW006W007LCD communication
+FaultW007Restart battery, if the warning still exist, contact usW008Software mismatchW008W009Fan StuckW009Restart inverter, if the error still exist, contact usW010Same para addressW010W011Secondary overflowW011Check parallel numberW012BatOnMos
+8-12KW?Phase loss
+for parallel systemW012Restart inverter, if the error still exist, contact us
+W013Overtemprature
+8-12KW?No primary set in parallel system
+W013Restart inverter(or check parallel setting), if the error still exist,
+contact usW0148-12KW?Muti- Primary set in
+parallel systemW014Check parallel settingW015Battery ReverseW015Check battery input polarities(available for SNA
+unit)W016No AC ConnectionNo AC ConnectionCheck AC ConnectionW017AC Voltage out of rangeAC V OutrangeCheck AC voltageW018AC Frequency out of rangeAC F OutrangeCheck AC frequency
+W019AC inconsistent in parallel system2 The parallel AC is
+inconsistent
+W019
+Check parallel connection or contact us
+
+
+W020
+PV Isolation low
+PV Isolation lowRestart inverter, if the error still exist, contact us
+W021
+Leakage I high
+Leakage I highRestart inverter, if the error still exist, contact usW022DC injection highDC injection highRestart inverter, if the error still exist, contact usW023PV short circuitPV shortCheck PV input connectionW024W025Battery voltage highBat Volt HighCheck battery connectionW026Battery voltage lowBat Volt LowCheck battery connectionW027Battery openBattery openCheck battery connectionW028EPS OverloadEPS Over loadCheck EPS load
+W030
+Meter Reversed
+W030
+Check meter connectionW031EPS DCV highW031Restart inverter, if the error still exist, contact usTable 12 Alarm information table
+3? On-grid Regulatory Mapping Table
+
+Bit0-31Type of safetyRemarkAmerican model voltage system Safety type0GeneralSame VDE0126UL1741&IEEE15471VDE0126GermanyHawaii ?HECO?2AS4777AustraliaUSA(rule21)3NEWZEALANDNew ZealandPR-LUMA4CGCChinaKIUC5G59United Kingdom6G83United Kingdom7N4105Germany8CEI0-21Italy9EN5043810EN50438_Finl andFinland11JapanJapan12PEAThailand13MEA
+Thailand
+
+14EN50438_Irela ndIreland15Czech
+Czech Republic16South AfricaSouth Africa17BarbadorsBarbadors18CEI021ARETI19EN5054920DenmarkDenmark21PolandPoland22SpainSpain23C10/C11Belgium24TORAustria25Denmark-2Denmark(DK2)262728293031Table 13: on-grid regulatory mapping table
+
+4? LCD Definition Table
+
+CodeDefinitionBrandMachine typeLCD0LuxpowertekLXP-LB-8-12KLCD1EG4LXP-LB-8-12KLCD2CROWNLXP-LB-8-12KLCD3EG4 MINUSLXP-LB-8-12KLCD4Luxpowertek10KLCD5EG410KLCD6CROWN10KLCD7Luxpowertek100KLCD8Luxpowertek6-20KLCD9EG46-20KLCD10CROWN6-20KLCD11LuxpowertekTrip_LVLCD12LuxpowertekGEN3-6KLCD13EG4GEN3-6KLCD14CROWNGEN3-6KLCD15......LCD16LuxpowertekGEN7-10KLCD17EG4GEN7-10KLCD18CROWNGEN7-10KLCD19......LCD20LuxpowertekSNALCD21EG4SNALCD22CROWNSNARSVD......
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,97 @@
+### It is impossible to target 100% battery at "End of Sun" because of diminishing sunlight
+
+### We need to make sure that battery is empty enough during PEAK production
+
+### Which is worst overcharge situation if usage is NOT high
+
+### Target lower soc of 90% to allow 3.2kw over production
+
+### Take standard winter day as 8 hours 8:30 till 16:30 with 12:30 Peak and 16:30 End Of Sunshine (EOS)
+
+ 
+
+##    Calculation Order
+
+##
+
+##    # Take Solcast Prediction
+
+##    # Take Allowance % Off
+
+##    # Take Off BASE LOAD Daytime Usage
+
+##    # Take Translated Spare Solar At 8.30am In To Percentage Charge Level from Targe Soc At EOS
+
+##    # Adjust For 3 hours BASE LOAD Night Usage from 5.30am to 8.30am
+
+ 
+
+### Aggregate Sensor for 'Target AC Battery Charge Level'
+
+    - name: 'Target AC Battery Charge Level'
+
+      unique_id: sensor.target_ac_battery_charge_level
+
+      unit_of_measurement: '%'
+
+      state: >
+
+        {% set target_soc_at_eos = 90 %}
+
+        {% set allowance_percent = 0 %}
+
+        {% set night_hours = 3 %}
+
+        {% set night_base_kwh_per_hour = 0.9 %}
+
+        {% set daily_hours = 8 %}
+
+        {% set daily_base_kwh_per_hour = 1.2 %}
+
+        {% set hours_before_peak = daily_hours/2 %}
+
+        {% set battery_capacity = states('input_number.system_battery_capacity')|float(0) %}
+
+        {% set battery_min_level = states('input_number.system_battery_min_charge_level')|float(0) %}
+
+        {% set hot_tub_daytime_energy = states('input_number.system_hot_tub_daytime_energy')|float(0) %}
+
+        {% if (states('sensor.stansol_forecast_today').lower() in ['unknown', 'unavailable']) or (states('input_boolean.system_on_octopus_flux_tariff') == "on) %}
+
+          {{ 100.0|round(0)|int }}
+
+        {% else %}
+
+          {% set spare_solar = states('sensor.stansol_forecast_today')|float(0) %}
+
+          {% set spare_solar = spare_solar * (100-allowance_percent)/100 %}
+
+          {% set spare_solar = spare_solar - night_hours * night_base_kwh_per_hour %}
+
+          {% set spare_solar = spare_solar - daily_hours * daily_base_kwh_per_hour %}
+
+          {% set spare_solar = spare_solar - hot_tub_daytime_energy * 1 %}
+
+          {% set charge_level = target_soc_at_eos - (spare_solar / battery_capacity * 100) %}
+
+          {% if charge_level < battery_min_level %}
+
+            {% set charge_level = battery_min_level %}
+
+          {% endif %}
+
+          {% if charge_level < 20.0 %}
+
+            {% set charge_level = 20.0 %}
+
+          {% endif %}
+
+          {% if charge_level > 90.0 %}
+
+            {% set charge_level = 100.0 %}
+
+          {% endif %}
+
+          {{ charge_level|round(0)|int }}
+
+        {% endif %}

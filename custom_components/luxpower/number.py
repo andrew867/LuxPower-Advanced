@@ -555,7 +555,7 @@ class LuxNormalNumberEntity(NumberEntity):
                     old_value = int(self._read_value)
                 else:
                     # Read has been UNsuccessful - use LAST KNOWN register value
-                    _LOGGER.warning(
+                    _LOGGER.debug(
                         f"Cannot read Register - Using LAST KNOWN Register {self.register_address} value of {self._register_value}"
                     )
                     old_value = int(self._register_value)
@@ -597,11 +597,11 @@ class LuxNormalNumberEntity(NumberEntity):
                             )
                         self.async_write_ha_state()
                     else:
-                        _LOGGER.warning(
+                        _LOGGER.error(
                             f"CanNOT confirm WRITTEN value is same as that sent to SET Register: {self.register_address} ValueSENT: {new_value} ValueREAD: {self._read_value} Entity: {self.entity_id}"
                         )
                 else:
-                    _LOGGER.warning(
+                    _LOGGER.error(
                         f"CanNOT confirm successful WRITE of SET Register: {self.register_address} Entity: {self.entity_id}"
                     )
 

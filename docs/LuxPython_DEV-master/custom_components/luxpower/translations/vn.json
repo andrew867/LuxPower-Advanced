@@ -1,0 +1,40 @@
+{
+  "config": {
+    "error": {
+      "host_error": "Địa chỉ IP không hợp lệ",
+      "dongle_error": "Dongle của inverter phải chứa đúng 10 ký tự",
+      "exist_error": "Tích hợp đã được thêm vào!"
+    },
+    "abort": {
+        "already_configured": "Thiết bị đã được cấu hình"
+    },
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Cấu hình tích hợp cho các inverter LuxPower",
+        "data": {
+          "lux_host": "Địa chỉ IP của inverter Lux",
+          "lux_dongle_serial": "Số dongle",
+          "lux_use_serial": "Sử dụng số seri làm một phần của thực thể",
+          "lux_respond_to_heartbeat": "Phản hồi các yêu cầu heartbeat từ inverter",
+          "lux_refresh_interval": "Khoảng thời gian làm mới tính bằng giây (0 để tắt)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "LuxPower",
+        "description": "Cấu hình tích hợp cho các inverter LuxPower",
+        "data": {
+          "lux_host": "Địa chỉ IP của inverter Lux",
+          "lux_dongle_serial": "Số dongle của inverter",
+          "lux_use_serial": "Sử dụng số seri làm một phần của thực thể",
+          "lux_respond_to_heartbeat": "Phản hồi các yêu cầu heartbeat từ inverter",
+          "lux_refresh_interval": "Khoảng thời gian làm mới tính bằng giây (0 để tắt)"
+        }
+      }
+    }
+  }
+}

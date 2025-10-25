@@ -219,8 +219,8 @@ async def async_setup_entry(
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Start SOC", "unique": "lux_generator_chg_start_soc", "bank": 4, "attribute": LXPPacket.gen_chg_start_soc, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge End SOC", "unique": "lux_generator_chg_end_soc", "bank": 4, "attribute": LXPPacket.gen_chg_end_soc, "device_class": SensorDeviceClass.BATTERY, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Charge Current", "unique": "lux_max_generator_chg_current", "bank": 4, "attribute": LXPPacket.max_gen_chg_current, "device_class": SensorDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Type", "unique": "lux_generator_charge_type", "bank": 3, "attribute": LXPPacket.gen_charge_type, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Input Type", "unique": "lux_ac_input_type", "bank": 3, "attribute": LXPPacket.ac_input_type, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Generator Charge Type", "unique": "lux_generator_charge_type", "bank": 3, "attribute": LXPPacket.gen_charge_type, "device_class": None, "unit_of_measurement": None, "state_class": None, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Input Type", "unique": "lux_ac_input_type", "bank": 3, "attribute": LXPPacket.ac_input_type, "device_class": None, "unit_of_measurement": None, "state_class": None, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Voltage (Live)", "unique": "lux_current_eps_L1_voltage", "bank": 3, "attribute": LXPPacket.eps_L1_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L2 Voltage (Live)", "unique": "lux_current_eps_L2_voltage", "bank": 3, "attribute": LXPPacket.eps_L2_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} EPS L1 Watts (Live)", "unique": "lux_current_eps_L1_watt", "bank": 3, "attribute": LXPPacket.eps_L1_watt, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT},
@@ -276,9 +276,9 @@ async def async_setup_entry(
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} DCDC Temperature High", "unique": "lux_dcdc_temperature_high", "bank": 5, "attribute": LXPPacket.t_dcdc_high, "device_class": SensorDeviceClass.TEMPERATURE, "unit_of_measurement": UnitOfTemperature.CELSIUS, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         
         # NEW 2025.03.05 Protocol: Historical Exception Sensors (Input 176-178)
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Exception Reason 1", "unique": "lux_exception_reason_1", "bank": 4, "attribute": LXPPacket.exception_reason_1, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Exception Reason 2", "unique": "lux_exception_reason_2", "bank": 4, "attribute": LXPPacket.exception_reason_2, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Discharge Disable Reason", "unique": "lux_charge_discharge_disable_reason", "bank": 4, "attribute": LXPPacket.charge_discharge_disable_reason, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Exception Reason 1", "unique": "lux_exception_reason_1", "bank": 4, "attribute": LXPPacket.exception_reason_1, "device_class": None, "unit_of_measurement": None, "state_class": None, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Exception Reason 2", "unique": "lux_exception_reason_2", "bank": 4, "attribute": LXPPacket.exception_reason_2, "device_class": None, "unit_of_measurement": None, "state_class": None, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Charge Discharge Disable Reason", "unique": "lux_charge_discharge_disable_reason", "bank": 4, "attribute": LXPPacket.charge_discharge_disable_reason, "device_class": None, "unit_of_measurement": None, "state_class": None, "enabled": False},
         
         # AC Coupling Sensors (Registers 220-223)
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling Start Voltage", "unique": "lux_ac_couple_start_volt", "bank": 4, "attribute": LXPPacket.ac_couple_start_volt, "device_class": SensorDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
@@ -286,14 +286,14 @@ async def async_setup_entry(
         
         # Advanced System Configuration Sensors (Registers 176-180)
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K", "unique": "lux_max_sys_power_12k", "bank": 4, "attribute": LXPPacket.max_sys_power_12k, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} System Configuration 12K", "unique": "lux_sys_config_12k", "bank": 4, "attribute": LXPPacket.sys_config_12k, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} System Configuration 12K", "unique": "lux_sys_config_12k", "bank": 4, "attribute": LXPPacket.sys_config_12k, "device_class": None, "unit_of_measurement": None, "state_class": None, "enabled": False},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Power Limit", "unique": "lux_power_limit", "bank": 4, "attribute": LXPPacket.power_limit, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         
         # Peak Shaving Effectiveness Sensor (Register 282)
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Peak Shaving Effectiveness", "unique": "lux_peak_shaving_effectiveness", "bank": 5, "attribute": LXPPacket.peak_shaving_effectiveness, "device_class": None, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
         
         # Demand Response Capability Sensor (Register 281)
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Demand Response Capability", "unique": "lux_demand_response_capability", "bank": 5, "attribute": LXPPacket.demand_response_capability, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Demand Response Capability", "unique": "lux_demand_response_capability", "bank": 5, "attribute": LXPPacket.demand_response_capability, "device_class": None, "unit_of_measurement": None, "state_class": None, "enabled": False},
         
         # Load Balancing Score Sensor (Register 283)
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Load Balancing Score", "unique": "lux_load_balancing_score", "bank": 5, "attribute": LXPPacket.load_balancing_score, "device_class": None, "unit_of_measurement": PERCENTAGE, "state_class": SensorStateClass.MEASUREMENT, "enabled": False},
@@ -303,15 +303,15 @@ async def async_setup_entry(
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Current Channel 2", "unique": "lux_afci_current_ch2", "bank": 3, "attribute": LXPPacket.afci_curr_ch2, "device_class": SensorDeviceClass.CURRENT, "unit_of_measurement": "mA", "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Current Channel 3", "unique": "lux_afci_current_ch3", "bank": 3, "attribute": LXPPacket.afci_curr_ch3, "device_class": SensorDeviceClass.CURRENT, "unit_of_measurement": "mA", "state_class": SensorStateClass.MEASUREMENT},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Current Channel 4", "unique": "lux_afci_current_ch4", "bank": 3, "attribute": LXPPacket.afci_curr_ch4, "device_class": SensorDeviceClass.CURRENT, "unit_of_measurement": "mA", "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Flags", "unique": "lux_afci_flags", "bank": 3, "attribute": LXPPacket.afci_flags, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Channel 1", "unique": "lux_afci_arc_ch1", "bank": 3, "attribute": LXPPacket.afci_arc_ch1, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Channel 2", "unique": "lux_afci_arc_ch2", "bank": 3, "attribute": LXPPacket.afci_arc_ch2, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Channel 3", "unique": "lux_afci_arc_ch3", "bank": 3, "attribute": LXPPacket.afci_arc_ch3, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Channel 4", "unique": "lux_afci_arc_ch4", "bank": 3, "attribute": LXPPacket.afci_arc_ch4, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Max Arc Channel 1", "unique": "lux_afci_max_arc_ch1", "bank": 3, "attribute": LXPPacket.afci_max_arc_ch1, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Max Arc Channel 2", "unique": "lux_afci_max_arc_ch2", "bank": 3, "attribute": LXPPacket.afci_max_arc_ch2, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Max Arc Channel 3", "unique": "lux_afci_max_arc_ch3", "bank": 3, "attribute": LXPPacket.afci_max_arc_ch3, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Max Arc Channel 4", "unique": "lux_afci_max_arc_ch4", "bank": 3, "attribute": LXPPacket.afci_max_arc_ch4, "device_class": None, "unit_of_measurement": None, "state_class": SensorStateClass.MEASUREMENT},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Flags", "unique": "lux_afci_flags", "bank": 3, "attribute": LXPPacket.afci_flags, "device_class": None, "unit_of_measurement": None, "state_class": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Channel 1", "unique": "lux_afci_arc_ch1", "bank": 3, "attribute": LXPPacket.afci_arc_ch1, "device_class": None, "unit_of_measurement": None, "state_class": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Channel 2", "unique": "lux_afci_arc_ch2", "bank": 3, "attribute": LXPPacket.afci_arc_ch2, "device_class": None, "unit_of_measurement": None, "state_class": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Channel 3", "unique": "lux_afci_arc_ch3", "bank": 3, "attribute": LXPPacket.afci_arc_ch3, "device_class": None, "unit_of_measurement": None, "state_class": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Arc Channel 4", "unique": "lux_afci_arc_ch4", "bank": 3, "attribute": LXPPacket.afci_arc_ch4, "device_class": None, "unit_of_measurement": None, "state_class": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Max Arc Channel 1", "unique": "lux_afci_max_arc_ch1", "bank": 3, "attribute": LXPPacket.afci_max_arc_ch1, "device_class": None, "unit_of_measurement": None, "state_class": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Max Arc Channel 2", "unique": "lux_afci_max_arc_ch2", "bank": 3, "attribute": LXPPacket.afci_max_arc_ch2, "device_class": None, "unit_of_measurement": None, "state_class": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Max Arc Channel 3", "unique": "lux_afci_max_arc_ch3", "bank": 3, "attribute": LXPPacket.afci_max_arc_ch3, "device_class": None, "unit_of_measurement": None, "state_class": None},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} AFCI Max Arc Channel 4", "unique": "lux_afci_max_arc_ch4", "bank": 3, "attribute": LXPPacket.afci_max_arc_ch4, "device_class": None, "unit_of_measurement": None, "state_class": None},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output (Daily)", "unique": "lux_daily_solar", "bank": 0, "attribute": LXPPacket.e_pv_total, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 1 (Daily)", "unique": "lux_daily_solar_array_1", "bank": 0, "attribute": LXPPacket.e_pv_1_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
         {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Solar Output Array 2 (Daily)", "unique": "lux_daily_solar_array_2", "bank": 0, "attribute": LXPPacket.e_pv_2_day, "device_class": SensorDeviceClass.ENERGY, "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR, "state_class": SensorStateClass.TOTAL_INCREASING},
@@ -339,13 +339,13 @@ async def async_setup_entry(
         {"etype": "LPBS", "name": "Lux {replaceID_midfix}{hyphen} Battery Status", "unique": "lux_battery_status", "bank": 2, "attribute": LXPPacket.bat_status_inv},
 
 
-        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Status", "unique": "lux_status", "bank": 0, "attribute": LXPPacket.status},
+        {"etype": "LPSE", "name": "Lux {replaceID_midfix}{hyphen} Status", "unique": "lux_status", "bank": 0, "attribute": LXPPacket.status, "device_class": None, "state_class": None, "unit_of_measurement": None},
 
         # 4. Setup Data Received Timestamp sensor
-        {"etype": "LPDR", "name": "Lux {replaceID_midfix}{hyphen} Data Received Time", "unique": "lux_data_last_received_time", "bank": 0, "attribute": LXPPacket.status},
+        {"etype": "LPDR", "name": "Lux {replaceID_midfix}{hyphen} Data Received Time", "unique": "lux_data_last_received_time", "bank": 0, "attribute": LXPPacket.status, "device_class": None, "state_class": None, "unit_of_measurement": None},
 
         # 5. Setup State Text sensor
-        {"etype": "LPST", "name": "Lux {replaceID_midfix}{hyphen} Status (Text)", "unique": "lux_status_text", "bank": 0, "attribute": LXPPacket.status},
+        {"etype": "LPST", "name": "Lux {replaceID_midfix}{hyphen} Status (Text)", "unique": "lux_status_text", "bank": 0, "attribute": LXPPacket.status, "device_class": None, "state_class": None, "unit_of_measurement": None},
 
         # Multiple Attribute Calculated Sensors
         # 6. Battery Flow Live
@@ -995,6 +995,8 @@ class LuxPowerSensorEntity(SensorEntity):
             return 1
         elif self._attr_native_unit_of_measurement == "%":
             return 0
+        elif self._attr_native_unit_of_measurement is None:
+            return None  # No precision for text sensors
         return 2
 
     @property

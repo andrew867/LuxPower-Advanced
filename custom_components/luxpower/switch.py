@@ -132,7 +132,6 @@ async def async_setup_entry(
         # Additional Register 110 Control Switches (Disabled by Default)
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} EPS Mode Enable", "register_address": 110, "bitmask": LXPPacket.EPS_ENABLE, "attribute": "eps_status", "enabled": False, "unique": "lux_eps_mode_enable"},
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Force Discharge Alt", "register_address": 110, "bitmask": LXPPacket.FORCED_DISCHG_EN_ALT, "attribute": "p_discharge", "enabled": False, "unique": "lux_force_discharge_alt"},
-        {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} DRMS Enable Alt", "register_address": 110, "bitmask": LXPPacket.DRMS_ENABLE_ALT, "attribute": "grid_status", "enabled": False, "unique": "lux_drms_enable_alt"},
         
         # 12K-Specific Control Switches (Based on Cloud UI Analysis) - UPDATED FROM CLOUD UI
         {"etype": "LVSE", "name": "Lux {replaceID_midfix}{hyphen} Smart Load Inverter Enable", "register_address": 0, "bitmask": 0, "attribute": "smart_load_start_soc", "enabled": False},  # Smart load control enable
@@ -346,7 +345,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
                     self.schedule_update_ha_state()
             if (
                 self._register_address == 21
-                and self._bitmask == LXPPacket.CHARGE_PRIORITY
+                and self._bitmask == LXPPacket.AC_CHARGE_ENABLE
             ):
                 if 76 in self.totalregs.keys():
                     self.schedule_update_ha_state()
@@ -489,7 +488,7 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             state_attributes["AC_CHARGE_START_3"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(72, 0)))
             state_attributes["AC_CHARGE_END_3"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(73, 0)))
 
-        if self._register_address == 21 and self._bitmask == LXPPacket.CHARGE_PRIORITY:
+        if self._register_address == 21 and self._bitmask == LXPPacket.AC_CHARGE_ENABLE:
 
             state_attributes["PRIORITY_CHARGE_START_1"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(76, 0)))
             state_attributes["PRIORITY_CHARGE_END_1"] = "{0[0]}:{0[1]}".format(self.convert_to_time(self.totalregs.get(77, 0)))
