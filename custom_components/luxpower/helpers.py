@@ -140,6 +140,7 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
     _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Entry ID: {entry_id}")
     _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Device Data: {device_data}")
     _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Model: {model}, Model Code: {model_code}, Firmware: {firmware_version}, Serial: {inverter_serial}")
+    _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Firmware from device_data: '{firmware_version}'")
     
     # Get model name from model code - ensure we get the string name, not the dict
     from .const import get_model_name
@@ -151,6 +152,7 @@ def get_comprehensive_device_info(hass, dongle: str, serial: str = None) -> dict
     
     # Use register-based serial number if available, otherwise fall back to configuration
     serial_number = inverter_serial or serial or dongle
+    _LOGGER.debug(f"🔍 DEVICE INFO DEBUG - Serial number selection: inverter_serial='{inverter_serial}', serial='{serial}', dongle='{dongle}', final='{serial_number}'")
     
     # Get appropriate device image
     device_image_url = get_device_image_url(model_code, model_name)

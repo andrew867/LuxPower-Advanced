@@ -1298,7 +1298,7 @@ class LuxPowerFirmwareSensor(LuxPowerSensorEntity):
                     self.hass.data[DOMAIN].setdefault(entry_id, {})[
                         "lux_firmware_version"
                     ] = firmware
-                    _LOGGER.debug(f"🔍 FIRMWARE SENSOR - Saved firmware '{firmware}' to hass.data[{DOMAIN}][{entry_id}]")
+                    _LOGGER.info(f"🔍 FIRMWARE SENSOR - Firmware changed from '{current_firmware}' to '{firmware}', updating device info")
                     
                     # Trigger device info update only if firmware changed
                     self._update_device_info()
@@ -1437,7 +1437,8 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
             reg08_str = int(reg08_val).to_bytes(2, "little").decode()
             code = reg07_str + reg08_str
             model_code = code.upper()
-            model = MODEL_MAP.get(model_code, "Unknown")
+            model_info = MODEL_MAP.get(model_code, {"name": "Unknown", "rated_power": 6000})
+            model = model_info.get("name", "Unknown") if isinstance(model_info, dict) else str(model_info)
 
             # Save both model and model_code into hass.data for device_info usage
             entry_id = None
@@ -1452,6 +1453,7 @@ class LuxPowerModelSensor(LuxPowerSensorEntity):
                 if current_model != model or current_model_code != model_code:
                     self.hass.data[DOMAIN].setdefault(entry_id, {})["model"] = model
                     self.hass.data[DOMAIN][entry_id]["model_code"] = model_code
+                    self.hass.data[DOMAIN][entry_id]["model_info"] = model_info
                     _LOGGER.debug(f"🔍 MODEL SENSOR - Saved model '{model}' and model_code '{model_code}' to hass.data[{DOMAIN}][{entry_id}]")
                     
                     # Trigger device info update only if model changed
@@ -1648,6 +1650,7 @@ class LuxPowerSerialNumberSensor(LuxPowerSensorEntity):
                 
                 # Trigger device info update if serial changed or if not previously set
                 if current_serial != serial_str or not current_serial:
+                    _LOGGER.info(f"🔍 SERIAL SENSOR - Serial number changed from '{current_serial}' to '{serial_str}', updating device info")
                     self._update_device_info()
                 else:
                     _LOGGER.debug(f"🔍 SERIAL SENSOR - Serial number unchanged: '{serial_str}'")
