@@ -7,6 +7,16 @@ class LuxPowerEnergyFlowCard extends HTMLElement {
     this._entities = {};
   }
 
+  static getConfigElement() {
+    return document.createElement('luxpower-energy-flow-card-editor');
+  }
+
+  static getStubConfig() {
+    return {
+      type: 'custom:luxpower-energy-flow-card'
+    };
+  }
+
   setConfig(config) {
     this._config = {
       show_pv3: true,

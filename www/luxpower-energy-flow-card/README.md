@@ -27,7 +27,9 @@ A custom Lovelace card that provides an interactive energy flow visualization fo
 3. Add to your Lovelace resources:
    ```yaml
    resources:
-     - url: /local/luxpower-energy-flow-card/luxpower-energy-flow-card.js
+     - url: /hacsfiles/luxpower-energy-flow-card/luxpower-energy-flow-card.js
+       type: module
+     - url: /hacsfiles/luxpower-energy-flow-card/luxpower-energy-flow-card-editor.js
        type: module
    ```
 4. Restart Home Assistant

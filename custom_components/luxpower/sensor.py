@@ -349,7 +349,7 @@ async def async_setup_entry(
 
         # Multiple Attribute Calculated Sensors
         # 6. Battery Flow Live
-        {"etype": "LPFS", "name": "Lux {replaceID_midfix}{hyphen} Battery Flow (Live)", "unique": "lux_battery_flow", "bank": 0, "attribute": LXPPacket.p_discharge, "attribute1": LXPPacket.p_discharge, "attribute2": LXPPacket.p_charge, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT},
+        {"etype": "LPBF", "name": "Lux {replaceID_midfix}{hyphen} Battery Flow (Live)", "unique": "lux_battery_flow", "bank": 0, "attribute": LXPPacket.p_discharge, "attribute1": LXPPacket.p_discharge, "attribute2": LXPPacket.p_charge, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT},
 
         # 7. Grid Flow Live
         {"etype": "LPFS", "name": "Lux {replaceID_midfix}{hyphen} Grid Flow (Live)", "unique": "lux_grid_flow", "bank": 0, "attribute": LXPPacket.p_to_user, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_to_grid, "device_class": SensorDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT},
@@ -738,6 +738,8 @@ async def async_setup_entry(
             sensorEntities.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPFS":
             sensorEntities.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPBF":
+            sensorEntities.append(LuxPowerBatteryFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPHC":
             sensorEntities.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPPF":
@@ -1046,12 +1048,70 @@ class LuxPowerFlowSensor(LuxPowerSensorEntity):
         _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
         self._data = event.data.get("data", {})
 
-        negative_value = float(self._data.get(self._device_attribute1, 0.0))
-        positive_value = float(self._data.get(self._device_attribute2, 0.0))
-        if negative_value > 0:
-            flow_value = -1 * negative_value
+        # For grid flow: attribute1 = p_to_user (grid to user), attribute2 = p_to_grid (user to grid)
+        grid_to_user = float(self._data.get(self._device_attribute1, 0.0))  # Power from grid to user
+        user_to_grid = float(self._data.get(self._device_attribute2, 0.0))   # Power from user to grid
+        
+        # Debug logging for grid flow values
+        _LOGGER.debug(f"Grid Flow Debug - grid_to_user: {grid_to_user}, user_to_grid: {user_to_grid}")
+        
+        # Calculate net grid flow: positive = importing from grid, negative = exporting to grid
+        if grid_to_user > 0:
+            # We're importing from grid
+            flow_value = grid_to_user
+        elif user_to_grid > 0:
+            # We're exporting to grid
+            flow_value = -user_to_grid
         else:
-            flow_value = positive_value
+            # No grid flow
+            flow_value = 0.0
+            
+        self._attr_native_value = f"{round(flow_value, 1)}"
+
+        self._attr_available = True
+        self.schedule_update_ha_state()
+        return self._attr_native_value
+
+
+class LuxPowerBatteryFlowSensor(LuxPowerSensorEntity):
+    """
+    Representation of a Battery Flow sensor for a LUXPower Inverter.
+    
+    Handles positive and negative power flow correctly:
+    - Positive = Battery discharging (power flowing out of battery)
+    - Negative = Battery charging (power flowing into battery)
+    """
+
+    def __init__(
+        self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None
+    ):
+        """Initialize the sensor."""
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._device_attribute1 = entity_definition["attribute1"]  # p_discharge
+        self._device_attribute2 = entity_definition["attribute2"]  # p_charge
+
+    def push_update(self, event):
+        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+        self._data = event.data.get("data", {})
+
+        # For battery flow: attribute1 = p_discharge, attribute2 = p_charge
+        battery_discharge = float(self._data.get(self._device_attribute1, 0.0))  # Power discharging from battery
+        battery_charge = float(self._data.get(self._device_attribute2, 0.0))     # Power charging battery
+        
+        # Debug logging for battery flow values
+        _LOGGER.debug(f"Battery Flow Debug - discharge: {battery_discharge}, charge: {battery_charge}")
+        
+        # Calculate net battery flow: positive = discharging, negative = charging
+        if battery_discharge > 0:
+            # Battery is discharging
+            flow_value = battery_discharge
+        elif battery_charge > 0:
+            # Battery is charging
+            flow_value = -battery_charge
+        else:
+            # No battery flow
+            flow_value = 0.0
+            
         self._attr_native_value = f"{round(flow_value, 1)}"
 
         self._attr_available = True
@@ -1092,6 +1152,10 @@ class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
         to_inverter = float(self._data.get(self._device_attribute2, 0.0))
         from_inverter = float(self._data.get(self._device_attribute3, 0.0))
         to_grid = float(self._data.get(self._device_attribute4, 0.0))
+        
+        # Debug logging for power values
+        _LOGGER.debug(f"Home Consumption Debug - grid: {grid}, to_inverter: {to_inverter}, from_inverter: {from_inverter}, to_grid: {to_grid}")
+        
         consumption_value = grid - to_inverter + from_inverter - to_grid
         self._attr_native_value = f"{round(consumption_value, 1)}"
 

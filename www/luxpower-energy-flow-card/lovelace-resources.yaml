@@ -1,0 +1,17 @@
+# LuxPower Energy Flow Card - Lovelace Resources Configuration (HACS)
+# Add this to your Home Assistant configuration.yaml or use in Lovelace resources
+
+lovelace:
+  resources:
+    # Main card component
+    - url: /hacsfiles/luxpower-energy-flow-card/luxpower-energy-flow-card.js
+      type: module
+    # Card editor for configuration
+    - url: /hacsfiles/luxpower-energy-flow-card/luxpower-energy-flow-card-editor.js
+      type: module
+    # Card wizard configuration
+    - url: /hacsfiles/luxpower-energy-flow-card/card-wizard-config.js
+      type: module
+    # Card wizard interface
+    - url: /hacsfiles/luxpower-energy-flow-card/luxpower-energy-flow-card-wizard.js
+      type: module

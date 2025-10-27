@@ -793,8 +793,7 @@ class LXPPacket:
                         self.get_device_values_bank5()
 
             # Calculate power flow after processing all bank data
-            # TODO: Fix power flow calculation - references non-existent variables
-            # self.calculate_power_flow()
+            self.calculate_power_flow()
             
             self.data.update(self.readValuesThis)
 
@@ -1051,6 +1050,7 @@ class LXPPacket:
             if p_load < 0:
                 p_load = 0
             if self.debug:
+                _LOGGER.debug("p_to_eps(Watts) %s", p_to_eps)
                 _LOGGER.debug("p_to_grid(Watts) %s", p_to_grid)
                 _LOGGER.debug("p_to_user(Watts) %s", p_to_user)
                 _LOGGER.debug("p_load(Watts) %s", p_load)
@@ -1494,35 +1494,44 @@ class LXPPacket:
     def calculate_power_flow(self):
         """Calculate power flow between different sources and loads."""
         try:
-            # Get current power values
+            # Get current power values (all in watts, positive values)
             pv_power = self.readValuesThis.get(LXPPacket.p_pv_total, 0)
-            battery_power = self.readValuesThis.get(LXPPacket.p_discharge, 0) - self.readValuesThis.get(LXPPacket.p_charge, 0)
-            grid_power = self.readValuesThis.get(LXPPacket.p_to_user, 0) - self.readValuesThis.get(LXPPacket.p_to_grid, 0)
+            battery_charge = self.readValuesThis.get(LXPPacket.p_charge, 0)  # Power charging battery
+            battery_discharge = self.readValuesThis.get(LXPPacket.p_discharge, 0)  # Power discharging from battery
+            grid_to_user = self.readValuesThis.get(LXPPacket.p_to_user, 0)  # Power from grid to user
+            user_to_grid = self.readValuesThis.get(LXPPacket.p_to_grid, 0)  # Power from user to grid
             load_power = self.readValuesThis.get(LXPPacket.p_load, 0)
             eps_power = self.readValuesThis.get(LXPPacket.p_to_eps, 0)
             
-            # Calculate power flow directions
-            # PV to Battery (when PV > 0 and battery < 0)
-            pv_to_battery = max(0, min(pv_power, -battery_power)) if battery_power < 0 else 0
+            # Calculate net power flows
+            # Battery power: positive = discharging, negative = charging
+            battery_net = battery_discharge - battery_charge
             
-            # PV to Load (when PV > battery charging)
-            pv_remaining = pv_power - pv_to_battery
-            pv_to_load = max(0, min(pv_remaining, load_power))
+            # Grid power: positive = importing from grid, negative = exporting to grid
+            grid_net = grid_to_user - user_to_grid
+            
+            # Calculate power flow directions based on actual power values
+            # PV to Battery (when PV available and battery charging)
+            pv_to_battery = min(pv_power, battery_charge) if battery_charge > 0 else 0
+            
+            # PV to Load (remaining PV after battery charging)
+            pv_remaining_after_battery = pv_power - pv_to_battery
+            pv_to_load = min(pv_remaining_after_battery, load_power) if load_power > 0 else 0
             
             # PV to Grid (remaining PV after battery and load)
-            pv_to_grid = max(0, pv_remaining - pv_to_load)
+            pv_to_grid = max(0, pv_remaining_after_battery - pv_to_load)
             
-            # Battery to Load (when battery discharging and load > PV)
-            battery_to_load = max(0, min(-battery_power, load_power - pv_to_load)) if battery_power < 0 else 0
+            # Battery to Load (when battery discharging and load needs power)
+            battery_to_load = min(battery_discharge, load_power - pv_to_load) if battery_discharge > 0 and load_power > pv_to_load else 0
             
             # Battery to Grid (when battery discharging and grid importing)
-            battery_to_grid = max(0, min(-battery_power - battery_to_load, -grid_power)) if battery_power < 0 and grid_power < 0 else 0
+            battery_to_grid = min(battery_discharge - battery_to_load, grid_to_user) if battery_discharge > battery_to_load and grid_to_user > 0 else 0
             
             # Grid to Battery (when grid charging battery)
-            grid_to_battery = max(0, min(grid_power, -battery_power)) if battery_power < 0 and grid_power > 0 else 0
+            grid_to_battery = min(grid_to_user, battery_charge) if grid_to_user > 0 and battery_charge > 0 else 0
             
             # Grid to Load (when grid powering loads)
-            grid_to_load = max(0, min(grid_power - grid_to_battery, load_power - pv_to_load - battery_to_load)) if grid_power > 0 else 0
+            grid_to_load = min(grid_to_user - grid_to_battery, load_power - pv_to_load - battery_to_load) if grid_to_user > grid_to_battery else 0
             
             # Store calculated power flows
             self.readValuesThis["pv_to_battery"] = pv_to_battery
