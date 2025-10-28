@@ -28,6 +28,13 @@ from .const import (
     ATTR_LUX_RECONNECTION_DELAY,
     ATTR_LUX_RATED_POWER,
     ATTR_LUX_READ_ONLY_MODE,
+    ATTR_LUX_CONNECTION_TYPE,
+    ATTR_LUX_MQTT_TOPIC_PREFIX,
+    ATTR_LUX_SERIAL_PORT,
+    ATTR_LUX_SERIAL_BAUDRATE,
+    CONNECTION_TYPE_TCP,
+    CONNECTION_TYPE_MQTT,
+    CONNECTION_TYPE_SERIAL,
     DEFAULT_CHARGE_DURATION_MINUTES,
     DEFAULT_CHARGE_SLOT,
     DEFAULT_DONGLE_SERIAL,
@@ -57,6 +64,65 @@ from .helpers import Event
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor", "switch", "number", "time", "button", "binary_sensor", "select"]
+
+
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    """
+    Migrate config entry to add connection type for existing configurations.
+    
+    Args:
+        hass: Home Assistant instance
+        config_entry: Configuration entry to migrate
+        
+    Returns:
+        True if migration was successful
+    """
+    if config_entry.version == 1:
+        # Add connection_type = tcp for existing configs
+        new_data = {**config_entry.data}
+        new_data[ATTR_LUX_CONNECTION_TYPE] = CONNECTION_TYPE_TCP
+        
+        config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new_data)
+        _LOGGER.info(f"Migrated config entry {config_entry.entry_id} to version 2")
+    
+    return True
+
+
+def create_transport(hass: HomeAssistant, config: dict) -> 'LuxPowerTransport':
+    """
+    Create appropriate transport based on connection type.
+    
+    Args:
+        hass: Home Assistant instance
+        config: Configuration dictionary
+        
+    Returns:
+        Appropriate transport instance
+    """
+    connection_type = config.get(ATTR_LUX_CONNECTION_TYPE, CONNECTION_TYPE_TCP)
+    dongle_serial = config.get(ATTR_LUX_DONGLE_SERIAL, DEFAULT_DONGLE_SERIAL)
+    
+    if connection_type == CONNECTION_TYPE_TCP:
+        from .transport.tcp_transport import TCPTransport
+        host = config.get(ATTR_LUX_HOST, "127.0.0.1")
+        port = config.get(ATTR_LUX_PORT, 8000)
+        return TCPTransport(host, port, dongle_serial)
+    
+    elif connection_type == CONNECTION_TYPE_MQTT:
+        from .transport.mqtt_transport import MQTTTransport
+        topic_prefix = config.get(ATTR_LUX_MQTT_TOPIC_PREFIX, "modbus_bridge")
+        return MQTTTransport(hass, topic_prefix, dongle_serial)
+    
+    elif connection_type == CONNECTION_TYPE_SERIAL:
+        from .transport.serial_transport import SerialTransport
+        serial_port = config.get(ATTR_LUX_SERIAL_PORT, "/dev/ttyUSB0")
+        baudrate = config.get(ATTR_LUX_SERIAL_BAUDRATE, 19200)
+        return SerialTransport(serial_port, baudrate, dongle_serial)
+    
+    else:
+        raise ValueError(f"Unknown connection type: {connection_type}")
+
 
 SCHEME_REGISTER_BANK = vol.Schema(
     {
@@ -477,20 +543,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     # USE_SERIAL = config.get(ATTR_LUX_USE_SERIAL, False)
 
-    # Import LuxPowerClient here to avoid blocking imports
-    from .lxp.client import LuxPowerClient
+    # Create transport and client using factory
+    transport = create_transport(hass, config)
     
     events = Event(dongle=DONGLE_SERIAL)
-    luxpower_client = LuxPowerClient(hass,
-                                     server=HOST,
-                                     port=PORT,
-                                     dongle_serial=str.encode(str(DONGLE_SERIAL)),
-                                     serial_number=str.encode(str(SERIAL_NUMBER)),
-                                     events=events,
-                                     respond_to_heartbeat=config.get(
-                                        ATTR_LUX_RESPOND_TO_HEARTBEAT,
-                                        PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)
-                                    )  # fmt: skip
+    
+    # Import new LuxPowerClient
+    from .lxp.client_new import LuxPowerClient
+    
+    luxpower_client = LuxPowerClient(
+        hass=hass,
+        transport=transport,
+        dongle_serial=str.encode(str(DONGLE_SERIAL)),
+        serial_number=str.encode(str(SERIAL_NUMBER)),
+        events=events,
+        respond_to_heartbeat=config.get(
+            ATTR_LUX_RESPOND_TO_HEARTBEAT,
+            PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT
+        )
+    )
 
     # Configure adaptive polling and reconnection settings
     adaptive_polling = config.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)

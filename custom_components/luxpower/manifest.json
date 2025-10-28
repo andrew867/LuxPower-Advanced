@@ -7,7 +7,7 @@
   "dependencies": [
     "http"
   ],
-  "requirements": [],
+  "requirements": ["pyserial-asyncio==0.6"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},

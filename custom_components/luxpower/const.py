@@ -25,6 +25,17 @@ ATTR_LUX_ADAPTIVE_POLLING = "lux_adaptive_polling"
 ATTR_LUX_RECONNECTION_DELAY = "lux_reconnection_delay"
 ATTR_LUX_READ_ONLY_MODE = "lux_read_only_mode"
 
+# Connection type attributes
+ATTR_LUX_CONNECTION_TYPE = "lux_connection_type"
+ATTR_LUX_MQTT_TOPIC_PREFIX = "lux_mqtt_topic_prefix"
+ATTR_LUX_SERIAL_PORT = "lux_serial_port"
+ATTR_LUX_SERIAL_BAUDRATE = "lux_serial_baudrate"
+
+# Connection type constants
+CONNECTION_TYPE_TCP = "tcp"
+CONNECTION_TYPE_MQTT = "mqtt"
+CONNECTION_TYPE_SERIAL = "serial"
+
 # Placeholder values
 PLACEHOLDER_LUX_HOST = ""
 PLACEHOLDER_LUX_PORT = 8000
@@ -39,6 +50,12 @@ PLACEHOLDER_LUX_RATED_POWER = 0  # 0 = auto-detect from model
 PLACEHOLDER_LUX_ADAPTIVE_POLLING = True
 PLACEHOLDER_LUX_RECONNECTION_DELAY = 5
 PLACEHOLDER_LUX_READ_ONLY_MODE = False
+
+# Connection type placeholder values
+PLACEHOLDER_LUX_CONNECTION_TYPE = CONNECTION_TYPE_TCP
+PLACEHOLDER_LUX_MQTT_TOPIC_PREFIX = "modbus_bridge"
+PLACEHOLDER_LUX_SERIAL_PORT = "/dev/ttyUSB0"
+PLACEHOLDER_LUX_SERIAL_BAUDRATE = 19200
 
 # Default values for service calls
 DEFAULT_CHARGE_DURATION_MINUTES = 180
