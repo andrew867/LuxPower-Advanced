@@ -179,6 +179,19 @@ text_sensor:
     force_new_range: true
     on_value:
       then:
+        - lambda: |-
+            const std::string &hex = id(bank0_raw).state;
+            auto parse16 = [&](size_t i) -> uint16_t {
+              if (i + 3 >= hex.size()) return 0;
+              return (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+            };
+            uint16_t v0 = parse16(0);
+            uint16_t v1 = parse16(4);
+            uint16_t v2 = parse16(8);
+            uint16_t v3 = parse16(12);
+            uint16_t v4 = parse16(16);
+            uint16_t v5 = parse16(20);
+            ESP_LOGI("modbus", "bank0 sample [0..5]: %u, %u, %u, %u, %u, %u", v0, v1, v2, v3, v4, v5);
         - mqtt.publish:
             topic: modbus_bridge/data/bank0
             payload: !lambda |-
