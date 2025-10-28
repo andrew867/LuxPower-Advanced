@@ -135,9 +135,9 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
             vol.Optional("lux_use_serial", default=config_entry.get("lux_use_serial", placeholder_use_serial)): bool,
             vol.Optional("lux_respond_to_heartbeat", default=config_entry.get("lux_respond_to_heartbeat", PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
             vol.Optional("lux_auto_refresh", default=config_entry.get("lux_auto_refresh", PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
-            vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
+            vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=5, max=120)),
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
-            vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
+            vol.Optional("lux_rated_power", default(config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER))): vol.All(int, vol.Range(min=0, max=15000)),
             vol.Optional("lux_adaptive_polling", default=config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
             vol.Optional("lux_read_only_mode", default=config_entry.get("lux_read_only_mode", PLACEHOLDER_LUX_READ_ONLY_MODE)): bool,
         })
@@ -180,7 +180,7 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
         
         # Validate refresh interval
         ri = user_input.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)
-        if type(ri) is not int or ri < 30 or ri > 120:
+        if type(ri) is not int or ri < 5 or ri > 120:
             errors["lux_refresh_interval"] = "refresh_interval_error"
         
         # Check if the dongle serial already exists in the configuration
@@ -292,6 +292,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             
             if not errors:
                 _LOGGER.info("OptionsFlowHandler: saving options ")
+                # Trigger a reload after updating options
+                self.hass.async_create_task(
+                    self.hass.config_entries.async_reload(self.config_entry.entry_id)
+                )
                 return self.async_create_entry(title="LuxPower ()", data=user_input)
 
         config_entry = self.config_entry_data
@@ -327,7 +331,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional("lux_use_serial", default=config_entry.get("lux_use_serial", PLACEHOLDER_LUX_USE_SERIAL)): bool,
             vol.Optional("lux_respond_to_heartbeat", default=config_entry.get("lux_respond_to_heartbeat", PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
             vol.Optional("lux_auto_refresh", default=config_entry.get("lux_auto_refresh", PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
-            vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
+            vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=5, max=120)),
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
             vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
             vol.Optional("lux_adaptive_polling", default=config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
@@ -373,7 +377,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         
         # Validate refresh interval
         ri = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
-        if type(ri) is not int or ri < 30 or ri > 120:
+        if type(ri) is not int or ri < 5 or ri > 120:
             errors[ATTR_LUX_REFRESH_INTERVAL] = "refresh_interval_error"
         
         # Validate serial number if using serial

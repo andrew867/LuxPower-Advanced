@@ -189,7 +189,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} AC Coupling End Voltage", "unique": "lux_ac_coupling_end_voltage", "register_address": 223, "def_val": 58.0, "min_val": 48.0, "max_val": 59.0, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "icon": "mdi:car-battery", "attribute": "ac_couple_end_volt", "enabled": True},
         
         # Advanced System Configuration Number Entities
-        {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K", "unique": "lux_max_system_power_12k_watts", "register_address": 176, "def_val": 12000, "min_val": 0, "max_val": 15000, "step": 100, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "icon": "mdi:lightning-bolt", "attribute": "max_sys_power_12k", "enabled": True},
+        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Generator Rated Power", "unique": "lux_generator_rated_power", "register_address": 176, "def_val": 0.0, "min_val": 0, "max_val": 90, "step": 0.1, "mode": NumberMode.BOX, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Generator rated power per 2025.03.05 protocol
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Configuration 12K", "unique": "lux_system_configuration_12k", "register_address": 178, "def_val": 0, "min_val": 0, "max_val": 65535, "icon": "mdi:cog", "attribute": "sys_config_12k", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Power Limit", "unique": "lux_power_limit_legacy", "register_address": 180, "def_val": 12000, "min_val": 0, "max_val": 15000, "step": 100, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "icon": "mdi:lightning-bolt", "attribute": "power_limit", "enabled": True},
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Priority Charge Level(%)", "unique": "lux_priority_charge_level", "register_address": 75, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:car-turbocharger", "enabled": True},
@@ -222,7 +222,6 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} Battery Warning Recovery SOC(%)", "register_address": 165, "def_val": 42.0, "min_val": minnumb, "max_val": maxperc, "icon": "mdi:battery-charging-10", "enabled": False},
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} AC Charge Battery Current", "register_address": 168, "def_val": 42.0, "min_val": minnumb, "max_val": maxbyte, "device_class": NumberDeviceClass.CURRENT, "unit_of_measurement": UnitOfElectricCurrent.AMPERE, "enabled": False},
         {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} On Grid EOD Voltage", "register_address": 169, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "step": 0.1, "device_class": NumberDeviceClass.VOLTAGE, "unit_of_measurement": UnitOfElectricPotential.VOLT, "enabled": False},
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Max Grid Input Power", "unique": "lux_max_grid_input_power", "register_address": 176, "def_val": 0.0, "min_val": 0, "max_val": 90, "step": 0.1, "mode": NumberMode.BOX, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},  # Updated description per 2025.03.05 protocol
         {"etype": "LNNE", "name": "Lux {replaceID_midfix}{hyphen} Max Generator Input Power", "register_address": 177, "def_val": 42.0, "min_val": minnumb, "max_val": maxnumb, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.WATT, "enabled": False},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Fan 1 Max Speed(%)", "register_address": 178, "bitmask": 0x00FF, "bitshift": 0, "divisor": 2, "def_val": 42.0, "min_val": 0.0, "max_val": maxbyte, "step": 0.5, "icon": "mdi:fan", "enabled": False},
         {"etype": "LBNE", "name": "Lux {replaceID_midfix}{hyphen} Fan 2 Max Speed(%)", "register_address": 178, "bitmask": 0xFF00, "bitshift": 8, "divisor": 2, "def_val": 42.0, "min_val": 0.0, "max_val": maxbyte, "step": 0.5, "icon": "mdi:fan", "enabled": False},
@@ -241,8 +240,6 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         {"etype": "LPNE", "name": "Lux {replaceID_midfix}{hyphen} System Charge SOC Limit (%)", "register_address": 227, "def_val": 101.0, "min_val": 10, "max_val": 101, "icon": "mdi:battery-charging-100", "enabled": False},  # Updated: 10-101% with -5% hysteresis per 2025.03.05 protocol
         
         # 12K Model Specific Number Entities (CFAA, CEAA, CCAA)
-        # Register 176: Max system power in kW (0-90kW range, 0.1kW steps)
-        {"etype": "LDTE", "name": "Lux {replaceID_midfix}{hyphen} Max System Power 12K (kW)", "unique": "lux_max_system_power_12k_kw", "register_address": 176, "def_val": 24.0, "min_val": 0, "max_val": 90, "step": 0.1, "device_class": NumberDeviceClass.POWER, "unit_of_measurement": UnitOfPower.KILO_WATT, "enabled": False},
         
         
         # 12K Enhanced AC Coupling (Registers 187-192) - UPDATED FROM CLOUD UI
@@ -327,6 +324,16 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
         
         # Update entity definition with model-based enablement
         entity_definition["enabled"] = default_enabled
+
+        # Backward-compatible guard: skip unsupported or placeholder (-1) register entities
+        # These previously produced duplicate unique_id collisions like ...numberdivbyten_-1
+        reg_addr = entity_definition.get("register_address", None)
+        if entity_definition.get("unsupported", False) or reg_addr is None or int(reg_addr) < 0:
+            _LOGGER.debug(
+                "Skipping unsupported/placeholder number entity: %s",
+                entity_definition.get("name"),
+            )
+            continue
         
         if etype == "LNNE":
             numberEntities.append(LuxNormalNumberEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
@@ -446,6 +453,22 @@ class LuxNormalNumberEntity(NumberEntity):
             elif 200 <= self.register_address <= 239:
                 self.hass.bus.async_listen(
                     self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update
+                )
+            elif 240 <= self.register_address <= 279:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK6_RECEIVED, self.push_update
+                )
+            elif 280 <= self.register_address <= 319:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK7_RECEIVED, self.push_update
+                )
+            elif 320 <= self.register_address <= 359:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK8_RECEIVED, self.push_update
+                )
+            elif 360 <= self.register_address <= 399:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK9_RECEIVED, self.push_update
                 )
 
     def convert_to_time(self, value):

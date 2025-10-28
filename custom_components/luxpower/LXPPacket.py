@@ -12,7 +12,7 @@ import struct
 _LOGGER = logging.getLogger(__name__)
 
 # Bank count validation constants
-MAX_BANK_COUNT = 7
+MAX_BANK_COUNT = 10
 MIN_BANK_COUNT = 1
 DEFAULT_BANK_COUNT = 7
 
@@ -724,27 +724,21 @@ class LXPPacket:
             elif self.register == 160 and number_of_registers == 40:
                 self.inputRead5 = True
                 self.get_device_values_bank4()
-            elif self.register == 200 and number_of_registers == 54:
+            elif self.register == 200 and number_of_registers == 40:
                 self.inputRead6 = True
                 self.get_device_values_bank5()
-            elif self.register == 254 and number_of_registers == 127:
+            elif self.register == 240 and number_of_registers == 40:
                 self.inputRead7 = True
                 self.get_device_values_bank6()
-            elif self.register == 0 and number_of_registers == 127:
-                self.inputRead1 = True
-                self.inputRead2 = True
-                self.inputRead3 = True
-                self.get_device_values_bank0()
-                self.get_device_values_bank1()
-                self.get_device_values_bank2()
-            elif self.register == 127 and number_of_registers == 127:
-                # Handle register range 127-253 (spans banks 3, 4, and 5)
-                self.inputRead4 = True
-                self.inputRead5 = True
-                self.inputRead6 = True
-                self.get_device_values_bank3()
-                self.get_device_values_bank4()
-                self.get_device_values_bank5()
+            elif self.register == 280 and number_of_registers == 40:
+                self.inputRead8 = True
+                self.get_device_values_bank7()
+            elif self.register == 320 and number_of_registers == 40:
+                self.inputRead9 = True
+                self.get_device_values_bank8()
+            elif self.register == 360 and number_of_registers == 40:
+                self.inputRead10 = True
+                self.get_device_values_bank9()
             else:
                 if number_of_registers == 1:
                     _LOGGER.debug(
@@ -1696,6 +1690,105 @@ class LXPPacket:
             self.readValuesThis["ai_optimization_enabled"] = ai_optimization_enabled
             self.readValuesThis["predictive_maintenance_score"] = predictive_maintenance_score
             self.readValuesThis["energy_forecasting_accuracy"] = energy_forecasting_accuracy
+
+    def get_device_values_bank7(self):
+        """Process register range 280-319 (Bank 7)."""
+        if self.inputRead8:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 8 registers (280-319)************")
+            
+            # Extended system monitoring and control
+            # Advanced inverter diagnostics and performance metrics
+            
+            # System health indicators (registers 280-299)
+            inverter_efficiency_score = self.readValuesInt.get(280, 0) / 100.0
+            thermal_performance_index = self.readValuesInt.get(281, 0) / 100.0
+            power_quality_score = self.readValuesInt.get(282, 0) / 100.0
+            
+            self.readValuesThis["inverter_efficiency_score"] = inverter_efficiency_score
+            self.readValuesThis["thermal_performance_index"] = thermal_performance_index
+            self.readValuesThis["power_quality_score"] = power_quality_score
+            
+            # Advanced control parameters (registers 300-319)
+            dynamic_response_time = self.readValuesInt.get(300, 0) / 100.0
+            load_transition_smoothness = self.readValuesInt.get(301, 0) / 100.0
+            grid_synchronization_quality = self.readValuesInt.get(302, 0) / 100.0
+            
+            self.readValuesThis["dynamic_response_time"] = dynamic_response_time
+            self.readValuesThis["load_transition_smoothness"] = load_transition_smoothness
+            self.readValuesThis["grid_synchronization_quality"] = grid_synchronization_quality
+
+    def get_device_values_bank8(self):
+        """Process register range 320-359 (Bank 8)."""
+        if self.inputRead9:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 9 registers (320-359)************")
+            
+            # Future-ready features and experimental capabilities
+            # These registers may contain beta features or future functionality
+            
+            # Experimental energy management (registers 320-339)
+            smart_charging_algorithm_version = self.readValuesInt.get(320, 0)
+            adaptive_load_balancing_enabled = self.readValuesInt.get(321, 0)
+            predictive_energy_optimization = self.readValuesInt.get(322, 0) / 100.0
+            
+            self.readValuesThis["smart_charging_algorithm_version"] = smart_charging_algorithm_version
+            self.readValuesThis["adaptive_load_balancing_enabled"] = adaptive_load_balancing_enabled
+            self.readValuesThis["predictive_energy_optimization"] = predictive_energy_optimization
+            
+            # Advanced diagnostics (registers 340-359)
+            component_health_score = self.readValuesInt.get(340, 0) / 100.0
+            maintenance_alert_level = self.readValuesInt.get(341, 0)
+            performance_degradation_factor = self.readValuesInt.get(342, 0) / 100.0
+            
+            self.readValuesThis["component_health_score"] = component_health_score
+            self.readValuesThis["maintenance_alert_level"] = maintenance_alert_level
+            self.readValuesThis["performance_degradation_factor"] = performance_degradation_factor
+
+    def get_device_values_bank9(self):
+        """Process register range 360-399 (Bank 9)."""
+        if self.inputRead10:
+            if self.debug:
+                _LOGGER.debug("***********INPUT 10 registers (360-399)************")
+            
+            # Extended register range - reserved for future expansion
+            # These registers are typically reserved for future firmware updates
+            
+            # Reserved future features (registers 360-380)
+            firmware_expansion_slot_1 = self.readValuesInt.get(360, 0)
+            firmware_expansion_slot_2 = self.readValuesInt.get(361, 0)
+            firmware_expansion_slot_3 = self.readValuesInt.get(362, 0)
+            
+            self.readValuesThis["firmware_expansion_slot_1"] = firmware_expansion_slot_1
+            self.readValuesThis["firmware_expansion_slot_2"] = firmware_expansion_slot_2
+            self.readValuesThis["firmware_expansion_slot_3"] = firmware_expansion_slot_3
+            
+            # System metadata and version info (registers 375-380)
+            extended_firmware_version = self.readValuesInt.get(375, 0)
+            hardware_revision_code = self.readValuesInt.get(376, 0)
+            feature_flags_extended = self.readValuesInt.get(377, 0)
+            
+            self.readValuesThis["extended_firmware_version"] = extended_firmware_version
+            self.readValuesThis["hardware_revision_code"] = hardware_revision_code
+            self.readValuesThis["feature_flags_extended"] = feature_flags_extended
+            
+            # Additional reserved registers (registers 381-399)
+            reserved_register_381 = self.readValuesInt.get(381, 0)
+            reserved_register_382 = self.readValuesInt.get(382, 0)
+            reserved_register_383 = self.readValuesInt.get(383, 0)
+            
+            self.readValuesThis["reserved_register_381"] = reserved_register_381
+            self.readValuesThis["reserved_register_382"] = reserved_register_382
+            self.readValuesThis["reserved_register_383"] = reserved_register_383
+            
+            # Future expansion slots (registers 390-399)
+            future_expansion_slot_1 = self.readValuesInt.get(390, 0)
+            future_expansion_slot_2 = self.readValuesInt.get(391, 0)
+            future_expansion_slot_3 = self.readValuesInt.get(392, 0)
+            
+            self.readValuesThis["future_expansion_slot_1"] = future_expansion_slot_1
+            self.readValuesThis["future_expansion_slot_2"] = future_expansion_slot_2
+            self.readValuesThis["future_expansion_slot_3"] = future_expansion_slot_3
 
     def _cleanup_old_entries(self):
         """Clean up old entries to prevent memory leaks."""

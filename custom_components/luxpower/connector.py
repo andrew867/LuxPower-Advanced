@@ -343,3 +343,19 @@ class ServiceHelper:
         except Exception as e:
             _LOGGER.error(f"Error refreshing data register bank {address_bank}: {e}")
             raise
+
+    async def service_get_performance_stats(self, dongle):
+        """Get performance statistics for the LuxPower client."""
+        try:
+            luxpower_client = self._lux_client(dongle)
+            stats = luxpower_client.get_performance_stats()
+            
+            # Log the stats
+            luxpower_client.log_performance_stats()
+            
+            # Return stats for potential use by other services
+            return stats
+            
+        except Exception as e:
+            _LOGGER.error(f"Error getting performance stats: {e}")
+            raise

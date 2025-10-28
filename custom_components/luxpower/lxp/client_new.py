@@ -93,8 +93,19 @@ class LuxPowerClient:
         self._lxp_request_lock = asyncio.Lock()
         self._lxp_single_register_result = None
         
+        # Performance tracking attributes
+        self._request_times = {}  # Track request start times by bank
+        self._response_times = []  # Track response times for averaging
+        self._last_request_time = None  # Track time between requests
+        self._request_intervals = []  # Track intervals between requests
+        self._max_response_time_samples = 100  # Keep last 100 samples for averaging
+        
         # Register data received callback with the transport
         self._transport.register_data_received_callback(self._handle_transport_data)
+        
+        # Set client reference in transport for direct processing (if MQTT transport)
+        if hasattr(self._transport, 'set_client'):
+            self._transport.set_client(self)
         
         # Retry logic attributes
         self._connection_attempts = 0
@@ -116,11 +127,189 @@ class LuxPowerClient:
             debug=False, dongle_serial=dongle_serial, serial_number=serial_number
         )
 
+    def _record_request_start(self, bank: int) -> None:
+        """Record the start time of a request for performance tracking."""
+        import time
+        current_time = time.time()
+        
+        # Track time between requests
+        if self._last_request_time is not None:
+            interval = current_time - self._last_request_time
+            self._request_intervals.append(interval)
+            # Keep only last 100 intervals
+            if len(self._request_intervals) > self._max_response_time_samples:
+                self._request_intervals.pop(0)
+        
+        self._last_request_time = current_time
+        self._request_times[bank] = current_time
+
+    def _record_response_time(self, bank: int) -> None:
+        """Record the response time for a completed request."""
+        import time
+        if bank in self._request_times:
+            response_time = time.time() - self._request_times[bank]
+            self._response_times.append(response_time)
+            
+            # Keep only last 100 samples
+            if len(self._response_times) > self._max_response_time_samples:
+                self._response_times.pop(0)
+            
+            # Remove the request time entry
+            del self._request_times[bank]
+
+    def get_performance_stats(self) -> dict:
+        """Get current performance statistics."""
+        import statistics
+        
+        stats = {
+            "average_response_time": 0.0,
+            "min_response_time": 0.0,
+            "max_response_time": 0.0,
+            "average_request_interval": 0.0,
+            "min_request_interval": 0.0,
+            "max_request_interval": 0.0,
+            "total_requests": len(self._response_times),
+            "pending_requests": len(self._request_times)
+        }
+        
+        if self._response_times:
+            stats["average_response_time"] = statistics.mean(self._response_times)
+            stats["min_response_time"] = min(self._response_times)
+            stats["max_response_time"] = max(self._response_times)
+        
+        if self._request_intervals:
+            stats["average_request_interval"] = statistics.mean(self._request_intervals)
+            stats["min_request_interval"] = min(self._request_intervals)
+            stats["max_request_interval"] = max(self._request_intervals)
+        
+        return stats
+
+    def log_performance_stats(self) -> None:
+        """Log current performance statistics."""
+        stats = self.get_performance_stats()
+        self._LOGGER.info(
+            f"📊 Performance Stats - "
+            f"Avg Response: {stats['average_response_time']:.3f}s "
+            f"(Min: {stats['min_response_time']:.3f}s, Max: {stats['max_response_time']:.3f}s), "
+            f"Avg Interval: {stats['average_request_interval']:.3f}s "
+            f"(Min: {stats['min_request_interval']:.3f}s, Max: {stats['max_request_interval']:.3f}s), "
+            f"Total Requests: {stats['total_requests']}, Pending: {stats['pending_requests']}"
+        )
+
     def _handle_transport_data(self, data: bytes) -> None:
         """Callback method to handle data received from the transport."""
         self._LOGGER.debug(f"Client received data from transport: {data.hex()}")
         # Pass the data to the existing LXPPacket parsing logic
         self._data_received(data)
+
+    def process_mqtt_register_data(self, register_start: int, register_count: int, 
+                                 values: list, register_type: str) -> None:
+        """
+        Process MQTT register data directly without LuxPower packet parsing.
+        
+        This bypasses the complex packet parsing and directly updates the entities.
+        
+        Args:
+            register_start: Starting register address
+            register_count: Number of registers
+            values: List of register values
+            register_type: Type of register ("input" or "hold")
+        """
+        try:
+            self._LOGGER.debug(f"Processing MQTT register data: start={register_start}, count={register_count}, type={register_type}")
+            
+            # Create a result structure that matches what the client expects
+            result = {
+                "tcp_function": "TRANSLATED_DATA",
+                "device_function": "READ_INPUT" if register_type == "input" else "READ_HOLD",
+                "register": register_start,
+                "value": b''.join(value.to_bytes(2, 'little') for value in values),
+                "data": {},
+                "thesedata": {},
+                "registers": {register_start + i: values[i] for i in range(len(values))},
+                "thesereg": {register_start + i: values[i] for i in range(len(values))}
+            }
+            
+            # Process the result directly using the existing client logic
+            self._process_register_result(result)
+            
+        except Exception as e:
+            self._LOGGER.error(f"Error processing MQTT register data: {e}")
+
+    def _process_register_result(self, result: dict) -> None:
+        """
+        Process register result data directly.
+        
+        This is the same logic that would be called after packet parsing.
+        """
+        try:
+            if result.get("device_function") == "READ_INPUT":
+                # Process input register data
+                self._process_input_register_data(result)
+            elif result.get("device_function") == "READ_HOLD":
+                # Process holding register data
+                self._process_holding_register_data(result)
+                
+        except Exception as e:
+            self._LOGGER.error(f"Error processing register result: {e}")
+
+    def _process_input_register_data(self, result: dict) -> None:
+        """Process input register data and trigger events."""
+        try:
+            registers = result.get("thesereg", {})
+            serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00')
+            
+            # Trigger the same events that would be triggered by packet parsing
+            event_data = {"registers": registers, "serial_number": serial_number}
+            self._LOGGER.debug("EVENT REGISTER: %s", event_data)
+            
+            # Fire the register update event safely
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self._fire_register_event(event_data))
+            except RuntimeError:
+                # No event loop running, fire synchronously
+                self.hass.bus.fire(
+                    f"{DOMAIN}_register_update_{self.dongle_serial}",
+                    event_data
+                )
+            
+        except Exception as e:
+            self._LOGGER.error(f"Error processing input register data: {e}")
+
+    def _process_holding_register_data(self, result: dict) -> None:
+        """Process holding register data and trigger events."""
+        try:
+            registers = result.get("thesereg", {})
+            serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00')
+            
+            # Trigger the same events that would be triggered by packet parsing
+            event_data = {"registers": registers, "serial_number": serial_number}
+            self._LOGGER.debug("EVENT REGISTER: %s", event_data)
+            
+            # Fire the register update event safely
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self._fire_register_event(event_data))
+            except RuntimeError:
+                # No event loop running, fire synchronously
+                self.hass.bus.fire(
+                    f"{DOMAIN}_register_update_{self.dongle_serial}",
+                    event_data
+                )
+            
+        except Exception as e:
+            self._LOGGER.error(f"Error processing holding register data: {e}")
+
+    async def _fire_register_event(self, event_data: dict) -> None:
+        """Fire the register update event safely from the event loop."""
+        try:
+            self.hass.bus.async_fire(
+                f"{DOMAIN}_register_update_{self.dongle_serial}",
+                event_data
+            )
+        except Exception as e:
+            self._LOGGER.error(f"Error firing register event: {e}")
 
     def update_connection_quality(self, success: bool) -> None:
         """Update connection quality based on success/failure."""
@@ -311,6 +500,10 @@ class LuxPowerClient:
                     self._LOGGER.debug("register: %s ", register)
                     number_of_registers = int(len(result.get("value", "")) / 2)
                     self._LOGGER.debug("number_of_registers: %s ", number_of_registers)
+                    
+                    # Record response time for performance tracking
+                    bank = register // 40  # Calculate bank number from register
+                    self._record_response_time(bank)
                     total_data = {"data": result.get("data", {})}
                     # Extract serial number from LXPPacket for serialization
                     serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00') if hasattr(self.lxpPacket, 'serial_number') else ""
@@ -355,29 +548,37 @@ class LuxPowerClient:
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANKX_RECEIVED, event_data
                         )
-                    elif register == 200 and number_of_registers == 54:
+                    elif register == 200 and number_of_registers == 40:
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANK5_RECEIVED, event_data
                         )
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANKX_RECEIVED, event_data
                         )
-                    elif register == 254 and number_of_registers == 127:
+                    elif register == 240 and number_of_registers == 40:
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANK6_RECEIVED, event_data
                         )
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANKX_RECEIVED, event_data
                         )
-                    elif register == 0 and number_of_registers == 127:
+                    elif register == 280 and number_of_registers == 40:
                         self.hass.bus.fire(
-                            self.events.EVENT_DATA_BANK0_RECEIVED, event_data
+                            self.events.EVENT_REGISTER_BANK7_RECEIVED, event_data
                         )
                         self.hass.bus.fire(
-                            self.events.EVENT_DATA_BANK1_RECEIVED, event_data
+                            self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                        )
+                    elif register == 320 and number_of_registers == 40:
+                        self.hass.bus.fire(
+                            self.events.EVENT_REGISTER_BANK8_RECEIVED, event_data
                         )
                         self.hass.bus.fire(
-                            self.events.EVENT_DATA_BANK2_RECEIVED, event_data
+                            self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                        )
+                    elif register == 360 and number_of_registers == 40:
+                        self.hass.bus.fire(
+                            self.events.EVENT_REGISTER_BANK9_RECEIVED, event_data
                         )
                         self.hass.bus.fire(
                             self.events.EVENT_DATA_BANKX_RECEIVED, event_data
@@ -420,6 +621,41 @@ class LuxPowerClient:
                                 self.hass.bus.fire(
                                     self.events.EVENT_DATA_BANKX_RECEIVED, event_data
                                 )
+                            elif 200 <= register <= 239:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANK5_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                                )
+                            elif 240 <= register <= 279:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANK6_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                                )
+                            elif 280 <= register <= 319:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_REGISTER_BANK7_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                                )
+                            elif 320 <= register <= 359:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_REGISTER_BANK8_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                                )
+                            elif 360 <= register <= 399:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_REGISTER_BANK9_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                                )
                         else:
                             # Decode Series of Registers - Possibly Over Block Boundaries
                             if 0 <= register <= 119:
@@ -435,11 +671,48 @@ class LuxPowerClient:
                                 self.hass.bus.fire(
                                     self.events.EVENT_DATA_BANKX_RECEIVED, event_data
                                 )
+                            elif 120 <= register <= 199:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANK3_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANK4_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                                )
+                            elif 200 <= register <= 279:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANK5_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANK6_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                                )
+                            elif 280 <= register <= 399:
+                                self.hass.bus.fire(
+                                    self.events.EVENT_REGISTER_BANK7_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_REGISTER_BANK8_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_REGISTER_BANK9_RECEIVED, event_data
+                                )
+                                self.hass.bus.fire(
+                                    self.events.EVENT_DATA_BANKX_RECEIVED, event_data
+                                )
 
                 elif self.lxpPacket.device_function == self.lxpPacket.READ_HOLD or self.lxpPacket.device_function == self.lxpPacket.WRITE_SINGLE:
                     register = self.lxpPacket.register
                     self._LOGGER.debug("register: %s ", register)
                     number_of_registers = int(len(result.get("value", "")) / 2)
+                    
+                    # Record response time for performance tracking
+                    bank = register // 40  # Calculate bank number from register
+                    self._record_response_time(bank)
 
                     if (
                         number_of_registers == 1
@@ -491,6 +764,22 @@ class LuxPowerClient:
                     elif 200 <= self.lxpPacket.register <= 239:
                         self.hass.bus.fire(
                             self.events.EVENT_REGISTER_BANK5_RECEIVED, event_data
+                        )
+                    elif 240 <= self.lxpPacket.register <= 279:
+                        self.hass.bus.fire(
+                            self.events.EVENT_REGISTER_BANK6_RECEIVED, event_data
+                        )
+                    elif 280 <= self.lxpPacket.register <= 319:
+                        self.hass.bus.fire(
+                            self.events.EVENT_REGISTER_BANK7_RECEIVED, event_data
+                        )
+                    elif 320 <= self.lxpPacket.register <= 359:
+                        self.hass.bus.fire(
+                            self.events.EVENT_REGISTER_BANK8_RECEIVED, event_data
+                        )
+                    elif 360 <= self.lxpPacket.register <= 399:
+                        self.hass.bus.fire(
+                            self.events.EVENT_REGISTER_BANK9_RECEIVED, event_data
                         )
                     
         except (ConnectionError, OSError, RuntimeError) as e:
@@ -559,13 +848,20 @@ class LuxPowerClient:
                             except asyncio.TimeoutError:
                                 self._LOGGER.warning("Sleep timeout exceeded")
                             self._connect_after_failure = False
-                        await self.do_refresh_data_registers(3)
+                        await self.do_refresh_data_registers(10)
                         await self.do_refresh_hold_registers()
+                        
+                        # Log performance stats after initial data refresh
+                        self.log_performance_stats()
                     else:
                         self._connect_twice = True
                         await self.reconnect()
 
+            # Log performance stats every 60 seconds during normal operation
             await asyncio.sleep(10)
+            if self._connected and len(self._response_times) > 0:
+                # Only log if we have some response time data
+                self.log_performance_stats()
         self._LOGGER.info("Stop Called - Exiting start_luxpower_client_daemon")
 
     async def request_data_bank(self, address_bank):
@@ -577,6 +873,9 @@ class LuxPowerClient:
         await self._acquire_lock()
         try:
             self._LOGGER.debug("request_data_bank for address_bank: %s", address_bank)
+            
+            # Record request start time for performance tracking
+            self._record_request_start(address_bank)
             
             packet = self.lxpPacket.prepare_packet_for_read(
                 start_register, number_of_registers, type=LXPPacket.READ_INPUT)
@@ -622,14 +921,15 @@ class LuxPowerClient:
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
         start_register = address_bank * 40
-        if address_bank == 6:
-            start_register = 560
 
         await self._acquire_lock()
         try:
             self._LOGGER.debug(
                 f"request_hold_bank for {serial} address_bank: {address_bank} , {number_of_registers}"
             )
+            
+            # Record request start time for performance tracking
+            self._record_request_start(address_bank)
             
             packet = self.lxpPacket.prepare_packet_for_read(
                 start_register, number_of_registers, type=LXPPacket.READ_HOLD)
@@ -656,23 +956,12 @@ class LuxPowerClient:
 
         try:
             self._warn_registers = True
-            for address_bank in range(0, 5):
+            # Request all 10 banks (0-9) with 40-register blocks
+            for address_bank in range(0, 10):
                 self._LOGGER.info(
                     f"{log_marker} call request_hold - Bank: {address_bank}"
                 )
                 await self.request_hold_bank(address_bank)
-            if 1 == 1:
-                # Request registers 200-239
-                self._LOGGER.info(f"{log_marker} call request_hold - EXTENDED Bank: 5")
-                self._warn_registers = True
-                await self.request_hold_bank(5)
-            if 1 == 0:
-                # Request registers 560-599
-                self._LOGGER.info(
-                    f"{log_marker} call request_hold - HIGH EXTENDED Bank: 6"
-                )
-                self._warn_registers = True
-                await self.request_hold_bank(6)
         except TimeoutError:
             pass
         finally:
@@ -684,7 +973,7 @@ class LuxPowerClient:
         """Stop the client and disconnect."""
         self._LOGGER.info("stop_client called")
         self._stop_client = True
-        asyncio.create_task(self.disconnect())
+        # Don't create a new task here - let the caller handle async disconnect
         self._LOGGER.info("stop client finished")
 
     async def reconnect(self):

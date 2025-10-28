@@ -58,7 +58,7 @@ class MQTTTransport(LuxPowerTransport):
             # Subscribe to data bank topics (both formats):
             # 1) {prefix}/{dongle}/data/bankX
             # 2) {prefix}/data/bankX
-            for bank in range(7):  # Banks 0-6
+            for bank in range(10):  # Banks 0-9
                 topic_with_dongle = f"{self.topic_prefix}/{self.dongle_serial}/data/bank{bank}"
                 topic_without_dongle = f"{self.topic_prefix}/data/bank{bank}"
                 self._subscriptions[f"data_bank{bank}_with"] = await async_subscribe(
@@ -70,7 +70,7 @@ class MQTTTransport(LuxPowerTransport):
                 self._logger.debug(f"Subscribed to {topic_with_dongle} and {topic_without_dongle}")
             
             # Subscribe to hold register topics (both formats)
-            for bank in range(6):  # Banks 0-5
+            for bank in range(10):  # Banks 0-9
                 topic_with_dongle = f"{self.topic_prefix}/{self.dongle_serial}/hold/bank{bank}"
                 topic_without_dongle = f"{self.topic_prefix}/hold/bank{bank}"
                 self._subscriptions[f"hold_bank{bank}_with"] = await async_subscribe(
@@ -207,21 +207,26 @@ class MQTTTransport(LuxPowerTransport):
     def _handle_status_message(self, msg) -> None:
         """Handle incoming status message."""
         try:
-            status = json.loads(msg.payload)
-            self._logger.debug(f"Bridge status: {status}")
+            payload = msg.payload
+            if isinstance(payload, bytes):
+                payload = payload.decode('utf-8', errors='ignore')
+            
+            # Try to parse as JSON first
+            if payload.startswith('{'):
+                status = json.loads(payload)
+                self._logger.debug(f"Bridge status: {status}")
+            else:
+                # Handle plain text status messages
+                self._logger.debug(f"Bridge status (text): {payload}")
         except Exception as e:
             self._logger.error(f"Error handling status message: {e}")
 
     def _json_to_register_data(self, data: Dict[str, Any], register_type: str) -> Optional[bytes]:
         """
-        Convert JSON register data to binary format.
+        Convert JSON register data to direct register format.
         
-        Args:
-            data: JSON data from MQTT message
-            register_type: Type of register ("input" or "hold")
-            
-        Returns:
-            Binary data in LuxPower packet format, or None if conversion failed
+        Instead of creating LuxPower packets, we'll pass the data directly
+        to the entities via a special callback mechanism.
         """
         try:
             register_start = data.get("register_start", 0)
@@ -237,50 +242,38 @@ class MQTTTransport(LuxPowerTransport):
                 register_addr = register_start + i
                 self._register_cache[register_addr] = value
             
-            # Convert to LuxPower packet format
-            # This creates a proper LuxPower packet structure
-            packet_data = self._create_luxpower_packet(register_start, register_count, values, register_type)
+            # Process the data directly without LuxPower packet parsing
+            self._process_direct_register_data(register_start, register_count, values, register_type)
             
-            return packet_data
+            # Return None to indicate we handled it directly
+            return None
             
         except Exception as e:
             self._logger.error(f"Error converting JSON to register data: {e}")
             return None
 
-    def _create_luxpower_packet(self, register_start: int, register_count: int, 
-                              values: list, register_type: str) -> bytes:
+    def _process_direct_register_data(self, register_start: int, register_count: int, 
+                                    values: list, register_type: str) -> None:
         """
-        Create LuxPower packet from register data.
+        Process register data directly without LuxPower packet parsing.
         
-        This creates a proper LuxPower packet that matches the format expected
-        by the LXPPacket parser in the integration.
+        This bypasses the complex packet parsing and directly updates the entities.
         """
-        packet = bytearray()
-        
-        # LuxPower packet header
-        packet.extend(b'\x55\xAA')  # Prefix
-        packet.extend(b'\xC2')      # Protocol number (TRANSLATED_DATA)
-        
-        # Device address and function code
-        packet.append(0x01)  # Device address
-        if register_type == "input":
-            packet.append(0x04)  # Read input registers response
-        else:
-            packet.append(0x03)  # Read holding registers response
-        
-        # Register information
-        packet.extend(register_start.to_bytes(2, 'little'))
-        packet.extend(register_count.to_bytes(2, 'little'))
-        
-        # Register values (each register is 2 bytes, little-endian)
-        for value in values:
-            packet.extend(value.to_bytes(2, 'little'))
-        
-        # Add CRC (simplified - would need proper CRC calculation)
-        crc = self._calculate_simple_crc(packet)
-        packet.extend(crc.to_bytes(2, 'little'))
-        
-        return bytes(packet)
+        try:
+            # Get the LuxPower client instance to call the direct processing method
+            if hasattr(self, '_client') and self._client:
+                # Call the client's direct MQTT processing method
+                self._client.process_mqtt_register_data(register_start, register_count, values, register_type)
+            else:
+                self._logger.warning("No client instance available for direct processing")
+                
+        except Exception as e:
+            self._logger.error(f"Error processing direct register data: {e}")
+
+    def set_client(self, client):
+        """Set the LuxPower client instance for direct processing."""
+        self._client = client
+
 
     def _calculate_simple_crc(self, data: bytearray) -> int:
         """

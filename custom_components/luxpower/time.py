@@ -291,6 +291,22 @@ class LuxTimeTimeEntity(TimeEntity):
                 self.hass.bus.async_listen(
                     self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update
                 )
+            elif 240 <= self.register_address <= 279:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK6_RECEIVED, self.push_update
+                )
+            elif 280 <= self.register_address <= 319:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK7_RECEIVED, self.push_update
+                )
+            elif 320 <= self.register_address <= 359:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK8_RECEIVED, self.push_update
+                )
+            elif 360 <= self.register_address <= 399:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK9_RECEIVED, self.push_update
+                )
 
     def convert_to_time(self, value):
         # Has To Be Integer Type value Coming In - NOT BYTE ARRAY

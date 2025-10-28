@@ -144,8 +144,11 @@ async def async_get_config_entry_diagnostics(
                         "bank2": {k: v for k, v in luxpower_client.readValuesInt.items() if 80 <= k <= 119},
                         "bank3": {k: v for k, v in luxpower_client.readValuesInt.items() if 120 <= k <= 159},
                         "bank4": {k: v for k, v in luxpower_client.readValuesInt.items() if 160 <= k <= 199},
-                        "bank5": {k: v for k, v in luxpower_client.readValuesInt.items() if 200 <= k <= 253},
-                        "bank6": {k: v for k, v in luxpower_client.readValuesInt.items() if 254 <= k <= 380},
+                        "bank5": {k: v for k, v in luxpower_client.readValuesInt.items() if 200 <= k <= 239},
+                        "bank6": {k: v for k, v in luxpower_client.readValuesInt.items() if 240 <= k <= 279},
+                        "bank7": {k: v for k, v in luxpower_client.readValuesInt.items() if 280 <= k <= 319},
+                        "bank8": {k: v for k, v in luxpower_client.readValuesInt.items() if 320 <= k <= 359},
+                        "bank9": {k: v for k, v in luxpower_client.readValuesInt.items() if 360 <= k <= 399},
                     },
                     "all_registers": dict(sorted(luxpower_client.readValuesInt.items())),
                 }

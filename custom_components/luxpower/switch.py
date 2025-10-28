@@ -216,6 +216,17 @@ async def async_setup_entry(
             
             # Update entity definition with model-based enablement
             entity_definition["enabled"] = default_enabled
+
+            # Backward-compatible guard: skip unsupported or placeholder (-1) register entities
+            # These previously produced duplicate unique_id collisions
+            reg_addr = entity_definition.get("register_address", None)
+            if entity_definition.get("unsupported", False) or reg_addr is None or int(reg_addr) < 0:
+                _LOGGER.debug(
+                    "Skipping unsupported/placeholder switch entity: %s",
+                    entity_definition.get("name"),
+                )
+                continue
+            
             switchEntities.append(LuxPowerRegisterValueSwitchEntity(hass, luxpower_client, DONGLE, SERIAL, entity_definition, event))
 
     # fmt: on
@@ -311,6 +322,22 @@ class LuxPowerRegisterValueSwitchEntity(SwitchEntity):
             elif 200 <= self._register_address <= 239:
                 self.hass.bus.async_listen(
                     self.event.EVENT_REGISTER_BANK5_RECEIVED, self.push_update
+                )
+            elif 240 <= self._register_address <= 279:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK6_RECEIVED, self.push_update
+                )
+            elif 280 <= self._register_address <= 319:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK7_RECEIVED, self.push_update
+                )
+            elif 320 <= self._register_address <= 359:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK8_RECEIVED, self.push_update
+                )
+            elif 360 <= self._register_address <= 399:
+                self.hass.bus.async_listen(
+                    self.event.EVENT_REGISTER_BANK9_RECEIVED, self.push_update
                 )
 
     def push_update(self, event):

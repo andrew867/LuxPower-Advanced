@@ -42,12 +42,25 @@ mqtt:
   keepalive: 15s
   birth_message:
     topic: modbus_bridge/status
-    payload: online
+    payload: '{"status":"online"}'
+    qos: 1
+    retain: true
   will_message:
     topic: modbus_bridge/status
-    payload: offline
+    payload: '{"status":"offline"}'
+    qos: 1
+    retain: true
+  on_connect:
+    then:
+      - lambda: |-
+          ESP_LOGI("mqtt", "🔗 MQTT connected - Modbus bridge ready");
+  on_disconnect:
+    then:
+      - lambda: |-
+          ESP_LOGW("mqtt", "🔌 MQTT disconnected - Modbus bridge offline");
 
 # RS485 UART (DI=TXD'→GPIO17, RO=RXD'←GPIO18). RE/DE is auto-driven from TX via 74HC04, so omit flow_control_pin.
+# LuxPower specs: 19200bps, 8N1 (8 data bits, no parity, 1 stop bit)
 uart:
   id: rs485_uart
   tx_pin: GPIO17
@@ -61,15 +74,31 @@ uart:
 modbus:
   id: mbus
   uart_id: rs485_uart
-  send_wait_time: 250ms
+  send_wait_time: 500ms
 
 modbus_controller:
   - id: lux
     modbus_id: mbus
     address: 0x01
-    update_interval: 500ms
-    command_throttle: 0ms
+    update_interval: 10000ms
+    command_throttle: 250ms
     offline_skip_updates: 0
+
+# Scripts for Modbus statistics and error tracking
+script:
+  - id: log_modbus_stats
+    then:
+      - lambda: |-
+          ESP_LOGI("modbus", "📊 Modbus Statistics: Polling every 5s, 10 banks total (40 registers each), LuxPower byte order (per spec)");
+  
+  - id: publish_status_update
+    then:
+      - mqtt.publish:
+          topic: modbus_bridge/status
+          payload: !lambda |-
+            return "{\"status\":\"online\",\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000)) + "}";
+          qos: 1
+          retain: true
 
 # Relays per Waveshare mapping
 switch:
@@ -154,6 +183,13 @@ sensor:
   - platform: uptime
     name: "Uptime"
 
+# Interval for periodic logging and status updates
+interval:
+  - interval: 30s
+    then:
+      - script.execute: log_modbus_stats
+      - script.execute: publish_status_update
+
 # Text sensors, device ID and Modbus banks → MQTT JSON
 text_sensor:
   - platform: template
@@ -181,9 +217,21 @@ text_sensor:
       then:
         - lambda: |-
             const std::string &hex = id(bank0_raw).state;
+            if (hex.empty()) {
+              ESP_LOGW("modbus", "⚠️  Bank0: Empty response received");
+              return;
+            }
+            if (hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank0: Incomplete response (%d bytes, expected 80)", hex.size());
+              return;
+            }
             auto parse16 = [&](size_t i) -> uint16_t {
               if (i + 3 >= hex.size()) return 0;
-              return (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+              // LuxPower spec: 16-bit integers have high/low byte order reversed
+              // 0x01 0x02 should be parsed as 0x0201 = 513 (per official docs)
+              uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+              uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+              return (low_byte << 8) | high_byte;
             };
             uint16_t v0 = parse16(0);
             uint16_t v1 = parse16(4);
@@ -191,7 +239,7 @@ text_sensor:
             uint16_t v3 = parse16(12);
             uint16_t v4 = parse16(16);
             uint16_t v5 = parse16(20);
-            ESP_LOGI("modbus", "bank0 sample [0..5]: %u, %u, %u, %u, %u, %u", v0, v1, v2, v3, v4, v5);
+            ESP_LOGI("modbus", "✅ Bank0: Good data [0..5]: %u, %u, %u, %u, %u, %u", v0, v1, v2, v3, v4, v5);
         - mqtt.publish:
             topic: modbus_bridge/data/bank0
             payload: !lambda |-
@@ -200,7 +248,10 @@ text_sensor:
                                  + ",\"register_start\":0,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
                 if (idx) json += ",";
-                uint16_t v = (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
               json += "]}";
@@ -218,6 +269,13 @@ text_sensor:
     force_new_range: true
     on_value:
       then:
+        - lambda: |-
+            const std::string &hex = id(bank1_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank1: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank1: Good data received");
+            }
         - mqtt.publish:
             topic: modbus_bridge/data/bank1
             payload: !lambda |-
@@ -226,7 +284,10 @@ text_sensor:
                                  + ",\"register_start\":40,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
                 if (idx) json += ",";
-                uint16_t v = (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
               json += "]}";
@@ -244,6 +305,13 @@ text_sensor:
     force_new_range: true
     on_value:
       then:
+        - lambda: |-
+            const std::string &hex = id(bank2_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank2: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank2: Good data received");
+            }
         - mqtt.publish:
             topic: modbus_bridge/data/bank2
             payload: !lambda |-
@@ -252,7 +320,10 @@ text_sensor:
                                  + ",\"register_start\":80,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
                 if (idx) json += ",";
-                uint16_t v = (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
               json += "]}";
@@ -270,6 +341,13 @@ text_sensor:
     force_new_range: true
     on_value:
       then:
+        - lambda: |-
+            const std::string &hex = id(bank3_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank3: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank3: Good data received");
+            }
         - mqtt.publish:
             topic: modbus_bridge/data/bank3
             payload: !lambda |-
@@ -278,7 +356,10 @@ text_sensor:
                                  + ",\"register_start\":120,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
                 if (idx) json += ",";
-                uint16_t v = (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
               json += "]}";
@@ -296,6 +377,13 @@ text_sensor:
     force_new_range: true
     on_value:
       then:
+        - lambda: |-
+            const std::string &hex = id(bank4_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank4: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank4: Good data received");
+            }
         - mqtt.publish:
             topic: modbus_bridge/data/bank4
             payload: !lambda |-
@@ -304,59 +392,195 @@ text_sensor:
                                  + ",\"register_start\":160,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
                 if (idx) json += ",";
-                uint16_t v = (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
               json += "]}";
               return json;
 
+  # Bank 5: Registers 200-239 (40 registers)
   - platform: modbus_controller
     modbus_controller_id: lux
     id: bank5_raw
     internal: true
     register_type: read
     address: 200
-    register_count: 54
-    response_size: 108
+    register_count: 40
+    response_size: 80
     raw_encode: HEXBYTES
     force_new_range: true
     on_value:
       then:
+        - lambda: |-
+            const std::string &hex = id(bank5_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank5: Bad data (%d bytes, expected 80)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank5: Good data received");
+            }
         - mqtt.publish:
             topic: modbus_bridge/data/bank5
             payload: !lambda |-
               const std::string &hex = id(bank5_raw).state;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
-                                 + ",\"register_start\":200,\"register_count\":54,\"values\":[";
-              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 54; i += 4, idx++) {
+                                 + ",\"register_start\":200,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
                 if (idx) json += ",";
-                uint16_t v = (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
               json += "]}";
               return json;
 
+  # Bank 6: Registers 240-279 (40 registers)
   - platform: modbus_controller
     modbus_controller_id: lux
     id: bank6_raw
     internal: true
     register_type: read
-    address: 254
-    register_count: 127
-    response_size: 254
+    address: 240
+    register_count: 40
+    response_size: 80
     raw_encode: HEXBYTES
     force_new_range: true
     on_value:
       then:
+        - lambda: |-
+            const std::string &hex = id(bank6_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank6: Bad data (%d bytes, expected 80)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank6: Good data received");
+            }
         - mqtt.publish:
             topic: modbus_bridge/data/bank6
             payload: !lambda |-
               const std::string &hex = id(bank6_raw).state;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
-                                 + ",\"register_start\":254,\"register_count\":127,\"values\":[";
-              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 127; i += 4, idx++) {
+                                 + ",\"register_start\":240,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
                 if (idx) json += ",";
-                uint16_t v = (uint16_t) strtoul(hex.substr(i, 4).c_str(), nullptr, 16);
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "]}";
+              return json;
+
+  # Bank 7: Registers 280-319 (40 registers)
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: bank7_raw
+    internal: true
+    register_type: read
+    address: 280
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(bank7_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank7: Bad data (%d bytes, expected 80)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank7: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/data/bank7
+            payload: !lambda |-
+              const std::string &hex = id(bank7_raw).state;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":280,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "]}";
+              return json;
+
+  # Bank 8: Registers 320-359 (40 registers)
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: bank8_raw
+    internal: true
+    register_type: read
+    address: 320
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(bank8_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank8: Bad data (%d bytes, expected 80)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank8: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/data/bank8
+            payload: !lambda |-
+              const std::string &hex = id(bank8_raw).state;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":320,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "]}";
+              return json;
+
+  # Bank 9: Registers 360-399 (40 registers)
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: bank9_raw
+    internal: true
+    register_type: read
+    address: 360
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(bank9_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Bank9: Bad data (%d bytes, expected 80)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Bank9: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/data/bank9
+            payload: !lambda |-
+              const std::string &hex = id(bank9_raw).state;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":360,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                // LuxPower spec: 16-bit integers have high/low byte order reversed
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
               json += "]}";

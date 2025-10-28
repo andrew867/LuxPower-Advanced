@@ -458,6 +458,24 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         DOMAIN, "luxpower_afci_alarm_clear", handle_afci_alarm_clear, schema=SCHEME_AFCI_ALARM_CLEAR
     )  # fmt: skip
 
+    # Performance stats service
+    async def handle_get_performance_stats(service):
+        """Handle get performance stats service call."""
+        dongle = service.data.get("dongle")
+        if not dongle:
+            _LOGGER.error("Dongle parameter is required for performance stats")
+            return
+        
+        try:
+            connector = hass.data[DOMAIN][dongle]["connector"]
+            await connector.service_get_performance_stats(dongle)
+        except Exception as e:
+            _LOGGER.error(f"Error getting performance stats: {e}")
+
+    hass.services.async_register(
+        DOMAIN, "luxpower_get_performance_stats", handle_get_performance_stats, schema=SCHEME_REGISTER_BANK
+    )  # fmt: skip
+
     return True
 
 
@@ -695,6 +713,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         entry_data = hass.data[DOMAIN].pop(entry.entry_id)
         if entry_data.get("client") is not None:
             luxpower_client = entry_data.get("client")
+            # Properly disconnect before stopping
+            await luxpower_client.disconnect()
             luxpower_client.stop_client()
         if entry_data.get("refresh_remove"):
             entry_data.get("refresh_remove")()
