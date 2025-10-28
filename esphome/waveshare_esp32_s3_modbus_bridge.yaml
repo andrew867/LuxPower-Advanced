@@ -67,7 +67,7 @@ modbus_controller:
   - id: lux
     modbus_id: mbus
     address: 0x01
-    update_interval: 1s
+    update_interval: 500ms
     command_throttle: 0ms
     offline_skip_updates: 0
 
