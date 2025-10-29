@@ -157,10 +157,10 @@ class LuxPowerSelectEntity(SelectEntity):
                 # Default behavior for other select entities
                 value = option_index << self._bit_position
 
-            # Get the client and write the register
+            # Get the client and write the register (bit-masked)
             client = self.hass.data[DOMAIN].get(self.dongle, {}).get("client")
             if client:
-                await client.write_register(self._register_address, value)
+                await client.write_register(self._register_address, value, mask=self._bit_mask)
                 self._attr_current_option = option
                 self.async_write_ha_state()
                 _LOGGER.debug(f"Set {self._attr_name} to {option}")

@@ -94,6 +94,9 @@ class LuxPowerClient(asyncio.Protocol):
             debug=False, dongle_serial=dongle_serial, serial_number=serial_number
         )
 
+        # Policy counters
+        self._dropped_read_127 = 0
+
     def update_connection_quality(self, success: bool) -> None:
         """Update connection quality based on success/failure."""
         if success:
@@ -200,10 +203,12 @@ class LuxPowerClient(asyncio.Protocol):
         return False
 
     async def _connect(self):
-        """Internal connection method."""
-        # This would contain the actual connection logic
-        # For now, we'll assume it's handled by the existing connection methods
-        pass
+        """Internal connection method using asyncio loop.create_connection."""
+        try:
+            await self.hass.loop.create_connection(self.factory, self.server, self.port)
+        except Exception as err:
+            self._LOGGER.error(f"_connect error: {err}")
+            raise
 
     def factory(self):
         """
@@ -477,6 +482,14 @@ class LuxPowerClient(asyncio.Protocol):
                     register = self.lxpPacket.register
                     self._LOGGER.debug("register: %s ", register)
                     number_of_registers = int(len(result.get("value", "")) / 2)
+                    # Enforce 40-register policy in responses; ignore legacy 127
+                    if number_of_registers == 127:
+                        self._LOGGER.warning("Ignoring 127-register response for bank starting at %s", register)
+                        try:
+                            self._dropped_read_127 += 1
+                        except Exception:
+                            pass
+                        return
 
                     if (
                         number_of_registers == 1
@@ -795,6 +808,35 @@ class LuxPowerClient(asyncio.Protocol):
                 # Always release lock to prevent deadlock
                 if self._lxp_request_lock.locked():
                     self._lxp_request_lock.release()
+
+    async def write_register(self, register: int, value: int, mask: int | None = None):
+        """
+        Write a register with optional bitmask merge.
+
+        If mask is provided, the method will read the current register value,
+        merge the provided value using the mask, and then write the merged value.
+
+        Args:
+            register: Register address
+            value: Desired raw value (already aligned/shifted as needed)
+            mask: Optional bit mask specifying which bits to modify
+
+        Returns:
+            The read-back value on success, or None on failure
+        """
+        try:
+            new_value = value
+            if isinstance(mask, int):
+                current = await self.read(register)
+                if current is None:
+                    return None
+                # Merge only masked bits from desired value
+                new_value = (current & (~mask & 0xFFFF)) | (value & mask & 0xFFFF)
+
+            return await self.write(register, new_value)
+        except Exception as e:
+            self._LOGGER.error(f"write_register failed for reg {register}: {e}")
+            return None
 
     async def read(self, register, type=LXPPacket.READ_HOLD, max_retries=3):
         """Read from register with retry logic."""

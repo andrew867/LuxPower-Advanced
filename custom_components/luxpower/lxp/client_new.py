@@ -10,6 +10,7 @@ import asyncio
 import datetime
 import logging
 from typing import Optional, TYPE_CHECKING
+import os
 
 from homeassistant.core import HomeAssistant
 
@@ -122,6 +123,15 @@ class LuxPowerClient:
         self._current_polling_interval = ADAPTIVE_POLLING_BASE_INTERVAL
         self._polling_history = []
 
+        # Policy counters
+        self._dropped_read_127 = 0
+
+        # Spacing between bank requests (seconds), configurable via env for tuning
+        try:
+            self._inter_bank_delay = float(os.getenv("LUXPOWER_INTER_BANK_DELAY", "0.1"))
+        except Exception:
+            self._inter_bank_delay = 0.1
+
         # Initialize LXPPacket for protocol handling
         self.lxpPacket = LXPPacket(
             debug=False, dongle_serial=dongle_serial, serial_number=serial_number
@@ -182,6 +192,11 @@ class LuxPowerClient:
             stats["min_request_interval"] = min(self._request_intervals)
             stats["max_request_interval"] = max(self._request_intervals)
         
+        # Include policy counters
+        try:
+            stats["dropped_read_127"] = self._dropped_read_127
+        except Exception:
+            stats["dropped_read_127"] = 0
         return stats
 
     def log_performance_stats(self) -> None:
@@ -709,6 +724,14 @@ class LuxPowerClient:
                     register = self.lxpPacket.register
                     self._LOGGER.debug("register: %s ", register)
                     number_of_registers = int(len(result.get("value", "")) / 2)
+                    # Enforce 40-register policy in responses; ignore legacy 127
+                    if number_of_registers == 127:
+                        self._LOGGER.warning("Ignoring 127-register response for bank starting at %s", register)
+                        try:
+                            self._dropped_read_127 += 1
+                        except Exception:
+                            pass
+                        continue
                     
                     # Record response time for performance tracking
                     bank = register // 40  # Calculate bank number from register
@@ -869,28 +892,29 @@ class LuxPowerClient:
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
         start_register = address_bank * 40
-
+        
+        # Prepare packet outside lock to minimize critical section
+        try:
+            packet = self.lxpPacket.prepare_packet_for_read(
+                start_register, number_of_registers, type=LXPPacket.READ_INPUT)
+        except Exception as e:
+            self._LOGGER.error("Prepare packet failed request_data_bank %s", e)
+            return
+        
         await self._acquire_lock()
         try:
             self._LOGGER.debug("request_data_bank for address_bank: %s", address_bank)
-            
             # Record request start time for performance tracking
             self._record_request_start(address_bank)
-            
-            packet = self.lxpPacket.prepare_packet_for_read(
-                start_register, number_of_registers, type=LXPPacket.READ_INPUT)
-            
             success = await self._transport.send_packet(packet)
             if success:
                 self._LOGGER.debug(
                     f"Packet Written for getting {serial} DATA registers address_bank {address_bank} , {number_of_registers}")
             else:
                 self._LOGGER.error("Failed to send data bank request")
-                
         except Exception as e:
             self._LOGGER.error("Exception request_data_bank %s", e)
         finally:
-            # Always release lock to prevent deadlock
             if self._lxp_request_lock.locked():
                 self._lxp_request_lock.release()
 
@@ -913,6 +937,12 @@ class LuxPowerClient:
                     f"{log_marker} call request_data - Bank: {address_bank}"
                 )
                 await self.request_data_bank(address_bank)
+                # small inter-bank spacing to avoid bursts
+                if self._inter_bank_delay > 0:
+                    try:
+                        await asyncio.sleep(self._inter_bank_delay)
+                    except Exception:
+                        pass
         except TimeoutError:
             pass
 
@@ -921,30 +951,31 @@ class LuxPowerClient:
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
         start_register = address_bank * 40
+        
+        # Prepare packet outside lock to minimize critical section
+        try:
+            packet = self.lxpPacket.prepare_packet_for_read(
+                start_register, number_of_registers, type=LXPPacket.READ_HOLD)
+        except Exception as e:
+            self._LOGGER.error("Prepare packet failed request_hold_bank %s", e)
+            return
 
         await self._acquire_lock()
         try:
             self._LOGGER.debug(
                 f"request_hold_bank for {serial} address_bank: {address_bank} , {number_of_registers}"
             )
-            
             # Record request start time for performance tracking
             self._record_request_start(address_bank)
-            
-            packet = self.lxpPacket.prepare_packet_for_read(
-                start_register, number_of_registers, type=LXPPacket.READ_HOLD)
-            
             success = await self._transport.send_packet(packet)
             if success:
                 self._LOGGER.debug(
                     f"Packet Written for getting {serial} HOLD registers address_bank {address_bank} , {number_of_registers}")
             else:
                 self._LOGGER.error("Failed to send hold bank request")
-                
         except Exception as e:
             self._LOGGER.error("Exception request_hold_bank %s", e)
         finally:
-            # Always release lock to prevent deadlock
             if self._lxp_request_lock.locked():
                 self._lxp_request_lock.release()
 
@@ -962,6 +993,11 @@ class LuxPowerClient:
                     f"{log_marker} call request_hold - Bank: {address_bank}"
                 )
                 await self.request_hold_bank(address_bank)
+                if self._inter_bank_delay > 0:
+                    try:
+                        await asyncio.sleep(self._inter_bank_delay)
+                    except Exception:
+                        pass
         except TimeoutError:
             pass
         finally:
@@ -1075,6 +1111,34 @@ class LuxPowerClient:
                 # Always release lock to prevent deadlock
                 if self._lxp_request_lock.locked():
                     self._lxp_request_lock.release()
+
+    async def write_register(self, register: int, value: int, mask: int | None = None):
+        """
+        Write a register with optional bitmask merge.
+
+        If mask is provided, read current value and merge only masked bits
+        before writing. The provided value should already be aligned/shifted.
+
+        Args:
+            register: Register address
+            value: Desired raw value (pre-shifted as needed)
+            mask: Optional bit mask specifying which bits to modify
+
+        Returns:
+            The read-back value on success, or None on failure
+        """
+        try:
+            new_value = value
+            if isinstance(mask, int):
+                current = await self.read(register)
+                if current is None:
+                    return None
+                new_value = (current & (~mask & 0xFFFF)) | (value & mask & 0xFFFF)
+
+            return await self.write(register, new_value)
+        except Exception as e:
+            self._LOGGER.error(f"write_register failed for reg {register}: {e}")
+            return None
 
     async def read(self, register, type=LXPPacket.READ_HOLD, max_retries=3):
         """Read from register with retry logic."""

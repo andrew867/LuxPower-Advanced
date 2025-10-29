@@ -7,6 +7,8 @@ into the new transport abstraction layer.
 
 import asyncio
 import logging
+import random
+import socket
 from typing import Optional, Callable
 
 from . import LuxPowerTransport
@@ -59,6 +61,24 @@ class TCPTransport(LuxPowerTransport):
                 self.port
             )
             
+            # Enable TCP keepalive if possible
+            try:
+                sock = self._transport.get_extra_info("socket")
+                if isinstance(sock, socket.socket):
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                    # Platform-specific tuning (best-effort)
+                    if hasattr(socket, "TCP_KEEPIDLE"):
+                        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 30)
+                    if hasattr(socket, "TCP_KEEPINTVL"):
+                        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 10)
+                    if hasattr(socket, "TCP_KEEPCNT"):
+                        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+                    # Linux tcp_user_timeout if available (milliseconds)
+                    if hasattr(socket, "TCP_USER_TIMEOUT"):
+                        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_USER_TIMEOUT, 30000)
+            except Exception as e:
+                self._logger.debug(f"Keepalive setup skipped: {e}")
+
             self._connected = True
             self._logger.info(f"Connected to TCP server {self.host}:{self.port}")
             
@@ -142,21 +162,47 @@ class TCPTransport(LuxPowerTransport):
 
     async def _listen_loop(self) -> None:
         """Background task to maintain connection."""
-        while self._connected:
+        while True:
             try:
-                # Check if transport is still valid
-                if not self._transport or self._transport.is_closing():
-                    self._logger.warning("TCP transport closed, attempting reconnection")
+                if self._connected and self._transport and not self._transport.is_closing():
+                    await asyncio.sleep(1)
+                else:
+                    self._logger.warning("TCP transport not connected; entering reconnect loop")
                     self._connected = False
-                    break
-                
-                await asyncio.sleep(1)
-                
+                    await self._reconnect_with_backoff()
+            except asyncio.CancelledError:
+                break
             except Exception as e:
                 self._logger.error(f"Error in TCP listen loop: {e}")
-                break
-        
+                await asyncio.sleep(1)
+
         self._connected = False
+
+    async def _reconnect_with_backoff(self) -> None:
+        """Attempt reconnection with exponential backoff and jitter."""
+        base = 0.5
+        cap = 30.0
+        attempt = 0
+        while True:
+            if self._listen_task and self._listen_task.cancelled():
+                return
+            try:
+                ok = await self.connect()
+                if ok:
+                    self._logger.info("TCP reconnect successful")
+                    return
+            except Exception as e:
+                self._logger.debug(f"Reconnect attempt failed: {e}")
+
+            delay = min(cap, base * (2 ** attempt))
+            # jitter ±20%
+            jitter = delay * (0.8 + 0.4 * random.random())
+            self._logger.warning(f"Reconnect in {jitter:.1f}s (attempt {attempt + 1})")
+            try:
+                await asyncio.sleep(jitter)
+            except asyncio.CancelledError:
+                return
+            attempt = min(attempt + 1, 10)
 
 
 class TCPProtocol(asyncio.Protocol):

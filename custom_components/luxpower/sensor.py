@@ -393,6 +393,7 @@ async def async_setup_entry(
         # 12. Adaptive Polling Sensors
         {"etype": "LPAP", "name": "Lux {replaceID_midfix}{hyphen} Polling Interval", "unique": "lux_polling_interval", "bank": 0, "attribute": LXPPacket.status, "device_class": SensorDeviceClass.DURATION, "unit_of_measurement": "s", "enabled": True},
         {"etype": "LPAC", "name": "Lux {replaceID_midfix}{hyphen} Connection Quality", "unique": "lux_connection_quality", "bank": 0, "attribute": LXPPacket.status, "device_class": None, "unit_of_measurement": PERCENTAGE, "enabled": True},
+        {"etype": "LPHL", "name": "Lux {replaceID_midfix}{hyphen} Health", "unique": "lux_health", "bank": 0, "attribute": LXPPacket.status, "device_class": None, "unit_of_measurement": "ms", "enabled": True},
 
         # 13. Calculated Power Flow Sensors
         {"etype": "LPSC", "name": "Lux {replaceID_midfix}{hyphen} Self Consumption Rate", "unique": "lux_self_consumption_rate", "bank": 0, "attribute": LXPPacket.p_load, "attribute1": LXPPacket.p_to_user, "attribute2": LXPPacket.p_to_grid, "device_class": SensorDeviceClass.POWER_FACTOR, "unit_of_measurement": PERCENTAGE, "enabled": True},
@@ -752,6 +753,8 @@ async def async_setup_entry(
             sensorEntities.append(LuxPowerAdaptivePollingSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPAC":
             sensorEntities.append(LuxPowerConnectionQualitySensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
+        elif etype == "LPHL":
+            sensorEntities.append(LuxPowerHealthSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPSC":
             sensorEntities.append(LuxPowerSelfConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPSG":
@@ -2164,6 +2167,48 @@ class LuxPowerConnectionQualitySensor(LuxPowerSensorEntity):
         # Update Home Assistant state (thread-safe)
         self.schedule_update_ha_state()
 
+
+class LuxPowerHealthSensor(LuxPowerSensorEntity):
+    """Aggregated health/metrics sensor sourced from client performance stats."""
+
+    def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
+        super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._attr_device_class = None
+        self._attr_state_class = None
+        self._attr_native_unit_of_measurement = None
+
+    def push_update(self, event):
+        _LOGGER.debug(f"Health Sensor update for dongle: {self.dongle}")
+        client = None
+        for entry_id, data in self.hass.data.get(DOMAIN, {}).items():
+            if data.get("DONGLE") == self.dongle:
+                client = data.get("client")
+                break
+
+        if client and hasattr(client, 'get_performance_stats'):
+            stats = client.get_performance_stats()
+            # Expose a simple numeric state: average_response_time in ms
+            try:
+                self._attr_native_value = round(float(stats.get("average_response_time", 0.0)) * 1000.0, 1)
+            except Exception:
+                self._attr_native_value = 0.0
+            # Attach extended metrics as attributes
+            self._attr_extra_state_attributes = {
+                "avg_response_s": stats.get("average_response_time", 0.0),
+                "min_response_s": stats.get("min_response_time", 0.0),
+                "max_response_s": stats.get("max_response_time", 0.0),
+                "avg_interval_s": stats.get("average_request_interval", 0.0),
+                "min_interval_s": stats.get("min_request_interval", 0.0),
+                "max_interval_s": stats.get("max_request_interval", 0.0),
+                "total_requests": stats.get("total_requests", 0),
+                "pending_requests": stats.get("pending_requests", 0),
+            }
+        else:
+            self._attr_native_value = 0.0
+            self._attr_extra_state_attributes = {"note": "client stats unavailable"}
+
+        self._attr_available = True
+        self.schedule_update_ha_state()
 
 class LuxPowerSelfConsumptionSensor(LuxPowerSensorEntity):
     """Representation of a Self-Consumption Rate sensor for a LUXPower Inverter."""

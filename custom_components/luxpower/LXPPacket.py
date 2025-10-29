@@ -600,6 +600,26 @@ class LXPPacket:
         else:
             self.value = self.data_frame[14:16]
 
+        # Defensive bounds and policy checks
+        if self.value_length_byte_present:
+            # Value length must be even number of bytes
+            if self.value_length < 0 or (self.value_length % 2) != 0:
+                _LOGGER.error("Invalid value_length=%s; discarding frame", self.value_length)
+                return
+            # Ensure data_frame contains the declared length
+            if 15 + self.value_length > len(self.data_frame):
+                _LOGGER.error("value_length exceeds data_frame; discarding frame")
+                return
+            # Enforce 40-register max for read responses; ignore 127-register replies
+            regs = int(self.value_length / 2)
+            if self.device_function in (self.READ_INPUT, self.READ_HOLD):
+                if regs == 127:
+                    _LOGGER.warning("Ignoring 127-register read response for compatibility")
+                    return
+                if regs != 40 and regs != 1:
+                    _LOGGER.debug("Normalizing non-standard read response size: %s", regs)
+                    # Allow processing to continue; downstream will selectively use known banks
+
         if self.debug:
             # _LOGGER.debug("address_action : %s %s", self.address_action, self.ADDRESS_ACTION[self.address_action])
             _LOGGER.debug(
@@ -840,6 +860,18 @@ class LXPPacket:
     def prepare_packet_for_read(self, register, value=1, type=READ_HOLD):
         _LOGGER.debug("Entering prepare_packet_for_read %s %s", register, value)
 
+        # Enforce 40-register read policy; ignore legacy 127 requests
+        try:
+            requested = int(value)
+        except Exception:
+            requested = 40
+        if requested == 127:
+            _LOGGER.warning("Ignoring 127-register read request; enforcing 40 for compatibility")
+            requested = 40
+        elif requested != 40:
+            _LOGGER.debug("Normalizing read size from %s to 40 registers", requested)
+            requested = 40
+
         protocol = 2
         frame_length = 32
         data_length = 18
@@ -862,7 +894,7 @@ class LXPPacket:
         data_frame = data_frame + self.serial_number
         # data_frame = data_frame + self.NULL_SERIAL
         data_frame = data_frame + struct.pack("H", register)
-        data_frame = data_frame + struct.pack("H", value)
+        data_frame = data_frame + struct.pack("H", requested)
         crc_modbus = self.computeCRC(data_frame)
         packet = packet + data_frame + struct.pack("H", crc_modbus)
 

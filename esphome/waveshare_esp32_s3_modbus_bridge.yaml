@@ -26,7 +26,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   fast_connect: true
-  reboot_timeout: 15min
+  reboot_timeout: 0s
   power_save_mode: none
 
 captive_portal:
@@ -54,13 +54,77 @@ mqtt:
     then:
       - lambda: |-
           ESP_LOGI("mqtt", "🔗 MQTT connected - Modbus bridge ready");
+          id(mqtt_offline_since) = 0;
   on_disconnect:
     then:
       - lambda: |-
           ESP_LOGW("mqtt", "🔌 MQTT disconnected - Modbus bridge offline");
+          if (id(mqtt_offline_since) == 0) { id(mqtt_offline_since) = esphome::millis(); }
+  on_json_message:
+    - topic: modbus_bridge/write
+      then:
+        - lambda: |-
+            // Expected payload: {"function":"write_single","register":<int>,"value":<int>,"seq":<int>}
+            if (!x.containsKey("register") || !x.containsKey("value")) {
+              ESP_LOGW("mqtt", "Write command missing fields");
+              return;
+            }
+            int reg = x["register"].as<int>();
+            int val = x["value"].as<int>();
+            int seq_in = x.containsKey("seq") ? x["seq"].as<int>() : 0;
+            id(write_target_reg) = reg;
+            id(write_target_val) = val;
+            id(write_seq_in) = seq_in;
+        - modbus_controller.write:
+            id: lux
+            register_type: holding
+            address: !lambda 'return id(write_target_reg);'
+            value: !lambda 'return id(write_target_val);'
+        - mqtt.publish:
+            topic: modbus_bridge/write/ack
+            payload: !lambda |-
+              char buf[96];
+              snprintf(buf, sizeof(buf), "{\"seq\":%d,\"status\":\"ok\",\"register\":%d,\"value\":%d}", id(write_seq_in), id(write_target_reg), id(write_target_val));
+              return std::string(buf);
+            qos: 1
+    - topic: !lambda |-
+        // Per-device write topic variant
+        std::string t = "modbus_bridge/";
+        t += id(device_id).state;
+        t += "/write";
+        return t;
+      then:
+        - lambda: |-
+            if (!x.containsKey("register") || !x.containsKey("value")) {
+              ESP_LOGW("mqtt", "Write command missing fields (per-device)");
+              return;
+            }
+            int reg = x["register"].as<int>();
+            int val = x["value"].as<int>();
+            int seq_in = x.containsKey("seq") ? x["seq"].as<int>() : 0;
+            id(write_target_reg) = reg;
+            id(write_target_val) = val;
+            id(write_seq_in) = seq_in;
+        - modbus_controller.write:
+            id: lux
+            register_type: holding
+            address: !lambda 'return id(write_target_reg);'
+            value: !lambda 'return id(write_target_val);'
+        - mqtt.publish:
+            topic: !lambda |-
+              std::string t = "modbus_bridge/";
+              t += id(device_id).state;
+              t += "/write/ack";
+              return t;
+            payload: !lambda |-
+              char buf[96];
+              snprintf(buf, sizeof(buf), "{\"seq\":%d,\"status\":\"ok\",\"register\":%d,\"value\":%d}", id(write_seq_in), id(write_target_reg), id(write_target_val));
+              return std::string(buf);
+            qos: 1
 
 # RS485 UART (DI=TXD'→GPIO17, RO=RXD'←GPIO18). RE/DE is auto-driven from TX via 74HC04, so omit flow_control_pin.
 # LuxPower specs: 19200bps, 8N1 (8 data bits, no parity, 1 stop bit)
+# IMPORTANT: If you have bus conflicts with WiFi dongle, try swapping A+ and B- connections
 uart:
   id: rs485_uart
   tx_pin: GPIO17
@@ -74,14 +138,14 @@ uart:
 modbus:
   id: mbus
   uart_id: rs485_uart
-  send_wait_time: 500ms
+  send_wait_time: 1000ms  # Tuned to reduce contention while avoiding conflicts
 
 modbus_controller:
   - id: lux
     modbus_id: mbus
     address: 0x01
-    update_interval: 10000ms
-    command_throttle: 250ms
+    update_interval: 60000ms  # Increased to 60s to avoid conflicts with WiFi dongle
+    command_throttle: 1000ms  # Increased throttle to be more conservative
     offline_skip_updates: 0
 
 # Scripts for Modbus statistics and error tracking
@@ -89,16 +153,28 @@ script:
   - id: log_modbus_stats
     then:
       - lambda: |-
-          ESP_LOGI("modbus", "📊 Modbus Statistics: Polling every 5s, 10 banks total (40 registers each), LuxPower byte order (per spec)");
+          ESP_LOGI("modbus", "📊 Modbus Statistics: Polling every 30s, 10 banks total (40 registers each), LuxPower byte order (per spec)");
+          ESP_LOGI("modbus", "⚠️  BUS ARBITRATION: 30s interval to avoid conflicts with WiFi dongle (15s polling)");
   
   - id: publish_status_update
     then:
       - mqtt.publish:
           topic: modbus_bridge/status
           payload: !lambda |-
-            return "{\"status\":\"online\",\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000)) + "}";
+            id(seq)++;
+            return "{\"status\":\"online\",\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000)) + ",\"seq\":" + to_string(id(seq)) + "}";
           qos: 1
           retain: true
+
+  # Bus arbitration script - check for bus activity before polling
+  - id: check_bus_activity
+    then:
+      - lambda: |-
+          ESP_LOGI("modbus", "🔍 Checking bus activity before polling...");
+          // Add a small random delay to avoid synchronized polling
+          uint32_t random_delay = (esphome::millis() % 5000) + 1000; // 1-6 second random delay
+          ESP_LOGI("modbus", "⏱️  Random delay: %u ms", random_delay);
+          delay(random_delay);
 
 # Relays per Waveshare mapping
 switch:
@@ -190,6 +266,28 @@ interval:
       - script.execute: log_modbus_stats
       - script.execute: publish_status_update
 
+globals:
+  - id: seq
+    type: uint32_t
+    restore_value: yes
+    initial_value: '0'
+  - id: mqtt_offline_since
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: write_target_reg
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: write_target_val
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: write_seq_in
+    type: int
+    restore_value: no
+    initial_value: '0'
+
 # Text sensors, device ID and Modbus banks → MQTT JSON
 text_sensor:
   - platform: template
@@ -207,7 +305,7 @@ text_sensor:
     modbus_controller_id: lux
     id: bank0_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 0
     register_count: 40
     response_size: 80
@@ -218,11 +316,11 @@ text_sensor:
         - lambda: |-
             const std::string &hex = id(bank0_raw).state;
             if (hex.empty()) {
-              ESP_LOGW("modbus", "⚠️  Bank0: Empty response received");
+              ESP_LOGW("modbus", "⚠️  Bank0: Empty response received - possible bus conflict");
               return;
             }
             if (hex.size() < 80) {
-              ESP_LOGW("modbus", "⚠️  Bank0: Incomplete response (%d bytes, expected 80)", hex.size());
+              ESP_LOGW("modbus", "⚠️  Bank0: Incomplete response (%d bytes, expected 80) - possible bus conflict", hex.size());
               return;
             }
             auto parse16 = [&](size_t i) -> uint16_t {
@@ -244,6 +342,7 @@ text_sensor:
             topic: modbus_bridge/data/bank0
             payload: !lambda |-
               const std::string &hex = id(bank0_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":0,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -254,14 +353,16 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   - platform: modbus_controller
     modbus_controller_id: lux
     id: bank1_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 40
     register_count: 40
     response_size: 80
@@ -280,6 +381,7 @@ text_sensor:
             topic: modbus_bridge/data/bank1
             payload: !lambda |-
               const std::string &hex = id(bank1_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":40,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -290,14 +392,16 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   - platform: modbus_controller
     modbus_controller_id: lux
     id: bank2_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 80
     register_count: 40
     response_size: 80
@@ -316,6 +420,7 @@ text_sensor:
             topic: modbus_bridge/data/bank2
             payload: !lambda |-
               const std::string &hex = id(bank2_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":80,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -326,14 +431,16 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   - platform: modbus_controller
     modbus_controller_id: lux
     id: bank3_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 120
     register_count: 40
     response_size: 80
@@ -352,6 +459,7 @@ text_sensor:
             topic: modbus_bridge/data/bank3
             payload: !lambda |-
               const std::string &hex = id(bank3_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":120,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -362,14 +470,16 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   - platform: modbus_controller
     modbus_controller_id: lux
     id: bank4_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 160
     register_count: 40
     response_size: 80
@@ -388,6 +498,7 @@ text_sensor:
             topic: modbus_bridge/data/bank4
             payload: !lambda |-
               const std::string &hex = id(bank4_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":160,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -398,7 +509,9 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   # Bank 5: Registers 200-239 (40 registers)
@@ -406,7 +519,7 @@ text_sensor:
     modbus_controller_id: lux
     id: bank5_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 200
     register_count: 40
     response_size: 80
@@ -425,6 +538,7 @@ text_sensor:
             topic: modbus_bridge/data/bank5
             payload: !lambda |-
               const std::string &hex = id(bank5_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":200,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -435,7 +549,9 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   # Bank 6: Registers 240-279 (40 registers)
@@ -443,7 +559,7 @@ text_sensor:
     modbus_controller_id: lux
     id: bank6_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 240
     register_count: 40
     response_size: 80
@@ -462,6 +578,7 @@ text_sensor:
             topic: modbus_bridge/data/bank6
             payload: !lambda |-
               const std::string &hex = id(bank6_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":240,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -472,7 +589,9 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   # Bank 7: Registers 280-319 (40 registers)
@@ -480,7 +599,7 @@ text_sensor:
     modbus_controller_id: lux
     id: bank7_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 280
     register_count: 40
     response_size: 80
@@ -499,6 +618,7 @@ text_sensor:
             topic: modbus_bridge/data/bank7
             payload: !lambda |-
               const std::string &hex = id(bank7_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":280,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -509,7 +629,9 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   # Bank 8: Registers 320-359 (40 registers)
@@ -517,7 +639,7 @@ text_sensor:
     modbus_controller_id: lux
     id: bank8_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 320
     register_count: 40
     response_size: 80
@@ -536,6 +658,7 @@ text_sensor:
             topic: modbus_bridge/data/bank8
             payload: !lambda |-
               const std::string &hex = id(bank8_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":320,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -546,7 +669,9 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;
 
   # Bank 9: Registers 360-399 (40 registers)
@@ -554,7 +679,7 @@ text_sensor:
     modbus_controller_id: lux
     id: bank9_raw
     internal: true
-    register_type: read
+    register_type: input
     address: 360
     register_count: 40
     response_size: 80
@@ -573,6 +698,7 @@ text_sensor:
             topic: modbus_bridge/data/bank9
             payload: !lambda |-
               const std::string &hex = id(bank9_raw).state;
+              id(seq)++;
               std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
                                  + ",\"register_start\":360,\"register_count\":40,\"values\":[";
               for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
@@ -583,5 +709,312 @@ text_sensor:
                 uint16_t v = (low_byte << 8) | high_byte;
                 json += to_string(v);
               }
-              json += "]}";
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
+              return json;
+
+  # Holding-register banks (FC03), published as JSON
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: hold_bank0_raw
+    internal: true
+    register_type: holding
+    address: 0
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(hold_bank0_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Hold Bank0: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Hold Bank0: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/hold/bank0
+            payload: !lambda |-
+              const std::string &hex = id(hold_bank0_raw).state;
+              id(seq)++;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":0,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
+              return json;
+
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: hold_bank1_raw
+    internal: true
+    register_type: holding
+    address: 40
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(hold_bank1_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Hold Bank1: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Hold Bank1: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/hold/bank1
+            payload: !lambda |-
+              const std::string &hex = id(hold_bank1_raw).state;
+              id(seq)++;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":40,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
+              return json;
+
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: hold_bank2_raw
+    internal: true
+    register_type: holding
+    address: 80
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(hold_bank2_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Hold Bank2: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Hold Bank2: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/hold/bank2
+            payload: !lambda |-
+              const std::string &hex = id(hold_bank2_raw).state;
+              id(seq)++;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":80,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
+              return json;
+
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: hold_bank3_raw
+    internal: true
+    register_type: holding
+    address: 120
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(hold_bank3_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Hold Bank3: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Hold Bank3: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/hold/bank3
+            payload: !lambda |-
+              const std::string &hex = id(hold_bank3_raw).state;
+              id(seq)++;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":120,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
+              return json;
+
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: hold_bank4_raw
+    internal: true
+    register_type: holding
+    address: 160
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(hold_bank4_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Hold Bank4: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Hold Bank4: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/hold/bank4
+            payload: !lambda |-
+              const std::string &hex = id(hold_bank4_raw).state;
+              id(seq)++;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":160,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
+              return json;
+
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: hold_bank5_raw
+    internal: true
+    register_type: holding
+    address: 200
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(hold_bank5_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Hold Bank5: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Hold Bank5: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/hold/bank5
+            payload: !lambda |-
+              const std::string &hex = id(hold_bank5_raw).state;
+              id(seq)++;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":200,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
+              return json;
+
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: hold_bank6_raw
+    internal: true
+    register_type: holding
+    address: 240
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(hold_bank6_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Hold Bank6: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Hold Bank6: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/hold/bank6
+            payload: !lambda |-
+              const std::string &hex = id(hold_bank6_raw).state;
+              id(seq)++;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":240,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
+              return json;
+
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    id: hold_bank7_raw
+    internal: true
+    register_type: holding
+    address: 280
+    register_count: 40
+    response_size: 80
+    raw_encode: HEXBYTES
+    force_new_range: true
+    on_value:
+      then:
+        - lambda: |-
+            const std::string &hex = id(hold_bank7_raw).state;
+            if (hex.empty() || hex.size() < 80) {
+              ESP_LOGW("modbus", "⚠️  Hold Bank7: Bad data (%d bytes)", hex.size());
+            } else {
+              ESP_LOGI("modbus", "✅ Hold Bank7: Good data received");
+            }
+        - mqtt.publish:
+            topic: modbus_bridge/hold/bank7
+            payload: !lambda |-
+              const std::string &hex = id(hold_bank7_raw).state;
+              id(seq)++;
+              std::string json = "{\"timestamp\":" + to_string((uint32_t)(esphome::millis()/1000))
+                                 + ",\"register_start\":280,\"register_count\":40,\"values\":[";
+              for (size_t i = 0, idx = 0; i + 3 < hex.size() && idx < 40; i += 4, idx++) {
+                if (idx) json += ",";
+                uint16_t high_byte = (uint16_t) strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+                uint16_t low_byte = (uint16_t) strtoul(hex.substr(i + 2, 2).c_str(), nullptr, 16);
+                uint16_t v = (low_byte << 8) | high_byte;
+                json += to_string(v);
+              }
+              json += "],\"seq\":" + to_string(id(seq)) + "}";
+            qos: 1
+            retain: true
               return json;

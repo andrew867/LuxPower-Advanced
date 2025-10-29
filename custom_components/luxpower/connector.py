@@ -11,6 +11,7 @@ import logging
 from homeassistant.core import HomeAssistant
 
 from .lxp.client import LuxPowerClient
+from .LXPPacket import LXPPacket
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -204,9 +205,21 @@ class ServiceHelper:
 
                 # Set charging times for the selected slot
                 await luxpower_client.write(start_register, start_value)
-                await asyncio.sleep(1)
+                # Wait for confirmation via read-back to ensure readiness, fallback to small delay
+                try:
+                    confirm = await luxpower_client.read(start_register)
+                    if confirm != start_value:
+                        await asyncio.sleep(0.5)
+                except Exception:
+                    await asyncio.sleep(0.5)
+
                 await luxpower_client.write(end_register, end_value)
-                await asyncio.sleep(1)
+                try:
+                    confirm2 = await luxpower_client.read(end_register)
+                    if confirm2 != end_value:
+                        await asyncio.sleep(0.5)
+                except Exception:
+                    await asyncio.sleep(0.5)
 
                 # Refresh registers to ensure changes are applied
                 # Get configured bank count from integration data
@@ -245,9 +258,19 @@ class ServiceHelper:
 
             # Set the selected slot times to 0 (effectively disabling the schedule)
             await luxpower_client.write(start_register, 0)  # Start time
-            await asyncio.sleep(1)
+            try:
+                confirm_s = await luxpower_client.read(start_register)
+                if confirm_s != 0:
+                    await asyncio.sleep(0.5)
+            except Exception:
+                await asyncio.sleep(0.5)
             await luxpower_client.write(end_register, 0)  # End time
-            await asyncio.sleep(1)
+            try:
+                confirm_e = await luxpower_client.read(end_register)
+                if confirm_e != 0:
+                    await asyncio.sleep(0.5)
+            except Exception:
+                await asyncio.sleep(0.5)
 
             # Check if all charging slots are now disabled
             slot1_start = await luxpower_client.read(68)

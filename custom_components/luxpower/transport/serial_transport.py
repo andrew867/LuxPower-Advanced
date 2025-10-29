@@ -8,7 +8,7 @@ implementing Modbus RTU protocol directly.
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Dict
 
 try:
     import serial_asyncio
@@ -44,6 +44,13 @@ class SerialTransport(LuxPowerTransport):
         self._writer: Optional[asyncio.StreamWriter] = None
         self._listen_task: Optional[asyncio.Task] = None
         self._buffer = bytearray()
+        self._crc_fail_count = 0
+        self._short_frame_count = 0
+        self._packets_ok = 0
+        self._last_request_start: Optional[int] = None
+        self._last_request_count: Optional[int] = None
+        self._last_request_type: Optional[str] = None  # "input" or "hold" or "write"
+        self._client = None
 
     async def connect(self) -> bool:
         """
@@ -125,7 +132,15 @@ class SerialTransport(LuxPowerTransport):
         
         try:
             # Convert LuxPower packet to Modbus RTU format
-            modbus_packet = self._luxpower_to_modbus_rtu(packet)
+            modbus_packet, meta = self._luxpower_to_modbus_rtu(packet)
+            if not modbus_packet:
+                self._logger.error("Serial send aborted: unable to parse LuxPower packet into Modbus RTU")
+                return False
+
+            # Track last request metadata to interpret responses
+            self._last_request_start = meta.get("start")
+            self._last_request_count = meta.get("count")
+            self._last_request_type = meta.get("type")
             
             self._writer.write(modbus_packet)
             await self._writer.drain()
@@ -181,10 +196,20 @@ class SerialTransport(LuxPowerTransport):
                 while self._buffer:
                     packet = self._extract_packet()
                     if packet:
-                        # Convert Modbus RTU to LuxPower format
-                        luxpower_packet = self._modbus_rtu_to_luxpower(packet)
-                        if luxpower_packet:
-                            if self._callback:
+                        # Verify CRC before conversion
+                        if not self._verify_crc(packet):
+                            self._crc_fail_count += 1
+                            self._logger.warning("Discarding packet with bad CRC")
+                            continue
+                        # Convert Modbus RTU to direct register update (preferred)
+                        handled = self._process_rtu_response(packet)
+                        if handled:
+                            self._packets_ok += 1
+                        else:
+                            # Fallback: convert to LuxPower-like bytes if needed
+                            luxpower_packet = self._modbus_rtu_to_luxpower(packet)
+                            if luxpower_packet and self._callback:
+                                self._packets_ok += 1
                                 self._callback(luxpower_packet)
                     else:
                         break
@@ -202,30 +227,50 @@ class SerialTransport(LuxPowerTransport):
         Returns:
             Complete packet data, or None if no complete packet available
         """
-        # Modbus RTU packets start with device address and end with CRC
-        # Minimum packet size is 4 bytes (address + function + CRC)
+        # Need at least 4 bytes for addr+func+CRC
         if len(self._buffer) < 4:
             return None
-        
-        # Look for packet start (device address)
+
+        # Scan for device address start (0x01 typical)
+        start_idx = None
         for i in range(len(self._buffer) - 3):
-            if self._buffer[i] == 0x01:  # LuxPower device address
-                # Calculate expected packet length based on function code
-                if i + 1 < len(self._buffer):
-                    function_code = self._buffer[i + 1]
-                    expected_length = self._get_modbus_packet_length(function_code)
-                    
-                    if len(self._buffer) >= i + expected_length:
-                        # Extract packet
-                        packet = bytes(self._buffer[i:i + expected_length])
-                        # Remove packet from buffer
-                        del self._buffer[:i + expected_length]
-                        return packet
-        
-        # If no complete packet found, keep only the last few bytes
-        if len(self._buffer) > 10:
-            self._buffer = self._buffer[-10:]
-        
+            if self._buffer[i] == 0x01:
+                start_idx = i
+                break
+        if start_idx is None:
+            # Drop leading noise, keep last 3 bytes as potential start
+            self._buffer = self._buffer[-3:]
+            return None
+
+        # Ensure we have function code
+        if start_idx + 1 >= len(self._buffer):
+            return None
+        function_code = self._buffer[start_idx + 1]
+
+        # If response (0x03/0x04), need byte count to determine length
+        if function_code in (0x03, 0x04):
+            # Need at least addr, func, byte_count
+            if start_idx + 3 > len(self._buffer):
+                return None
+            # If this is a response frame, third byte is byte count
+            # For requests, length is fixed 8 bytes, but requests won't arrive here usually
+            byte_count = self._buffer[start_idx + 2]
+            expected_length = 3 + byte_count + 2  # addr+func+count + data + CRC
+        elif function_code == 0x06:  # write single
+            expected_length = 8
+        else:
+            # Default conservative length; re-sync on CRC failure later
+            expected_length = 8
+
+        end_idx = start_idx + expected_length
+        if len(self._buffer) >= end_idx:
+            packet = bytes(self._buffer[start_idx:end_idx])
+            del self._buffer[:end_idx]
+            return packet
+
+        # Not enough bytes yet; keep buffer but trim leading noise if any
+        if start_idx > 0:
+            del self._buffer[:start_idx]
         return None
 
     def _get_modbus_packet_length(self, function_code: int) -> int:
@@ -247,7 +292,7 @@ class SerialTransport(LuxPowerTransport):
         else:
             return 8  # Default length
 
-    def _luxpower_to_modbus_rtu(self, luxpower_packet: bytes) -> bytes:
+    def _luxpower_to_modbus_rtu(self, luxpower_packet: bytes) -> (Optional[bytes], Dict[str, int]):
         """
         Convert LuxPower packet to Modbus RTU format.
         
@@ -255,27 +300,63 @@ class SerialTransport(LuxPowerTransport):
             luxpower_packet: LuxPower packet data
             
         Returns:
-            Modbus RTU packet data
+            Tuple of (Modbus RTU packet bytes or None, metadata dict with start/count/type)
         """
-        # This is a placeholder implementation
-        # The actual implementation would need to:
-        # 1. Parse LuxPower packet structure
-        # 2. Extract register information
-        # 3. Create appropriate Modbus RTU command
-        # 4. Add proper CRC calculation
-        
-        # For now, return a simple Modbus RTU read command
-        modbus_packet = bytearray()
-        modbus_packet.append(0x01)  # Device address
-        modbus_packet.append(0x04)  # Read input registers
-        modbus_packet.extend((0x0000).to_bytes(2, 'big'))  # Start address
-        modbus_packet.extend((0x0028).to_bytes(2, 'big'))  # Number of registers
-        
-        # Calculate CRC (simplified)
-        crc = self._calculate_crc16(modbus_packet)
-        modbus_packet.extend(crc.to_bytes(2, 'little'))
-        
-        return bytes(modbus_packet)
+        try:
+            if not isinstance(luxpower_packet, (bytes, bytearray)) or len(luxpower_packet) < 12:
+                return None, {}
+
+            # Heuristic scan for register and a second word that is either count (<=125) or value
+            start = None
+            second = None
+            for i in range(0, len(luxpower_packet) - 3):
+                reg = int.from_bytes(luxpower_packet[i:i+2], 'little')
+                val = int.from_bytes(luxpower_packet[i+2:i+4], 'little')
+                if 0 <= reg <= 1200:
+                    start = reg
+                    second = val
+                    break
+            if start is None:
+                return None, {}
+
+            device_addr = 0x01
+            func = 0x04  # default to read input
+            count = None
+            value = None
+
+            if second is not None and 1 <= second <= 125:
+                # Treat as read count
+                if second == 127:
+                    # Policy: ignore legacy 127-register reads entirely
+                    self._logger.warning("Ignoring 127-register read request (serial bridge)")
+                    return None, {}
+                # Normalize to 40 for best compatibility
+                count = 40
+                # Attempt to distinguish READ_HOLD: look ahead for a hint byte 0x03 somewhere
+                func = 0x04
+            else:
+                # Treat as write single
+                func = 0x06
+                value = second if second is not None else 0
+
+            frame = bytearray()
+            frame.append(device_addr)
+            frame.append(func)
+            if func in (0x03, 0x04):
+                frame.extend(start.to_bytes(2, 'big'))
+                frame.extend((count or 40).to_bytes(2, 'big'))
+                meta = {"start": start, "count": count or 40, "type": "input" if func == 0x04 else "hold"}
+            else:
+                frame.extend(start.to_bytes(2, 'big'))
+                frame.extend((value or 0).to_bytes(2, 'big'))
+                meta = {"start": start, "count": 1, "type": "write"}
+
+            crc = self._calculate_crc16(frame)
+            frame.extend(crc.to_bytes(2, 'little'))
+            return bytes(frame), meta
+        except Exception as e:
+            self._logger.error(f"Failed to build Modbus RTU from LuxPower packet: {e}")
+            return None, {}
 
     def _modbus_rtu_to_luxpower(self, modbus_packet: bytes) -> Optional[bytes]:
         """
@@ -297,11 +378,6 @@ class SerialTransport(LuxPowerTransport):
         if len(modbus_packet) < 4:
             return None
         
-        # Verify CRC
-        if not self._verify_crc(modbus_packet):
-            self._logger.warning("Modbus RTU packet CRC verification failed")
-            return None
-        
         # Extract register data
         device_addr = modbus_packet[0]
         function_code = modbus_packet[1]
@@ -315,6 +391,40 @@ class SerialTransport(LuxPowerTransport):
             return luxpower_packet
         
         return None
+
+    def _process_rtu_response(self, modbus_packet: bytes) -> bool:
+        """Process RTU response by forwarding directly to client if available."""
+        try:
+            if len(modbus_packet) < 5:
+                return False
+            if not self._verify_crc(modbus_packet):
+                return False
+            func = modbus_packet[1]
+            if func not in (0x03, 0x04):
+                return False
+            byte_count = modbus_packet[2]
+            data = modbus_packet[3:-2]
+            if len(data) != byte_count:
+                return False
+
+            # Determine register start/count/type from last request
+            start = self._last_request_start if isinstance(self._last_request_start, int) else 0
+            count = self._last_request_count if isinstance(self._last_request_count, int) else max(1, byte_count // 2)
+            reg_type = self._last_request_type if self._last_request_type in ("input", "hold") else ("input" if func == 0x04 else "hold")
+
+            values = []
+            for i in range(0, byte_count, 2):
+                # Modbus RTU is big-endian per register
+                v = int.from_bytes(data[i:i+2], 'big')
+                values.append(v)
+
+            if hasattr(self, '_client') and self._client:
+                self._client.process_mqtt_register_data(start, count, values, reg_type)
+                return True
+            return False
+        except Exception as e:
+            self._logger.error(f"Error processing RTU response: {e}")
+            return False
 
     def _create_luxpower_response_packet(self, register_data: bytes) -> bytes:
         """
@@ -341,6 +451,10 @@ class SerialTransport(LuxPowerTransport):
         packet.extend(register_data)
         
         return bytes(packet)
+
+    def set_client(self, client) -> None:
+        """Set the LuxPower client instance for direct processing."""
+        self._client = client
 
     def _calculate_crc16(self, data: bytearray) -> int:
         """

@@ -44,6 +44,8 @@ class MQTTTransport(LuxPowerTransport):
         self._listen_task: Optional[asyncio.Task] = None
         self._register_cache: Dict[int, int] = {}
         self._last_update_times: Dict[str, float] = {}
+        self._seq: int = 0
+        self._pending_acks: Dict[int, Dict[str, Any]] = {}
 
     async def connect(self) -> bool:
         """
@@ -91,6 +93,17 @@ class MQTTTransport(LuxPowerTransport):
                 self.hass, status_topic_without, self._handle_status_message, qos=1
             )
             self._logger.debug(f"Subscribed to {status_topic_with} and {status_topic_without}")
+
+            # Subscribe to write acks (add-only topic, backwards compatible)
+            write_ack_with = f"{self.topic_prefix}/{self.dongle_serial}/write/ack"
+            write_ack_without = f"{self.topic_prefix}/write/ack"
+            self._subscriptions["write_ack_with"] = await async_subscribe(
+                self.hass, write_ack_with, self._handle_write_ack, qos=1
+            )
+            self._subscriptions["write_ack_without"] = await async_subscribe(
+                self.hass, write_ack_without, self._handle_write_ack, qos=1
+            )
+            self._logger.debug(f"Subscribed to {write_ack_with} and {write_ack_without}")
             
             self._connected = True
             self._logger.info("MQTT subscriptions established")
@@ -142,16 +155,28 @@ class MQTTTransport(LuxPowerTransport):
         try:
             # Convert binary packet to JSON write command
             write_command = self._packet_to_write_command(packet)
-            
+            if not write_command:
+                self._logger.error("Refusing to send MQTT write: could not parse register/value from packet")
+                return False
+
+            # Attach sequence for idempotency and ack correlation
+            self._seq = (self._seq + 1) & 0xFFFFFFFF
+            write_command["seq"] = self._seq
+
+            # Track pending ack (best-effort, non-blocking)
+            self._pending_acks[self._seq] = {
+                "command": write_command,
+                "timestamp": asyncio.get_event_loop().time(),
+                "retries": 0,
+            }
+
             # Publish write command
             write_topic = f"{self.topic_prefix}/{self.dongle_serial}/write"
-            await async_publish(
-                self.hass, write_topic, json.dumps(write_command), qos=1
-            )
-            
+            await async_publish(self.hass, write_topic, json.dumps(write_command), qos=1)
+
             self._logger.debug(f"Sent write command: {write_command}")
             return True
-            
+
         except Exception as e:
             self._logger.error(f"Failed to send packet via MQTT: {e}")
             return False
@@ -221,6 +246,23 @@ class MQTTTransport(LuxPowerTransport):
         except Exception as e:
             self._logger.error(f"Error handling status message: {e}")
 
+    def _handle_write_ack(self, msg) -> None:
+        """Handle incoming write acknowledgements."""
+        try:
+            data = msg.payload
+            if isinstance(data, bytes):
+                data = data.decode("utf-8", errors="ignore")
+            ack = json.loads(data)
+            seq = ack.get("seq")
+            status = ack.get("status")
+            if isinstance(seq, int) and seq in self._pending_acks:
+                entry = self._pending_acks.pop(seq, None)
+                self._logger.debug(f"Received write ack for seq={seq}, status={status}")
+            else:
+                self._logger.debug(f"Write ack for unknown seq: {ack}")
+        except Exception as e:
+            self._logger.error(f"Error handling write ack: {e}")
+
     def _json_to_register_data(self, data: Dict[str, Any], register_type: str) -> Optional[bytes]:
         """
         Convert JSON register data to direct register format.
@@ -235,6 +277,14 @@ class MQTTTransport(LuxPowerTransport):
             
             if not values or len(values) != register_count:
                 self._logger.warning(f"Invalid register data: {data}")
+                return None
+
+            # Enforce 40-register bank policy; ignore legacy 127 banks
+            if register_count == 127:
+                self._logger.warning("Ignoring 127-register MQTT bank (start=%s)", register_start)
+                return None
+            if register_count != 40:
+                self._logger.debug("Normalizing non-standard MQTT bank size=%s to 40-only policy (dropping)", register_count)
                 return None
             
             # Update register cache
@@ -287,7 +337,7 @@ class MQTTTransport(LuxPowerTransport):
             crc ^= byte
         return crc & 0xFFFF
 
-    def _packet_to_write_command(self, packet: bytes) -> Dict[str, Any]:
+    def _packet_to_write_command(self, packet: bytes) -> Optional[Dict[str, Any]]:
         """
         Convert binary packet to JSON write command.
         
@@ -295,21 +345,41 @@ class MQTTTransport(LuxPowerTransport):
             packet: Binary packet data
             
         Returns:
-            JSON write command dictionary
+            JSON write command dictionary, or None on parse failure
         """
-        # This is a placeholder implementation
-        # The actual implementation would need to:
-        # 1. Parse LuxPower packet structure
-        # 2. Extract register address and value
-        # 3. Create appropriate Modbus write command
-        
-        return {
-            "function": "write_single",
-            "address": 0x01,
-            "register": 0,
-            "value": 0,
-            "timestamp": asyncio.get_event_loop().time()
-        }
+        try:
+            # Minimal, safe parser for LuxPower WRITE_SINGLE frames created by LXPPacket
+            # Expected pattern (little-endian fields within framed payload).
+            # We search for two consecutive 2-byte values that plausibly represent register and value.
+            if not isinstance(packet, (bytes, bytearray)) or len(packet) < 12:
+                return None
+
+            # Heuristic: scan for two uint16 little-endian values in a reasonable range
+            # Registers typically 0..1000, values 0..65535
+            register = None
+            value = None
+            for i in range(0, len(packet) - 3):
+                reg = int.from_bytes(packet[i:i+2], "little")
+                val = int.from_bytes(packet[i+2:i+4], "little")
+                if 0 <= reg <= 1200:
+                    register = reg
+                    value = val
+                    break
+
+            if register is None:
+                self._logger.warning("Could not infer register from packet; write skipped")
+                return None
+
+            return {
+                "function": "write_single",
+                "address": 0x01,
+                "register": register,
+                "value": value,
+                "timestamp": asyncio.get_event_loop().time(),
+            }
+        except Exception as e:
+            self._logger.error(f"Failed to parse write packet: {e}")
+            return None
 
     async def _listen_loop(self) -> None:
         """Background task to monitor MQTT connection."""
@@ -322,6 +392,29 @@ class MQTTTransport(LuxPowerTransport):
                 for topic, last_update in self._last_update_times.items():
                     if current_time - last_update > 30:
                         self._logger.warning(f"No data received on {topic} for 30+ seconds")
+
+                # Retry pending writes if no ack after timeout (best-effort)
+                to_retry = []
+                for seq, entry in list(self._pending_acks.items()):
+                    if current_time - entry.get("timestamp", 0) > 5:
+                        to_retry.append(seq)
+                for seq in to_retry:
+                    entry = self._pending_acks.get(seq)
+                    if not entry:
+                        continue
+                    retries = entry.get("retries", 0)
+                    if retries >= 3:
+                        self._logger.error(f"Write seq={seq} failed after retries; giving up")
+                        self._pending_acks.pop(seq, None)
+                        continue
+                    entry["retries"] = retries + 1
+                    entry["timestamp"] = current_time
+                    try:
+                        write_topic = f"{self.topic_prefix}/{self.dongle_serial}/write"
+                        await async_publish(self.hass, write_topic, json.dumps(entry["command"]), qos=1)
+                        self._logger.warning(f"Retried write seq={seq} (attempt {retries + 1})")
+                    except Exception as e:
+                        self._logger.error(f"Error retrying write seq={seq}: {e}")
                 
                 await asyncio.sleep(10)
                 
