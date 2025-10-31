@@ -48,6 +48,16 @@ class TCPTransport(LuxPowerTransport):
         Returns:
             True if connection successful, False otherwise
         """
+        # Clean up any existing connection before attempting new one
+        if self._transport and not self._transport.is_closing():
+            try:
+                self._transport.close()
+            except Exception:
+                pass
+        self._transport = None
+        self._protocol = None
+        self._connected = False
+        
         try:
             self._logger.info(f"Connecting to TCP server {self.host}:{self.port}")
             
@@ -55,7 +65,8 @@ class TCPTransport(LuxPowerTransport):
             self._protocol = TCPProtocol(self)
             
             # Create connection
-            self._transport, self._protocol = await asyncio.get_event_loop().create_connection(
+            loop = asyncio.get_event_loop()
+            self._transport, self._protocol = await loop.create_connection(
                 lambda: self._protocol,
                 self.host,
                 self.port
@@ -82,14 +93,17 @@ class TCPTransport(LuxPowerTransport):
             self._connected = True
             self._logger.info(f"Connected to TCP server {self.host}:{self.port}")
             
-            # Start listening task
-            self._listen_task = asyncio.create_task(self._listen_loop())
+            # Start listening task if not already running
+            if not self._listen_task or self._listen_task.done():
+                self._listen_task = asyncio.create_task(self._listen_loop())
             
             return True
             
         except Exception as e:
             self._logger.error(f"Failed to connect to TCP server: {e}")
             self._connected = False
+            self._transport = None
+            self._protocol = None
             return False
 
     async def disconnect(self) -> None:
@@ -122,14 +136,24 @@ class TCPTransport(LuxPowerTransport):
         Returns:
             True if send successful, False otherwise
         """
+        # Check connection state
         if not self._connected or not self._transport or self._transport.is_closing():
-            self._logger.error("Cannot send packet: not connected")
+            self._logger.debug("Cannot send packet: not connected")
+            # Ensure _connected flag is False if transport is dead
+            if self._transport is None or self._transport.is_closing():
+                self._connected = False
             return False
         
         try:
             self._transport.write(packet)
             self._logger.debug(f"Sent packet: {packet.hex()}")
             return True
+        except (ConnectionError, OSError, RuntimeError) as e:
+            # Connection error - mark as disconnected
+            self._logger.warning(f"Failed to send packet due to connection error: {e}")
+            self._connected = False
+            # Don't set transport to None here - let connection_lost handle cleanup
+            return False
         except Exception as e:
             self._logger.error(f"Failed to send packet: {e}")
             return False
@@ -164,45 +188,80 @@ class TCPTransport(LuxPowerTransport):
         """Background task to maintain connection."""
         while True:
             try:
-                if self._connected and self._transport and not self._transport.is_closing():
+                # Check connection state - verify both flag and actual transport state
+                is_connected = (
+                    self._connected and 
+                    self._transport is not None and 
+                    not self._transport.is_closing()
+                )
+                
+                if is_connected:
                     await asyncio.sleep(1)
                 else:
-                    self._logger.warning("TCP transport not connected; entering reconnect loop")
+                    # Connection lost - clean up and reconnect
+                    if self._connected:
+                        self._logger.warning("TCP transport connection lost; entering reconnect loop")
                     self._connected = False
+                    
+                    # Clean up transport reference if connection is dead
+                    if self._transport and self._transport.is_closing():
+                        self._transport = None
+                        self._protocol = None
+                    
+                    # Attempt reconnection
                     await self._reconnect_with_backoff()
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 self._logger.error(f"Error in TCP listen loop: {e}")
+                self._connected = False
                 await asyncio.sleep(1)
 
         self._connected = False
 
     async def _reconnect_with_backoff(self) -> None:
         """Attempt reconnection with exponential backoff and jitter."""
-        base = 0.5
+        base = 1.0
         cap = 30.0
         attempt = 0
         while True:
+            # Check if task was cancelled
             if self._listen_task and self._listen_task.cancelled():
+                self._logger.debug("Listen task cancelled, stopping reconnect attempts")
                 return
+            
+            # Check if already connected (race condition check)
+            if self._connected and self._transport and not self._transport.is_closing():
+                self._logger.debug("Already connected, stopping reconnect attempts")
+                return
+            
             try:
+                self._logger.info(f"Attempting TCP reconnection (attempt {attempt + 1})")
                 ok = await self.connect()
-                if ok:
+                if ok and self._connected:
                     self._logger.info("TCP reconnect successful")
                     return
+                else:
+                    self._logger.debug("Reconnect returned False")
+            except asyncio.CancelledError:
+                return
             except Exception as e:
                 self._logger.debug(f"Reconnect attempt failed: {e}")
 
+            # Calculate delay with exponential backoff and jitter
             delay = min(cap, base * (2 ** attempt))
-            # jitter ±20%
             jitter = delay * (0.8 + 0.4 * random.random())
-            self._logger.warning(f"Reconnect in {jitter:.1f}s (attempt {attempt + 1})")
+            
+            # Don't log every single retry attempt if it's getting too frequent
+            if attempt < 3 or attempt % 5 == 0:
+                self._logger.warning(f"TCP reconnect failed, retrying in {jitter:.1f}s (attempt {attempt + 1})")
+            
             try:
                 await asyncio.sleep(jitter)
             except asyncio.CancelledError:
                 return
-            attempt = min(attempt + 1, 10)
+            
+            attempt = min(attempt + 1, 20)  # Allow more attempts for continuous reconnection
 
 
 class TCPProtocol(asyncio.Protocol):
@@ -231,11 +290,14 @@ class TCPProtocol(asyncio.Protocol):
     def connection_lost(self, exc: Optional[Exception]) -> None:
         """Called when TCP connection is lost."""
         if exc:
-            self._logger.error(f"TCP connection lost: {exc}")
+            self._logger.warning(f"TCP connection lost: {exc}")
         else:
             self._logger.info("TCP connection closed")
         
+        # Mark as disconnected and clean up transport reference
         self.transport._connected = False
+        # Don't set transport to None here - let it be cleaned up naturally
+        # The listen loop will detect the disconnection and trigger reconnection
 
     def data_received(self, data: bytes) -> None:
         """Called when data is received from TCP connection."""

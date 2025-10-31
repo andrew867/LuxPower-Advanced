@@ -7,6 +7,7 @@ and options flow for reconfiguration.
 """
 
 import ipaddress
+import asyncio
 import logging
 import re
 
@@ -28,13 +29,6 @@ from .const import (
     ATTR_LUX_ADAPTIVE_POLLING,
     ATTR_LUX_RECONNECTION_DELAY,
     ATTR_LUX_READ_ONLY_MODE,
-    ATTR_LUX_CONNECTION_TYPE,
-    ATTR_LUX_MQTT_TOPIC_PREFIX,
-    ATTR_LUX_SERIAL_PORT,
-    ATTR_LUX_SERIAL_BAUDRATE,
-    CONNECTION_TYPE_TCP,
-    CONNECTION_TYPE_MQTT,
-    CONNECTION_TYPE_SERIAL,
     DOMAIN,
     PLACEHOLDER_LUX_DONGLE_SERIAL,
     PLACEHOLDER_LUX_HOST,
@@ -49,10 +43,6 @@ from .const import (
     PLACEHOLDER_LUX_ADAPTIVE_POLLING,
     PLACEHOLDER_LUX_RECONNECTION_DELAY,
     PLACEHOLDER_LUX_READ_ONLY_MODE,
-    PLACEHOLDER_LUX_CONNECTION_TYPE,
-    PLACEHOLDER_LUX_MQTT_TOPIC_PREFIX,
-    PLACEHOLDER_LUX_SERIAL_PORT,
-    PLACEHOLDER_LUX_SERIAL_BAUDRATE,
     MIN_RECONNECTION_DELAY,
     MAX_RECONNECTION_DELAY,
 )
@@ -72,117 +62,222 @@ def host_valid(host):
 class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
     """
     Handle LuxPower configuration flow.
-    
-    This class manages the initial setup process for LuxPower inverters,
-    including validation of host addresses, dongle serials, and other
-    configuration parameters.
+
+    Two-step wizard:
+    - Step 1: choose connection type and minimal inputs
+    - Validate: probe device and extract identifiers
+    - Step 2: show detected info and options
     """
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        self._data: dict = {}
+        self._detected: dict = {}
+
+    # ------------------------
+    # Step 1 - basic connection
+    # ------------------------
     async def async_step_user(self, user_input=None):
-        errors = {}
+        errors: dict[str, str] = {}
 
         if user_input is not None:
-            user_input[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
-            if not user_input[ATTR_LUX_USE_SERIAL]:
-                user_input[ATTR_LUX_SERIAL_NUMBER] = PLACEHOLDER_LUX_SERIAL_NUMBER
-            # Omitting bank count from initial setup:
-            errors = self._validate_user_input(user_input)
+            # Persist interim inputs, basic validation only
+            connection_type = user_input.get("connection_type", "tcp")
+            errors = self._validate_step1(user_input)
             if not errors:
-                _LOGGER.info("LuxConfigFlow: saving options ")
-                return self.async_create_entry(
-                    title=f"LuxPower - ({user_input[ATTR_LUX_DONGLE_SERIAL]})",
-                    data=user_input,
-                )
+                self._data.update(user_input)
+                return await self.async_step_validate()
 
-        config_entry = user_input if user_input else {}
+        # default values
+        defaults = {**self._data}
 
-        # Check if luxpower device already exists to use sn in entities
-        if (
-            self.hass.data.get(DOMAIN, None) is not None
-            and self.hass.data[DOMAIN].__len__() > 0
-        ):
-            placeholder_use_serial = True
+        # Build schema dynamically based on selected connection type (if any)
+        connection_type = (user_input or {}).get("connection_type", self._data.get("connection_type", "tcp"))
+        schema = self._schema_for_type(connection_type, defaults)
+        return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
+
+    def _schema_for_type(self, connection_type: str, defaults: dict) -> vol.Schema:
+        base = {
+            vol.Required("connection_type", default=connection_type): vol.In({
+                "tcp": "TCP Direct",
+                "mqtt": "MQTT Bridge",
+                "serial": "USB Serial/RS485",
+            })
+        }
+
+        if connection_type == "tcp":
+            base.update(
+                {
+                    vol.Required(ATTR_LUX_HOST, default=defaults.get(ATTR_LUX_HOST, PLACEHOLDER_LUX_HOST)): str,
+                    vol.Optional(ATTR_LUX_PORT, default=defaults.get(ATTR_LUX_PORT, PLACEHOLDER_LUX_PORT)): int,
+                    vol.Required(ATTR_LUX_DONGLE_SERIAL, default=defaults.get(ATTR_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
+                    vol.Optional(ATTR_LUX_USE_SERIAL, default=defaults.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)): bool,
+                    vol.Optional(ATTR_LUX_SERIAL_NUMBER, default=defaults.get(ATTR_LUX_SERIAL_NUMBER, "")): str,
+                }
+            )
+        elif connection_type == "mqtt":
+            base.update(
+                {
+                    vol.Required("broker_host", default=defaults.get("broker_host", "")): str,
+                    vol.Optional("broker_port", default=defaults.get("broker_port", 1883)): int,
+                    vol.Optional("username", default=defaults.get("username", "")): str,
+                    vol.Optional("password", default=defaults.get("password", "")): str,
+                    vol.Optional("topic_prefix", default=defaults.get("topic_prefix", "luxpower")): str,
+                    vol.Required(ATTR_LUX_DONGLE_SERIAL, default=defaults.get(ATTR_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
+                }
+            )
+        else:  # serial
+            base.update(
+                {
+                    vol.Required("serial_port", default=defaults.get("serial_port", "/dev/ttyUSB0")): str,
+                    vol.Required(ATTR_LUX_DONGLE_SERIAL, default=defaults.get(ATTR_LUX_DONGLE_SERIAL, PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
+                }
+            )
+
+        return vol.Schema(base)
+
+    def _validate_step1(self, user_input: dict) -> dict:
+        errors: dict[str, str] = {}
+        ctype = user_input.get("connection_type", "tcp")
+
+        # Basic per-type validation
+        if ctype == "tcp":
+            if not host_valid(user_input.get(ATTR_LUX_HOST, "")):
+                errors[ATTR_LUX_HOST] = "host_error"
+            dongle_serial = user_input.get(ATTR_LUX_DONGLE_SERIAL, "")
+            if len(dongle_serial) < 8 or len(dongle_serial) > 12:
+                errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
+            use_sn = user_input.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)
+            if use_sn:
+                sn = user_input.get(ATTR_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_SERIAL_NUMBER)
+                if len(sn) != 10 or sn == PLACEHOLDER_LUX_SERIAL_NUMBER:
+                    errors[ATTR_LUX_SERIAL_NUMBER] = "serial_error"
+                    errors[ATTR_LUX_USE_SERIAL] = "use_serial_error"
+
+            # Duplicate dongle check (existing entries)
+            if self.hass.data.get(DOMAIN):
+                for entry in self.hass.data[DOMAIN].values():
+                    if entry.get("DONGLE") == dongle_serial:
+                        errors[ATTR_LUX_DONGLE_SERIAL] = "exist_error"
+
+        elif ctype == "mqtt":
+            if not user_input.get("broker_host"):
+                errors["broker_host"] = "required"
+            dongle_serial = user_input.get(ATTR_LUX_DONGLE_SERIAL, "")
+            if len(dongle_serial) < 8 or len(dongle_serial) > 12:
+                errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
+        else:  # serial
+            if not user_input.get("serial_port"):
+                errors["serial_port"] = "required"
+            dongle_serial = user_input.get(ATTR_LUX_DONGLE_SERIAL, "")
+            if len(dongle_serial) < 8 or len(dongle_serial) > 12:
+                errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
+
+        return errors
+
+    # ------------------------
+    # Validate - probe device
+    # ------------------------
+    async def async_step_validate(self, user_input=None):
+        errors: dict[str, str] = {}
+        try:
+            self._detected = await self._probe_connection(self._data)
+        except asyncio.TimeoutError:
+            errors["base"] = "cannot_connect"
+        except Exception:
+            errors["base"] = "cannot_connect"
+
+        if errors:
+            # Go back to user step with prior inputs preserved
+            schema = self._schema_for_type(self._data.get("connection_type", "tcp"), self._data)
+            return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
+
+        return await self.async_step_options()
+
+    async def _probe_connection(self, data: dict) -> dict:
+        """Attempt a lightweight probe of the device and return identifiers.
+
+        Returns a dict with keys: serial_number, model, model_code (best-effort).
+        """
+        ctype = data.get("connection_type", "tcp")
+        result = {"serial_number": "", "model": "", "model_code": ""}
+
+        if ctype == "tcp":
+            # Try to establish a TCP connection and close immediately
+            host = data.get(ATTR_LUX_HOST)
+            port = int(data.get(ATTR_LUX_PORT, PLACEHOLDER_LUX_PORT))
+            import asyncio as _asyncio
+            conn = await _asyncio.wait_for(_asyncio.open_connection(host, port), timeout=8)
+            reader, writer = conn
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
+            # Best effort; detailed model/serial extraction requires protocol exchange
+            result["serial_number"] = data.get(ATTR_LUX_SERIAL_NUMBER, "")
         else:
-            placeholder_use_serial = PLACEHOLDER_LUX_USE_SERIAL
+            # For MQTT/Serial we don't actively probe here
+            await asyncio.sleep(0)
 
-        # Specify items in the order they are to be displayed in the UI
-        schema = {
-            vol.Required(ATTR_LUX_CONNECTION_TYPE, default=config_entry.get(ATTR_LUX_CONNECTION_TYPE, PLACEHOLDER_LUX_CONNECTION_TYPE)): vol.In({
-                CONNECTION_TYPE_TCP: "TCP Direct",
-                CONNECTION_TYPE_MQTT: "MQTT Bridge", 
-                CONNECTION_TYPE_SERIAL: "USB Serial/RS485"
-            }),
-            vol.Required("lux_dongle_serial", default=config_entry.get("lux_dongle_serial", PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
-        }  # fmt: skip
+        return result
 
-        # Add connection-specific fields based on connection type
-        connection_type = config_entry.get(ATTR_LUX_CONNECTION_TYPE, PLACEHOLDER_LUX_CONNECTION_TYPE)
-        
-        if connection_type == CONNECTION_TYPE_TCP:
-            schema[vol.Required("lux_host", default=config_entry.get("lux_host", PLACEHOLDER_LUX_HOST))] = str
-        elif connection_type == CONNECTION_TYPE_MQTT:
-            schema[vol.Required(ATTR_LUX_MQTT_TOPIC_PREFIX, default=config_entry.get(ATTR_LUX_MQTT_TOPIC_PREFIX, PLACEHOLDER_LUX_MQTT_TOPIC_PREFIX))] = str
-        elif connection_type == CONNECTION_TYPE_SERIAL:
-            schema[vol.Required(ATTR_LUX_SERIAL_PORT, default=config_entry.get(ATTR_LUX_SERIAL_PORT, PLACEHOLDER_LUX_SERIAL_PORT))] = str
-            schema[vol.Optional(ATTR_LUX_SERIAL_BAUDRATE, default=config_entry.get(ATTR_LUX_SERIAL_BAUDRATE, PLACEHOLDER_LUX_SERIAL_BAUDRATE))] = vol.All(int, vol.Range(min=9600, max=115200))
+    # ------------------------
+    # Step 2 - options
+    # ------------------------
+    async def async_step_options(self, user_input=None):
+        errors: dict[str, str] = {}
 
-        if config_entry.get("lux_use_serial", placeholder_use_serial):
-            schema[vol.Optional("lux_serial_number", default=config_entry.get("lux_serial_number", ""))] = str  # fmt: skip
+        if user_input is not None:
+            # Merge and finalize
+            final = {**self._data, **self._detected, **user_input}
+            # Normalize defaults
+            if final.get(ATTR_LUX_PORT) is None:
+                final[ATTR_LUX_PORT] = PLACEHOLDER_LUX_PORT
+            title_sn = self._data.get(ATTR_LUX_DONGLE_SERIAL, "?")
+            return self.async_create_entry(title=f"LuxPower - ({title_sn})", data=final)
 
-        schema.update({
-            vol.Optional("lux_use_serial", default=config_entry.get("lux_use_serial", placeholder_use_serial)): bool,
-            vol.Optional("lux_respond_to_heartbeat", default=config_entry.get("lux_respond_to_heartbeat", PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
-            vol.Optional("lux_auto_refresh", default=config_entry.get("lux_auto_refresh", PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
-            vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=5, max=120)),
-            vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
-            vol.Optional("lux_rated_power", default(config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER))): vol.All(int, vol.Range(min=0, max=15000)),
-            vol.Optional("lux_adaptive_polling", default=config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
-            vol.Optional("lux_read_only_mode", default=config_entry.get("lux_read_only_mode", PLACEHOLDER_LUX_READ_ONLY_MODE)): bool,
+        ctype = self._data.get("connection_type", "tcp")
+        schema = self._options_schema(ctype, {**self._data, **self._detected})
+        return self.async_show_form(step_id="options", data_schema=schema, errors=errors, description_placeholders={
+            "serial": self._detected.get("serial_number", ""),
+            "model": self._detected.get("model", ""),
         })
 
-        # Add retry attempts field only if adaptive polling is disabled
-        adaptive_polling_enabled = config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)
-        if not adaptive_polling_enabled:
-            schema.update({
-                vol.Optional("lux_reconnection_delay", default=config_entry.get("lux_reconnection_delay", PLACEHOLDER_LUX_RECONNECTION_DELAY)): vol.All(int, vol.Range(min=MIN_RECONNECTION_DELAY, max=MAX_RECONNECTION_DELAY)),
-            })  # fmt: skip
-        data_schema = vol.Schema(schema)
-        return self.async_show_form(
-            step_id="user",
-            data_schema=data_schema,
-            errors=errors,
-        )
+    def _options_schema(self, connection_type: str, defaults: dict) -> vol.Schema:
+        # TCP/Serial: full options; MQTT: only read_only_mode
+        if connection_type in ("tcp", "serial"):
+            schema = {
+                vol.Optional(ATTR_LUX_USE_SERIAL, default=defaults.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)): bool,
+                vol.Optional(ATTR_LUX_RESPOND_TO_HEARTBEAT, default=defaults.get(ATTR_LUX_RESPOND_TO_HEARTBEAT, PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
+                vol.Optional(ATTR_LUX_AUTO_REFRESH, default=defaults.get(ATTR_LUX_AUTO_REFRESH, PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
+                vol.Optional(ATTR_LUX_REFRESH_INTERVAL, default=defaults.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
+                vol.Optional(ATTR_LUX_DEVICE_GROUPING, default=defaults.get(ATTR_LUX_DEVICE_GROUPING, PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
+                vol.Optional(ATTR_LUX_ADAPTIVE_POLLING, default=defaults.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
+                vol.Optional(ATTR_LUX_READ_ONLY_MODE, default=defaults.get(ATTR_LUX_READ_ONLY_MODE, PLACEHOLDER_LUX_READ_ONLY_MODE)): bool,
+            }
+            # Conditionally show reconnection_delay when adaptive polling disabled
+            adaptive_enabled = defaults.get(ATTR_LUX_ADAPTIVE_POLLING, PLACEHOLDER_LUX_ADAPTIVE_POLLING)
+            if not adaptive_enabled:
+                schema[vol.Optional(ATTR_LUX_RECONNECTION_DELAY, default=defaults.get(ATTR_LUX_RECONNECTION_DELAY, PLACEHOLDER_LUX_RECONNECTION_DELAY))] = vol.All(int, vol.Range(min=MIN_RECONNECTION_DELAY, max=MAX_RECONNECTION_DELAY))  # fmt: skip
+            return vol.Schema(schema)
+        else:
+            return vol.Schema({
+                vol.Optional(ATTR_LUX_READ_ONLY_MODE, default=defaults.get(ATTR_LUX_READ_ONLY_MODE, PLACEHOLDER_LUX_READ_ONLY_MODE)): bool,
+            })
 
     def _validate_user_input(self, user_input):
         errors = {}
-        
-        # Validate connection type specific fields
-        connection_type = user_input.get(ATTR_LUX_CONNECTION_TYPE, PLACEHOLDER_LUX_CONNECTION_TYPE)
-        
-        if connection_type == CONNECTION_TYPE_TCP:
-            if not host_valid(user_input.get("lux_host", "")):
-                errors["lux_host"] = "host_error"
-        elif connection_type == CONNECTION_TYPE_MQTT:
-            topic_prefix = user_input.get(ATTR_LUX_MQTT_TOPIC_PREFIX, "")
-            if not topic_prefix or len(topic_prefix.strip()) == 0:
-                errors[ATTR_LUX_MQTT_TOPIC_PREFIX] = "required"
-        elif connection_type == CONNECTION_TYPE_SERIAL:
-            serial_port = user_input.get(ATTR_LUX_SERIAL_PORT, "")
-            if not serial_port or len(serial_port.strip()) == 0:
-                errors[ATTR_LUX_SERIAL_PORT] = "required"
-        
-        # Validate dongle serial
+        if not host_valid(user_input["lux_host"]):
+            errors["lux_host"] = "host_error"
+        # Allow dongle serials with 8-12 characters
         dongle_serial = user_input["lux_dongle_serial"]
         if len(dongle_serial) < 8 or len(dongle_serial) > 12:
             errors["lux_dongle_serial"] = "dongle_error"
-        
-        # Validate refresh interval
         ri = user_input.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)
-        if type(ri) is not int or ri < 5 or ri > 120:
+        if type(ri) is not int or ri < 30 or ri > 120:
             errors["lux_refresh_interval"] = "refresh_interval_error"
-        
         # Check if the dongle serial already exists in the configuration
         if (
             self.hass.data.get(DOMAIN, None) is not None
@@ -192,8 +287,6 @@ class LuxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:ignore
                 entry_data = self.hass.data[DOMAIN][entry]
                 if entry_data["DONGLE"] == user_input["lux_dongle_serial"]:
                     errors["lux_dongle_serial"] = "exist_error"
-        
-        # Validate serial number if using serial
         use_sn = user_input.get("lux_use_serial", PLACEHOLDER_LUX_USE_SERIAL)
         if use_sn:
             sn = user_input.get("lux_serial_number", PLACEHOLDER_LUX_SERIAL_NUMBER)
@@ -262,19 +355,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 user_input["lux_serial_number"] = PLACEHOLDER_LUX_SERIAL_NUMBER
             
             # Enhanced validation with real-time feedback
-            connection_type = user_input.get(ATTR_LUX_CONNECTION_TYPE, PLACEHOLDER_LUX_CONNECTION_TYPE)
-            
-            if connection_type == CONNECTION_TYPE_TCP:
-                if not user_input.get("lux_host") or not user_input["lux_host"].strip():
-                    errors["lux_host"] = "required"
-                elif not self._is_valid_ip(user_input["lux_host"]):
-                    errors["lux_host"] = "invalid_ip"
-            elif connection_type == CONNECTION_TYPE_MQTT:
-                if not user_input.get(ATTR_LUX_MQTT_TOPIC_PREFIX) or not user_input[ATTR_LUX_MQTT_TOPIC_PREFIX].strip():
-                    errors[ATTR_LUX_MQTT_TOPIC_PREFIX] = "required"
-            elif connection_type == CONNECTION_TYPE_SERIAL:
-                if not user_input.get(ATTR_LUX_SERIAL_PORT) or not user_input[ATTR_LUX_SERIAL_PORT].strip():
-                    errors[ATTR_LUX_SERIAL_PORT] = "required"
+            if not user_input.get("lux_host") or not user_input["lux_host"].strip():
+                errors["lux_host"] = "required"
+            elif not self._is_valid_ip(user_input["lux_host"]):
+                errors["lux_host"] = "invalid_ip"
                 
             if not user_input.get("lux_dongle_serial") or not user_input["lux_dongle_serial"].strip():
                 errors["lux_dongle_serial"] = "required"
@@ -292,10 +376,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             
             if not errors:
                 _LOGGER.info("OptionsFlowHandler: saving options ")
-                # Trigger a reload after updating options
-                self.hass.async_create_task(
-                    self.hass.config_entries.async_reload(self.config_entry.entry_id)
-                )
                 return self.async_create_entry(title="LuxPower ()", data=user_input)
 
         config_entry = self.config_entry_data
@@ -305,24 +385,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             config_entry = user_input
 
         schema = {
-            vol.Required(ATTR_LUX_CONNECTION_TYPE, default=config_entry.get(ATTR_LUX_CONNECTION_TYPE, PLACEHOLDER_LUX_CONNECTION_TYPE)): vol.In({
-                CONNECTION_TYPE_TCP: "TCP Direct",
-                CONNECTION_TYPE_MQTT: "MQTT Bridge", 
-                CONNECTION_TYPE_SERIAL: "USB Serial/RS485"
-            }),
+            vol.Required("lux_host", default=config_entry.get("lux_host", PLACEHOLDER_LUX_HOST)): str,
             vol.Required("lux_dongle_serial", default=config_entry.get("lux_dongle_serial", PLACEHOLDER_LUX_DONGLE_SERIAL)): str,
         }  # fmt: skip
-
-        # Add connection-specific fields based on connection type
-        connection_type = config_entry.get(ATTR_LUX_CONNECTION_TYPE, PLACEHOLDER_LUX_CONNECTION_TYPE)
-        
-        if connection_type == CONNECTION_TYPE_TCP:
-            schema[vol.Required("lux_host", default=config_entry.get("lux_host", PLACEHOLDER_LUX_HOST))] = str
-        elif connection_type == CONNECTION_TYPE_MQTT:
-            schema[vol.Required(ATTR_LUX_MQTT_TOPIC_PREFIX, default=config_entry.get(ATTR_LUX_MQTT_TOPIC_PREFIX, PLACEHOLDER_LUX_MQTT_TOPIC_PREFIX))] = str
-        elif connection_type == CONNECTION_TYPE_SERIAL:
-            schema[vol.Required(ATTR_LUX_SERIAL_PORT, default=config_entry.get(ATTR_LUX_SERIAL_PORT, PLACEHOLDER_LUX_SERIAL_PORT))] = str
-            schema[vol.Optional(ATTR_LUX_SERIAL_BAUDRATE, default=config_entry.get(ATTR_LUX_SERIAL_BAUDRATE, PLACEHOLDER_LUX_SERIAL_BAUDRATE))] = vol.All(int, vol.Range(min=9600, max=115200))
 
         if config_entry.get("lux_use_serial", PLACEHOLDER_LUX_USE_SERIAL):
             schema[vol.Optional("lux_serial_number", default=config_entry.get("lux_serial_number", ""))] = str  # fmt: skip
@@ -331,7 +396,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional("lux_use_serial", default=config_entry.get("lux_use_serial", PLACEHOLDER_LUX_USE_SERIAL)): bool,
             vol.Optional("lux_respond_to_heartbeat", default=config_entry.get("lux_respond_to_heartbeat", PLACEHOLDER_LUX_RESPOND_TO_HEARTBEAT)): bool,
             vol.Optional("lux_auto_refresh", default=config_entry.get("lux_auto_refresh", PLACEHOLDER_LUX_AUTO_REFRESH)): bool,
-            vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=5, max=120)),
+            vol.Optional("lux_refresh_interval", default=config_entry.get("lux_refresh_interval", PLACEHOLDER_LUX_REFRESH_INTERVAL)): vol.All(int, vol.Range(min=30, max=120)),
             vol.Optional("lux_device_grouping", default=config_entry.get("lux_device_grouping", PLACEHOLDER_LUX_DEVICE_GROUPING)): bool,
             vol.Optional("lux_rated_power", default=config_entry.get("lux_rated_power", PLACEHOLDER_LUX_RATED_POWER)): vol.All(int, vol.Range(min=0, max=15000)),
             vol.Optional("lux_adaptive_polling", default=config_entry.get("lux_adaptive_polling", PLACEHOLDER_LUX_ADAPTIVE_POLLING)): bool,
@@ -354,33 +419,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     def _validate_user_input(self, user_input):
         errors = {}
-        
-        # Validate connection type specific fields
-        connection_type = user_input.get(ATTR_LUX_CONNECTION_TYPE, PLACEHOLDER_LUX_CONNECTION_TYPE)
-        
-        if connection_type == CONNECTION_TYPE_TCP:
-            if not host_valid(user_input.get(ATTR_LUX_HOST, "")):
-                errors[ATTR_LUX_HOST] = "host_error"
-        elif connection_type == CONNECTION_TYPE_MQTT:
-            topic_prefix = user_input.get(ATTR_LUX_MQTT_TOPIC_PREFIX, "")
-            if not topic_prefix or len(topic_prefix.strip()) == 0:
-                errors[ATTR_LUX_MQTT_TOPIC_PREFIX] = "required"
-        elif connection_type == CONNECTION_TYPE_SERIAL:
-            serial_port = user_input.get(ATTR_LUX_SERIAL_PORT, "")
-            if not serial_port or len(serial_port.strip()) == 0:
-                errors[ATTR_LUX_SERIAL_PORT] = "required"
-        
-        # Validate dongle serial
+        if not host_valid(user_input[ATTR_LUX_HOST]):
+            errors[ATTR_LUX_HOST] = "host_error"
+        # Allow dongle serials with 8-12 characters
         dongle_serial = user_input[ATTR_LUX_DONGLE_SERIAL]
         if len(dongle_serial) < 8 or len(dongle_serial) > 12:
             errors[ATTR_LUX_DONGLE_SERIAL] = "dongle_error"
-        
-        # Validate refresh interval
         ri = user_input.get(ATTR_LUX_REFRESH_INTERVAL, PLACEHOLDER_LUX_REFRESH_INTERVAL)
-        if type(ri) is not int or ri < 5 or ri > 120:
+        if type(ri) is not int or ri < 30 or ri > 120:
             errors[ATTR_LUX_REFRESH_INTERVAL] = "refresh_interval_error"
-        
-        # Validate serial number if using serial
         sn = user_input.get(ATTR_LUX_SERIAL_NUMBER, PLACEHOLDER_LUX_SERIAL_NUMBER)
         use_sn = user_input.get(ATTR_LUX_USE_SERIAL, PLACEHOLDER_LUX_USE_SERIAL)
         if use_sn:

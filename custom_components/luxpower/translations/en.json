@@ -6,7 +6,9 @@
       "serial_error": "Enter a valid 10 character inverter serial number...",
       "use_serial_error": "...or disable this option",
       "exist_error": "Integration already added for this dongle!",
-      "refresh_interval_error": "Refresh interval must be 30-120"
+      "refresh_interval_error": "Refresh interval must be 30-120",
+      "cannot_connect": "Cannot connect. Check host/port and try again.",
+      "required": "This field is required."
     },
     "abort": {
       "already_configured": "Device is already configured"
@@ -14,16 +16,38 @@
     "step": {
       "user": {
         "title": "LuxPower",
-        "description": "Integration configuration for LuxPower Inverters",
+        "description": "Step 1: Select connection type and provide minimal details.",
         "data": {
+          "connection_type": "Connection Type",
           "lux_host": "IP address of Lux Inverter",
+          "lux_port": "Port",
           "lux_dongle_serial": "Dongle Number",
           "lux_serial_number": "Inverter Serial Number",
+          "lux_use_serial": "Use serial number in entity names",
+          "broker_host": "MQTT Broker Host",
+          "broker_port": "MQTT Broker Port",
+          "username": "MQTT Username",
+          "password": "MQTT Password",
+          "topic_prefix": "MQTT Topic Prefix",
+          "serial_port": "Serial Port"
+        }
+      },
+      "validate": {
+        "title": "Validating Connection",
+        "description": "Probing device..."
+      },
+      "options": {
+        "title": "LuxPower Options",
+        "description": "Step 2: Detected serial: {serial}. Detected model: {model}.",
+        "data": {
           "lux_use_serial": "Use serial number in entity names",
           "lux_respond_to_heartbeat": "Respond to heartbeat requests from inverter",
           "lux_auto_refresh": "Enable automatic refresh (disable for refresh automations)",
           "lux_refresh_interval": "Refresh interval (30-120 seconds)",
-          "lux_refresh_bank_count": "Number of banks to refresh (1-6)"
+          "lux_device_grouping": "Enable Device Grouping",
+          "lux_adaptive_polling": "Enable Adaptive Polling",
+          "lux_reconnection_delay": "Reconnection Delay (0-30 seconds)",
+          "lux_read_only_mode": "Read-Only Mode"
         }
       }
     }

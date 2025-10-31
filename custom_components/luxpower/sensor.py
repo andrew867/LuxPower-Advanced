@@ -26,9 +26,12 @@ from homeassistant.const import (
     UnitOfFrequency,
     UnitOfPower,
     UnitOfTemperature,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, Entity, EntityCategory
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import slugify
 
 from .const import (
@@ -723,6 +726,34 @@ async def async_setup_entry(
         if etype == "LPSS":
             sensorEntities.append(LuxStateSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPSE":
+            # For calculated power flow sensors, find dependencies
+            if entity_definition.get("calculated", False):
+                # All calculated power flow sensors depend on these base sensors
+                # We need to track all of them for accurate power flow calculation
+                base_dependencies = [
+                    LXPPacket.p_pv_total,      # PV Power
+                    LXPPacket.p_charge,        # Battery Charge
+                    LXPPacket.p_discharge,     # Battery Discharge
+                    LXPPacket.p_to_user,       # Grid Import
+                    LXPPacket.p_to_grid,       # Grid Export
+                    LXPPacket.p_load,          # Load Power
+                    LXPPacket.p_to_eps,        # EPS Power
+                    # Optional dependencies (may not exist on all systems):
+                    # LXPPacket.gen_power_watt, # Generator Power (12K only, often disabled)
+                ]
+                
+                entity_definition['dependency_entity_ids'] = []
+                entity_definition['dependency_attr_map'] = {}  # Map entity_id -> attribute name
+                
+                for dep_attr in base_dependencies:
+                    dep_def = next((s for s in sensors if s.get("attribute") == dep_attr), None)
+                    if dep_def:
+                        dep_entity_id = f"sensor.{slugify(dep_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}"
+                        entity_definition['dependency_entity_ids'].append(dep_entity_id)
+                        entity_definition['dependency_attr_map'][dep_entity_id] = dep_attr
+                    else:
+                        # Log missing dependency for debugging
+                        _LOGGER.debug(f"Calculated power flow sensor {entity_definition.get('unique')} missing dependency sensor for attribute: {dep_attr}")
             sensorEntities.append(LuxPowerSensorEntity(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPRS":
             sensorEntities.append(LuxPowerRegisterSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
@@ -738,12 +769,45 @@ async def async_setup_entry(
         elif etype == "LPST":
             sensorEntities.append(LuxPowerStatusTextSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPFS":
+            # Find entity IDs for dependencies
+            attr1_def = next((s for s in sensors if s.get("attribute") == entity_definition.get("attribute1")), None)
+            attr2_def = next((s for s in sensors if s.get("attribute") == entity_definition.get("attribute2")), None)
+            entity_definition['entity_id_1'] = f"sensor.{slugify(attr1_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if attr1_def else None
+            entity_definition['entity_id_2'] = f"sensor.{slugify(attr2_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if attr2_def else None
             sensorEntities.append(LuxPowerFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPBF":
+            # Find entity IDs for dependencies
+            attr1_def = next((s for s in sensors if s.get("attribute") == entity_definition.get("attribute1")), None)
+            attr2_def = next((s for s in sensors if s.get("attribute") == entity_definition.get("attribute2")), None)
+            entity_definition['entity_id_1'] = f"sensor.{slugify(attr1_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if attr1_def else None
+            entity_definition['entity_id_2'] = f"sensor.{slugify(attr2_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if attr2_def else None
             sensorEntities.append(LuxPowerBatteryFlowSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPHC":
+            # Find entity IDs for dependencies
+            attr1_def = next((s for s in sensors if s.get("attribute") == entity_definition.get("attribute1")), None)
+            attr2_def = next((s for s in sensors if s.get("attribute") == entity_definition.get("attribute2")), None)
+            attr3_def = next((s for s in sensors if s.get("attribute") == entity_definition.get("attribute3")), None)
+            attr4_def = next((s for s in sensors if s.get("attribute") == entity_definition.get("attribute4")), None)
+            entity_definition['entity_id_1'] = f"sensor.{slugify(attr1_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if attr1_def else None
+            entity_definition['entity_id_2'] = f"sensor.{slugify(attr2_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if attr2_def else None
+            entity_definition['entity_id_3'] = f"sensor.{slugify(attr3_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if attr3_def else None
+            entity_definition['entity_id_4'] = f"sensor.{slugify(attr4_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if attr4_def else None
             sensorEntities.append(LuxPowerHomeConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPPF":
+            watt_attribute = entity_definition["attribute_watts"]
+            va_attribute = entity_definition["attribute_va"]
+            watt_def = next((s for s in sensors if s.get("attribute") == watt_attribute), None)
+            va_def = next((s for s in sensors if s.get("attribute") == va_attribute), None)
+
+            watt_entity_id, va_entity_id = None, None
+
+            if watt_def:
+                watt_entity_id = f"sensor.{slugify(watt_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}"
+            if va_def:
+                va_entity_id = f"sensor.{slugify(va_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}"
+
+            entity_definition['watt_entity_id'] = watt_entity_id
+            entity_definition['va_entity_id'] = va_entity_id
             sensorEntities.append(LuxPowerFactorSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPBS":
             sensorEntities.append(LuxPowerBatteryStatusSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
@@ -756,8 +820,20 @@ async def async_setup_entry(
         elif etype == "LPHL":
             sensorEntities.append(LuxPowerHealthSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPSC":
+            # Find entity IDs for dependencies (p_load, p_to_user, p_to_grid)
+            p_load_def = next((s for s in sensors if s.get("attribute") == LXPPacket.p_load), None)
+            p_to_user_def = next((s for s in sensors if s.get("attribute") == LXPPacket.p_to_user), None)
+            p_to_grid_def = next((s for s in sensors if s.get("attribute") == LXPPacket.p_to_grid), None)
+            entity_definition['p_load_entity_id'] = f"sensor.{slugify(p_load_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if p_load_def else None
+            entity_definition['p_to_user_entity_id'] = f"sensor.{slugify(p_to_user_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if p_to_user_def else None
+            entity_definition['p_to_grid_entity_id'] = f"sensor.{slugify(p_to_grid_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if p_to_grid_def else None
             sensorEntities.append(LuxPowerSelfConsumptionSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPSG":
+            # Find entity IDs for dependencies (p_to_user, p_load)
+            p_to_user_def = next((s for s in sensors if s.get("attribute") == LXPPacket.p_to_user), None)
+            p_load_def = next((s for s in sensors if s.get("attribute") == LXPPacket.p_load), None)
+            entity_definition['p_to_user_entity_id'] = f"sensor.{slugify(p_to_user_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if p_to_user_def else None
+            entity_definition['p_load_entity_id'] = f"sensor.{slugify(p_load_def['name'].format(replaceID_midfix=entityID_midfix, hyphen=hyphen))}" if p_load_def else None
             sensorEntities.append(LuxPowerGridDependencySensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
         elif etype == "LPTS":
             sensorEntities.append(LuxPowerTestSensor(hass, HOST, PORT, DONGLE, SERIAL, entity_definition, event, model_code))
@@ -868,6 +944,11 @@ class LuxPowerSensorEntity(SensorEntity):
         self._device_attribute = entity_definition.get("attribute", None)
         self._decimal_places = entity_definition.get("decimal_places", 1)
         self._calculated = entity_definition.get("calculated", False)
+        
+        # For calculated sensors, initialize dependency tracking
+        if self._calculated:
+            self._dependency_values = {}
+            self._dependency_attr_map = entity_definition.get("dependency_attr_map", {})
 
         # _LOGGER.debug("Slugified entity_id: %s", self.entity_id)
 
@@ -875,7 +956,25 @@ class LuxPowerSensorEntity(SensorEntity):
         await super().async_added_to_hass()
         _LOGGER.debug("async_added_to_hasss %s", self._attr_name)
         self.is_added_to_hass = True
-        if self.hass is not None:
+        
+        # Handle calculated power flow sensors - track dependencies instead of events
+        if self._calculated and self._entity_definition.get("dependency_entity_ids"):
+            self._dependency_values = {}
+            dependency_entity_ids = self._entity_definition.get("dependency_entity_ids", [])
+            
+            for dep_entity_id in dependency_entity_ids:
+                async_track_state_change_event(self.hass, dep_entity_id, self._calculated_dependency_update)
+                state = self.hass.states.get(dep_entity_id)
+                if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                    try:
+                        self._dependency_values[dep_entity_id] = float(state.state)
+                    except (ValueError, TypeError):
+                        self._dependency_values[dep_entity_id] = 0.0
+            
+            # Initial calculation
+            self._update_calculated_power_flow()
+        elif self.hass is not None:
+            # Regular sensors still use event-based updates
             self.hass.bus.async_listen(
                 self.event.EVENT_UNAVAILABLE_RECEIVED, self.gone_unavailable
             )
@@ -914,7 +1013,8 @@ class LuxPowerSensorEntity(SensorEntity):
         
         # Handle calculated power flow values
         if hasattr(self, '_calculated') and self._calculated:
-            # For calculated power flow sensors, use the calculated values
+            # For calculated power flow sensors that still use events (fallback)
+            # Note: State-driven calculated sensors handle updates in _calculated_dependency_update
             value = self._data.get(self._device_attribute)
         else:
             # For regular sensors, use the standard attribute
@@ -956,6 +1056,89 @@ class LuxPowerSensorEntity(SensorEntity):
             self._attr_available = False
         self.schedule_update_ha_state()
         return self._attr_native_value
+
+    def _calculated_dependency_update(self, event):
+        """Handle dependency update for calculated power flow sensors."""
+        entity_id = event.data.get('entity_id')
+        new_state = event.data.get('new_state')
+
+        value = 0.0
+        if new_state and new_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            try: 
+                value = float(new_state.state)
+            except (ValueError, TypeError): 
+                value = 0.0
+
+        if entity_id in self._dependency_values:
+            self._dependency_values[entity_id] = value
+            self._update_calculated_power_flow()
+
+    def _update_calculated_power_flow(self):
+        """Update calculated power flow sensor based on dependency values."""
+        if not self._calculated or not hasattr(self, '_dependency_attr_map'):
+            return
+        
+        # Build data dict from dependency values (mapped to attribute names)
+        power_data = {}
+        for entity_id, attr_name in self._dependency_attr_map.items():
+            power_data[attr_name] = self._dependency_values.get(entity_id, 0.0)
+        
+        # Calculate power flows using same logic as LXPPacket.calculate_power_flow()
+        try:
+            pv_power = power_data.get(LXPPacket.p_pv_total, 0.0)
+            battery_charge = power_data.get(LXPPacket.p_charge, 0.0)
+            battery_discharge = power_data.get(LXPPacket.p_discharge, 0.0)
+            grid_to_user = power_data.get(LXPPacket.p_to_user, 0.0)
+            user_to_grid = power_data.get(LXPPacket.p_to_grid, 0.0)
+            load_power = power_data.get(LXPPacket.p_load, 0.0)
+            eps_power = power_data.get(LXPPacket.p_to_eps, 0.0)
+            
+            # Calculate power flows (matching LXPPacket.calculate_power_flow logic exactly)
+            # Sources: p_pv_total, p_charge, p_discharge, p_to_user, p_to_grid, p_load, p_to_eps
+            pv_to_battery = min(pv_power, battery_charge) if battery_charge > 0 else 0.0
+            pv_remaining_after_battery = pv_power - pv_to_battery
+            pv_to_load = min(pv_remaining_after_battery, load_power) if load_power > 0 else 0.0
+            pv_to_grid_calc = max(0.0, pv_remaining_after_battery - pv_to_load)
+            battery_to_load = min(battery_discharge, load_power - pv_to_load) if battery_discharge > 0 and load_power > pv_to_load else 0.0
+            battery_to_grid_calc = min(battery_discharge - battery_to_load, grid_to_user) if battery_discharge > battery_to_load and grid_to_user > 0 else 0.0
+            grid_to_battery = min(grid_to_user, battery_charge) if grid_to_user > 0 and battery_charge > 0 else 0.0
+            grid_to_load = min(grid_to_user - grid_to_battery, load_power - pv_to_load - battery_to_load) if grid_to_user > grid_to_battery else 0.0
+            
+            # Map calculated values to attribute names
+            calc_values = {
+                "pv_to_battery": pv_to_battery,
+                "pv_to_load": pv_to_load,
+                "pv_to_grid": pv_to_grid_calc,
+                "battery_to_load": battery_to_load,
+                "battery_to_grid": battery_to_grid_calc,
+                "grid_to_battery": grid_to_battery,
+                "grid_to_load": grid_to_load,
+                "generator_to_battery": 0.0,  # Generator flows would need gen_power_watt
+                "generator_to_load": 0.0,
+                "ac_couple_to_battery": 0.0,  # AC couple flows would need additional data
+                "ac_couple_to_grid": 0.0,
+            }
+            
+            # Get the value for this sensor's attribute
+            # For calculated sensors, use unique ID to determine which value to return
+            unique_id = self._entity_definition.get("unique", "")
+            calc_key = unique_id.replace("lux_", "").replace("_power", "")
+            value = calc_values.get(calc_key, 0.0)
+            
+            if isinstance(value, (int, float)):
+                value = round(value, self._decimal_places)
+                self._attr_native_value = value
+                self._attr_available = True
+            else:
+                self._attr_native_value = None
+                self._attr_available = False
+                
+        except Exception as e:
+            _LOGGER.error(f"Error calculating power flow for {self._attr_name}: {e}")
+            self._attr_native_value = None
+            self._attr_available = False
+        
+        self.schedule_update_ha_state()
 
     def gone_unavailable(self, event):
         _LOGGER.warning(f"Sensor: gone_unavailable event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
@@ -1044,36 +1227,66 @@ class LuxPowerFlowSensor(LuxPowerSensorEntity):
     ):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
-        self._device_attribute1 = entity_definition["attribute1"]
-        self._device_attribute2 = entity_definition["attribute2"]
+        self._entity_id_1 = entity_definition.get("entity_id_1")
+        self._entity_id_2 = entity_definition.get("entity_id_2")
+        self._value_1 = None
+        self._value_2 = None
 
-    def push_update(self, event):
-        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
-        self._data = event.data.get("data", {})
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        _LOGGER.debug(f"async_added_to_hass for {self.entity_id}")
 
-        # For grid flow: attribute1 = p_to_user (grid to user), attribute2 = p_to_grid (user to grid)
-        grid_to_user = float(self._data.get(self._device_attribute1, 0.0))  # Power from grid to user
-        user_to_grid = float(self._data.get(self._device_attribute2, 0.0))   # Power from user to grid
+        if self._entity_id_1:
+            async_track_state_change_event(self.hass, self._entity_id_1, self._dependency_update)
+            state = self.hass.states.get(self._entity_id_1)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._value_1 = float(state.state)
+                except (ValueError, TypeError): self._value_1 = None
+
+        if self._entity_id_2:
+            async_track_state_change_event(self.hass, self._entity_id_2, self._dependency_update)
+            state = self.hass.states.get(self._entity_id_2)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._value_2 = float(state.state)
+                except (ValueError, TypeError): self._value_2 = None
         
-        # Debug logging for grid flow values
-        _LOGGER.debug(f"Grid Flow Debug - grid_to_user: {grid_to_user}, user_to_grid: {user_to_grid}")
+        self._update_flow()
+
+    def _dependency_update(self, event):
+        """Handle dependency update."""
+        _LOGGER.debug(f"Dependency update for {self.entity_id} from {event.data.get('entity_id')}")
+        entity_id = event.data.get('entity_id')
+        new_state = event.data.get('new_state')
+
+        value = None
+        if new_state and new_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            try: value = float(new_state.state)
+            except (ValueError, TypeError): value = None
+
+        if entity_id == self._entity_id_1:
+            self._value_1 = value
+        elif entity_id == self._entity_id_2:
+            self._value_2 = value
+        
+        self._update_flow()
+
+    def _update_flow(self):
+        """Update grid flow."""
+        grid_to_user = self._value_1 if self._value_1 is not None else 0.0
+        user_to_grid = self._value_2 if self._value_2 is not None else 0.0
         
         # Calculate net grid flow: positive = importing from grid, negative = exporting to grid
         if grid_to_user > 0:
-            # We're importing from grid
             flow_value = grid_to_user
         elif user_to_grid > 0:
-            # We're exporting to grid
             flow_value = -user_to_grid
         else:
-            # No grid flow
             flow_value = 0.0
             
         self._attr_native_value = f"{round(flow_value, 1)}"
-
         self._attr_available = True
         self.schedule_update_ha_state()
-        return self._attr_native_value
 
 
 class LuxPowerBatteryFlowSensor(LuxPowerSensorEntity):
@@ -1090,36 +1303,66 @@ class LuxPowerBatteryFlowSensor(LuxPowerSensorEntity):
     ):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
-        self._device_attribute1 = entity_definition["attribute1"]  # p_discharge
-        self._device_attribute2 = entity_definition["attribute2"]  # p_charge
+        self._entity_id_1 = entity_definition.get("entity_id_1")  # p_discharge
+        self._entity_id_2 = entity_definition.get("entity_id_2")  # p_charge
+        self._value_1 = None
+        self._value_2 = None
 
-    def push_update(self, event):
-        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
-        self._data = event.data.get("data", {})
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        _LOGGER.debug(f"async_added_to_hass for {self.entity_id}")
 
-        # For battery flow: attribute1 = p_discharge, attribute2 = p_charge
-        battery_discharge = float(self._data.get(self._device_attribute1, 0.0))  # Power discharging from battery
-        battery_charge = float(self._data.get(self._device_attribute2, 0.0))     # Power charging battery
+        if self._entity_id_1:
+            async_track_state_change_event(self.hass, self._entity_id_1, self._dependency_update)
+            state = self.hass.states.get(self._entity_id_1)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._value_1 = float(state.state)
+                except (ValueError, TypeError): self._value_1 = None
+
+        if self._entity_id_2:
+            async_track_state_change_event(self.hass, self._entity_id_2, self._dependency_update)
+            state = self.hass.states.get(self._entity_id_2)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._value_2 = float(state.state)
+                except (ValueError, TypeError): self._value_2 = None
         
-        # Debug logging for battery flow values
-        _LOGGER.debug(f"Battery Flow Debug - discharge: {battery_discharge}, charge: {battery_charge}")
+        self._update_flow()
+
+    def _dependency_update(self, event):
+        """Handle dependency update."""
+        _LOGGER.debug(f"Dependency update for {self.entity_id} from {event.data.get('entity_id')}")
+        entity_id = event.data.get('entity_id')
+        new_state = event.data.get('new_state')
+
+        value = None
+        if new_state and new_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            try: value = float(new_state.state)
+            except (ValueError, TypeError): value = None
+
+        if entity_id == self._entity_id_1:
+            self._value_1 = value
+        elif entity_id == self._entity_id_2:
+            self._value_2 = value
+        
+        self._update_flow()
+
+    def _update_flow(self):
+        """Update battery flow."""
+        battery_discharge = self._value_1 if self._value_1 is not None else 0.0
+        battery_charge = self._value_2 if self._value_2 is not None else 0.0
         
         # Calculate net battery flow: positive = discharging, negative = charging
         if battery_discharge > 0:
-            # Battery is discharging
             flow_value = battery_discharge
         elif battery_charge > 0:
-            # Battery is charging
             flow_value = -battery_charge
         else:
-            # No battery flow
             flow_value = 0.0
             
         self._attr_native_value = f"{round(flow_value, 1)}"
-
         self._attr_available = True
         self.schedule_update_ha_state()
-        return self._attr_native_value
 
 
 class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
@@ -1134,37 +1377,66 @@ class LuxPowerHomeConsumptionSensor(LuxPowerSensorEntity):
     ):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
-        self._device_attribute1 = entity_definition[
-            "attribute1"
-        ]  # Power from grid to consumer unit
-        self._device_attribute2 = entity_definition[
-            "attribute2"
-        ]  # Power from consumer unit to inverter
-        self._device_attribute3 = entity_definition[
-            "attribute3"
-        ]  # Power from inverter to consumer unit
-        self._device_attribute4 = entity_definition[
-            "attribute4"
-        ]  # Power from consumer unit to grid
+        self._entity_id_1 = entity_definition.get("entity_id_1")  # Power from grid to consumer unit
+        self._entity_id_2 = entity_definition.get("entity_id_2")  # Power from consumer unit to inverter
+        self._entity_id_3 = entity_definition.get("entity_id_3")  # Power from inverter to consumer unit
+        self._entity_id_4 = entity_definition.get("entity_id_4")  # Power from consumer unit to grid
+        self._value_1 = None
+        self._value_2 = None
+        self._value_3 = None
+        self._value_4 = None
 
-    def push_update(self, event):
-        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
-        self._data = event.data.get("data", {})
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        _LOGGER.debug(f"async_added_to_hass for {self.entity_id}")
 
-        grid = float(self._data.get(self._device_attribute1, 0.0))
-        to_inverter = float(self._data.get(self._device_attribute2, 0.0))
-        from_inverter = float(self._data.get(self._device_attribute3, 0.0))
-        to_grid = float(self._data.get(self._device_attribute4, 0.0))
+        for i, entity_id in enumerate([self._entity_id_1, self._entity_id_2, self._entity_id_3, self._entity_id_4], 1):
+            if entity_id:
+                async_track_state_change_event(self.hass, entity_id, self._dependency_update)
+                state = self.hass.states.get(entity_id)
+                if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                    try: 
+                        value = float(state.state)
+                        setattr(self, f"_value_{i}", value)
+                    except (ValueError, TypeError): 
+                        setattr(self, f"_value_{i}", None)
         
-        # Debug logging for power values
-        _LOGGER.debug(f"Home Consumption Debug - grid: {grid}, to_inverter: {to_inverter}, from_inverter: {from_inverter}, to_grid: {to_grid}")
+        self._update_consumption()
+
+    def _dependency_update(self, event):
+        """Handle dependency update."""
+        _LOGGER.debug(f"Dependency update for {self.entity_id} from {event.data.get('entity_id')}")
+        entity_id = event.data.get('entity_id')
+        new_state = event.data.get('new_state')
+
+        value = None
+        if new_state and new_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            try: value = float(new_state.state)
+            except (ValueError, TypeError): value = None
+
+        if entity_id == self._entity_id_1:
+            self._value_1 = value
+        elif entity_id == self._entity_id_2:
+            self._value_2 = value
+        elif entity_id == self._entity_id_3:
+            self._value_3 = value
+        elif entity_id == self._entity_id_4:
+            self._value_4 = value
+        
+        self._update_consumption()
+
+    def _update_consumption(self):
+        """Update home consumption."""
+        grid = self._value_1 if self._value_1 is not None else 0.0
+        to_inverter = self._value_2 if self._value_2 is not None else 0.0
+        from_inverter = self._value_3 if self._value_3 is not None else 0.0
+        to_grid = self._value_4 if self._value_4 is not None else 0.0
         
         consumption_value = grid - to_inverter + from_inverter - to_grid
         self._attr_native_value = f"{round(consumption_value, 1)}"
-
         self._attr_available = True
         self.schedule_update_ha_state()
-        return self._attr_native_value
 
 
 class LuxPowerFactorSensor(LuxPowerSensorEntity):
@@ -1179,29 +1451,62 @@ class LuxPowerFactorSensor(LuxPowerSensorEntity):
     ):
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
-        self._device_attribute_watts = entity_definition["attribute_watts"]
-        self._device_attribute_va = entity_definition["attribute_va"]
+        self._watt_entity_id = entity_definition.get("watt_entity_id")
+        self._va_entity_id = entity_definition.get("va_entity_id")
+        self._watt_value = None
+        self._va_value = None
 
-    def push_update(self, event):
-        _LOGGER.debug(f"Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
-        self._data = event.data.get("data", {})
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        _LOGGER.debug(f"async_added_to_hass for {self.entity_id}")
 
-        watts = float(self._data.get(self._device_attribute_watts, 0.0))
-        va = float(self._data.get(self._device_attribute_va, 0.0))
+        if self._watt_entity_id:
+            async_track_state_change_event(self.hass, self._watt_entity_id, self._dependency_update)
+            watt_state = self.hass.states.get(self._watt_entity_id)
+            if watt_state and watt_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._watt_value = float(watt_state.state)
+                except (ValueError, TypeError): self._watt_value = None
+
+        if self._va_entity_id:
+            async_track_state_change_event(self.hass, self._va_entity_id, self._dependency_update)
+            va_state = self.hass.states.get(self._va_entity_id)
+            if va_state and va_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._va_value = float(va_state.state)
+                except (ValueError, TypeError): self._va_value = None
         
-        # Handle division by zero and invalid values
-        if va == 0.0 or watts is None or va is None:
+        self._update_power_factor()
+
+    def _dependency_update(self, event):
+        """Handle dependency update."""
+        _LOGGER.debug(f"Dependency update for {self.entity_id} from {event.data.get('entity_id')}")
+        entity_id = event.data.get('entity_id')
+        new_state = event.data.get('new_state')
+
+        value = None
+        if new_state and new_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            try: value = float(new_state.state)
+            except (ValueError, TypeError): value = None
+
+        if entity_id == self._watt_entity_id:
+            self._watt_value = value
+        elif entity_id == self._va_entity_id:
+            self._va_value = value
+        
+        self._update_power_factor()
+
+    def _update_power_factor(self):
+        """Update power factor."""
+        if self._watt_value is None or self._va_value is None or self._va_value == 0:
             self._attr_native_value = None
             self._attr_available = False
         else:
-            power_factor = watts / va
-            # Clamp power factor between 0 and 1
+            power_factor = self._watt_value / self._va_value
             power_factor = max(0.0, min(1.0, power_factor))
             self._attr_native_value = f"{round(power_factor, 2)}"
             self._attr_available = True
 
         self.schedule_update_ha_state()
-        return self._attr_native_value
 
 
 class LuxPowerRegisterSensor(LuxPowerSensorEntity):
@@ -2216,16 +2521,65 @@ class LuxPowerSelfConsumptionSensor(LuxPowerSensorEntity):
     def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._p_load_entity_id = entity_definition.get("p_load_entity_id")
+        self._p_to_user_entity_id = entity_definition.get("p_to_user_entity_id")
+        self._p_to_grid_entity_id = entity_definition.get("p_to_grid_entity_id")
+        self._p_load_value = None
+        self._p_to_user_value = None
+        self._p_to_grid_value = None
 
-    def push_update(self, event):
-        """Handle data updates and calculate self-consumption rate."""
-        _LOGGER.debug(f"Self Consumption Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        _LOGGER.debug(f"async_added_to_hass for {self.entity_id}")
 
-        # Get power flow data
-        self._data = event.data.get("data", {})
-        load_power = self._data.get(LXPPacket.p_load, 0)
-        grid_import = self._data.get(LXPPacket.p_to_user, 0)  # Power from grid to loads
-        grid_export = self._data.get(LXPPacket.p_to_grid, 0)  # Power to grid (export)
+        if self._p_load_entity_id:
+            async_track_state_change_event(self.hass, self._p_load_entity_id, self._dependency_update)
+            state = self.hass.states.get(self._p_load_entity_id)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._p_load_value = float(state.state)
+                except (ValueError, TypeError): self._p_load_value = None
+
+        if self._p_to_user_entity_id:
+            async_track_state_change_event(self.hass, self._p_to_user_entity_id, self._dependency_update)
+            state = self.hass.states.get(self._p_to_user_entity_id)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._p_to_user_value = float(state.state)
+                except (ValueError, TypeError): self._p_to_user_value = None
+
+        if self._p_to_grid_entity_id:
+            async_track_state_change_event(self.hass, self._p_to_grid_entity_id, self._dependency_update)
+            state = self.hass.states.get(self._p_to_grid_entity_id)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._p_to_grid_value = float(state.state)
+                except (ValueError, TypeError): self._p_to_grid_value = None
+        
+        self._update_self_consumption()
+
+    def _dependency_update(self, event):
+        """Handle dependency update."""
+        _LOGGER.debug(f"Dependency update for {self.entity_id} from {event.data.get('entity_id')}")
+        entity_id = event.data.get('entity_id')
+        new_state = event.data.get('new_state')
+
+        value = None
+        if new_state and new_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            try: value = float(new_state.state)
+            except (ValueError, TypeError): value = None
+
+        if entity_id == self._p_load_entity_id:
+            self._p_load_value = value
+        elif entity_id == self._p_to_user_entity_id:
+            self._p_to_user_value = value
+        elif entity_id == self._p_to_grid_entity_id:
+            self._p_to_grid_value = value
+        
+        self._update_self_consumption()
+
+    def _update_self_consumption(self):
+        """Update self-consumption rate."""
+        load_power = self._p_load_value if self._p_load_value is not None else 0.0
+        grid_import = self._p_to_user_value if self._p_to_user_value is not None else 0.0
 
         # Self-consumption = power from PV/battery to loads / total load power
         # Grid import is power from grid, so self-consumption = 1 - (grid_import / load_power)
@@ -2239,9 +2593,6 @@ class LuxPowerSelfConsumptionSensor(LuxPowerSensorEntity):
             _LOGGER.debug("No load power, self-consumption rate = 0%")
 
         self._attr_available = True
-        self.lastupdated_time = time.time()
-
-        # Update Home Assistant state (thread-safe)
         self.schedule_update_ha_state()
 
 
@@ -2251,15 +2602,54 @@ class LuxPowerGridDependencySensor(LuxPowerSensorEntity):
     def __init__(self, hass, host, port, dongle, serial, entity_definition, event: Event, model_code: str = None):  # fmt: skip
         """Initialize the sensor."""
         super().__init__(hass, host, port, dongle, serial, entity_definition, event, model_code)
+        self._p_to_user_entity_id = entity_definition.get("p_to_user_entity_id")
+        self._p_load_entity_id = entity_definition.get("p_load_entity_id")
+        self._p_to_user_value = None
+        self._p_load_value = None
 
-    def push_update(self, event):
-        """Handle data updates and calculate grid dependency percentage."""
-        _LOGGER.debug(f"Grid Dependency Sensor: register event received Bank: {self._bank} Attrib: {self._device_attribute} Name: {self._attr_name}")  # fmt: skip
+    async def async_added_to_hass(self) -> None:
+        """Handle entity which will be added."""
+        await super().async_added_to_hass()
+        _LOGGER.debug(f"async_added_to_hass for {self.entity_id}")
 
-        # Get power flow data
-        self._data = event.data.get("data", {})
-        grid_import = self._data.get(LXPPacket.p_to_user, 0)  # Power from grid to loads
-        load_power = self._data.get(LXPPacket.p_load, 0)
+        if self._p_to_user_entity_id:
+            async_track_state_change_event(self.hass, self._p_to_user_entity_id, self._dependency_update)
+            state = self.hass.states.get(self._p_to_user_entity_id)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._p_to_user_value = float(state.state)
+                except (ValueError, TypeError): self._p_to_user_value = None
+
+        if self._p_load_entity_id:
+            async_track_state_change_event(self.hass, self._p_load_entity_id, self._dependency_update)
+            state = self.hass.states.get(self._p_load_entity_id)
+            if state and state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                try: self._p_load_value = float(state.state)
+                except (ValueError, TypeError): self._p_load_value = None
+        
+        self._update_grid_dependency()
+
+    def _dependency_update(self, event):
+        """Handle dependency update."""
+        _LOGGER.debug(f"Dependency update for {self.entity_id} from {event.data.get('entity_id')}")
+        entity_id = event.data.get('entity_id')
+        new_state = event.data.get('new_state')
+
+        value = None
+        if new_state and new_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            try: value = float(new_state.state)
+            except (ValueError, TypeError): value = None
+
+        if entity_id == self._p_to_user_entity_id:
+            self._p_to_user_value = value
+        elif entity_id == self._p_load_entity_id:
+            self._p_load_value = value
+        
+        self._update_grid_dependency()
+
+    def _update_grid_dependency(self):
+        """Update grid dependency percentage."""
+        grid_import = self._p_to_user_value if self._p_to_user_value is not None else 0.0
+        load_power = self._p_load_value if self._p_load_value is not None else 0.0
 
         # Grid dependency = grid power / total load power
         if load_power > 0:
@@ -2271,9 +2661,6 @@ class LuxPowerGridDependencySensor(LuxPowerSensorEntity):
             _LOGGER.debug("No load power, grid dependency = 0%")
 
         self._attr_available = True
-        self.lastupdated_time = time.time()
-
-        # Update Home Assistant state (thread-safe)
         self.schedule_update_ha_state()
 
 

@@ -731,79 +731,78 @@ class LuxPowerClient:
                             self._dropped_read_127 += 1
                         except Exception:
                             pass
-                        continue
-                    
-                    # Record response time for performance tracking
-                    bank = register // 40  # Calculate bank number from register
-                    self._record_response_time(bank)
+                    else:
+                        # Record response time for performance tracking
+                        bank = register // 40  # Calculate bank number from register
+                        self._record_response_time(bank)
 
-                    if (
-                        number_of_registers == 1
-                        and self._lxp_single_register_result is not None
-                        and not self._lxp_single_register_result.done()
-                    ):
-                        self._lxp_single_register_result.set_result(
-                            result.get("thesereg", {})
-                        )
+                        if (
+                            number_of_registers == 1
+                            and self._lxp_single_register_result is not None
+                            and not self._lxp_single_register_result.done()
+                        ):
+                            self._lxp_single_register_result.set_result(
+                                result.get("thesereg", {})
+                            )
 
-                    total_data = {"registers": result.get("registers", {})}
-                    # Extract serial number from LXPPacket for serialization
-                    serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00') if hasattr(self.lxpPacket, 'serial_number') else ""
-                    self._LOGGER.debug(f"🔍 CLIENT REGISTER DEBUG - Raw serial_number bytes: {getattr(self.lxpPacket, 'serial_number', b'')}")
-                    self._LOGGER.debug(f"🔍 CLIENT REGISTER DEBUG - Decoded serial_number: '{serial_number}'")
-                    event_data = {"registers": result.get("thesereg", {}), "serial_number": serial_number}
-                    self._LOGGER.debug("EVENT REGISTER: %s ", event_data)
-                    if self.lxpPacket.register >= 160 and self._warn_registers:
-                        self._LOGGER.debug("REGISTERS: %s ", total_data)
-                    if 0 <= self.lxpPacket.register <= 39:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK0_RECEIVED, event_data
-                        )
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_21_RECEIVED, event_data
-                        )
-                    elif 40 <= self.lxpPacket.register <= 79:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK1_RECEIVED, event_data
-                        )
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_21_RECEIVED, event_data
-                        )
-                    elif 80 <= self.lxpPacket.register <= 119:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK2_RECEIVED, event_data
-                        )
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_21_RECEIVED, event_data
-                        )
-                    elif 120 <= self.lxpPacket.register <= 159:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK3_RECEIVED, event_data
-                        )
-                    elif 160 <= self.lxpPacket.register <= 199:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK4_RECEIVED, event_data
-                        )
-                    elif 200 <= self.lxpPacket.register <= 239:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK5_RECEIVED, event_data
-                        )
-                    elif 240 <= self.lxpPacket.register <= 279:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK6_RECEIVED, event_data
-                        )
-                    elif 280 <= self.lxpPacket.register <= 319:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK7_RECEIVED, event_data
-                        )
-                    elif 320 <= self.lxpPacket.register <= 359:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK8_RECEIVED, event_data
-                        )
-                    elif 360 <= self.lxpPacket.register <= 399:
-                        self.hass.bus.fire(
-                            self.events.EVENT_REGISTER_BANK9_RECEIVED, event_data
-                        )
+                        total_data = {"registers": result.get("registers", {})}
+                        # Extract serial number from LXPPacket for serialization
+                        serial_number = getattr(self.lxpPacket, 'serial_number', b'').decode('utf-8', errors='ignore').rstrip('\x00') if hasattr(self.lxpPacket, 'serial_number') else ""
+                        self._LOGGER.debug(f"🔍 CLIENT REGISTER DEBUG - Raw serial_number bytes: {getattr(self.lxpPacket, 'serial_number', b'')}")
+                        self._LOGGER.debug(f"🔍 CLIENT REGISTER DEBUG - Decoded serial_number: '{serial_number}'")
+                        event_data = {"registers": result.get("thesereg", {}), "serial_number": serial_number}
+                        self._LOGGER.debug("EVENT REGISTER: %s ", event_data)
+                        if self.lxpPacket.register >= 160 and self._warn_registers:
+                            self._LOGGER.debug("REGISTERS: %s ", total_data)
+                        if 0 <= self.lxpPacket.register <= 39:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK0_RECEIVED, event_data
+                            )
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_21_RECEIVED, event_data
+                            )
+                        elif 40 <= self.lxpPacket.register <= 79:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK1_RECEIVED, event_data
+                            )
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_21_RECEIVED, event_data
+                            )
+                        elif 80 <= self.lxpPacket.register <= 119:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK2_RECEIVED, event_data
+                            )
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_21_RECEIVED, event_data
+                            )
+                        elif 120 <= self.lxpPacket.register <= 159:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK3_RECEIVED, event_data
+                            )
+                        elif 160 <= self.lxpPacket.register <= 199:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK4_RECEIVED, event_data
+                            )
+                        elif 200 <= self.lxpPacket.register <= 239:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK5_RECEIVED, event_data
+                            )
+                        elif 240 <= self.lxpPacket.register <= 279:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK6_RECEIVED, event_data
+                            )
+                        elif 280 <= self.lxpPacket.register <= 319:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK7_RECEIVED, event_data
+                            )
+                        elif 320 <= self.lxpPacket.register <= 359:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK8_RECEIVED, event_data
+                            )
+                        elif 360 <= self.lxpPacket.register <= 399:
+                            self.hass.bus.fire(
+                                self.events.EVENT_REGISTER_BANK9_RECEIVED, event_data
+                            )
                     
         except (ConnectionError, OSError, RuntimeError) as e:
             self._LOGGER.error(f"Connection error in data_received: {e}")
@@ -826,8 +825,12 @@ class LuxPowerClient:
         Returns:
             True if send successful, False otherwise
         """
-        if not self._connected:
-            self._LOGGER.error("Cannot send packet: not connected")
+        # Check both client and transport connection state
+        if not self._connected or not self._transport.connected:
+            self._LOGGER.debug("Cannot send packet: not connected")
+            # Sync client state with transport state
+            if not self._transport.connected:
+                self._connected = False
             return False
         
         try:
@@ -836,32 +839,45 @@ class LuxPowerClient:
                 self._LOGGER.debug(f"Sent packet: {packet.hex()}")
                 return True
             else:
-                self._LOGGER.error("Failed to send packet")
+                # If send failed, sync connection state
+                if not self._transport.connected:
+                    self._connected = False
+                self._LOGGER.debug("Failed to send packet")
                 return False
         except Exception as e:
             self._LOGGER.error(f"Error sending packet: {e}")
+            # Mark as disconnected on exception
+            self._connected = False
             return False
 
     async def start_luxpower_client_daemon(self):
         """Start the main client daemon loop."""
         while not self._stop_client:
+            # Sync client connection state with transport state
+            if self._connected and not self._transport.connected:
+                self._LOGGER.debug("Client connection state out of sync with transport, marking as disconnected")
+                self._connected = False
+            
             if not self._connected:
                 try:
                     self._LOGGER.info("luxpower daemon: Connecting to lux power server")
                     success = await self.connect()
-                    if success:
+                    if success and self._transport.connected:
                         self._LOGGER.info("luxpower daemon: Connected to lux power server")
                     else:
-                        self._LOGGER.error("luxpower daemon: Connection failed")
+                        self._LOGGER.warning("luxpower daemon: Connection failed or not fully established")
+                        self._connected = False
                         await asyncio.sleep(10)
                         continue
                 except Exception as e:
                     self._LOGGER.error(f"Connection failed in daemon: {e}")
+                    self._connected = False
                     await asyncio.sleep(10)
                     continue
 
                 await asyncio.sleep(1)
-                if self._connected:
+                # Re-check connection state before proceeding
+                if self._connected and self._transport.connected:
                     if not self._connect_twice:
                         self._connect_twice = False
                         self._LOGGER.info("Refreshing Lux Platforms With Data")
@@ -880,15 +896,20 @@ class LuxPowerClient:
                         self._connect_twice = True
                         await self.reconnect()
 
-            # Log performance stats every 60 seconds during normal operation
+            # Log performance stats periodically during normal operation
             await asyncio.sleep(10)
-            if self._connected and len(self._response_times) > 0:
+            if self._connected and self._transport.connected and len(self._response_times) > 0:
                 # Only log if we have some response time data
                 self.log_performance_stats()
         self._LOGGER.info("Stop Called - Exiting start_luxpower_client_daemon")
 
     async def request_data_bank(self, address_bank):
         """Request data from a specific register bank."""
+        # Check connection state before attempting to send
+        if not self._connected or not self._transport.connected:
+            self._LOGGER.debug(f"Cannot request data bank {address_bank}: not connected")
+            return
+        
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
         start_register = address_bank * 40
@@ -903,6 +924,11 @@ class LuxPowerClient:
         
         await self._acquire_lock()
         try:
+            # Re-check connection state after acquiring lock
+            if not self._connected or not self._transport.connected:
+                self._LOGGER.debug(f"Connection lost while waiting for lock in request_data_bank {address_bank}")
+                return
+                
             self._LOGGER.debug("request_data_bank for address_bank: %s", address_bank)
             # Record request start time for performance tracking
             self._record_request_start(address_bank)
@@ -911,9 +937,15 @@ class LuxPowerClient:
                 self._LOGGER.debug(
                     f"Packet Written for getting {serial} DATA registers address_bank {address_bank} , {number_of_registers}")
             else:
-                self._LOGGER.error("Failed to send data bank request")
+                self._LOGGER.debug("Failed to send data bank request")
+                # Sync connection state if send failed
+                if not self._transport.connected:
+                    self._connected = False
         except Exception as e:
             self._LOGGER.error("Exception request_data_bank %s", e)
+            # Mark as disconnected on exception
+            if isinstance(e, (ConnectionError, OSError)):
+                self._connected = False
         finally:
             if self._lxp_request_lock.locked():
                 self._lxp_request_lock.release()
@@ -948,6 +980,11 @@ class LuxPowerClient:
 
     async def request_hold_bank(self, address_bank):
         """Request holding registers from a specific bank."""
+        # Check connection state before attempting to send
+        if not self._connected or not self._transport.connected:
+            self._LOGGER.debug(f"Cannot request hold bank {address_bank}: not connected")
+            return
+        
         serial = self.lxpPacket.serial_number
         number_of_registers = 40
         start_register = address_bank * 40
@@ -962,6 +999,11 @@ class LuxPowerClient:
 
         await self._acquire_lock()
         try:
+            # Re-check connection state after acquiring lock
+            if not self._connected or not self._transport.connected:
+                self._LOGGER.debug(f"Connection lost while waiting for lock in request_hold_bank {address_bank}")
+                return
+                
             self._LOGGER.debug(
                 f"request_hold_bank for {serial} address_bank: {address_bank} , {number_of_registers}"
             )
@@ -972,9 +1014,15 @@ class LuxPowerClient:
                 self._LOGGER.debug(
                     f"Packet Written for getting {serial} HOLD registers address_bank {address_bank} , {number_of_registers}")
             else:
-                self._LOGGER.error("Failed to send hold bank request")
+                self._LOGGER.debug("Failed to send hold bank request")
+                # Sync connection state if send failed
+                if not self._transport.connected:
+                    self._connected = False
         except Exception as e:
             self._LOGGER.error("Exception request_hold_bank %s", e)
+            # Mark as disconnected on exception
+            if isinstance(e, (ConnectionError, OSError)):
+                self._connected = False
         finally:
             if self._lxp_request_lock.locked():
                 self._lxp_request_lock.release()
