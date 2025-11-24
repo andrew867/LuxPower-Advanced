@@ -75,11 +75,9 @@ mqtt:
             id(write_target_reg) = reg;
             id(write_target_val) = val;
             id(write_seq_in) = seq_in;
-        - modbus_controller.write:
-            id: lux
-            register_type: holding
-            address: !lambda 'return id(write_target_reg);'
-            value: !lambda 'return id(write_target_val);'
+        - number.set:
+            id: modbus_write_number
+            value: !lambda 'return (float)id(write_target_val);'
         - mqtt.publish:
             topic: modbus_bridge/write/ack
             payload: !lambda |-
@@ -105,11 +103,9 @@ mqtt:
             id(write_target_reg) = reg;
             id(write_target_val) = val;
             id(write_seq_in) = seq_in;
-        - modbus_controller.write:
-            id: lux
-            register_type: holding
-            address: !lambda 'return id(write_target_reg);'
-            value: !lambda 'return id(write_target_val);'
+        - number.set:
+            id: modbus_write_number
+            value: !lambda 'return (float)id(write_target_val);'
         - mqtt.publish:
             topic: !lambda |-
               std::string t = "modbus_bridge/";
@@ -258,6 +254,39 @@ light:
 sensor:
   - platform: uptime
     name: "Uptime"
+
+# Dynamic modbus write number component (hidden, used internally for MQTT writes)
+number:
+  - platform: modbus_controller
+    modbus_controller_id: lux
+    name: "Modbus Write"
+    id: modbus_write_number
+    internal: true
+    address: 0
+    register_type: holding
+    value_type: U_WORD
+    min_value: 0
+    max_value: 65535
+    step: 1
+    write_lambda: |-
+      // Use the register address stored in write_target_reg global
+      // This allows dynamic register addressing from MQTT messages
+      uint16_t reg_addr = id(write_target_reg);
+      uint16_t reg_value = (uint16_t) id(write_target_val);
+      ESP_LOGI("modbus", "Writing to register %d with value %d", reg_addr, reg_value);
+      
+      // Construct Modbus write single register PDU (FC06)
+      // Device address is handled by modbus_controller, payload is PDU only
+      payload.push_back(0x06); // Function code: Write Single Register
+      payload.push_back((reg_addr >> 8) & 0xFF); // Register address high byte
+      payload.push_back(reg_addr & 0xFF);        // Register address low byte
+      // LuxPower byte order: reversed (low byte first, then high byte)
+      // If we want to write 0x0201, send 0x01 0x02
+      payload.push_back(reg_value & 0xFF);        // Value low byte first
+      payload.push_back((reg_value >> 8) & 0xFF); // Value high byte second
+      
+      // CRC will be calculated automatically by ESPHome's modbus component
+      return true;
 
 # Interval for periodic logging and status updates
 interval:
