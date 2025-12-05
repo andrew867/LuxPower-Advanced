@@ -7,7 +7,9 @@
       "serial_error": "Invalid serial number. Must be exactly 10 characters.",
       "use_serial_error": "Serial number is required when 'Use Serial' is enabled.",
       "refresh_interval_error": "Refresh interval must be between 30 and 120 seconds.",
-      "refresh_bank_count_error": "Bank count must be between 1 and 6."
+      "refresh_bank_count_error": "Bank count must be between 1 and 6.",
+      "cannot_connect": "Cannot connect. Check host/port and try again.",
+      "required": "This field is required."
     },
     "abort": {
       "already_configured": "This LuxPower inverter is already configured."
@@ -15,25 +17,38 @@
     "step": {
       "user": {
         "title": "LuxPower Inverter",
-        "description": "Configure your LuxPower inverter connection. You'll need the IP address of your inverter's Wi-Fi dongle and the dongle serial number (found on the dongle or in the inverter's web interface). Device grouping organizes 250+ entities into logical sub-devices for better navigation.",
+        "description": "Step 1 of 2: Select connection type and provide minimal connection details.",
         "data": {
+          "connection_type": "Connection Type",
           "lux_host": "IP Address",
+          "lux_port": "Port",
           "lux_dongle_serial": "Dongle Serial Number",
           "lux_use_serial": "Use Serial Number in Entity IDs",
           "lux_serial_number": "Inverter Serial Number",
+          "broker_host": "MQTT Broker Host",
+          "broker_port": "MQTT Broker Port",
+          "username": "MQTT Username",
+          "password": "MQTT Password",
+          "topic_prefix": "MQTT Topic Prefix",
+          "serial_port": "Serial Port"
+        }
+      },
+      "validate": {
+        "title": "Validating Connection",
+        "description": "Probing device..."
+      },
+      "options": {
+        "title": "LuxPower Options",
+        "description": "Step 2 of 2: Detected serial: {serial}. Detected model: {model}.",
+        "data": {
+          "lux_use_serial": "Use Serial Number in Entity IDs",
           "lux_respond_to_heartbeat": "Respond to Heartbeat",
           "lux_auto_refresh": "Enable Auto Refresh",
           "lux_refresh_interval": "Refresh Interval (30-120 seconds)",
-          "lux_refresh_bank_count": "Number of Register Banks to Refresh (1-6). Use 6 for modern firmware, 2-3 for older firmware versions",
-          "lux_device_grouping": "Enable Device Grouping (Organizes 250+ entities into PV, Grid, EPS, Generator, Battery, Temperatures, and Settings groups)",
-          "lux_rated_power": "Inverter Rated Power (Watts)",
-          "lux_adaptive_polling": "Enable Adaptive Polling (60s-5min based on connection quality)",
+          "lux_device_grouping": "Enable Device Grouping",
+          "lux_adaptive_polling": "Enable Adaptive Polling",
           "lux_reconnection_delay": "Reconnection Delay (0-30 seconds)",
-          "lux_read_only_mode": "Read-Only Mode (Creates sensors instead of control entities - WARNING: Changes entity types!)",
-          "lux_ac_charge_type": "AC Charge Type",
-          "lux_output_priority": "Output Priority",
-          "lux_work_mode": "Work Mode",
-          "lux_ac_charge_mode": "AC Charge Mode"
+          "lux_read_only_mode": "Read-Only Mode"
         }
       }
     }
